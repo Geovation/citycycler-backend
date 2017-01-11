@@ -12,6 +12,7 @@ describe("Timepix API", () => {
         error: null,
         response: null,
     };
+    let origin = "https://www.example.com";
     beforeAll(done => {
         if ( startServer ) {
             server = api.listen(process.env.PORT || "8081", () => {
@@ -29,7 +30,10 @@ describe("Timepix API", () => {
             const password = "TimepixRocks!";
             const auth = "Basic " + new Buffer(username + ":" + password).toString("base64");
             request({
-                headers:  {Authorization: auth},
+                headers:  {
+                    Authorization: auth,
+                    Origin: origin,
+                },
                 url: url + "/api/v0/?key=" + API_KEY,
             }, (error, response, body) => {
                     result.error = error;
@@ -58,6 +62,9 @@ describe("Timepix API", () => {
             expect(result.response.statusCode).toEqual(200);
         });
 
+        it("CORS is enabled", () => {
+            expect(result.response.headers["access-control-allow-origin"]).toBe(origin);
+        });
     });
 
 });

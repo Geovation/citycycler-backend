@@ -1,6 +1,8 @@
 import * as Koa from "koa";
+import * as cors from "koa2-cors";
 
 export const api = new Koa();
+api.use(cors());
 
 // response
 api.use(async (ctx, next) => {
