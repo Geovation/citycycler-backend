@@ -14,7 +14,7 @@ const replace = require('gulp-replace');
 const remapIstanbul = require('remap-istanbul/lib/gulpRemapIstanbul');
 
 if (typeof process.env.DOCURL == "undefined") {
-  process.env.DOCURL = "https://api.flyflock.io";
+  process.env.DOCURL = "https://timepix-dev.appspot.com";
 }
 
 gulp.task("info", () => {
@@ -25,7 +25,7 @@ gulp.task("info", () => {
 
 gulp.task("modify-swagger-yaml", () => {
   return gulp.src('conf/swagger.yaml')
-    .pipe(replace('api.flyflock.io', process.env.DOCURL.split("//")[1]))
+    .pipe(replace('timepix-dev.appspot.com', process.env.DOCURL.split("//")[1]))
     .pipe(gulp.dest('build'))
 });
 

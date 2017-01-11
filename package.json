@@ -1,10 +1,10 @@
 {
-  "name": "flyflock-api",
-  "description": "FlyFlock API",
+  "name": "timepix-api",
+  "description": "Timepix API",
   "version": "0.1.0",
   "private": true,
   "license": "Commercial",
-  "author": "FlyFlock",
+  "author": "Timepix",
   "engines": {
     "node": "~4.2"
   },

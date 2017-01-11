@@ -8,5 +8,9 @@ api.use(async (ctx, next) => {
     await next();
     const ms =  <any> (new Date()) - <any> start;
     console.log(`${ctx.method} ${ctx.url} - ${ms}ms`);
-    ctx.body = "{ \"text\": \"Hello Koa async\" }";
+
+    ctx.body = JSON.stringify({
+        node: process.versions,
+        test: "Hello Koa async",
+    });
 });

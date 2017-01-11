@@ -9,14 +9,14 @@ dependencies:
   post:
     - npm run clean
 
-#deployment:
-#  production:
-#    branch: master
-#    commands:
-#      - sudo /opt/google-cloud-sdk/bin/gcloud components update -q
-##     - sudo /opt/google-cloud-sdk/bin/gcloud components install beta -q
-#      - sudo chown ubuntu.ubuntu -R /home/ubuntu/.config/gcloud
-#      - gcloud auth activate-service-account --key-file conf/key-file.json
-#      - gcloud config set project flock-api-dev-148515
-#      - npm run deploy
-#      - URL=https://api.flyflock.io npm run e2etest
+deployment:
+  production:
+    branch: master
+    commands:
+      - sudo /opt/google-cloud-sdk/bin/gcloud components update -q
+#     - sudo /opt/google-cloud-sdk/bin/gcloud components install beta -q
+      - sudo chown ubuntu.ubuntu -R /home/ubuntu/.config/gcloud
+      - gcloud auth activate-service-account --key-file conf/key-file.json
+      - gcloud config set project timepix-dev
+      - npm run deploy
+      - URL=https://timepix-dev.appspot.com npm run e2etest

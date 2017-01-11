@@ -3,7 +3,7 @@ import * as request from "request";
 
 const API_KEY = "AIzaSyDOzTdHFHxAiBm52HDlqz_AkHX7rZ3VFIg";
 
-describe("Flock API", () => {
+describe("Timepix API", () => {
     const startServer = !process.env.URL;
     const url = process.env.URL || "http://localhost:8081";
     let server;

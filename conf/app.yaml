@@ -1,19 +1,25 @@
 runtime: nodejs
-vm: flex
+env: flex
+automatic_scaling:
+#  min_num_instances: 2 # default is 2
+  max_num_instances: 4
+#  cool_down_period_sec: 120 # default value
+#  cpu_utilization:
+#    target_utilization: 0.5
 
-env_variables:
-  # Testing App Engine Memcache service (currently in alpha)
-  USE_GAE_MEMCACHE: 1
-  # otherweise we can use another service such as redislab
-  # MEMCACHE_URL: pub-memcache-16904.us-east-1-2.1.ec2.garantiadata.com:16904
-  # If you are using a Memcached server with SASL authentiation enabled,
-  # fill in these values with your username and password.
-  #  MEMCACHE_USERNAME: sebastian.ovide@geovation.uk
-  #  MEMCACHE_PASSWORD: 4hflupdoTV1R
+#env_variables:
+#  # Testing App Engine Memcache service (currently in alpha)
+#  USE_GAE_MEMCACHE: 1
+#  # otherweise we can use another service such as redislab
+#  # MEMCACHE_URL: pub-memcache-16904.us-east-1-2.1.ec2.garantiadata.com:16904
+#  # If you are using a Memcached server with SASL authentiation enabled,
+#  # fill in these values with your username and password.
+#  #  MEMCACHE_USERNAME: sebastian.ovide@geovation.uk
+#  #  MEMCACHE_PASSWORD: 4hflupdoTV1R
 
 resources:
   cpu: .1
-  memory_gb: .1
+#  memory_gb: .9
   disk_size_gb: 10
 
 #beta_settings:

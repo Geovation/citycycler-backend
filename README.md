@@ -1,4 +1,4 @@
-# Flock API
+# Timepix API
 
 ## Install
 
@@ -94,7 +94,7 @@ Here, the first `/` forms part of the path added by the application and tests,
 not part of the base URL.
 
 By default the base URL that appears in the docs is
-`https://api.flyflock.io/api/v0`. When you run `npm run
+`https://timepix-dev.appspot.com/`. When you run `npm run
 serve`, the docs get generated for the local server instead.
 
 The `circle.yml` file sets this variable for testing live after a deployment,
@@ -113,7 +113,7 @@ To be able to deploy there are three steps:
    ```gcloud components install beta```
 
 2. Create a Service Account in the
-   [Credentials](https://console.cloud.google.com/apis/credentials?project=flock-api-dev-148515)
+   [Credentials](https://console.cloud.google.com/apis/credentials?project=timepix-dev)
    section of the API Manger section of the web console for the project you are
    working on. Download the JSON key file and save it as `conf/key-file.json`.
 
@@ -128,7 +128,7 @@ To be able to deploy there are three steps:
 From this point on you can deploy like this:
 
 ```
-CLOUDSDK_CORE_PROJECT=flock-api-dev-148515 npm run deploy
+CLOUDSDK_CORE_PROJECT=timepix-dev npm run deploy
 ```
 
 The `predeploy` step currently just runs a build (and lint) and the tests.
@@ -139,7 +139,7 @@ If you don't want to have to keep setting the project explicilty with the
 environment variable above, you can run:
 
 ```
-gcloud config set project flock-api-dev-148515
+gcloud config set project timepix-dev
 ```
 
 Explicit is usually better though.
