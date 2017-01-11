@@ -24,6 +24,9 @@
     "preinstall": "npm update",
     "postinstall": "npm prune"
   },
+  "engines": {
+    "node": "7.4.0"
+  },
   "dependencies": {
     "@types/request": "0.0.39",
     "babel-core": "^6.21.0",
