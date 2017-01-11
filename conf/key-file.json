@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "flock-api-dev-148515",
+  "private_key_id": "b98366f7e21e2aca9c444893dfea022193b44f15",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDQ5e3UARHm0bne\nroepKSdlftuYj+jZuuO5miS89/NHrI/mAjPJTCGlJ7bD2+c1SHNOqtqtMrpFZTdp\nQqCrcVePBT/JcyrY8bJ4bPLCLmfa34j9PDmnt0At9dyIaywnKA4WdgnoXKYV0RYs\nTOUe47numtAQ/ngjN0nnnjt59oRukfCLMzwwIfTMP4Vl/61QEGktQikJotYsQFWF\nx6SGFqRRGd1KLfzjRcGpbPrJJBuCMSba/X5SK/ouedCRIbvkDCBhlD6iDYimCZyh\nn7D8fXxchfjTdbH2c00SfAJMxBEBpBqdV+XwpPHGaTilIFWEJGTz2oWl5sG69jEi\nRNfJyn1fAgMBAAECggEAVSj2/I93Gc7z5Ajoexiw29qMcTRxq5lZzsc9JOA8CEMb\n4puROwXTTX3ULyJNrlYb070pKqRcdX/eyAWGdH3fQQnVyC0wEYLuy9M2X90FL6Aj\nO4E6y9mTy2jIf8CZHllg7N0wCs8CUjCLxoGOgjo6CUCJg/QJS+n1Mfw6qOzLbjtJ\nnEY2XJ5zmgdEbSYFmQmKmZSadQILlVSIVEm5i3Dgf4rfdrgHBWUoHXgZDz0LRF/Z\nOkZoX3QkekPR2v4zODuAOkEfNsLJ3Gg8dUrEqOUk/o4peLesXReuYuoDDfMsCvez\nI+TWrp58GBYhS8in9l1cFi/P87mKN74kCDtlTARpCQKBgQD1tQQhWn7/s2p7SxJo\nSQnC+9MMjfkmS6e6N3wgF2RJJ1mbt7rz63B8mysxiETY+snL1JDrcLi6IYvU6wNk\nx0EsKyCqxWT+H6lxwWG3ksC4jjRasRH8N1SaxunfSV6xqrWt1IcSUripfYO3S3UA\nxRi+QK48lr6U0CuTyq+4CF6IowKBgQDZpiu07ELgoBxkQebaKOgCfCRrfVqhbJiq\n2+fUJIw9Zcwb4Xd5VMakkmFEaoYRCz18hbRE3bVT5nvwGr/BUuePpyGl0c/F6Wdf\n1vbxqhxMMC1qv2gsobGD+ugO31i+V8le4o2OWrultmfzJVo7bj9q/WBVQHhnxrFl\nrV2D334YFQKBgHtnHZruy4f7AUjJDIap4Cg4t+e/Slnsd2H0SfgIJ4sCI2Qs481r\n+wPqHshyyzk6w60Gpn5JD84T2Rnnqr2rwVTAmFiMaUukdUK3wC8lmntWmH7QHdtR\nosFVk9JcFB4hQbv7WJdgSnR9oHCnii0H0ISFEb1GbJNq9ef1TUmdknUHAoGBAIpN\nsqZUH6c3dvMqgXSN2+iAVHBNhsLfDCA+fxFqbAcz4cCxxEbAXT4EmnRsMGcyOk8f\nc07zh58Z7hXEGafSc7zwGkyRh7MevwbCxccJLtQnJSUZHiyGTxQr4zxYJr9Fb3ux\nAPy9oVILGAEE8lKjmv70pTtnLVvcgau3v53l7e2FAoGBAPS2BavqfNIKQ5D2kvdp\nWp7Hw41FSJ5S7ON3BRYj+7AWwISERZdYBj2+c+CUdKeCGxVywpMIDs7QI5Rrheae\nn89oMeMfCH3MQTHh0oZFnXzI50SY0M4POQ0VYQVuJqAmXbJiQf71ukAqwTafyVz9\n+/1oVGprIOFsNcdGTPacZ5Q8\n-----END PRIVATE KEY-----\n",
+  "client_email": "deploy@flock-api-dev-148515.iam.gserviceaccount.com",
+  "client_id": "107989235468045439508",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://accounts.google.com/o/oauth2/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/deploy%40flock-api-dev-148515.iam.gserviceaccount.com"
+}

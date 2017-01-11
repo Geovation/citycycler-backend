@@ -1,0 +1,160 @@
+# to edit this you could use the online editor: http://editor.swagger.io/#/?import=https://api.flyflock.io/swagger.yaml
+swagger: "2.0"
+info:
+  description: "A simple Google Cloud Endpoints API example."
+  title: "Endpoints Example"
+  version: "1.0.0"
+host: "api.flyflock.io"
+basePath: "/api/v0/"
+produces:
+- "application/json"
+schemes:
+- "https"
+- "http"
+
+# TODO: discuss with Antton about URL format
+paths:
+  "/{latitude},{longitude},{radius}/{droneMaxSpeed}":
+    get:
+      summary: Calculate Flock number based on several factors.
+      description: "Request flock number"
+      operationId: "GetFlockNumber"
+      parameters:
+        - name: latitude
+          in: path
+          description: "Latitude component of location. Ex: 50.7667"
+          required: true
+          type: number
+          format: double
+        - name: longitude
+          in: path
+          description: "Longitude component of location. Ex: -1.0833"
+          required: true
+          type: number
+          format: double
+        - name: radius
+          in: path
+          description: "Radius of the fly in metters. It must be less or equal than 500. Ex: 300"
+          required: true
+          type: integer
+          format: int32
+          maximum: 500
+          minimum: 0
+        - name: droneMaxSpeed
+          in: path
+          description: "Max speed in kph that the drone can fly against. Ex: 20.0"
+          required: true
+          type: number
+          format: double
+          maximum: 500
+          minimum: 0
+
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "an object with a flock and an array of flocks"
+          schema:
+            $ref: '#/definitions/FinalFlock'
+
+# This section requires all requests to any path to require an API key.
+security:
+- api_key: []
+
+securityDefinitions:
+  # This section configures basic authentication with an API key.
+  api_key:
+    type: "apiKey"
+    name: "key"
+    in: "query"
+
+definitions:
+  AirSpaceConditionPrecipitation:
+    allOf:
+      - $ref: '#/definitions/Factor'
+      - type: object
+        properties:
+          pop:
+            $ref: '#/definitions/Double'
+          qpf:
+            $ref: '#/definitions/Double'
+
+  AirSpaceConditionTemperature:
+    allOf:
+    - $ref: '#/definitions/Factor'
+    - type: object
+      properties:
+        temperature:
+          $ref: '#/definitions/Double'
+
+  AirSpaceConditionWind:
+    allOf:
+    - $ref: '#/definitions/Factor'
+    - type: object
+      properties:
+        gust:
+          $ref: '#/definitions/Double'
+
+  Cars:
+    allOf:
+    - $ref: '#/definitions/Factor'
+    - type: object
+      properties:
+        numberOfCars:
+          type: number
+
+  Double:
+    type: number
+    format: double
+
+  Factor:
+    type: object
+    properties:
+      flockNumber:
+        $ref: '#/definitions/Double'
+      elapsedTime:
+        type: number
+
+  FinalFlock:
+    allOf:
+      - $ref: '#/definitions/Factor'
+      - type: object
+        properties:
+          airSpaceConditionPrecipitation:
+            $ref: '#/definitions/AirSpaceConditionPrecipitation'
+          airSpaceConditionTemperature:
+            $ref: '#/definitions/AirSpaceConditionTemperature'
+          airSpaceConditionWind:
+            $ref: '#/definitions/AirSpaceConditionWind'
+          cars:
+            $ref: '#/definitions/Cars'
+          visibilityTimeOfDay:
+            $ref: '#/definitions/VisibilityTimeOfDay'
+          visibilityWeather:
+            $ref: '#/definitions/VisibilityWeather'
+
+  DateTime:
+    type: string
+    format: date-time
+
+  VisibilityTimeOfDay:
+    allOf:
+      - $ref: '#/definitions/Factor'
+      - type: object
+        properties:
+          sunriseStart:
+            $ref: '#/definitions/DateTime'
+          sunriseEnd:
+            $ref: '#/definitions/DateTime'
+          sunsetStart:
+            $ref: '#/definitions/DateTime'
+          sunsetEnd:
+            $ref: '#/definitions/DateTime'
+
+  VisibilityWeather:
+    allOf:
+      - $ref: '#/definitions/Factor'
+      - type: object
+        properties:
+          visibility:
+            type: number

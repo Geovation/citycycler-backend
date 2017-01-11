@@ -1,0 +1,1 @@
+the tests in this folder (the root of src) are considered e2e tests
