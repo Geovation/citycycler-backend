@@ -25,7 +25,7 @@
     "postinstall": "npm prune"
   },
   "engines": {
-    "node": "7.4.0"
+    "node": "^7.0.0"
   },
   "dependencies": {
     "@types/request": "0.0.39",
