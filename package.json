@@ -16,7 +16,7 @@
     "deploy": "gcloud app deploy -q build/app.yaml",
     "gulp": "gulp",
     "lint": "gulp tslint",
-    "serve": "DOCURL=http://localhost:8080 gulp serve",
+    "serve:web": "DOCURL=http://localhost:8080 gulp serve --script build/app.js --with_services $npm_package_config_with_services",
     "start": "node app.js",
     "test": "gulp test",
     "unittest": "gulp unittest",
@@ -28,15 +28,18 @@
     "node": "^7.0.0"
   },
   "dependencies": {
-    "@types/request": "0.0.39",
     "babel-core": "^6.21.0",
     "cache-manager": "^2.2.0",
     "cache-manager-memcached-store": "^2.1.0",
+    "dotenv": "^4.0.0",
+    "es6-promisify": "^5.0.0",
+    "joi": "^10.1.0",
     "koa": "^2.0.0",
     "koa2-cors": "^2.0.2",
     "lodash": "^4.17.2",
     "moment": "^2.17.0",
-    "request": "^2.79.0"
+    "request": "^2.79.0",
+    "winston": "^2.3.0"
   },
   "devDependencies": {
     "@types/core-js": "^0.9.34",

@@ -1,4 +1,4 @@
-import { api } from "./api";
+import { app } from "./server";
 import * as request from "request";
 
 const API_KEY = "AIzaSyDOzTdHFHxAiBm52HDlqz_AkHX7rZ3VFIg";
@@ -15,7 +15,7 @@ describe("Timepix API", () => {
     let origin = "https://www.example.com";
     beforeAll(done => {
         if ( startServer ) {
-            server = api.listen(process.env.PORT || "8081", () => {
+            server = app.listen(process.env.PORT || "8081", () => {
                 console.log("App listening on port %s", server.address().port);
                 console.log("Press Ctrl+C to quit.");
                 finalDone();

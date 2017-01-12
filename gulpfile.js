@@ -12,9 +12,19 @@ const nodemon = require('gulp-nodemon');
 const runSequence = require('run-sequence');
 const replace = require('gulp-replace');
 const remapIstanbul = require('remap-istanbul/lib/gulpRemapIstanbul');
+const path = require('path');
 
 if (typeof process.env.DOCURL == "undefined") {
   process.env.DOCURL = "https://timepix-dev.appspot.com";
+}
+
+function getOption (name) {
+  let i = process.argv.indexOf('--' + name)
+  let result
+  if (i > -1) {
+    result = process.argv[i + 1]
+  }
+  return result
 }
 
 gulp.task("info", () => {
@@ -48,10 +58,10 @@ function populateWithEnvVariables() {
     let conf = JSON.parse(file.contents);
 
 
-  for (let varIndex in variables) {
-    let varName = variables[varIndex];
-    conf[varName] = process.env[varName];
-  }
+    for (let varIndex in variables) {
+      let varName = variables[varIndex];
+      conf[varName] = process.env[varName];
+    }
 
     file.contents = new Buffer(JSON.stringify(conf, null, ' '));
 
@@ -139,13 +149,25 @@ gulp.task("build", ["typescript", "swagger-ui", "info"], () => {
     .pipe(gulp.dest('build'));
 });
 
-
 gulp.task("serve", ['test'], () => {
   // configure nodemon
+  const envVars = {
+    NODE_ENV: 'development',
+    PROCESS_TYPE: 'web',
+    WITH_SERVICES: getOption('with_services') || true
+  }
+
+  if (path.parse(__dirname).name != 'build') {
+    envVars.NODE_PATH = path.join(__dirname, 'build');
+  } else {
+    envVars.NODE_PATH = __dirname;
+  }
+
   nodemon({
-    script: 'build/app.js',
+    script: getOption('script'),
     ext: 'ts',
     tasks: ["test"],
+    env: envVars,
   });
 });
 

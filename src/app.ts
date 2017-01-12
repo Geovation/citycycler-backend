@@ -1,7 +1,24 @@
-import { api } from "./api";
+import web from "web";
+import * as logger from "winston";
 
-process.chdir(__dirname);
-let server = api.listen(process.env.PORT || "8080", () => {
-    console.log("App listening on port %s", server.address().port);
-    console.log("Press CtrlC to quit.");
-});
+const processType: string = process.env.PROCESS_TYPE;
+// const services: boolean = process.env.WITH_SERVICES || true;
+
+logger.info(`Starting '${processType}' process`, { pid: process.pid });
+
+switch (processType) {
+    case "web":
+//        if (services) {
+//            require("common/services");
+//        }
+        web();
+        break;
+//    case "microservices":
+//        require("common/services");
+//        break;
+    default:
+        throw new Error(`
+            ${processType} is an unsupported process type.
+            Use one of: 'web', 'microservices'!
+        `);
+}

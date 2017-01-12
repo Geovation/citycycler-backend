@@ -3,6 +3,16 @@
     "src/**/*"
   ],
   "compilerOptions": {
-    "outDir": "build"
+    "outDir": "build",
+    "alwaysStrict": true,
+    "baseUrl": ".",
+    "paths": {
+    	"*": [
+    		"*",
+    		"src/*",
+    		"src/config/*",
+    		"src/config/components/*"
+    	]
+    }
   }
 }
