@@ -7,7 +7,11 @@ automatic_scaling:
 #  cpu_utilization:
 #    target_utilization: 0.5
 
-#env_variables:
+env_variables:
+  NODE_ENV: "development"
+  PROCESS_TYPE: "web"
+  WITH_SERVICES: true
+  NODE_PATH: .
 #  # Testing App Engine Memcache service (currently in alpha)
 #  USE_GAE_MEMCACHE: 1
 #  # otherweise we can use another service such as redislab
