@@ -12,7 +12,7 @@ describe("Timepix API", () => {
         error: null,
         response: null,
     };
-    let origin = "https://www.example.com";
+    let origin = "*";
     beforeAll(done => {
         if ( startServer ) {
             server = app.listen(process.env.PORT || "8081", () => {
@@ -32,7 +32,7 @@ describe("Timepix API", () => {
             request({
                 headers:  {
                     Authorization: auth,
-                    Origin: origin,
+                    Origin: "https://www.example.com",
                 },
                 url: url + "/api/v0/?key=" + API_KEY,
             }, (error, response, body) => {

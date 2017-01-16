@@ -110,8 +110,9 @@ gulp.task("unittest", ["pre-test"], () => {
       verbose: true,
       includeStackTrace: true,
     }))
-    .on('error', () => {
+    .on('error', (err) => {
       if (process.argv[2] !== 'serve') {
+        console.log("In unit-test");
         console.error('Unit tests failed');
         process.exit(1);
       }
@@ -155,12 +156,6 @@ gulp.task("serve", ['test'], () => {
     NODE_ENV: 'development',
     PROCESS_TYPE: 'web',
     WITH_SERVICES: getOption('with_services') || true
-  }
-
-  if (path.parse(__dirname).name != 'build') {
-    envVars.NODE_PATH = path.join(__dirname, 'build');
-  } else {
-    envVars.NODE_PATH = __dirname;
   }
 
   nodemon({

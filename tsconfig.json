@@ -4,15 +4,6 @@
   ],
   "compilerOptions": {
     "outDir": "build",
-    "alwaysStrict": true,
-    "baseUrl": ".",
-    "paths": {
-    	"*": [
-    		"*",
-    		"src/*",
-    		"src/config/*",
-    		"src/config/components/*"
-    	]
-    }
+    "alwaysStrict": true
   }
 }

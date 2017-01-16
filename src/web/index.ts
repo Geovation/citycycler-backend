@@ -2,8 +2,9 @@ import * as promisify from "es6-promisify";
 import * as http from "http";
 import * as logger from "winston";
 
+// local modules
+import { config } from "../config";
 import { app } from "./server";
-import { config } from "config";
 
 export default function (): void {
     const server: http.Server = http.createServer(app.callback());

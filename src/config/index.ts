@@ -1,15 +1,11 @@
-import * as dotenv from "dotenv";
 import * as joi from "joi";
 
+// local modules
 import web from "./web";
 
 const configs = {
     web,
 };
-
-if (process.env.NODE_ENV === "development") {
-    dotenv.config({ silent: true });
-}
 
 const processType: string = process.env.PROCESS_TYPE;
 

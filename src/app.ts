@@ -1,4 +1,4 @@
-import web from "web";
+import web from "./web";
 import * as logger from "winston";
 
 const processType: string = process.env.PROCESS_TYPE;

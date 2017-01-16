@@ -1,8 +1,9 @@
 import * as _ from "lodash";
 
-import { config as common } from "config/components/common";
-import { config as logger } from "config/components/logger";
-import { config as server } from "config/components/server";
+// local modules
+import { config as common } from "./components/common";
+import { config as logger } from "./components/logger";
+import { config as server } from "./components/server";
 
 // if running separate microservices process update the package npm config value "with_services" to false
 // e.g. npm config set multi-process-nodejs-example:with_services false
