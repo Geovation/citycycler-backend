@@ -35,6 +35,7 @@ let hardCodedPhotos = [
 let router = new Router();
 router.get("/api/v0/photos",  (ctx, next) => {
     ctx.body = hardCodedPhotos;
+    next();
 });
 
 app
