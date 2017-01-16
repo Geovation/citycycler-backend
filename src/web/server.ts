@@ -2,10 +2,13 @@ import * as Koa from "koa";
 import * as bodyParser from "koa-bodyparser";
 import * as qs from "koa-qs";
 import * as Router from "koa-router";
+import * as serve from "koa-static";
 import * as cors from "koa2-cors";
+import * as path from "path";
 
 // local modules
 import * as middleware from "./middleware";
+import getSwaggerJson from "./swagger";
 
 export const app = new Koa();
 
@@ -43,15 +46,37 @@ app
     .use(router.allowedMethods());
 
 app.use(cors({
-  headers: ["Content-Type", "api_key", "Authorization"],
-  methods: ["GET", "HEAD", "POST", "DELETE", "PUT", "PATCH", "OPTIONS"],
+  allowHeaders: ["content-type", "api_key", "Authorization"],
+  allowMethods: ["GET", "HEAD", "POST", "DELETE", "PUT", "PATCH", "OPTIONS"],
   origin: "*",
 }));
 
-app.use(middleware.handleErrors());
 app.use(bodyParser());
+app.use(middleware.handleErrors());
+
+// serve files in public folder (css, js etc)
+app.use(serve(path.join(__dirname, "../static")));
 
 // response
+app.use(async (ctx, next) => {
+    if (ctx.path === "/swagger.json") {
+        console.log(ctx);
+        try {
+            ctx.body = await getSwaggerJson();
+        } catch (err) {
+            ctx.status = 500;
+            return {
+                detail: err,
+                error: "Failed to parse swagger.json",
+                path: ctx.request.url,
+                status: ctx.status,
+            };
+        }
+    } else {
+        await next();
+    }
+});
+
 app.use(async (ctx, next) => {
     await next();
 
@@ -60,10 +85,3 @@ app.use(async (ctx, next) => {
         test: "Hello Koa async multi-process using middleware",
     });
 });
-/*
-app.use(async (ctx, next) => {
-    await next();
-    if (this.path === "/api") {
-      ctx.body = await swagger();
-    }
-});// */

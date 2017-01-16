@@ -1,7 +1,9 @@
 import { app } from "./server";
+import * as chai from "chai";
 import * as request from "request";
 
 const API_KEY = "AIzaSyDOzTdHFHxAiBm52HDlqz_AkHX7rZ3VFIg";
+const expect = chai.expect;
 
 describe("Timepix API", () => {
     const startServer = !process.env.URL;
@@ -58,12 +60,12 @@ describe("Timepix API", () => {
 
     describe("root level", () => {
         it("error not null", () => {
-            expect(result.error).toBe(null);
-            expect(result.response.statusCode).toEqual(200);
+            expect(result.error).to.be.null;
+            expect(result.response.statusCode).to.equal(200);
         });
 
         it("CORS is enabled", () => {
-            expect(result.response.headers["access-control-allow-origin"]).toBe(origin);
+            expect(result.response.headers["access-control-allow-origin"]).to.equal(origin);
         });
     });
 

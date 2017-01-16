@@ -1,10 +1,8 @@
 import * as Koa from "koa";
 import * as _ from "lodash";
 
-/* tslint:disable only-arrow-functions */
-// tslint only allows arrow functions by default and async doesn"t play well with arrow functions
-export function handleErrorsFactory (): Koa.Middleware {
-  return async function handleErrors (ctx: Koa.Context, next ): Promise<any> {
+export const handleErrorsFactory = (): Koa.Middleware => {
+  return async (ctx: Koa.Context, next ): Promise<any> => {
     // formats error according to Swagger error definition (web/router/swagger/index)
     const formatError = (err) => {
       ctx.status = err.status || 500;

@@ -3,6 +3,7 @@ const ts = require("gulp-typescript");
 const tsProject = ts.createProject("tsconfig.json");
 const sourcemaps = require('gulp-sourcemaps');
 const clean = require('gulp-clean');
+const env = require("gulp-env");
 const tslint = require("gulp-tslint");
 const jsonfile = require('jsonfile');
 const run = require('gulp-run');
@@ -11,6 +12,7 @@ const istanbul = require('gulp-istanbul');
 const nodemon = require('gulp-nodemon');
 const runSequence = require('run-sequence');
 const replace = require('gulp-replace');
+const shell = require('gulp-shell')
 const remapIstanbul = require('remap-istanbul/lib/gulpRemapIstanbul');
 const path = require('path');
 
@@ -33,13 +35,7 @@ gulp.task("info", () => {
     .pipe(gulp.dest('./build/static'));
 });
 
-gulp.task("modify-swagger-yaml", () => {
-  return gulp.src('conf/swagger.yaml')
-    .pipe(replace('timepix-dev.appspot.com', process.env.DOCURL.split("//")[1]))
-    .pipe(gulp.dest('build'))
-});
-
-gulp.task("copy-swagger", ["modify-swagger-yaml"], () => {
+gulp.task("copy-swagger", () => {
   return gulp.src('./node_modules/swagger-ui/dist/**/*')
     .pipe(gulp.dest('./build/static'))
 });
@@ -99,7 +95,13 @@ gulp.task("clean", () => {
 });
 
 gulp.task("pre-test", ["typescript"], () => {
+  const envs = env.set({
+    NODE_ENV: "development",
+    PROCESS_TYPE: 'web',
+    WITH_SERVICES: getOption('with_services') || true
+  })
   return gulp.src(["build/**/*.js", "!build/_*", "!build/**/**[sS]pec.js", "!build/static/**/*.js",])
+    .pipe(envs)
     .pipe(istanbul({includeUntested: true}))
     .pipe(istanbul.hookRequire());
 });
@@ -111,6 +113,7 @@ gulp.task("unittest", ["pre-test"], () => {
       includeStackTrace: true,
     }))
     .on('error', (err) => {
+      console.log("error: ", err);
       if (process.argv[2] !== 'serve') {
         console.log("In unit-test");
         console.error('Unit tests failed');
@@ -189,3 +192,19 @@ gulp.task('remap-istanbul-unit', ["unittest"], function () {
     }))
     .pipe(gulp.dest('./coverage/unit'));
 });
+
+gulp.task("dredd", ["serve"], function () {
+  // shell doesn't need the source piped to it but this way we can attach 'error' and 'end' events...
+  return gulp.src('.')
+    .pipe(shell([
+      'sleep 10',
+      'npm run dredd'
+    ]))
+    .once('error', (err) => {
+      console.log('[gulp] error:', err)
+      process.exit(1)
+    })
+    .once('end', () => {
+      process.exit()
+    })
+})
