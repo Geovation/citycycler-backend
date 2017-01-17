@@ -1,13 +1,13 @@
 import * as Koa from "koa";
 import * as bodyParser from "koa-bodyparser";
 import * as qs from "koa-qs";
-import * as Router from "koa-router";
 import * as serve from "koa-static";
 import * as cors from "koa2-cors";
 import * as path from "path";
 
 // local modules
 import * as middleware from "./middleware";
+import { router } from "./router";
 import getSwaggerJson from "./swagger";
 
 export const app = new Koa();
@@ -15,47 +15,20 @@ export const app = new Koa();
 // enable qs for query string parsing
 qs(app, "strict");
 
-// TODO: to integrate with swagger (??)
-let hardCodedPhotos = [
-    "Pokémon Yellow",
-    "Super Metroid",
-    "Mega Man X",
-    "The Legend of Zelda",
-    "Pac-Man",
-    "Super Mario World",
-    "Street Fighter II",
-    "Half Life",
-    "Final Fantasy VII",
-    "Star Fox",
-    "Tetris",
-    "Donkey Kong III",
-    "GoldenEye 007",
-    "Doom",
-    "Fallout",
-    "GTA",
-    "Halo",
-];
-let router = new Router();
-router.get("/api/v0/photos",  (ctx, next) => {
-    ctx.body = hardCodedPhotos;
-    next();
-});
-
 app
-    .use(router.routes())
-    .use(router.allowedMethods());
-
-app.use(cors({
-  allowHeaders: ["content-type", "api_key", "Authorization"],
-  allowMethods: ["GET", "HEAD", "POST", "DELETE", "PUT", "PATCH", "OPTIONS"],
-  origin: "*",
-}));
-
-app.use(bodyParser());
-app.use(middleware.handleErrors());
+    .use(bodyParser())
+    .use(middleware.handleErrors())
+    .use(cors({
+      allowHeaders: ["content-type", "api_key", "Authorization"],
+      allowMethods: ["GET", "HEAD", "POST", "DELETE", "PUT", "PATCH", "OPTIONS"],
+      origin: "*",
+    }));
 
 // serve files in public folder (css, js etc)
 app.use(serve(path.join(__dirname, "../static")));
+
+// serve files from router endpoints
+app.use(router.middleware());
 
 // response
 app.use(async (ctx, next) => {

@@ -1,5 +1,9 @@
+import * as _ from "lodash";
 import * as yaml from  "node-yaml";
 import * as logger from "winston";
+
+// local modules
+import * as api from "../router/api";
 
 const host = process.env.DOCURL ? process.env.DOCURL.split("//")[1] : "timepix-dev.appspot.com";
 
@@ -128,6 +132,34 @@ const meta = {
     },
     swagger: "2.0",
 };
+
+/** @function addHeaders
+ *
+ *  Iterates recursively through definition objects and appends common headers to all endpoint responses.
+ *
+ *  @param  tag - The tag whose reponses common headers have to be appended
+ */
+const addHeaders = tag => {
+    _.forIn(tag, (val, key) => {
+        if (key === "responses") {
+            // we're in the right place, add the headers
+            _.each(_.valuesIn(val), response => _.merge(response, { headers }));
+        } else if (typeof val !== "object") {
+            // we've got to the bottom of the tree
+            return;
+        } else {
+            // we're not at the bottom of the tree yet
+            addHeaders(val);
+        }
+    });
+};
+
+const swaggerKeys = ["definitions", "paths"];
+
+_.each(_.valuesIn(api), (tag) => {
+    addHeaders(tag);
+    _.merge(meta, _.pick(tag, swaggerKeys));
+});
 
 yaml.write("../../static/swagger.yaml", meta, "utf8", (err) => {
     if (err) {
