@@ -26,13 +26,14 @@ env_variables:
 #  #  MEMCACHE_USERNAME: sebastian.ovide@geovation.uk
 #  #  MEMCACHE_PASSWORD: 4hflupdoTV1R
 
-resources:
-  cpu: .1
-#  memory_gb: .9
-  disk_size_gb: 10
+#resources:
+#  cpu: .1
+#  memory_gb: .18
+#  disk_size_gb: 10
 
 #beta_settings:
 #  # Enable Google Cloud Endpoints API management.
 #  use_endpoints_api_management: true
 #  # Specify the Swagger API specification.
-#  endpoints_swagger_spec_file: swagger.yaml
+#  endpoints_swagger_spec_file: swagger.yaml:
+#  machine_type: f1-micro

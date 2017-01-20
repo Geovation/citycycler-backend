@@ -1,6 +1,5 @@
 import * as Datastore from "@google-cloud/datastore";
 import * as promisify from "es6-promisify";
-import * as path from "path";
 import * as logger from "winston";
 
 // Datastore
@@ -22,7 +21,7 @@ export const image = options => {
 
                 const entities = result[0].map( entity => {
                     entity.id = entity[datastore.KEY].id;
-                    entity.thumbnail = <string> path.join(process.env.IMAGES_URL, String(entity.id), "thumbnail.jpg");
+                    entity.thumbnail = process.env.IMAGES_URL + "/" + entity.id + "/thumbnail.jpg";
                     return entity;
                 });
 
