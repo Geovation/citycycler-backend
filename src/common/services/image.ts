@@ -1,5 +1,6 @@
 import * as Datastore from "@google-cloud/datastore";
 import * as promisify from "es6-promisify";
+import * as path from "path";
 import * as logger from "winston";
 
 // Datastore
@@ -18,7 +19,14 @@ export const image = options => {
                 logger.debug("entities", JSON.stringify(result[0]));
                 logger.debug("info", JSON.stringify(result[1]));
                 console.timeEnd("getPhotos");
-                respond(null, { ok: true, result: result[0] });
+
+                const entities = result[0].map( entity => {
+                    entity.id = entity[datastore.KEY].id;
+                    entity.thumbnail = <string> path.join(process.env.IMAGES_URL, entity.id + ".jpg");
+                    return entity;
+                });
+
+                respond(null, { ok: true, result: entities });
             });
     });
 

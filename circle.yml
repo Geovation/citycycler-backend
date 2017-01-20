@@ -4,7 +4,9 @@ machine:
   environment:
     GOOGLE_APPLICATION_CREDENTIALS: conf/key-file.json
     GCLOUD_PROJECT: timepix-dev
+    CLOUDSDK_CORE_PROJECT: timepix-dev
     DATASTORE_PROJECT_ID: timepix-dev
+    IMAGES_URL: https://storage.googleapis.com/timepix-dev/images
 
 dependencies:
   cache_directories:
