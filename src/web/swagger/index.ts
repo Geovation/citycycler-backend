@@ -4,6 +4,7 @@ import * as logger from "winston";
 
 // local modules
 import { api } from "../router/api";
+import { services } from "../router/services";
 
 const host = process.env.DOCURL ? process.env.DOCURL.split("//")[1] : "timepix-dev.appspot.com";
 
@@ -157,6 +158,11 @@ const addHeaders = tag => {
 const swaggerKeys = ["definitions", "paths"];
 
 _.each(api.values(), (tag) => {
+    addHeaders(tag);
+    _.merge(meta, _.pick(tag, swaggerKeys));
+});
+
+_.each(services.values(), (tag) => {
     addHeaders(tag);
     _.merge(meta, _.pick(tag, swaggerKeys));
 });

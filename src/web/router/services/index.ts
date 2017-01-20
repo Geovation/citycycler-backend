@@ -1,5 +1,7 @@
 import * as _ from "lodash";
 
+import { ISwaggerEndpoint } from "../../../common/interfaces";
+import { KeyedCollection } from "../../../common/utilities";
 import { images } from "./images";
 
 const allRoutes = {};
@@ -24,3 +26,9 @@ export const routes = [{
         pin: "role:api,path:*",
         prefix: "/api/v0",
      }];
+
+class SwaggerEndpointDictionary extends KeyedCollection<ISwaggerEndpoint> {};
+
+export const services: SwaggerEndpointDictionary = new SwaggerEndpointDictionary();
+
+services.add("images", images);
