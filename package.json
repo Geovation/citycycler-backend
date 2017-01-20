@@ -22,7 +22,7 @@
     "gulp": "gulp",
     "lint": "gulp tslint",
     "serve:web": "DOCURL=http://localhost:8080 GOOGLE_APPLICATION_CREDENTIALS=conf/key-file.json DATASTORE_PROJECT_ID=timepix-dev IMAGES_URL=https://storage.googleapis.com/timepix-dev/images LOGGER_LEVEL=debug gulp serve --script build/app.js --with_services $npm_package_config_with_services",
-    "start": "node build/app.js",
+    "start": "node app.js",
     "test": "gulp test",
     "dredd": "dredd $npm_package_config_host:$npm_package_config_port/swagger.yaml $npm_package_config_host:$npm_package_config_port",
     "gulp:dredd": "gulp dredd --script build/app.js",
