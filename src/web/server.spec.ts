@@ -1,5 +1,6 @@
-import { app } from "./server";
+import { app, setupServer } from "./server";
 import * as chai from "chai";
+import * as EventEmitter from "events";
 import * as request from "request";
 
 const API_KEY = "AIzaSyDOzTdHFHxAiBm52HDlqz_AkHX7rZ3VFIg";
@@ -16,16 +17,21 @@ describe("Timepix API", () => {
     };
     let origin = "*";
     beforeAll(done => {
-        if ( startServer ) {
-            server = app.listen(process.env.PORT || "8081", () => {
-                console.log("App listening on port %s", server.address().port);
-                console.log("Press Ctrl+C to quit.");
-                finalDone();
-            });
+        class AppEmitter extends EventEmitter {};
+        const appEmitter = new AppEmitter();
+        setupServer(appEmitter);
+        appEmitter.on("ready", () => {
+            if ( startServer ) {
+                server = app.listen(process.env.PORT || "8081", () => {
+                    console.log("App listening on port %s", server.address().port);
+                    console.log("Press Ctrl+C to quit.");
+                    finalDone();
+                });
 
-        } else {
-            finalDone();
-        }
+            } else {
+                finalDone();
+            }
+        });
 
         function finalDone() {
             const username = "timepix";
@@ -38,6 +44,8 @@ describe("Timepix API", () => {
                 },
                 url: url + "/api/v0/?key=" + API_KEY,
             }, (error, response, body) => {
+                    console.log("error: ", error);
+                    console.log("body: ", body);
                     result.error = error;
                     result.response = response;
                     result.body = error ? body : JSON.parse(body);

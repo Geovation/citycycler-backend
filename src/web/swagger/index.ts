@@ -3,7 +3,7 @@ import * as yaml from  "node-yaml";
 import * as logger from "winston";
 
 // local modules
-import * as api from "../router/api";
+import { api } from "../router/api";
 
 const host = process.env.DOCURL ? process.env.DOCURL.split("//")[1] : "timepix-dev.appspot.com";
 
@@ -156,7 +156,7 @@ const addHeaders = tag => {
 
 const swaggerKeys = ["definitions", "paths"];
 
-_.each(_.valuesIn(api), (tag) => {
+_.each(api.values(), (tag) => {
     addHeaders(tag);
     _.merge(meta, _.pick(tag, swaggerKeys));
 });
@@ -168,6 +168,6 @@ yaml.write("../../static/swagger.yaml", meta, "utf8", (err) => {
     logger.log("info", "swagger.yaml saved");
 });
 
-export default async (): Promise<any> => {
+export default function * (next) {
     return meta;
 };

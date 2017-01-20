@@ -4,17 +4,10 @@
 // /////////////////////////////////////////////////////////////
 
 // PATH
-const swaggerPath = {
+const paths = {
     get: {
         consumes: ["application/json"],
-        description: "be greeted by the API",
-        parameters: [
-            {
-                in: "query",
-                name: "name",
-                type: "string",
-            },
-        ],
+        description: "Returns a hard-coded array of strings to test UI/API communicaiton and function endpoint.",
         produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
@@ -45,7 +38,7 @@ const swaggerPath = {
 };
 
 // DEFINITIONS
-const swaggerDefs = {
+const definitions = {
     StringArray: {
         items: {
             type: "string",
@@ -60,7 +53,8 @@ const swaggerDefs = {
 
 // Handle request
 
-const getPhotos = async (ctx, next): Promise<any> => {
+/* tslint:disable only-arrow-functions */
+const getPhotos = function * (next) {
     const hardCodedPhotos = [
         "Pokémon Yellow",
         "Super Metroid",
@@ -81,11 +75,12 @@ const getPhotos = async (ctx, next): Promise<any> => {
         "Halo",
     ];
 
-    ctx.body = hardCodedPhotos;
+    this.body = hardCodedPhotos;
 };
+/* tslint:enable only-arrow-functions */
 
 export const get = {
+    definitions,
     get: getPhotos,
-    swaggerPath,
-    swaggerDefs,
+    paths,
 };

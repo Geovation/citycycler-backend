@@ -4,6 +4,11 @@
   ],
   "compilerOptions": {
     "outDir": "build",
-    "alwaysStrict": true
-  }
+    "alwaysStrict": true,
+    "target": "es6",
+    "module": "commonjs"
+  },
+  "exclude": [
+    "node_modules"
+  ]
 }

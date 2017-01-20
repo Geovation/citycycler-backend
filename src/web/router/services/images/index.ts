@@ -4,18 +4,21 @@ import * as _ from "lodash";
 import { ISwaggerEndpoint } from "../../../../common/interfaces";
 import { get } from "./get";
 
-const endpoint = "/photos";
+const endpoint = "/images";
 
 const paths = {};
 paths[endpoint] = {};
 const defs = get.definitions;
+const routes = {};
 
 _.merge(paths[endpoint], get.paths);
 _.merge(defs, get.definitions);
+_.merge(routes, get.routes);
 
-export const photos: ISwaggerEndpoint = {
-  definitions: defs,
-  endpoint,
-  get: get.get,
-  paths,
+export const images: ISwaggerEndpoint = {
+    definitions: defs,
+    endpoint,
+    get: get.get,
+    paths,
+    routes,
 };

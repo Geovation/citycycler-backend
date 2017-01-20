@@ -1,9 +1,11 @@
 import * as joi from "joi";
 
 // local modules
+import microservices from "./microservices";
 import web from "./web";
 
 const configs = {
+    microservices,
     web,
 };
 

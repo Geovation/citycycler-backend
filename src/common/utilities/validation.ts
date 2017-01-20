@@ -7,33 +7,32 @@ interface IValidationOptions {
     errorStatus: number;
 }
 
-interface IValidationError {
+interface IValidationFormatOptions {
+    err: any;
+    message: string;
     status: number;
-    ok: boolean;
-    err: Error;
+    value: any;
 }
 
 /** @function formatError
  *
  *  Returns an error formatted for Seneca.
  *
- *  @param    {Object}  error - The error to be formatted.
- *  @param    {number}  status - The status to be applied to the error (defaults to 500).
- *  @param    {string}  message - The application error message to be returned.
- *  @param    {any}     value - The value whose validation raised this error.
+ *  @param     {Object}    options - The error format options object.
+ *  @param     {Object}    options.error - The error to be formatted.
+ *  @param     {number}    options.status - The status to be applied to the error (defaults to 500).
+ *  @param     {string}    options.message - The application error message to be returned.
+ *  @param     {any}       options.value - The value whose validation raised this error.
+ *  @param     {boolean}   options.isJoi - Indicates whether error is a joi error.
  *
  *  @return   { Object, any}
  */
-const formatError = (err: any, status: number, message: string, value: any): joi.ValidationError => {
-    err.status = status || 500;
-    err.message = message;
+const formatError = (options: IValidationFormatOptions): joi.ValidationResult<any> => {
+    options.err.status = options.status || 500;
+    options.err.message = options.message;
     return {
-        error: {
-            err,
-            ok: false,
-            status: err.status,
-        },
-        value,
+        error: options.err,
+        value: options.value,
     };
 };
 
@@ -52,17 +51,27 @@ const formatError = (err: any, status: number, message: string, value: any): joi
  *
  *  @return    {any}
  */
-const validateAgainstJoiSchema = (options: IValidationOptions): joi.ValidationResult => {
-  try {
-    const { error, value: result } = options.schema.validate(options.value);
-    if (error) {
-      return formatError(error, options.errorStatus, options.errorMessage, result);
-    } else {
-      return { error: null, value: result };
+const validateAgainstJoiSchema = (options: IValidationOptions): joi.ValidationResult<any> => {
+    try {
+        const { error, value: result } = joi.validate<any>(<joi.Schema> options.schema, options.value);
+        if (error) {
+            return formatError({
+                err: error,
+                message: options.errorMessage,
+                status: options.errorStatus,
+                value: result,
+            });
+        } else {
+            return { error: null, value: result };
+        }
+    } catch (err) {
+        return formatError({
+            err,
+            message: options.errorMessage,
+            status: options.errorStatus,
+            value: null,
+        });
     }
-  } catch (err) {
-    return formatError(err, options.errorStatus, options.errorMessage, null);
-  }
 };
 
 export default {
