@@ -12,8 +12,7 @@ import * as logger from "winston";
 
 // local modules
 import * as middleware from "./middleware";
-import { router } from "./router";
-import { api, routes } from "./router/services";
+import { api, routes } from "./services";
 import getSwaggerJson from "./swagger";
 
 export const app = new Koa();
@@ -32,7 +31,6 @@ export const setupServer = (eventEmitter) => {
         .use(api, { seneca })
         .client({
             pin: "role:image",
-            timeout: 10000,
             type: "tcp",
       });
 
@@ -50,9 +48,6 @@ export const setupServer = (eventEmitter) => {
 
     // serve files in public folder (css, js etc)
     app.use(serve(path.join(__dirname, "../static")));
-
-    // serve files from router endpoints
-    app.use(router.middleware());
 
     seneca.ready(() => {
         logger.info("seneca ready");

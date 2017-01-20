@@ -4,9 +4,9 @@ import { image } from "./image";
 
 export default function (): void {
     const seneca = Seneca();
-    seneca.use(image, { seneca })
-        .listen({
-            pin: "role:image",
-            type: "tcp",
-        });
+    seneca
+      .use(image, { seneca })
+      .listen({
+          type: "tcp",
+      });
 };

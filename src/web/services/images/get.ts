@@ -1,4 +1,4 @@
-import { ISwaggerEndpoint } from "../../../../common/interfaces";
+import { ISwaggerEndpoint } from "../../../common/interfaces";
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //

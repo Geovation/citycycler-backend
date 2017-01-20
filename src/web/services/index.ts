@@ -1,7 +1,7 @@
 import * as _ from "lodash";
 
-import { ISwaggerEndpoint } from "../../../common/interfaces";
-import { KeyedCollection } from "../../../common/utilities";
+import { ISwaggerEndpoint } from "../../common/interfaces";
+import { KeyedCollection } from "../../common/utilities";
 import { images } from "./images";
 
 const allRoutes = {};
@@ -11,8 +11,6 @@ _.merge(allRoutes, images.routes);
 allServices.push(images.get);
 
 export const api = (options) => {
-    const seneca = options.seneca;
-
     _.each(allServices, service => service(options));
 
     return {

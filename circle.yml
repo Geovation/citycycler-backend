@@ -1,6 +1,10 @@
 machine:
   node:
-    version: 7
+    version: 6
+  environment:
+    GOOGLE_APPLICATION_CREDENTIALS: conf/key-file.json
+    GCLOUD_PROJECT: timepix-dev
+    DATASTORE_PROJECT_ID: timepix-dev
 
 dependencies:
   cache_directories:
@@ -16,7 +20,7 @@ deployment:
       - sudo /opt/google-cloud-sdk/bin/gcloud components update -q
 #     - sudo /opt/google-cloud-sdk/bin/gcloud components install beta -q
       - sudo chown ubuntu.ubuntu -R /home/ubuntu/.config/gcloud
-      - gcloud auth activate-service-account --key-file conf/key-file.json
-      - gcloud config set project timepix-dev
+#      - gcloud auth activate-service-account --key-file conf/key-file.json
+#      - gcloud config set project timepix-dev
       - npm run deploy
       - URL=https://timepix-dev.appspot.com npm run e2etest

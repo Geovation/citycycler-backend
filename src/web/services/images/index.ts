@@ -1,7 +1,7 @@
 import * as _ from "lodash";
 
 // local modules
-import { ISwaggerEndpoint } from "../../../../common/interfaces";
+import { ISwaggerEndpoint } from "../../../common/interfaces";
 import { get } from "./get";
 
 const endpoint = "/images";
