@@ -22,7 +22,7 @@ deployment:
       - sudo /opt/google-cloud-sdk/bin/gcloud components update -q
 #     - sudo /opt/google-cloud-sdk/bin/gcloud components install beta -q
       - sudo chown ubuntu.ubuntu -R /home/ubuntu/.config/gcloud
-#      - gcloud auth activate-service-account --key-file conf/key-file.json
-#      - gcloud config set project timepix-dev
+      - gcloud auth activate-service-account --key-file conf/key-file.json
+      - gcloud config set project timepix-dev
       - npm run deploy
       - URL=https://timepix-dev.appspot.com npm run e2etest
