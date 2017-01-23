@@ -23,6 +23,7 @@ export const image = options => {
                 const entities = result[0].map( entity => {
                     entity.id = entity[datastore.KEY].id;
                     entity.thumbnail = process.env.IMAGES_URL + "/" + entity.id + "/thumbnail.jpg";
+                    entity.free = process.env.IMAGES_URL + "/" + entity.id + "/free.jpg";
                     return entity;
                 });
 
