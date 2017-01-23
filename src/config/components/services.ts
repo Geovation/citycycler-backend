@@ -1,8 +1,9 @@
 import * as joi from "joi";
 
 const envVarsSchema: joi.Schema = joi.object({
-    PORT: joi.number()
-        .default(8080),
+    TRANSPORT: joi.string()
+        .allow(["tcp", "http", "https"])
+        .default("tcp"),
 }).unknown().required();
 
 const { error, value: envVars }: joi.ValidationResult<any> = joi.validate(process.env, envVarsSchema);
@@ -11,8 +12,7 @@ if (error) {
 }
 
 export const config = {
-    server: {
-        port: envVars.PORT,
-        prefix: "/api/v0",
+    services: {
+        transport: envVars.TRANSPORT,
     },
 };

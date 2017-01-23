@@ -1,3 +1,4 @@
+import { config } from "../config";
 import { app, setupServer } from "./server";
 import * as chai from "chai";
 import * as EventEmitter from "events";
@@ -42,7 +43,7 @@ describe("Timepix API", () => {
                     Authorization: auth,
                     Origin: "https://www.example.com",
                 },
-                url: url + "/api/v0/?key=" + API_KEY,
+                url: url + config.server.prefix + "/?key=" + API_KEY,
             }, (error, response, body) => {
                     console.log("error: ", error);
                     console.log("body: ", body);

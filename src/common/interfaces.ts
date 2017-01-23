@@ -8,6 +8,7 @@ export interface ISwaggerEndpoint {
     get?: koa.Middleware;
     paths: Object;
     routes?: Object;
+    pin?: string;
     post?: koa.Middleware;
     put?: koa.Middleware;
 };
@@ -16,6 +17,7 @@ export interface IConfigurationComposite {
     common?: any;
     logger?: any;
     server?: any;
+    services?: any;
 };
 
 export interface IValidationOptions {

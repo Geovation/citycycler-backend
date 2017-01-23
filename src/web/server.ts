@@ -11,8 +11,9 @@ import * as senecaWebAdapter from "seneca-web-adapter-koa1";
 import * as logger from "winston";
 
 // local modules
+import { config } from "../config";
 import * as middleware from "./middleware";
-import { api, routes } from "./services";
+import { servicesHelper } from "./services";
 import getSwaggerJson from "./swagger";
 
 export const app = new Koa();
@@ -23,15 +24,15 @@ export const setupServer = (eventEmitter) => {
         adapter: senecaWebAdapter,
         context: Router(),
         options: { parseBody: false },
-        routes,
+        routes: servicesHelper.routes,
     };
     const seneca = Seneca();
 
     seneca.use(SenecaWeb, senecaWebConfig)
-        .use(api, { seneca })
+        .use(servicesHelper.api, { fatal$: false, seneca })
         .client({
-            pin: "role:image",
-            type: "tcp",
+            pins: servicesHelper.pins,
+            type: config.services.transport,
       });
 
     // enable qs for query string parsing

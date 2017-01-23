@@ -1,6 +1,7 @@
 import * as joi from "joi";
 
 // local modules
+import { IConfigurationComposite } from "../common/interfaces";
 import microservices from "./microservices";
 import web from "./web";
 

@@ -8,6 +8,7 @@ const datastoreRunQuery = promisify(datastore.runQuery, {multiArgs: true, thisAr
 
 export const image = options => {
     const seneca = options.seneca;
+    options.pin = "role:image";
 
     seneca.add("role:image,cmd:get", (msg, respond) => {
         console.time("getPhotos");
@@ -34,3 +35,4 @@ export const image = options => {
         options: {},
     };
 };
+export const imagePin: string = "role:image";

@@ -3,7 +3,8 @@ import * as yaml from  "node-yaml";
 import * as logger from "winston";
 
 // local modules
-import { services } from "../services";
+import { config } from "../../config";
+import { servicesHelper } from "../services";
 
 const host = process.env.DOCURL ? process.env.DOCURL.split("//")[1] : "timepix-dev.appspot.com";
 
@@ -28,8 +29,15 @@ const headers = {
 };
 
 const meta = {
-    basePath: "/api/v0",
+    basePath: config.server.prefix,
     definitions: {
+        APIMessage: {
+            properties: {
+                message: {
+                    type: "string",
+                },
+            },
+        },
         AppMessage: {
             properties: {
                 node: {
@@ -156,7 +164,7 @@ const addHeaders = tag => {
 
 const swaggerKeys = ["definitions", "paths"];
 
-_.each(services.values(), (tag) => {
+_.each(servicesHelper.services.values(), (tag) => {
     addHeaders(tag);
     _.merge(meta, _.pick(tag, swaggerKeys));
 });

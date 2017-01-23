@@ -1,0 +1,16 @@
+export const {{ camelCase serviceName }} = options => {
+    const seneca = options.seneca;
+    options.pin = "role:{{ camelCase serviceName }}";
+
+    seneca.add("role:{{ camelCase serviceName }},cmd:get", (msg, respond) => {
+        // define your command here and update the result appropriately
+        respond(null, { ok: true, result: "microservice '{{ camelCase serviceName }}' listening" });
+    });
+
+    return {
+        name: "{{ camelCase serviceName }}",
+        options: {},
+    };
+};
+
+export const {{ camelCase serviceName }}Pin = "role:{{ camelCase serviceName }}";
