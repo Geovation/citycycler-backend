@@ -24,14 +24,14 @@ export const setupServer = (eventEmitter) => {
         adapter: senecaWebAdapter,
         context: Router(),
         options: { parseBody: false },
-        routes: servicesHelper.routes,
+        routes: servicesHelper.apiEndpointCollection.senecaRoutes(),
     };
     const seneca = Seneca();
 
     seneca.use(SenecaWeb, senecaWebConfig)
         .use(servicesHelper.api, { fatal$: false, seneca })
         .client({
-            pins: servicesHelper.pins,
+            pins: servicesHelper.apiEndpointCollection.endpointPins(),
             type: config.services.transport,
       });
 

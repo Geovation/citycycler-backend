@@ -1,4 +1,4 @@
-import { ISwaggerEndpoint } from "../../../common/interfaces";
+import { APIEndpoint } from "../api-endpoint";
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //
@@ -6,10 +6,10 @@ import { ISwaggerEndpoint } from "../../../common/interfaces";
 // /////////////////////////////////////////////////////////////
 
 // PATH
-const paths = {
+const path = {
     get: {
         consumes: ["application/json"],
-        description: "Returns a hard-coded array of objects to test UI/API communicaiton and microservice endpoint.",
+        description: "Returns images from the databases.",
         produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
@@ -57,28 +57,10 @@ const definitions = {
 // SWAGGER: END //
 // ///////////////
 
-// Handle request
-export const getService = options => {
-    const seneca = options.seneca;
-
-    // expose the role:api,path:calculate pattern via the api
-    seneca.add("role:api,path:images", (msg, respond) => {
-        try {
-            seneca.act("role:image", {
-                $fatal: false,
-                cmd: "get",
-            }, respond);
-        } catch (err) {
-            return respond(null, err);
-        }
-    });
-};
-
-const routes = { images: { GET: true } };
-
-export const get: ISwaggerEndpoint = {
-    definitions,
-    get: getService,
-    paths,
-    routes,
-};
+export const get = new APIEndpoint({
+        cmd: "get",
+        path: "list",
+        role: "image",
+    })
+    .addPath(path)
+    .addDefinitions(definitions);

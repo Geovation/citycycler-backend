@@ -1,25 +1,13 @@
-import * as _ from "lodash";
+import * as path from "path";
 
-// local modules
-import { ISwaggerEndpoint } from "../../../common/interfaces";
+import { APIEndpointCollection } from "../api-endpoint-collection";
+
+// Import Endpoints
 import { get } from "./get";
+import { getById } from "./getById";
 
-const endpoint = "/images";
+export const images: APIEndpointCollection = new APIEndpointCollection(path.parse(__dirname).name);
 
-const paths = {};
-paths[endpoint] = {};
-const defs = get.definitions;
-const routes = {};
-
-_.merge(paths[endpoint], get.paths);
-_.merge(defs, get.definitions);
-_.merge(routes, get.routes);
-
-export const images: ISwaggerEndpoint = {
-    definitions: defs,
-    endpoint,
-    get: get.get,
-    paths,
-    pin: "role:image",
-    routes,
-};
+// export Endpoints
+images.addApiEndpoint(get);
+images.addApiEndpoint(getById);

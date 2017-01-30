@@ -1,3 +1,7 @@
+/**
+ * DO NOT TOUCH IT. Ask Paul.
+ */
+
 import * as promisify from "es6-promisify";
 import * as EventEmitter from "events";
 import * as http from "http";

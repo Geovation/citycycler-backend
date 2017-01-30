@@ -1,3 +1,7 @@
+/**
+ * DO NOT TOUCH IT. Ask Paul.
+ */
+
 // Based on http://www.dustinhorne.com/post/2016/06/08/implementing-a-dictionary-in-typescript
 
 import * as _ from "lodash";

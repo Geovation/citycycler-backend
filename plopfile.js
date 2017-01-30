@@ -40,14 +40,14 @@ module.exports = (plop) => {
             let actions = [
                 {
                     type: "add",
-                    path: path.join(servicesPath, "{{camelCase serviceName}}.ts"),
+                    path: path.join(servicesPath, "plugins/{{camelCase serviceName}}.ts"),
                     templateFile: "plop-templates/microservice.template"
                 },
                 {
                     type: "modify",
                     path: path.join(servicesPath, "composer.ts"),
                     pattern: /(\/\/ IMPORT MICROSERVICES)/g,
-                    template: "$1\nimport \{ {{camelCase serviceName}}, {{camelCase serviceName}}Pin \} from \"./{{camelCase serviceName}}\";\n"
+                    template: "$1\nimport \{ {{camelCase serviceName}}, {{camelCase serviceName}}Pin \} from \"./plugins/{{camelCase serviceName}}\";\n"
                 },
                 {
                     type: "modify",

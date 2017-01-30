@@ -1,16 +1,16 @@
+/**
+ * DO NOT TOUCH IT. Ask Paul.
+ */
+
 import * as joi from "joi";
-import * as koa from "koa";
+// import * as koa from "koa";
 
 export interface ISwaggerEndpoint {
+    apiEndpoints: Object;
     definitions: Object;
-    delete?: koa.Middleware;
-    endpoint?: string;
-    get?: koa.Middleware;
     paths: Object;
-    routes?: Object;
-    pin?: string;
-    post?: koa.Middleware;
-    put?: koa.Middleware;
+    routes: Object;
+    tag: string;
 };
 
 export interface IConfigurationComposite {

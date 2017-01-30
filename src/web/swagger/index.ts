@@ -1,3 +1,7 @@
+/**
+ * DO NOT TOUCH IT. Ask Paul.
+ */
+
 import * as _ from "lodash";
 import * as yaml from  "node-yaml";
 import * as logger from "winston";
@@ -145,10 +149,10 @@ const meta = {
  *
  *  Iterates recursively through definition objects and appends common headers to all endpoint responses.
  *
- *  @param  tag - The tag whose reponses common headers have to be appended
+ *  @param  path - The path whose reponses common headers have to be appended
  */
-const addHeaders = tag => {
-    _.forIn(tag, (val, key) => {
+const addHeaders = path => {
+    _.forIn(path, (val, key) => {
         if (key === "responses") {
             // we're in the right place, add the headers
             _.each(_.valuesIn(val), response => _.merge(response, { headers }));
@@ -162,12 +166,10 @@ const addHeaders = tag => {
     });
 };
 
-const swaggerKeys = ["definitions", "paths"];
-
-_.each(servicesHelper.services.values(), (tag) => {
-    addHeaders(tag);
-    _.merge(meta, _.pick(tag, swaggerKeys));
-});
+const paths = servicesHelper.apiEndpointCollection.endpointPaths();
+addHeaders(paths);
+_.merge(meta.paths, paths);
+_.merge(meta.definitions, servicesHelper.apiEndpointCollection.endpointDefinitions());
 
 yaml.write("../../static/swagger.yaml", meta, "utf8", (err) => {
     if (err) {

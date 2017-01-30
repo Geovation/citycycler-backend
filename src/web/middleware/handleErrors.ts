@@ -1,3 +1,7 @@
+/**
+ * DO NOT TOUCH IT. Ask Paul.
+ */
+
 import * as _ from "lodash";
 
 /* tslint:disable only-arrow-functions */

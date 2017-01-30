@@ -1,3 +1,7 @@
+/**
+ * DO NOT TOUCH IT. Ask Paul.
+ */
+
 import * as joi from "joi";
 
 interface IValidationOptions {
