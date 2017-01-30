@@ -2,6 +2,8 @@ import * as Datastore from "@google-cloud/datastore";
 import * as promisify from "es6-promisify";
 import * as logger from "winston";
 
+import {Kind} from "./models";
+
 // Datastore
 const datastore = Datastore();
 const datastoreRunQuery = promisify(datastore.runQuery, {multiArgs: true, thisArg: datastore});
@@ -16,24 +18,9 @@ export const image = options => {
             role: "image",
         },
         (msg, respond) => {
-            console.time("getPhotos");
-            const kind = "Image";
+            const kind: Kind = "Image";
             const query = datastore.createQuery(kind);
-            datastoreRunQuery(query)
-                .then(result => {
-                    logger.debug("entities", JSON.stringify(result[0]));
-                    logger.debug("info", JSON.stringify(result[1]));
-                    console.timeEnd("getPhotos");
-
-                    const entities = result[0].map( entity => {
-                        entity.id = entity[datastore.KEY].id;
-                        entity.thumbnail = process.env.IMAGES_URL + "/" + entity.id + "/thumbnail.jpg";
-                        entity.free = process.env.IMAGES_URL + "/" + entity.id + "/free.jpg";
-                        return entity;
-                    });
-
-                    respond(null, { ok: true, result: entities });
-                });
+            queryImages(query, "getImage").then(result => respond(null, { ok: true, result }));
         }
     );
 
@@ -43,7 +30,13 @@ export const image = options => {
             role: "image",
         },
         (msg, respond) => {
-            respond(null, { ok: true, result: `I can now get images by id (and the current id is ${msg.id})` });
+            // respond(null, { ok: true, result: `I can now get images by id (and the current id is ${msg.id})` });
+            const kind: Kind = "Image";
+            const id: number =  +msg.id;
+            const query = datastore.createQuery(kind)
+                .filter("__key__", "=", datastore.key(["Image", id]));
+
+            queryImages(query, "getImageById").then(result => respond(null, { ok: true, result: result[0] }));
         }
     );
 
@@ -53,3 +46,25 @@ export const image = options => {
     };
 };
 export const imagePin: string = "role:image";
+
+function queryImages(query, queryName): Promise<any> {
+    const startTime = performance.now();
+
+    return datastoreRunQuery(query)
+        .then(result => {
+            const images = result[0];
+            const info = result[1];
+            logger.debug("entities", JSON.stringify(images));
+            logger.debug("info", JSON.stringify(info));
+            logger.debug(queryName, performance.now() - startTime);
+
+            return images.map( entity => {
+                entity.id = entity[datastore.KEY].id;
+                entity.thumbnail = process.env.IMAGES_URL + "/" + entity.id + "/thumbnail.jpg";
+                entity.free = process.env.IMAGES_URL + "/" + entity.id + "/free.jpg";
+                return entity;
+            });
+        });
+        // TODO: somewhere lets try to catch the errors to don't repeat ourself.
+        // .catch(error => respond(null, { ok: false, result: error}));
+}

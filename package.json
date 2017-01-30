@@ -21,6 +21,7 @@
     "deploy": "gcloud app deploy -q build/app.yaml",
     "gulp": "gulp",
     "lint": "gulp tslint",
+    "serve": "npm run serve:web",
     "serve:web": "DOCURL=http://localhost:8080 GOOGLE_APPLICATION_CREDENTIALS=conf/key-file.json DATASTORE_PROJECT_ID=timepix-dev IMAGES_URL=https://storage.googleapis.com/timepix-dev/images LOGGER_LEVEL=debug gulp serve --script build/app.js --with_services $npm_package_config_with_services",
     "start": "node app.js",
     "generator": "plop",
