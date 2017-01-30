@@ -1,8 +1,8 @@
 runtime: nodejs
 env: flex
 automatic_scaling:
-#  min_num_instances: 2 # default is 2
-  max_num_instances: 4
+  min_num_instances: 1 # default is 2
+  max_num_instances: 1
 #  cool_down_period_sec: 120 # default value
 #  cpu_utilization:
 #    target_utilization: 0.5

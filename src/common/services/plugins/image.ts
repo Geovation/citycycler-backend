@@ -48,7 +48,7 @@ export const image = options => {
 export const imagePin: string = "role:image";
 
 function queryImages(query, queryName): Promise<any> {
-    const startTime = performance.now();
+    console.time(queryName);
 
     return datastoreRunQuery(query)
         .then(result => {
@@ -56,7 +56,7 @@ function queryImages(query, queryName): Promise<any> {
             const info = result[1];
             logger.debug("entities", JSON.stringify(images));
             logger.debug("info", JSON.stringify(info));
-            logger.debug(queryName, performance.now() - startTime);
+            console.timeEnd(queryName);
 
             return images.map( entity => {
                 entity.id = entity[datastore.KEY].id;
