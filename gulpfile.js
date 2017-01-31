@@ -148,7 +148,12 @@ gulp.task("test", ["build", "pre-test"], (cb) => {
   runSequence(["remap-istanbul-unit", "tslint"], 'remap-istanbul-e2e', cb);
 });
 
-gulp.task("build", ["typescript", "swagger-ui", "info"], () => {
+gulp.task("copy-conf", () => {
+  gulp.src(['conf/*'])
+    .pipe(gulp.dest('build/conf/'));
+});
+
+gulp.task("build", ["typescript", "swagger-ui", "info", "copy-conf"], () => {
   gulp.src(['conf/app.yaml', 'package.json'])
     .pipe(gulp.dest('build'));
 });

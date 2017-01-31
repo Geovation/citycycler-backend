@@ -5,10 +5,12 @@ import { registerServices } from "./helper";
 
 // IMPORT MICROSERVICES
 import { images } from "./images";
+import { users } from "./users";
 
 const apiEndpointCollection: APIEndpointCollection = new APIEndpointCollection();
 
 // ADD MICROSERVICES TO EXPORT
 apiEndpointCollection.addApiEndpointCollection(images);
+apiEndpointCollection.addApiEndpointCollection(users);
 
 export const servicesHelper = registerServices(apiEndpointCollection);

@@ -7,6 +7,7 @@ import {Kind} from "./models";
 // Datastore
 const datastore = Datastore();
 const datastoreRunQuery = promisify(datastore.runQuery, {multiArgs: true, thisArg: datastore});
+const kind: Kind = "Image";
 
 export const image = options => {
     const seneca = options.seneca;
@@ -18,7 +19,6 @@ export const image = options => {
             role: "image",
         },
         (msg, respond) => {
-            const kind: Kind = "Image";
             const query = datastore.createQuery(kind);
             queryImages(query, "getImage").then(result => respond(null, { ok: true, result }));
         }
@@ -31,7 +31,6 @@ export const image = options => {
         },
         (msg, respond) => {
             // respond(null, { ok: true, result: `I can now get images by id (and the current id is ${msg.id})` });
-            const kind: Kind = "Image";
             const id: number =  +msg.params.id;
             const query = datastore.createQuery(kind)
                 .filter("__key__", "=", datastore.key(["Image", id]));
