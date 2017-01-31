@@ -26,7 +26,7 @@ export const setupServer = (eventEmitter) => {
         .use(bodyParser())
         .use(middleware.handleErrors())
         .use(cors({
-            headers: ["content-type", "api_key", "Authorization"],
+            headers: ["content-type", "api_key", "Authorization", "idtoken"],
             methods: ["GET", "HEAD", "POST", "DELETE", "PUT", "PATCH", "OPTIONS"],
             origin: "*",
         }));
