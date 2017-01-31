@@ -8,7 +8,12 @@ import * as Seneca from "seneca";
 import { config } from "../../config";
 
 export const initialiseSeneca = services => {
-    const seneca = Seneca();
+    const options: Seneca.Options = {
+        debug: {
+            undead: true,
+        },
+    };
+    const seneca = Seneca(options);
     const pins = [];
     _.each(services,  (plugin, pin) => {
         seneca.use(plugin, { seneca });

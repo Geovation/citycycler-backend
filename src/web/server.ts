@@ -41,7 +41,12 @@ export const setupServer = (eventEmitter) => {
         options: { parseBody: false },
         routes: servicesHelper.apiEndpointCollection.senecaRoutes(),
     };
-    const seneca = Seneca();
+    const options: Seneca.Options = {
+        debug: {
+            undead: true,
+        },
+    };
+    const seneca = Seneca(options);
 
     seneca.use(SenecaWeb, senecaWebConfig)
         .use(servicesHelper.api, { fatal$: false, seneca })

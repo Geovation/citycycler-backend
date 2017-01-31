@@ -21,10 +21,10 @@ export const user = options => {
             role: "user",
         },
         (msg, respond) => {
-            const id: string = msg.params.id;
-            const idToken: string = msg.params.idtoken;
+            const id: string = msg.params.id || "";
+            const idtoken: string = msg.params.idtoken || "";
 
-            firebaseAdmin.auth().verifyIdToken(idToken)
+            firebaseAdmin.auth().verifyIdToken(idtoken)
                 .then( decodedToken => {
                     if (decodedToken.uid === id) {
                         const query = datastore.createQuery(kind)
