@@ -1,7 +1,7 @@
 import * as Koa from "koa";
 import * as bodyParser from "koa-bodyparser";
 import * as cors from "koa-cors";
-import * as qs from "koa-qs";
+import * as KoaQs from "koa-qs";
 import * as Router from "koa-router";
 import * as serve from "koa-static";
 import * as path from "path";
@@ -19,6 +19,21 @@ import getSwaggerJson from "./swagger";
 export const app = new Koa();
 
 export const setupServer = (eventEmitter) => {
+    // enable qs for query string parsing
+    KoaQs(app, "strict");
+
+    app
+        .use(bodyParser())
+        .use(middleware.handleErrors())
+        .use(cors({
+            headers: ["content-type", "api_key", "Authorization"],
+            methods: ["GET", "HEAD", "POST", "DELETE", "PUT", "PATCH", "OPTIONS"],
+            origin: "*",
+        }));
+
+    // serve files in public folder (css, js etc)
+    app.use(serve(path.join(__dirname, "../static")));
+
     // Seneca setup
     const senecaWebConfig = {
         adapter: senecaWebAdapter,
@@ -34,21 +49,6 @@ export const setupServer = (eventEmitter) => {
             pins: servicesHelper.apiEndpointCollection.endpointPins(),
             type: config.services.transport,
       });
-
-    // enable qs for query string parsing
-    qs(app, "strict");
-
-    app
-        .use(bodyParser())
-        .use(middleware.handleErrors())
-        .use(cors({
-            headers: ["content-type", "api_key", "Authorization"],
-            methods: ["GET", "HEAD", "POST", "DELETE", "PUT", "PATCH", "OPTIONS"],
-            origin: "*",
-        }));
-
-    // serve files in public folder (css, js etc)
-    app.use(serve(path.join(__dirname, "../static")));
 
     seneca.ready(() => {
         logger.info("seneca ready");

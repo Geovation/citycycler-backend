@@ -5,6 +5,8 @@
 import * as Maybe from "data.maybe";
 import * as _ from "lodash";
 import * as nPath from "path";
+import * as qs from "qs";
+import * as R from "ramda";
 
 import { functions as F } from "../../common/utilities";
 
@@ -13,6 +15,7 @@ export class APIEndpoint {
     private myDefinitions: Object;
     private mySenecaOptions: any;
     private myPrefix: string;
+    private getCachedParamsFromSwaggerJSON: Function = R.memoize(this.getParamsFromSwaggerJSON);
 
     constructor(
         senecaOptions: any,
@@ -69,21 +72,36 @@ export class APIEndpoint {
             const seneca = options.seneca;
             const opts = this.mySenecaOptions;
 
+            const getParamName = param => Maybe.fromNullable(param.name).map(name => name.toLowerCase()).getOrElse("");
+            const getParamNames = params => params.map(param => getParamName(param));
+            const parseQuery = query => qs.parse(query, { allowDots: true });
+            const extractPathParams = msg => nPath.parse(msg.request$.url.split("?")[0]).name;
+            const extractParams = (parsedMsg, pNames) => _.pick(parsedMsg, pNames);
+            const addParamsToObject = (obj, paramDefinitions, paramsSource) => Maybe.fromNullable(paramDefinitions)
+                    .map(params => _.merge(
+                        Maybe.fromNullable(obj.params).getOrElse(_.set(obj, params, {})),
+                        extractParams(paramsSource, getParamNames(params))));
+
             seneca.add({
                     path: opts.path,
                     role: "api",
                 }, (msg, respond) => {
                     try {
-                        const senecaParams = {
+                        const payload = {
                             $fatal: false,
                             cmd: opts.cmd,
+                            params: {},
                             path: opts.path,
                             role: opts.role,
                         };
+                        // add path parameters
                         Maybe.fromNullable(this.getPathParam())
-                            .map(param => senecaParams[param.name.toLowerCase()] =
-                                    nPath.parse(msg.request$.url.split("?")[0]).name);
-                        seneca.act(senecaParams, respond);
+                            .map(param => _.set(payload.params, getParamName(param), extractPathParams(msg)));
+                        // add query string parameters
+                        addParamsToObject(payload, this.getQueryParams(), parseQuery(msg.args.query));
+                        // add header parameters
+                        addParamsToObject(payload, this.getHeaderParams(), msg.request$.header);
+                        seneca.act(payload, respond);
                     } catch (err) {
                         return respond(null, err);
                     }
@@ -103,13 +121,26 @@ export class APIEndpoint {
         return result;
     }
 
+    private getParamsFromSwaggerJSON (location) {
+        return _.filter(
+            this.getParameters(this.myPath),
+            param => {
+                return Maybe.fromNullable(param.in)
+                    .map(loc => loc === location)
+                    .getOrElse(false);
+            }
+        );
+    }
+
     private getPathParam () {
-        return _.find(
-                this.getParameters(this.myPath), param => {
-                    return Maybe.fromNullable(param.in)
-                        .map(loc => loc === "path")
-                        .getOrElse(false);
-                }
-            );
+        return this.getCachedParamsFromSwaggerJSON("path")[0];
+    }
+
+    private getQueryParams () {
+        return this.getCachedParamsFromSwaggerJSON("query");
+    }
+
+    private getHeaderParams () {
+        return this.getCachedParamsFromSwaggerJSON("header");
     }
 };

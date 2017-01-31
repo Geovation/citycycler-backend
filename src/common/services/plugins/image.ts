@@ -32,7 +32,7 @@ export const image = options => {
         (msg, respond) => {
             // respond(null, { ok: true, result: `I can now get images by id (and the current id is ${msg.id})` });
             const kind: Kind = "Image";
-            const id: number =  +msg.id;
+            const id: number =  +msg.params.id;
             const query = datastore.createQuery(kind)
                 .filter("__key__", "=", datastore.key(["Image", id]));
 
