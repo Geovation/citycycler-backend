@@ -17,7 +17,7 @@ const remapIstanbul = require('remap-istanbul/lib/gulpRemapIstanbul');
 const path = require('path');
 
 if (typeof process.env.DOCURL == "undefined") {
-  process.env.DOCURL = "https://timepix-dev.appspot.com";
+  process.env.DOCURL = "https://timepix-dev.appspot-preview.com";
 }
 
 function getOption (name) {
