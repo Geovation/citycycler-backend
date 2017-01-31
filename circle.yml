@@ -25,4 +25,4 @@ deployment:
       - gcloud auth activate-service-account --key-file conf/key-file.json
       - gcloud config set project timepix-dev
       - npm run deploy
-      - URL=https://timepix-dev.appspot-preview.com npm run e2etest
+      - URL=https://timepix-dev.appspot.com npm run e2etest

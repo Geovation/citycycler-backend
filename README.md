@@ -94,7 +94,7 @@ Here, the first `/` forms part of the path added by the application and tests,
 not part of the base URL.
 
 By default the base URL that appears in the docs is
-`https://timepix-dev.appspot-preview.com/`. When you run `npm run
+`https://timepix-dev.appspot.com/`. When you run `npm run
 serve`, the docs get generated for the local server instead.
 
 The `circle.yml` file sets this variable for testing live after a deployment,

@@ -10,7 +10,7 @@ import * as logger from "winston";
 import { config } from "../../config";
 import { servicesHelper } from "../services";
 
-const host = process.env.DOCURL ? process.env.DOCURL.split("//")[1] : "timepix-dev.appspot-preview.com";
+const host = process.env.DOCURL ? process.env.DOCURL.split("//")[1] : "timepix-dev.appspot.com";
 
 // default headers to be added to all endpoints
 const headers = {
