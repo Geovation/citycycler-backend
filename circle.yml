@@ -7,6 +7,7 @@ machine:
     CLOUDSDK_CORE_PROJECT: timepix-dev
     DATASTORE_PROJECT_ID: timepix-dev
     IMAGES_URL: https://storage.googleapis.com/timepix-dev/images
+    DOCURL: https://timepix-dev.herokuapp.com
 
 dependencies:
   cache_directories:
