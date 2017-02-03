@@ -35,6 +35,7 @@ deployment:
   heroku:
     branch: master
     commands:
+      - heroku git:remote -a timepix-dev
       - heroku config:set GOOGLE_APPLICATION_CREDENTIALS="conf/key-file.json"
       - heroku config:set IMAGES_URL="https://storage.googleapis.com/timepix-dev/images"
       - heroku config:set PROCESS_TYPE="web"
