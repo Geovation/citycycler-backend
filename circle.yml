@@ -35,6 +35,7 @@ deployment:
   heroku:
     branch: master
     commands:
+      - cp conf/.netrc ~/
       - heroku git:remote -a timepix-dev
       - heroku config:set GOOGLE_APPLICATION_CREDENTIALS="conf/key-file.json"
       - heroku config:set IMAGES_URL="https://storage.googleapis.com/timepix-dev/images"
@@ -43,7 +44,7 @@ deployment:
       - heroku config:set NODE_PATH=.
       - heroku config:set FIREBASE_URL="https://timepix-dev.firebaseio.com"
       - heroku config:set DOCURL="https://timepix-dev.herokuapp.com"
-      - git config --global user.email "sebastian.ovide@gmail.com"
-      - git config --global user.name "sebastian ovide"
+      - # git config --global user.email "sebastian.ovide@gmail.com"
+      - # git config --global user.name "sebastian ovide"
       - cd build && git init . && heroku git:remote -a timepix-dev && git add . && git commit -am "make it better" && git push heroku master -f
       - rm -rf build/.git
