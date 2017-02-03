@@ -15,9 +15,15 @@ dependencies:
   post:
     - npm run clean
 
+test:
+  post:
+    - mkdir -p temp
+    - tar -cvzf temp/build.tgz build
+    - cp -a temp/build.tgz $CIRCLE_ARTIFACTS/
+
 deployment:
   production:
-    branch: master
+    branch: gae
     commands:
       - sudo /opt/google-cloud-sdk/bin/gcloud components update -q
 #     - sudo /opt/google-cloud-sdk/bin/gcloud components install beta -q
@@ -26,3 +32,15 @@ deployment:
       - gcloud config set project timepix-dev
       - npm run deploy
       - URL=https://timepix-dev.appspot.com npm run e2etest
+  heroku:
+    branch: master
+    commands:
+      - heroku config:set GOOGLE_APPLICATION_CREDENTIALS="conf/key-file.json"
+      - heroku config:set IMAGES_URL="https://storage.googleapis.com/timepix-dev/images"
+      - heroku config:set PROCESS_TYPE="web"
+      - heroku config:set WITH_SERVICES=true
+      - heroku config:set NODE_PATH=.
+      - heroku config:set FIREBASE_URL="https://timepix-dev.firebaseio.com"
+      - heroku config:set DOCURL="https://timepix-dev.herokuapp.com"
+      - cd build && git init . && heroku git:remote -a timepix-dev && git add . && git commit -am "make it better" && git push heroku master -f
+      - rm -rf build/.git
