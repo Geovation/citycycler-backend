@@ -17,7 +17,7 @@ export const user = options => {
 
     seneca.add({
             cmd: "getById",
-            path: "load",
+            path: "loadUser",
             role: "user",
         },
         (msg, respond) => {

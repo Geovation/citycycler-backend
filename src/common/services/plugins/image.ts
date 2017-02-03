@@ -15,7 +15,7 @@ export const image = options => {
 
     seneca.add({
             cmd: "get",
-            path: "list",
+            path: "listImage",
             role: "image",
         },
         (msg, respond) => {
@@ -26,14 +26,14 @@ export const image = options => {
 
     seneca.add({
             cmd: "getById",
-            path: "load",
+            path: "loadImage",
             role: "image",
         },
         (msg, respond) => {
             // respond(null, { ok: true, result: `I can now get images by id (and the current id is ${msg.id})` });
-            const id: number =  +msg.params.id;
+            const id: number =  +(msg.params.id || "");
             const query = datastore.createQuery(kind)
-                .filter("__key__", "=", datastore.key(["Image", id]));
+                .filter("__key__", "=", datastore.key([kind, id]));
 
             queryImages(query, "getImageById").then(result => respond(null, { ok: true, result: result[0] }));
         }

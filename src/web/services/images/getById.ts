@@ -8,12 +8,12 @@ import { APIEndpoint } from "../api-endpoint";
 // PATH
 const path = {
     get: {
-        consumes: ["application/json"],
-        description: "Returns an image matching the passed ID.",
+          consumes: ["application/json"],
         parameters: [{
             description: "The ID of the image to be returned",
             in: "path",
             name: "id",
+            required: true,
             type: "string",
         }],
         produces: ["application/json; charset=utf-8"],
@@ -43,7 +43,7 @@ const path = {
 
 export const getById = new APIEndpoint({
         cmd: "getById",
-        path: "load",
+        path: "loadImage",
         role: "image",
     })
     .addPath(path);

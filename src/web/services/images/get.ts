@@ -59,7 +59,7 @@ const definitions = {
 
 export const get = new APIEndpoint({
         cmd: "get",
-        path: "list",
+        path: "listImage",
         role: "image",
     })
     .addPath(path)
