@@ -11,24 +11,16 @@ const kind: Kind = "Image";
 
 export const image = options => {
     const seneca = options.seneca;
-    options.pin = "role:image";
+//    options.pin = "role:image";
 
-    seneca.add({
-            cmd: "get",
-            path: "listImage",
-            role: "image",
-        },
+    seneca.add({ path: "listImages" },
         (msg, respond) => {
             const query = datastore.createQuery(kind);
             queryImages(query, "getImage").then(result => respond(null, { ok: true, result }));
         }
     );
 
-    seneca.add({
-            cmd: "getById",
-            path: "loadImage",
-            role: "image",
-        },
+    seneca.add({ path: "loadImage" },
         (msg, respond) => {
             // respond(null, { ok: true, result: `I can now get images by id (and the current id is ${msg.id})` });
             const id: number =  +(msg.params.id || "");

@@ -107,7 +107,7 @@ gulp.task("pre-test", ["typescript"], () => {
 });
 
 gulp.task("unittest", ["pre-test"], () => {
-  return gulp.src(["build/**/*[sS]pec.js", "!build/*[sS]pec.js"])
+  return gulp.src(["build/web/**/*[sS]pec.js", "!build/web/*[sS]pec.js"])
     .pipe(jasmine({
       verbose: true,
       includeStackTrace: true,
@@ -127,7 +127,7 @@ gulp.task("unittest", ["pre-test"], () => {
 });
 
 gulp.task("e2etest", ["pre-test"], () => {
-  return gulp.src("build/*[sS]pec.js")
+  return gulp.src("build/web/*[sS]pec.js")
     .pipe(jasmine({
       verbose: true,
       includeStackTrace: true,
@@ -158,7 +158,7 @@ gulp.task("build", ["typescript", "swagger-ui", "info", "copy-conf"], () => {
     .pipe(gulp.dest('build'));
 });
 
-gulp.task("serve", ['test'], () => {
+gulp.task("serve", ["test"], () => {
   // configure nodemon
   const envVars = {
     NODE_ENV: 'development',

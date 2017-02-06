@@ -3,12 +3,15 @@
  */
 
 import * as _ from "lodash";
+import * as Seneca from "seneca";
+
+import { config } from "../../config";
 
 const allServices = [];
 
-export const registerServices = apiEndpointCollection => {
-    _.each(apiEndpointCollection.endpointCollections(), endpointCollection => {
-        _.each(endpointCollection.endpoints(), endpoint => allServices.push(endpoint.plugin()));
+export const registerAPI = endpointCollection => {
+    _.each(endpointCollection.endpointCollections(), coll => {
+        _.each(coll.endpoints(), endpoint => allServices.push(endpoint.plugin()));
     });
     const api = (options) => {
         _.each(allServices, service => service(options));
@@ -20,6 +23,24 @@ export const registerServices = apiEndpointCollection => {
     };
     return {
         api,
-        apiEndpointCollection,
+        endpointCollection,
     };
 };
+
+export const registerServices = endpointCollection => {
+    const options: Seneca.Options = {
+        debug: {
+            undead: true,
+        },
+        tag: "service",
+    };
+    const seneca = Seneca(options);
+    _.each(
+        endpointCollection.endpointServices(),
+        service => {
+            seneca.use(service, { seneca });
+        }
+    );
+    seneca
+      .listen({ pins: endpointCollection.endpointPins(), type: config.services.transport });
+  };

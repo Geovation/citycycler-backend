@@ -12,6 +12,7 @@ export const initialiseSeneca = services => {
         debug: {
             undead: true,
         },
+        tag: "srv",
     };
     const seneca = Seneca(options);
     const pins = [];
@@ -20,8 +21,8 @@ export const initialiseSeneca = services => {
         pins.push(pin);
     });
     seneca
-      .listen({
-          pins,
-          type: config.services.transport,
-      });
+        .listen({
+            pins,
+            type: config.services.transport,
+        });
 };

@@ -12,6 +12,5 @@ export default function() {
   // ADD MICROSERVICES TO EXPORT
   services[imagePin] = image;
   services[userPin] = user;
-
   initialiseSeneca(services);
 }

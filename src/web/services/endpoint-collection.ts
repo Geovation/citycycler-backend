@@ -7,36 +7,36 @@ import * as _ from "lodash";
 import * as R from "ramda";
 
 import { config } from "../../config";
-import { APIEndpoint } from "./api-endpoint";
+import { IEndpoint } from "./api-endpoint";
 
-export class APIEndpointCollection {
-    private myApiEndpoints: APIEndpoint[];
-    private myApiEndpointCollections: APIEndpointCollection[];
+export class EndpointCollection {
+    private myEndpoints: IEndpoint[];
+    private myEndpointCollections: EndpointCollection[];
     private myPrefix: string;
 
     constructor(prefix?: string) {
         this.myPrefix = prefix;
-        this.myApiEndpoints = [];
-        this.myApiEndpointCollections = [];
+        this.myEndpoints = [];
+        this.myEndpointCollections = [];
     }
 
-    public addApiEndpoint(endpoint: APIEndpoint): APIEndpointCollection {
+    public addEndpoint(endpoint: IEndpoint): EndpointCollection {
         endpoint.setPathPrefix(this.myPrefix);
-        this.myApiEndpoints.push(endpoint);
+        this.myEndpoints.push(endpoint);
         return this;
     }
 
-    public addApiEndpointCollection(endpointCollection: APIEndpointCollection): APIEndpointCollection {
-        this.myApiEndpointCollections.push(endpointCollection);
+    public addEndpointCollection(endpointCollection: EndpointCollection): EndpointCollection {
+        this.myEndpointCollections.push(endpointCollection);
         return this;
     }
 
-    public endpoints(): APIEndpoint[] {
-        return this.myApiEndpoints;
+    public endpoints(): IEndpoint[] {
+        return this.myEndpoints;
     }
 
-    public endpointCollections(): APIEndpointCollection[] {
-        return this.myApiEndpointCollections;
+    public endpointCollections(): EndpointCollection[] {
+        return this.myEndpointCollections;
     }
 
     public endpointPaths(): Object {
@@ -51,20 +51,18 @@ export class APIEndpointCollection {
         return this.mergeProperties("route", "endpointRoutes", {});
     }
 
-    public senecaRoutes(): Object {
-        const routes: Object[] = [];
-        _.each(this.myApiEndpointCollections, coll => coll.senecaRoute(routes));
-        return routes;
+    public endpointServices(): any[] {
+        return this.concatUniqueProperties("service", "endpointServices");
     }
 
     public endpointPins(): string[] {
-        return _.reduce(
-            this.endpointCollections(),
-            (coll, endpointCollection) => {
-                return _.union(coll, endpointCollection.endpointPins());
-            },
-            this.endpoints().map(endpoint => endpoint.pin())
-        );
+        return this.concatUniqueProperties("pin", "endpointPins");
+    }
+
+    public senecaRoutes(): Object {
+        const routes: Object[] = [];
+        _.each(this.myEndpointCollections, coll => coll.senecaRoute(routes));
+        return routes;
     }
 
     public prefix(): string {
@@ -72,9 +70,9 @@ export class APIEndpointCollection {
     }
 
     public toString(): string {
-        return `APIEndpointCollection:
-                    { endpoints: ${this.myApiEndpoints} },
-                    { endpointCollections: ${this.myApiEndpointCollections} }`;
+        return `EndpointCollection:
+                    { endpoints: ${this.myEndpoints} },
+                    { endpointCollections: ${this.myEndpointCollections} }`;
     }
 
     protected senecaRoute(routes = []): Object[] {
@@ -94,5 +92,15 @@ export class APIEndpointCollection {
         Maybe.fromNullable(this.endpoints()).map(mergeResults(instanceMethod));
         Maybe.fromNullable(this.endpointCollections()).map(mergeResults(collectionMethod));
         return value;
+    }
+
+    private concatUniqueProperties(instanceMethod: string, collectionMethod: string): any[] {
+        return _.reduce(
+            this.endpointCollections(),
+            (coll, endpointCollection) => {
+                return _.union(coll, endpointCollection[collectionMethod]());
+            },
+            this.endpoints().map(endpoint => endpoint[instanceMethod]())
+        );
     }
 };

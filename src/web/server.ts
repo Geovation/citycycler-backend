@@ -39,19 +39,20 @@ export const setupServer = (eventEmitter) => {
         adapter: senecaWebAdapter,
         context: Router(),
         options: { parseBody: false },
-        routes: servicesHelper.apiEndpointCollection.senecaRoutes(),
+        routes: servicesHelper.endpointCollection.senecaRoutes(),
     };
     const options: Seneca.Options = {
         debug: {
             undead: true,
         },
+        tag: "web",
     };
     const seneca = Seneca(options);
 
     seneca.use(SenecaWeb, senecaWebConfig)
         .use(servicesHelper.api, { fatal$: false, seneca })
         .client({
-            pins: servicesHelper.apiEndpointCollection.endpointPins(),
+            pins: servicesHelper.endpointCollection.endpointPins(),
             type: config.services.transport,
       });
 

@@ -1,14 +1,16 @@
-import { APIEndpoint } from "../api-endpoint";
+import { Kind } from "../../../common/services/plugins/models";
+import { datastore, queryImages } from "../../../common/utilities/datastore";
+import { MicroserviceEndpoint } from "../microservice-endpoint";
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //
 // KEEP THIS UP-TO-DATE WHEN MAKING ANY CHANGES TO THE METHOD //
 // /////////////////////////////////////////////////////////////
 
-// PATH
-const path = {
+// OPERATION
+const operation = {
     get: {
-          consumes: ["application/json"],
+        consumes: ["application/json"],
         parameters: [{
             description: "The ID of the image to be returned",
             in: "path",
@@ -41,9 +43,22 @@ const path = {
 // SWAGGER: END //
 // ///////////////
 
-export const getById = new APIEndpoint({
-        cmd: "getById",
-        path: "loadImage",
-        role: "image",
-    })
-    .addPath(path);
+// ////////////////
+// SENECA: start //
+// ////////////////
+
+const service = (params): Promise<any> => {
+    const kind: Kind = "Image";
+    const id: number =  +params.id;
+    const query = datastore.createQuery(kind)
+        .filter("__key__", "=", datastore.key(["Image", id]));
+    return queryImages(query, "getImageById");
+};
+
+// //////////////
+// SENECA: end //
+// //////////////
+
+export const getById = new MicroserviceEndpoint("loadImage")
+    .addSwaggerOperation(operation)
+    .addService(service);

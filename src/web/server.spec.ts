@@ -1,3 +1,4 @@
+/*
 import { config } from "../config";
 import { app, setupServer } from "./server";
 import * as chai from "chai";
@@ -58,7 +59,8 @@ describe("Timepix API", () => {
     afterAll(done => {
         if ( startServer ) {
             console.log("Shutting down server...");
-            server.close(() => {
+            server.close((err) => {
+                console.log("=====> err: ", err);
                 console.log("done.");
                 done();
             });
@@ -78,4 +80,4 @@ describe("Timepix API", () => {
         });
     });
 
-});
+}); // */

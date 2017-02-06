@@ -4,32 +4,35 @@
 
 import * as Maybe from "data.maybe";
 import * as _ from "lodash";
-import * as nPath from "path";
-import * as qs from "qs";
 import * as R from "ramda";
 
 import { functions as F } from "../../common/utilities";
 
 export class APIEndpoint {
-    private myPath: Object;
-    private myDefinitions: Object;
-    private mySenecaOptions: any;
-    private myPrefix: string;
-    private getCachedParamsFromSwaggerJSON: Function = R.memoize(this.getParamsFromSwaggerJSON);
+    protected myOperation: Object;
+    protected myDefinitions: Object;
+    protected mySenecaOptions: any;
+    protected myPrefix: string;
+    protected getCachedParamsFromSwaggerJSON: Function = R.memoize(this.getParamsFromSwaggerJSON);
 
     constructor(
-        senecaOptions: any,
+        path: string,
     ) {
-        this.mySenecaOptions = senecaOptions;
+        this.mySenecaOptions = { path };
     }
 
-    public addPath(path: Object): APIEndpoint {
+    // SWAGGER SPEC
+
+    /**
+     *    This is a swagger operation object (see http://swagger.io/specification/#operationObject)
+     */
+    public addSwaggerOperation(path: Object): IEndpoint {
         // validate method... && path??
-        this.myPath = path;
+        this.myOperation = path;
         return this;
     }
 
-    public setPathPrefix(prefix: string): APIEndpoint {
+    public setPathPrefix(prefix: string): IEndpoint {
         const suffix = this.route()[this.mySenecaOptions.path].suffix;
         const pathSuffix =
             Maybe.fromNullable(suffix)
@@ -41,11 +44,11 @@ export class APIEndpoint {
 
     public path(): Object {
         return Maybe.fromNullable(this.myPrefix)
-                .map(prefix => _.set({}, prefix, this.myPath))
-                .getOrElse(this.myPath);
+                .map(prefix => _.set({}, prefix, this.myOperation))
+                .getOrElse(this.myOperation);
     }
 
-    public addDefinitions(definitions): APIEndpoint {
+    public addSwaggerDefinitions(definitions): IEndpoint {
         this.myDefinitions = definitions;
         return this;
     }
@@ -54,63 +57,33 @@ export class APIEndpoint {
         return this.myDefinitions;
     }
 
+    // END SWAGGER SPEC
+
+    // SENECA SPEC
+
     public pin() {
-        return `role:${this.mySenecaOptions.role}`;
+        return undefined;
     }
 
     public route () {
-        const path = this.mySenecaOptions.path;
-        const route = _.set({}, path, { name: "" });
-        _.merge(route[path], _.set({}, _.keys(this.myPath)[0].toUpperCase(), true));
-        Maybe.fromNullable(this.getPathParam())
-            .map(param => _.set(route[path], "suffix", `/:${param.name.toLowerCase()}`));
-        return route;
+        return undefined;
     }
 
     public plugin () {
-        return options => {
-            const seneca = options.seneca;
-            const opts = this.mySenecaOptions;
-
-            const getParamName = param => Maybe.fromNullable(param.name).map(name => name.toLowerCase()).getOrElse("");
-            const getParamNames = params => params.map(param => getParamName(param));
-            const parseQuery = query => qs.parse(query, { allowDots: true });
-            const extractPathParams = msg => nPath.parse(msg.request$.url.split("?")[0]).name;
-            const extractParams = (parsedMsg, pNames) => _.pick(parsedMsg, pNames);
-            const addParamsToObject = (obj, paramDefinitions, paramsSource) => Maybe.fromNullable(paramDefinitions)
-                    .map(params => _.merge(
-                        Maybe.fromNullable(obj.params).getOrElse(_.set(obj, params, {})),
-                        extractParams(paramsSource, getParamNames(params))));
-
-            seneca.add({
-                    path: opts.path,
-                    role: "api",
-                }, (msg, respond) => {
-                    try {
-                        const payload = {
-                            $fatal: false,
-                            cmd: opts.cmd,
-                            params: {},
-                            path: opts.path,
-                            role: opts.role,
-                        };
-                        // add path parameters
-                        Maybe.fromNullable(this.getPathParam())
-                            .map(param => _.set(payload.params, getParamName(param), extractPathParams(msg)));
-                        // add query string parameters
-                        addParamsToObject(payload, this.getQueryParams(), parseQuery(msg.args.query));
-                        // add header parameters
-                        addParamsToObject(payload, this.getHeaderParams(), msg.request$.header);
-                        seneca.act(payload, respond);
-                    } catch (err) {
-                        return respond(null, err);
-                    }
-                },
-            );
-        };
+        return undefined;
     }
 
-    private getParameters (path: any, result = []) {
+    public service() {
+        return undefined;
+    }
+
+    public addService(service): IEndpoint {
+        return this;
+    }
+
+    // END SENECA SPEC
+
+    protected getParameters (path: any, result = []) {
         _.each(path, (val, key) => {
             if (key === "parameters") {
                 _.each(val, param => result.push(param));
@@ -121,9 +94,9 @@ export class APIEndpoint {
         return result;
     }
 
-    private getParamsFromSwaggerJSON (location) {
+    protected getParamsFromSwaggerJSON (location) {
         return _.filter(
-            this.getParameters(this.myPath),
+            this.getParameters(this.myOperation),
             param => {
                 return Maybe.fromNullable(param.in)
                     .map(loc => loc === location)
@@ -132,15 +105,17 @@ export class APIEndpoint {
         );
     }
 
-    private getPathParam () {
+    protected getPathParam () {
         return this.getCachedParamsFromSwaggerJSON("path")[0];
     }
 
-    private getQueryParams () {
+    protected getQueryParams () {
         return this.getCachedParamsFromSwaggerJSON("query");
     }
 
-    private getHeaderParams () {
+    protected getHeaderParams () {
         return this.getCachedParamsFromSwaggerJSON("header");
     }
 };
+
+export interface IEndpoint extends APIEndpoint {};

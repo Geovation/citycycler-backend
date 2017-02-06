@@ -166,10 +166,10 @@ const addHeaders = path => {
     });
 };
 
-const paths = servicesHelper.apiEndpointCollection.endpointPaths();
+const paths = servicesHelper.endpointCollection.endpointPaths();
 addHeaders(paths);
 _.merge(meta.paths, paths);
-_.merge(meta.definitions, servicesHelper.apiEndpointCollection.endpointDefinitions());
+_.merge(meta.definitions, servicesHelper.endpointCollection.endpointDefinitions());
 
 yaml.write("../../static/swagger.yaml", meta, "utf8", (err) => {
     if (err) {

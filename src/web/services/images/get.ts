@@ -1,12 +1,15 @@
-import { APIEndpoint } from "../api-endpoint";
+
+import { Kind } from "../../../common/services/plugins/models";
+import { datastore, queryImages } from "../../../common/utilities/datastore";
+import { MicroserviceEndpoint } from "../microservice-endpoint";
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //
 // KEEP THIS UP-TO-DATE WHEN MAKING ANY CHANGES TO THE METHOD //
 // /////////////////////////////////////////////////////////////
 
-// PATH
-const path = {
+// OPERATION
+const operation = {
     get: {
         consumes: ["application/json"],
         description: "Returns images from the databases.",
@@ -14,12 +17,12 @@ const path = {
         responses: {
             200: {
                 description: "A list of image metadata summaries.",
-                example: {
-                    "application/json": [
-                        { url: "http://timepix.com/images/picture1.jpg" },
-                        { url: "http://timepix.com/images/picture2.png" },
-                        { url: "http://timepix.com/images/picture3.tiff" },
-                        { url: "http://timepix.com/images/picture4.gif" },
+                examples: {
+                    result: [
+                        { thumbnail: "http://timepix.com/images/picture1.jpg" },
+                        { thumbnail: "http://timepix.com/images/picture2.png" },
+                        { thumbnail: "http://timepix.com/images/picture3.tiff" },
+                        { thumbnail: "http://timepix.com/images/picture4.gif" },
                     ],
                 },
                 schema: {
@@ -44,7 +47,7 @@ const definitions = {
     ImageMetadataSummary: {
         items: {
             properties: {
-                url: {
+                thumbnail: {
                     type: "string",
                 },
             },
@@ -54,13 +57,24 @@ const definitions = {
 };
 
 // ///////////////
-// SWAGGER: END //
+// SWAGGER: end //
 // ///////////////
 
-export const get = new APIEndpoint({
-        cmd: "get",
-        path: "listImage",
-        role: "image",
-    })
-    .addPath(path)
-    .addDefinitions(definitions);
+// ////////////////
+// SENECA: start //
+// ////////////////
+
+const service = (params): Promise<any> => {
+    const kind: Kind = "Image";
+    const query = datastore.createQuery(kind);
+    return queryImages(query, "getImage");
+};
+
+// //////////////
+// SENECA: end //
+// //////////////
+
+export const get = new MicroserviceEndpoint("listImages")
+    .addSwaggerOperation(operation)
+    .addSwaggerDefinitions(definitions)
+    .addService(service);

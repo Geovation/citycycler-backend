@@ -13,13 +13,9 @@ const kind: Kind = "User";
 
 export const user = options => {
     const seneca = options.seneca;
-    options.pin = "role:user";
+//    options.pin = "role:user";
 
-    seneca.add({
-            cmd: "getById",
-            path: "loadUser",
-            role: "user",
-        },
+    seneca.add({ path: "loadUser" },
         (msg, respond) => {
             const id: string = msg.params.id || "";
             const idtoken: string = msg.params.idtoken || "";
