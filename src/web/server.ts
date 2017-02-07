@@ -1,5 +1,4 @@
 import * as Koa from "koa";
-import * as bodyParser from "koa-bodyparser";
 import * as cors from "koa-cors";
 import * as KoaQs from "koa-qs";
 import * as Router from "koa-router";
@@ -23,7 +22,6 @@ export const setupServer = (eventEmitter) => {
     KoaQs(app, "strict");
 
     app
-        .use(bodyParser())
         .use(middleware.handleErrors())
         .use(cors({
             headers: ["content-type", "api_key", "Authorization", "idtoken"],
