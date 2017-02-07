@@ -81,6 +81,18 @@ export class APIEndpoint {
         return this;
     }
 
+    public addBefore(operation): IEndpoint {
+        return this;
+    }
+
+    public addAfter(operation): IEndpoint {
+        return this;
+    }
+
+    public broadcast(pattern) {
+        // do nothing
+    }
+
     // END SENECA SPEC
 
     protected getParameters (path: any, result = []) {
