@@ -6,6 +6,7 @@ import * as Maybe from "data.maybe";
 import * as _ from "lodash";
 import * as nPath from "path";
 import * as qs from "qs";
+import * as logger from "winston";
 
 import { APIEndpoint, IEndpoint } from "./api-endpoint";
 
@@ -39,7 +40,6 @@ export class MicroserviceEndpoint extends APIEndpoint {
         return options => {
             const senOpts = this.mySenecaOptions;
 
-            const getParamsValue = obj => Maybe.fromNullable(obj.params).getOrElse(_.set(obj, "params", {}));
             const getParamName = param => Maybe.fromNullable(param.name).map(name => name.toLowerCase()).getOrElse("");
             const getParamNames = params => params.map(param => getParamName(param));
             const parseQuery = query => qs.parse(query, { allowDots: true });
@@ -47,7 +47,7 @@ export class MicroserviceEndpoint extends APIEndpoint {
             const extractParams = (parsedMsg, pNames) => _.pick(parsedMsg, pNames);
             const addParamsToObject = (obj, paramDefinitions, paramsSource) => Maybe.fromNullable(paramDefinitions)
                     .map(params => _.merge(
-                        getParamsValue(obj),
+                        Maybe.fromNullable(obj.params).getOrElse(_.set(obj, params, {})),
                         extractParams(paramsSource, getParamNames(params))));
 
             const service = opts => (msg, respond) => {
@@ -66,7 +66,6 @@ export class MicroserviceEndpoint extends APIEndpoint {
                     addParamsToObject(payload, this.getQueryParams(), parseQuery(msg.args.query));
                     addParamsToObject(payload, this.getHeaderParams(), msg.request$.header);
                     Maybe.fromNullable(msg.args.body).map(body => {
-                        getParamsValue(payload);
                         _.merge(payload.params, { body });
                     });
                     seneca.map(sen => {
@@ -103,16 +102,18 @@ export class MicroserviceEndpoint extends APIEndpoint {
                 const before = Maybe.fromNullable(this.myBefore).getOrElse(params => Promise.resolve(params));
                 const after = Maybe.fromNullable(this.myAfter).getOrElse(params => Promise.resolve(params));
                 before(msg.params)
-                    .then(params =>  {
-                        return service(params);
-                    })
+                    .then(params => service(params))
                     .then(result => {
                         respond(null, { ok: true, result });
                         return result;
                     })
                     .then(result => after(_.merge({}, msg.params, result)))
-                    .catch(error => respond(null, { ok: false, result: error }));
+                    .catch(error => {
+                        logger.debug(error);
+                        respond(null, { ok: false, result: String(error) });
+                    });
             } catch (e) {
+                logger.error(e);
                 respond(null, { ok: false, result: e });
             }
         };

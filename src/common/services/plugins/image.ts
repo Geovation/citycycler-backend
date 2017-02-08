@@ -1,13 +1,14 @@
+/*
 import * as Datastore from "@google-cloud/datastore";
 import * as promisify from "es6-promisify";
 import * as logger from "winston";
 
-import {Kind} from "./models";
+import {DatastoreKind} from "../../../web/common/datastore";
 
 // Datastore
 const datastore = Datastore();
 const datastoreRunQuery = promisify(datastore.runQuery, {multiArgs: true, thisArg: datastore});
-const kind: Kind = "Image";
+const kind: DatastoreKind = "Image";
 
 export const image = options => {
     const seneca = options.seneca;
@@ -59,3 +60,4 @@ function queryImages(query, queryName): Promise<any> {
         // TODO: somewhere lets try to catch the errors to don't repeat ourself.
         // .catch(error => respond(null, { ok: false, result: error}));
 }
+*/

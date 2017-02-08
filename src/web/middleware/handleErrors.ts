@@ -1,14 +1,15 @@
 /**
  * DO NOT TOUCH IT. Ask Paul.
  */
-
 import * as _ from "lodash";
+// import * as logger from "winston";
 
 /* tslint:disable only-arrow-functions */
 export const handleErrorsFactory = () => {
     return function * (next) {
         // formats error according to Swagger error definition (web/router/swagger/index)
         const formatError = (err) => {
+            // logger.error(err);
             this.status = err.status || err.code || 500;
             return {
                 detail: (err.isJoi ? err.details : err),

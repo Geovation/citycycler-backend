@@ -1,15 +1,16 @@
+/*
 import * as Datastore from "@google-cloud/datastore";
 import * as promisify from "es6-promisify";
 import * as firebaseAdmin from "firebase-admin";
 import * as _ from "lodash";
 import * as logger from "winston";
 
-import {Kind} from "./models";
+import {DatastoreKind} from "../../../web/common/datastore";
 
 // Datastore
 const datastore = Datastore();
 const datastoreRunQuery = promisify(datastore.runQuery, {multiArgs: true, thisArg: datastore});
-const kind: Kind = "User";
+const kind: DatastoreKind = "User";
 
 export const user = options => {
     const seneca = options.seneca;
@@ -63,3 +64,4 @@ firebaseAdmin.initializeApp({
     credential: firebaseAdmin.credential.cert("conf/key-file.json"),
     databaseURL: process.env.FIREBASE_URL,
 });
+*/

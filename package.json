@@ -35,7 +35,7 @@
     "postinstall": "npm prune"
   },
   "dependencies": {
-    "@google-cloud/datastore": "^0.6.1",
+    "@google-cloud/datastore": "^0.7.0",
     "babel-core": "^6.21.0",
     "cache-manager": "^2.2.0",
     "cache-manager-memcached-store": "^2.1.0",
@@ -92,6 +92,6 @@
     "run-sequence": "^1.2.2",
     "swagger-ui": "^2.2.10",
     "tslint": "^3.15.1",
-    "typescript": "^2.1.4"
+    "typescript": "^2.1.5"
   }
 }

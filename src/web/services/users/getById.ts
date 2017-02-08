@@ -1,11 +1,9 @@
-import { Kind } from "../../../common/services/plugins/models";
-import { authorizer } from "../../../common/utilities/auth";
-import { datastore, datastoreRunQuery } from "../../../common/utilities/datastore";
+import * as Maybe from "data.maybe";
+
 import { MicroserviceEndpoint } from "../microservice-endpoint";
 
-import * as Maybe from "data.maybe";
-import * as _ from "lodash";
-import * as logger from "winston";
+import * as Auth from "../../common/auth";
+import * as Datastore from "../../common/datastore";
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //
@@ -65,46 +63,11 @@ const operation = {
 // ////////////////
 
 const service = (params): any => {
-    const kind: Kind = "User";
     const id: string = Maybe.fromNullable(params.id).getOrElse("");
     const idtoken: string = Maybe.fromNullable(params.idtoken).getOrElse("");
 
-    return new Promise((resolve, reject) => {
-        authorizer.auth().verifyIdToken(idtoken)
-            .then( decodedToken => {
-                if (decodedToken.uid === id) {
-                    const query = datastore.createQuery(kind)
-                        .filter("__key__", "=", datastore.key([kind, id]));
-
-                    console.time("getUserById");
-                    datastoreRunQuery(query)
-                        .then(result => {
-                            const users = result[0];
-                            const info = result[1];
-                            logger.debug("entities", JSON.stringify(users));
-                            logger.debug("info", JSON.stringify(info));
-                            console.timeEnd("getUserById");
-
-                            resolve(_.extend({}, users[0]));
-                        });
-                } else {
-                    const err = {
-                        message: `${decodedToken.uid} is not allowed to read user ${id}`,
-                        status: 401,
-                    };
-                    console.log(err.message);
-                    reject(err);
-                }
-            })
-            .catch(error => {
-                console.log(`Server error:  ${error}`);
-                const err = {
-                    message: "There was a problem with authorization",
-                };
-                reject(err);
-            });
-        }
-    );
+    return Auth.isUser(idtoken, id)
+        .then( () => Datastore.getUserById(id));
 };
 
 // //////////////

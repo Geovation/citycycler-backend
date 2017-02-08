@@ -1,6 +1,6 @@
-import { Kind } from "../../../common/services/plugins/models";
-import { datastore, queryImages } from "../../../common/utilities/datastore";
 import { MicroserviceEndpoint } from "../microservice-endpoint";
+
+import * as Datastore from "../../common/datastore";
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //
@@ -48,11 +48,7 @@ const operation = {
 // ////////////////
 
 const service = (params): Promise<any> => {
-    const kind: Kind = "Image";
-    const id: number =  +params.id;
-    const query = datastore.createQuery(kind)
-        .filter("__key__", "=", datastore.key(["Image", id]));
-    return queryImages(query, "getImageById");
+    return Datastore.getImageById(Number(params.id));
 };
 
 // //////////////
