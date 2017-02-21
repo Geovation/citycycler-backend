@@ -9,6 +9,7 @@ import * as R from "ramda";
 import { functions as F } from "../../common/utilities";
 
 export class APIEndpoint {
+    public broadcast: Function;
     protected myOperation: Object;
     protected myDefinitions: Object;
     protected mySenecaOptions: any;
@@ -33,10 +34,13 @@ export class APIEndpoint {
     }
 
     public setPathPrefix(prefix: string): IEndpoint {
-        const suffix = this.route()[this.mySenecaOptions.path].suffix;
+        const suffix =
+            Maybe.fromNullable(this.getPathParam())
+                .map(param => param.name)
+                .getOrElse(undefined);
         const pathSuffix =
             Maybe.fromNullable(suffix)
-                .map(suff => `/\{${suff.split(":")[1]}\}`)
+                .map(suff => `/{${suff}}`)
                 .getOrElse("");
         this.myPrefix = F.concat(`/${prefix}`, pathSuffix);
         return this;
@@ -87,10 +91,6 @@ export class APIEndpoint {
 
     public addAfter(operation): IEndpoint {
         return this;
-    }
-
-    public broadcast(pattern) {
-        // do nothing
     }
 
     // END SENECA SPEC

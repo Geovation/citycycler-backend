@@ -158,7 +158,7 @@ gulp.task("build", ["typescript", "swagger-ui", "info", "copy-conf"], () => {
     .pipe(gulp.dest('build'));
 });
 
-gulp.task("serve", ["test"], () => {
+gulp.task("serve", ["build"], () => {
   // configure nodemon
   const envVars = {
     NODE_ENV: 'development',

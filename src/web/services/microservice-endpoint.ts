@@ -6,14 +6,13 @@ import * as Maybe from "data.maybe";
 import * as _ from "lodash";
 import * as nPath from "path";
 import * as qs from "qs";
+import * as R from "ramda";
 import * as logger from "winston";
 
 import { APIEndpoint, IEndpoint } from "./api-endpoint";
 
 export class MicroserviceEndpoint extends APIEndpoint {
     private myService: any;
-    private myBefore: any;
-    private myAfter: any;
 
     constructor(
         path: string,
@@ -30,60 +29,76 @@ export class MicroserviceEndpoint extends APIEndpoint {
     public route () {
         const path = this.mySenecaOptions.path;
         const route = _.set({}, path, { name: "" });
-        _.merge(route[path], _.set({}, _.keys(this.myOperation)[0].toUpperCase(), true));
+        const op = Maybe.fromNullable(this.myOperation).getOrElse({ path: "INVALID" });
+        _.merge(route[path], _.set({}, _.keys(op)[0].toUpperCase(), true));
         Maybe.fromNullable(this.getPathParam())
             .map(param => _.set(route[path], "suffix", `/:${param.name.toLowerCase()}`));
         return route;
     }
 
     public plugin () {
-        return options => {
-            const senOpts = this.mySenecaOptions;
+        if (this.myOperation) {
+            return options => {
+                const senOpts = this.mySenecaOptions;
 
-            const getParamName = param => Maybe.fromNullable(param.name).map(name => name.toLowerCase()).getOrElse("");
-            const getParamNames = params => params.map(param => getParamName(param));
-            const parseQuery = query => qs.parse(query, { allowDots: true });
-            const extractPathParams = msg => nPath.parse(msg.request$.url.split("?")[0]).name;
-            const extractParams = (parsedMsg, pNames) => _.pick(parsedMsg, pNames);
-            const addParamsToObject = (obj, paramDefinitions, paramsSource) => Maybe.fromNullable(paramDefinitions)
-                    .map(params => _.merge(
-                        Maybe.fromNullable(obj.params).getOrElse(_.set(obj, params, {})),
-                        extractParams(paramsSource, getParamNames(params))));
+                const getParamName = param => Maybe
+                                                .fromNullable(param.name)
+                                                .map(name => name.toLowerCase())
+                                                .getOrElse("");
+                const getParamNames = params => params.map(param => getParamName(param));
+                const parseQuery = query => qs.parse(query, { allowDots: true });
+                const extractPathParams = msg => nPath.parse(msg.request$.url.split("?")[0]).name;
+                const extractParamsFromMessage = (parsedMsg, pNames) => _.pick(parsedMsg, pNames);
+                const addParamsToObject =
+                    (obj, paramDefinitions, paramsSource) =>
+                        Maybe.fromNullable(paramDefinitions)
+                            .map(params =>
+                                    _.merge(
+                                        Maybe.fromNullable(obj.params)
+                                            .getOrElse(_.set(obj, params, {})),
+                                        extractParamsFromMessage(
+                                            paramsSource,
+                                            getParamNames(params))
+                                    )
+                                );
 
-            const service = opts => (msg, respond) => {
-                const seneca = Maybe.fromNullable(opts.seneca);
-                try {
-                    const payload = _.merge(
-                        senOpts,
-                        {
-                            default$: `No service matching message ${senOpts}`,
-                            fatal$: false,
-                            params: {},
-                        }
-                    );
-                    Maybe.fromNullable(this.getPathParam())
-                        .map(param => _.set(payload.params, getParamName(param), extractPathParams(msg)));
-                    addParamsToObject(payload, this.getQueryParams(), parseQuery(msg.args.query));
-                    addParamsToObject(payload, this.getHeaderParams(), msg.request$.header);
-                    Maybe.fromNullable(msg.args.body).map(body => {
-                        _.merge(payload.params, { body });
-                    });
-                    seneca.map(sen => {
-                        sen.act(payload, respond);
-                    });
-                } catch (err) {
-                    return respond(null, err);
-                }
+                const service = opts => (msg, respond) => {
+                    const seneca = Maybe.fromNullable(opts.seneca);
+                    try {
+                        const payload = _.merge(
+                            senOpts,
+                            {
+                                default$: `No service matching message ${senOpts}`,
+                                fatal$: false,
+                                params: {},
+                            }
+                        );
+                        Maybe.fromNullable(this.getPathParam())
+                            .map(param => _.set(payload.params, getParamName(param), extractPathParams(msg)));
+                        addParamsToObject(payload, this.getQueryParams(), parseQuery(msg.args.query));
+                        addParamsToObject(payload, this.getHeaderParams(), msg.request$.header);
+                        Maybe.fromNullable(msg.args.body).map(body => {
+                            _.merge(payload.params, { body });
+                        });
+                        seneca.map(sen => {
+                            sen.act(payload, respond);
+                        });
+                    } catch (err) {
+                        return respond(null, err);
+                    }
+                };
+                this.registerService(
+                    options,
+                    service,
+                    {
+                        path: Maybe.fromNullable(senOpts.path).getOrElse(""),
+                        role: "api",
+                    }
+                );
             };
-            this.registerService(
-                options,
-                service,
-                {
-                    path: Maybe.fromNullable(senOpts.path).getOrElse(""),
-                    role: "api",
-                }
-            );
-        };
+        } else {
+            return null;
+        }
     }
 
     public service () {
@@ -96,64 +111,60 @@ export class MicroserviceEndpoint extends APIEndpoint {
         };
     }
 
-    public addService (service): IEndpoint {
+    public addService (service: Function): IEndpoint {
         this.myService = options => (msg, respond) => {
             try {
-                const before = Maybe.fromNullable(this.myBefore).getOrElse(params => Promise.resolve(params));
-                const after = Maybe.fromNullable(this.myAfter).getOrElse(params => Promise.resolve(params));
-                before(msg.params)
-                    .then(params => service(params))
-                    .then(result => {
-                        respond(null, { ok: true, result });
-                        return result;
-                    })
-                    .then(result => after(_.merge({}, msg.params, result)))
-                    .catch(error => {
-                        logger.debug(error);
-                        respond(null, { ok: false, result: String(error) });
-                    });
+                service(this.broadcast, msg.params)
+                .then(result => {
+                    respond(null, { ok: true, result });
+                    return result;
+                })
+                .catch(error => {
+                    respond(null, { ok: false, result: { err: error, message: error.message, status: 500 } });
+                });
             } catch (e) {
-                logger.error(e);
-                respond(null, { ok: false, result: e });
+                logger.error("service failed", e);
+                respond(null, { ok: false, result: e.message } );
             }
         };
         return this;
     }
 
-    public addBefore (operation): IEndpoint {
-        this.myBefore = this.wrapOperation(operation);
-        return this;
-    }
-
-    public addAfter (operation): IEndpoint {
-        this.myAfter = this.wrapOperation(operation);
-        return this;
-    }
-
-    public broadcast(pattern) {
-        console.log("========> emitting: " + pattern);
-    }
-
-    private wrapOperation (operation): Function {
-        return params => {
-            try {
-                return operation(params);
-            } catch (e) {
-                throw e;
-            }
-        };
+    /**
+     * Be aware that more than one microservice can match any given message pattern. In this case, the broadcast
+     * will resolve when the first receiving microservice resolves (since we have no way of knowing what will
+     * respond to any broadcast message).
+     */
+    private broadcastUsingSeneca (seneca, pattern, params) {
+        return new Promise((resolve, reject) => {
+            Maybe.fromNullable(seneca)
+            .map(sen => {
+                sen.act({ params, path: pattern }, (err, res) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        if (res.ok) {
+                            resolve(res.result);
+                        } else {
+                            reject(res.result);
+                        }
+                    }
+                });
+            })
+            .orElse(() => {
+                resolve(params);
+            });
+        });
     }
 
     private registerService (options, service, params): IEndpoint {
         Maybe.fromNullable(options.seneca)
             .map(seneca => Maybe.fromNullable(service)
-                .map(svc => seneca.add(_.merge(
-                        params,
-                        { default$: "This is a default response" })
-                        , svc(options)
-                    )
-                )
+                .map(svc => seneca.add(params, svc(options)))
             );
+        Maybe.fromNullable(options.senecaClient)
+            .map(senClient => this.broadcast = R.partial(this.broadcastUsingSeneca, [senClient]));
+
         return this;
     }
 }

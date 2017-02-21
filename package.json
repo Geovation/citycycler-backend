@@ -36,12 +36,15 @@
   },
   "dependencies": {
     "@google-cloud/datastore": "^0.7.0",
+    "@google-cloud/storage": "^0.7.0",
     "babel-core": "^6.21.0",
     "cache-manager": "^2.2.0",
     "cache-manager-memcached-store": "^2.1.0",
     "data.maybe": "^1.2.2",
     "es6-promisify": "^5.0.0",
     "firebase-admin": "^4.0.6",
+    "get-stream": "^3.0.0",
+    "get-uri": "^2.0.0",
     "joi": "^10.1.0",
     "koa": "^1.2.4",
     "koa-cors": "0.0.16",
@@ -58,6 +61,7 @@
     "seneca": "^3.2.2",
     "seneca-web": "^2.0.0",
     "seneca-web-adapter-koa1": "^1.0.1",
+    "sharp": "^0.17.2",
     "winston": "^2.3.0"
   },
   "devDependencies": {

@@ -12,7 +12,7 @@ import * as logger from "winston";
 // local modules
 import { config } from "../config";
 import * as middleware from "./middleware";
-import { servicesHelper } from "./services";
+import { closeServices, servicesHelper } from "./services";
 import getSwaggerJson from "./swagger";
 
 export const app = new Koa();
@@ -94,3 +94,5 @@ export const setupServer = (eventEmitter) => {
         eventEmitter.emit("ready");
     });
 };
+
+export const gracefulShutdown = () => closeServices();

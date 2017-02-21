@@ -1,6 +1,6 @@
-/*
+// /*
 import { config } from "../config";
-import { app, setupServer } from "./server";
+import { app, gracefulShutdown, setupServer } from "./server";
 import * as chai from "chai";
 import * as EventEmitter from "events";
 import * as request from "request";
@@ -59,8 +59,8 @@ describe("Timepix API", () => {
     afterAll(done => {
         if ( startServer ) {
             console.log("Shutting down server...");
+            gracefulShutdown();
             server.close((err) => {
-                console.log("=====> err: ", err);
                 console.log("done.");
                 done();
             });

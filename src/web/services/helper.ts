@@ -2,19 +2,33 @@
  * DO NOT TOUCH IT. Ask Paul.
  */
 
+import * as Maybe from "data.maybe";
 import * as _ from "lodash";
 import * as Seneca from "seneca";
 
 import { config } from "../../config";
 
 const allServices = [];
+const senecaInstances = [];
 
 export const registerAPI = endpointCollection => {
-    _.each(endpointCollection.endpointCollections(), coll => {
-        _.each(coll.endpoints(), endpoint => allServices.push(endpoint.plugin()));
-    });
+    _.each(
+        endpointCollection.endpointCollections(),
+        coll => {
+            _.each(
+                coll.endpoints(),
+                endpoint =>
+                    Maybe.fromNullable(endpoint.plugin())
+                        .map(plugin => allServices.push(plugin))
+            );
+        }
+    );
+
     const api = (options) => {
-        _.each(allServices, service => service(options));
+        _.each(
+            allServices,
+            service => service(options)
+        );
 
         return {
             name: "api",
@@ -28,19 +42,37 @@ export const registerAPI = endpointCollection => {
 };
 
 export const registerServices = endpointCollection => {
-    const options: Seneca.Options = {
+    const seneca = Seneca({
         debug: {
             undead: true,
         },
-        tag: "service",
-    };
-    const seneca = Seneca(options);
+        tag: "listener",
+    });
+    const senecaClient = Seneca({
+        debug: {
+            undead: true,
+        },
+        tag: "client",
+    });
+    senecaInstances.push(seneca);
+    senecaInstances.push(senecaClient);
     _.each(
         endpointCollection.endpointServices(),
         service => {
-            seneca.use(service, { seneca });
+            seneca.use(service, { seneca, senecaClient });
         }
     );
     seneca
-      .listen({ pins: endpointCollection.endpointPins(), type: config.services.transport });
+        .listen({
+            pins: endpointCollection.endpointPins(),
+            type: config.services.transport,
+        });
+    senecaClient
+        .client({
+            pins: endpointCollection.endpointPins(),
+            type: config.services.transport,
+        });
+
   };
+
+export const closeSeneca = () => senecaInstances.map(sen => sen.close());

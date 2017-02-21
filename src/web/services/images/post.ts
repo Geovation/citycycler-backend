@@ -99,7 +99,7 @@ const definitions = {
 // SWAGGER: END //
 // ///////////////
 
-const service = (params): Promise<any> => {
+const service = (broadcast: Function, params: any): Promise<any> => {
     const payLoad = params.body;
     const idtoken = params.idtoken;
 

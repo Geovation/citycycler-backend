@@ -47,7 +47,7 @@ const operation = {
 // SENECA: start //
 // ////////////////
 
-const service = (params): Promise<any> => {
+const service = (broadcast: Function, params: any): Promise<any> => {
     return Datastore.getImageById(Number(params.id));
 };
 

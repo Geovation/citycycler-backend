@@ -3,7 +3,7 @@
  */
 
 import { EndpointCollection } from "./endpoint-collection";
-import { registerAPI, registerServices } from "./helper";
+import { closeSeneca, registerAPI, registerServices } from "./helper";
 
 // IMPORT MICROSERVICES
 import { images } from "./images";
@@ -17,3 +17,5 @@ endpointCollection.addEndpointCollection(users);
 
 export const servicesHelper = registerAPI(endpointCollection);
 registerServices(endpointCollection);
+
+export const closeServices = closeSeneca;
