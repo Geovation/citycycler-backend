@@ -1,12 +1,12 @@
+import { getImageWritableStream } from "../../common/storage";
 import { MicroserviceEndpoint } from "../microservice-endpoint";
-import * as gcloud from "@google-cloud/storage";
 import * as Maybe from "data.maybe";
 import * as promisify from "es6-promisify";
 import * as getStream from "get-stream";
 import * as getUri from "get-uri";
 import * as _ from "lodash";
 import * as path from "path";
-import * as sharp from "sharp";
+import * as Sharp from "sharp";
 import * as logger from "winston";
 
 // /////////////////////////////////////////////////////////////
@@ -24,65 +24,69 @@ import * as logger from "winston";
 
 const defaultOpts = {
     resize: {
-        mimeType: "png",
-        name: "original",
-        url: "",
+        id: "",
+        public: false,
     },
 };
-const gcStorage = gcloud(process.env.GOOGLE_APPLICATION_CREDENTIALS);
-const images = gcStorage.bucket("timepix-dev");
 const getUriAsPromise = promisify(getUri);
 
 const service = (broadcast: Function, params: any): Promise<any> => {
     const opts = _.merge({}, defaultOpts.resize, Maybe.fromNullable(params.resize).getOrElse({}));
-    const image = images.file(path.join(opts.url, `${opts.name}.${opts.mimeType}`));
+    Maybe.fromNullable(opts.type).orElse(() => opts.type = "enhanced");
+    let uniqueUrl;
 
-    const getTransformer = () => new Promise((resolve, reject) => {
-        switch (Maybe.fromNullable(opts.type).getOrElse("")) {
+    const getTransformer = ({ sharp, md }) => new Promise((resolve, reject) => {
+        uniqueUrl = path.join(opts.id, `${opts.type}.${md.format}`);
+        switch (opts.type) {
             case "thumbnail":
-                resolve(sharp().resize(opts.width, opts.height).png());
+                resolve(sharp.resize(opts.width, opts.height));
                 break;
-            case "watermark":
-                getUriAsPromise(params.body.watermarkUri)
-                .then(watermarkStream => getStream.buffer(watermarkStream))
-                .then(watermarkBuffer => {
-                    resolve(sharp().resize(opts.width, opts.height).overlayWith(watermarkBuffer).png());
-                })
-                .catch(error => {
-                    logger.error("Failed to create watermark transform", error);
-                    reject(error);
-                });
+            case "cc":
+                resolve(sharp
+                        .resize(Math.floor(md.width * 0.25), Math.floor(md.height * 0.25))
+                        .overlayWith(
+                            path.join(__dirname, "/../../../conf/watermark.png"),
+                            {
+                                gravity: Sharp.gravity.northwest,
+                                tile: true,
+                            }));
+                break;
+            case "personal":
+                resolve(sharp.resize(Math.floor(md.width * 0.5), Math.floor(md.height * 0.5)));
+                break;
+            case "business":
+                resolve(sharp.resize(Math.floor(md.width * 0.75), Math.floor(md.height * 0.75)));
+                resolve();
                 break;
             default:
-                resolve(sharp().png());
+                resolve(sharp);
         }
     });
 
+    const getMetadata = buff => {
+        return new Promise((resolve, reject) => {
+            let sharp = Sharp(buff);
+            sharp
+            .metadata()
+            .then(md => resolve({ sharp, md }))
+            .catch(e => reject(e));
+        });
+    };
+
     return new Promise((resolve, reject) => {
-        getTransformer()
+        getUriAsPromise(params.body.fileUri)
+        .then(readStream => getStream.buffer(readStream))
+        .then(buff => getMetadata(buff))
+        .then(results => getTransformer(results))
         .then(transformer => {
-            return getUriAsPromise(params.body.fileUri)
-            .then(readStream => {
-                return { readStream, transformer };
-            })
-            .catch(e => {
-                logger.error("Failed to convert file Uri to stream", e);
-                throw e;
-            });
-        })
-        .then(({ readStream, transformer }) => {
-            const writeStream = image.createWriteStream();
-            writeStream.on("error", e => {
-                throw e;
-            });
-            writeStream.on("finish", () => {
-                resolve(params);
-            });
-            readStream.on("error", e => {
-                throw e;
-            });
-            readStream
-            .pipe(transformer)
+            const writeStream = getImageWritableStream(path.join("images", uniqueUrl), opts.public);
+            transformer.on("error", e => reject(e));
+            writeStream.on("error", e => reject(e));
+            writeStream.on("finish", () => resolve({
+                type: opts.type,
+                url: `${process.env.IMAGES_URL}/${uniqueUrl}`,
+            }));
+            transformer
             .pipe(writeStream);
         })
         .catch(err => {

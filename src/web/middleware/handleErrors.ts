@@ -11,12 +11,7 @@ export const handleErrorsFactory = () => {
         const formatError = (err) => {
             logger.error("middleware handling error", err);
             this.status = err.status || err.code || 500;
-            return {
-                detail: (err.isJoi ? err.details : err),
-                error: err.message,
-                path: this.request.url,
-                status: this.status,
-            };
+            return err;
         };
         try {
             yield next;

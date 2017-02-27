@@ -5,8 +5,7 @@ import { EndpointCollection } from "../endpoint-collection";
 // Import Endpoints
 import { get } from "./get";
 import { getById } from "./get-by-id";
-// import { post } from "./post";
-import { put } from "./put";
+import { post } from "./post";
 import { resize } from "./resize";
 
 export const images: EndpointCollection = new EndpointCollection(path.parse(__dirname).name);
@@ -14,5 +13,5 @@ export const images: EndpointCollection = new EndpointCollection(path.parse(__di
 // export Endpoints
 images.addEndpoint(get);
 images.addEndpoint(getById);
-images.addEndpoint(put);
+images.addEndpoint(post);
 images.addEndpoint(resize);

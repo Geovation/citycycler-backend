@@ -112,6 +112,9 @@ export class MicroserviceEndpoint extends APIEndpoint {
     }
 
     public addService (service: Function): IEndpoint {
+        const formatError = e => {
+            return _.has(e, "ok") ? e : { ok: false, result: { err: e, status: 500 } };
+        };
         this.myService = options => (msg, respond) => {
             try {
                 service(this.broadcast, msg.params)
@@ -120,11 +123,12 @@ export class MicroserviceEndpoint extends APIEndpoint {
                     return result;
                 })
                 .catch(error => {
-                    respond(null, { ok: false, result: { err: error, message: error.message, status: 500 } });
+                    logger.error("service managed failure", error);
+                    respond(null, formatError(error));
                 });
             } catch (e) {
-                logger.error("service failed", e);
-                respond(null, { ok: false, result: e.message } );
+                logger.error("service unmanaged failure", e);
+                respond(null, formatError(e));
             }
         };
         return this;

@@ -1,8 +1,9 @@
-import { MicroserviceEndpoint } from "../microservice-endpoint";
-
 import * as Auth from "../../common/auth";
 import * as Datastore from "../../common/datastore";
 import { ImageMetadataModel } from "../../common/ImageMetadataModel";
+import { MicroserviceEndpoint } from "../microservice-endpoint";
+
+import * as _ from "lodash";
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //
@@ -83,8 +84,7 @@ const definitions = {
     },
     ImageUpload: {
         properties: {
-            file: {
-                format: "binary",
+            fileUri: {
                 type: "string",
             },
             metadata: {
@@ -104,7 +104,29 @@ const service = (broadcast: Function, params: any): Promise<any> => {
     const idtoken = params.idtoken;
 
     return Auth.isOwner(idtoken)
-        .then(() => Datastore.saveImageMetadata(new ImageMetadataModel(payLoad.metadata)));
+        .then(() => Datastore.saveImageMetadata(new ImageMetadataModel(payLoad.metadata)))
+        .then(imageResultModel => {
+            const originalImageOpts = { resize:
+                {
+                    id: imageResultModel.id,
+                },
+            };
+            const resizeImageOpts = [
+                originalImageOpts,
+                _.merge({}, originalImageOpts, { resize: { height: 100, public: true, type: "thumbnail" } }),
+                _.merge({}, originalImageOpts, { resize: { public: true, type: "cc" } }),
+                _.merge({}, originalImageOpts, { resize: { type: "personal" } }),
+                _.merge({}, originalImageOpts, { resize: { type: "business" } }),
+            ];
+
+            return Promise.all(resizeImageOpts.map(opts => broadcast("resizeImage", _.merge({}, params, opts))))
+                    .then(result => {
+                        result.map(fileRes => {
+                            imageResultModel.images[fileRes.type] = fileRes.url;
+                        });
+                        return imageResultModel;
+                    });
+        });
 };
 
 // TODO: add after for triggering images processing
