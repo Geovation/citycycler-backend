@@ -1,4 +1,5 @@
 import * as Maybe from "data.maybe";
+import * as logger from "winston";
 
 import { MicroserviceEndpoint } from "../microservice-endpoint";
 
@@ -68,7 +69,7 @@ const operation = {
 const service = (broadcast: Function, params: any): Promise<any> => {
     // anything expect "false" would do
     const imageUrlOnly = Maybe.fromNullable(params["image-url"])
-        .map( v => v !== "false" )
+        .map( v => v[0] !== "false" )
         .getOrElse(false);
     const idtoken = params.idtoken;
     const imageId = Number(params.id);
@@ -76,7 +77,13 @@ const service = (broadcast: Function, params: any): Promise<any> => {
     if (imageUrlOnly) {
         return Auth.getImageLicense(idtoken, imageId)
             .then(license => {
-                return Storage.genTempPubUrl(`images/${imageId}/${license}.jpg`);
+                const path = `images/${imageId}/${license}.jpeg`;
+                logger.debug("Signing p: ", String(path));
+
+                return Storage.genTempPubUrl(path)
+                    .then(url => {
+                        logger.debug(`The URL ${path} Signed is ${url}`);
+                    });
             });
     } else {
         return Datastore.getImageById(imageId);
