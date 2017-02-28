@@ -62,7 +62,7 @@ const operation = {
 // SENECA: start //
 // ////////////////
 
-const service = (params): any => {
+const service = (broadcast: Function, params: any): any => {
     const id: string = Maybe.fromNullable(params.id).getOrElse("");
     const idtoken: string = Maybe.fromNullable(params.idtoken).getOrElse("");
 

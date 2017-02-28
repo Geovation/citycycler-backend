@@ -81,7 +81,7 @@ export class APIEndpoint {
         return undefined;
     }
 
-    public addService(service): IEndpoint {
+    public addService(service: (broadcast: Function, params: any) => Promise <any> ): IEndpoint {
         return this;
     }
 

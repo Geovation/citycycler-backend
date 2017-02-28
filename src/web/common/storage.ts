@@ -17,3 +17,16 @@ export const getImageWritableStream: Function = (path: string, publicAccess: boo
   }
   return getBucketFile(path).createWriteStream(writeOpts);
 };
+
+/**
+ * Given a path, it returns a temp public URL that will last just few seconds.
+ *
+ * @param path path to the file from /bucketname
+ * @returns {Promise<string>}
+ */
+export function genTempPubUrl(path): Promise <string> {
+    const expires = new Date().getTime() + 10 * 1000;
+    const imageFile = getBucketFile(path);
+    return imageFile.getSignedUrl({ action: "read", expires})
+        .then(urls => urls[0]);
+}

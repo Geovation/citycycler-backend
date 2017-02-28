@@ -68,7 +68,7 @@ export function getImages() {
     return queryImages(query, "getImage");
 }
 
-export function getImageById(id) {
+export function getImageById(id): Promise<any> {
     const kind: DatastoreKind = "Image";
     const query = datastore.createQuery(kind)
         .filter("__key__", "=", datastore.key([kind, id]));
