@@ -83,6 +83,7 @@ const service = (broadcast: Function, params: any): Promise<any> => {
                 return Storage.genTempPubUrl(path)
                     .then(url => {
                         logger.debug(`The URL ${path} Signed is ${url}`);
+                        return url;
                     });
             });
     } else {
