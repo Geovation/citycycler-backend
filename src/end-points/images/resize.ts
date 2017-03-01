@@ -1,5 +1,5 @@
-import { getImageWritableStream } from "../../common/storage";
-import { MicroserviceEndpoint } from "../microservice-endpoint";
+import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
+
 import * as Maybe from "data.maybe";
 import * as promisify from "es6-promisify";
 import * as getStream from "get-stream";
@@ -8,6 +8,8 @@ import * as _ from "lodash";
 import * as path from "path";
 import * as Sharp from "sharp";
 import * as logger from "winston";
+
+import { getImageWritableStream } from "../../common/storage";
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //

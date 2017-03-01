@@ -1,4 +1,4 @@
-import { MicroserviceEndpoint } from "../microservice-endpoint";
+import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //

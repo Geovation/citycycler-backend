@@ -1,7 +1,8 @@
 import * as Auth from "../../common/auth";
 import * as Datastore from "../../common/datastore";
 import { ImageMetadataModel } from "../../common/ImageMetadataModel";
-import { MicroserviceEndpoint } from "../microservice-endpoint";
+
+import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 
 import * as _ from "lodash";
 

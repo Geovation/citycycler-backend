@@ -6,8 +6,8 @@ import { EndpointCollection } from "./endpoint-collection";
 import { closeSeneca, registerAPI, registerServices } from "./helper";
 
 // IMPORT MICROSERVICES
-import { images } from "./images";
-import { users } from "./users";
+import { images } from "../../../end-points/images";
+import { users } from "../../../end-points/users";
 
 const endpointCollection: EndpointCollection = new EndpointCollection();
 

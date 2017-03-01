@@ -11,9 +11,9 @@ import * as logger from "winston";
 
 // local modules
 import { config } from "../config";
-import * as middleware from "./middleware";
-import { closeServices, servicesHelper } from "./services";
-import getSwaggerJson from "./swagger";
+import * as middleware from "../web/middleware";
+import { closeServices, servicesHelper } from "../web/services";
+import getSwaggerJson from "../web/swagger";
 
 export const app = new Koa();
 
