@@ -5,6 +5,7 @@ import { ImageMetadataModel } from "../../common/ImageMetadataModel";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 
 import * as _ from "lodash";
+import * as logger from "winston";
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //
@@ -100,18 +101,15 @@ const definitions = {
 // SWAGGER: END //
 // ///////////////
 
-const service = (broadcast: Function, params: any): Promise<any> => {
+export const service = (broadcast: Function, params: any): Promise<any> => {
     const payLoad = params.body;
     const idtoken = params.idtoken;
 
     return Auth.isOwner(idtoken)
         .then(() => Datastore.saveImageMetadata(new ImageMetadataModel(payLoad.metadata)))
         .then(imageResultModel => {
-            const originalImageOpts = { resize:
-                {
-                    id: imageResultModel.id,
-                },
-            };
+            const id = imageResultModel.id;
+            const originalImageOpts = { resize: { id } };
             const resizeImageOpts = [
                 originalImageOpts,
                 _.merge({}, originalImageOpts, { resize: { height: 100, public: true, type: "thumbnail" } }),
@@ -121,16 +119,30 @@ const service = (broadcast: Function, params: any): Promise<any> => {
             ];
 
             return Promise.all(resizeImageOpts.map(opts => broadcast("resizeImage", _.merge({}, params, opts))))
-                    .then(result => {
-                        result.map(fileRes => {
-                            imageResultModel.images[fileRes.type] = fileRes.url;
-                        });
-                        return imageResultModel;
+                .then(result => {
+                    result.map(fileRes => {
+                        imageResultModel.images[fileRes.type] = fileRes.url;
                     });
+                    return imageResultModel;
+                })
+                .catch(err => {
+                    throw { err, id };
+                });
+        })
+        .catch( error => {
+            logger.error(error);
+
+            if (error.err) {
+                // revert error. If the reverting fails, nothing else can be done.
+                Datastore.deleteImageMetadata(error.id)
+                    .catch(logger.error);
+                throw error.err;
+            }
+
+            throw error;
         });
 };
 
-// TODO: add after for triggering images processing
 // end point definition
 export const post = new MicroserviceEndpoint("postImage")
     .addSwaggerOperation(operation)

@@ -75,3 +75,9 @@ export function getImageById(id): Promise<any> {
     return queryImages(query, "getImageById")
         .then(images => images[0]);
 }
+
+export function deleteImageMetadata(id) {
+    const kind: DatastoreKind = "Image";
+    const key = datastore.key([kind, id]);
+    return datastore.delete(key);
+}

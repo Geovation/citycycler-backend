@@ -1,6 +1,5 @@
-// /*
-import { config } from "../config";
-import { app, gracefulShutdown, setupServer } from "./server";
+import { config } from "./microservices-framework/config";
+import { app, gracefulShutdown, setupServer } from "./microservices-framework/web/server";
 import * as chai from "chai";
 import * as EventEmitter from "events";
 import * as request from "request";

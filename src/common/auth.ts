@@ -4,20 +4,22 @@ import * as logger from "winston";
 
 import * as Datastore from "./datastore";
 
-// Init firebase
-firebaseAdmin.initializeApp(
-    {
-        credential: firebaseAdmin.credential.cert(process.env.GOOGLE_APPLICATION_CREDENTIALS),
-        databaseURL: process.env.FIREBASE_URL,
-    }
-);
-
 function getIdFromIdtoken(idtoken): Promise<string> {
     return firebaseAdmin.auth().verifyIdToken(idtoken)
         .then(decodedIdToken => decodedIdToken.uid) as Promise<any>;
 }
 
 type LicenseType = "business" | "personal";
+
+export function init() {
+    // Init firebase
+    firebaseAdmin.initializeApp(
+        {
+            credential: firebaseAdmin.credential.cert(process.env.GOOGLE_APPLICATION_CREDENTIALS),
+            databaseURL: process.env.FIREBASE_URL,
+        }
+    );
+}
 
 /**
  * check if the token belongs to the given user

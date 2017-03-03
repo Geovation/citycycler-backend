@@ -107,7 +107,7 @@ gulp.task("pre-test", ["typescript"], () => {
 });
 
 gulp.task("unittest", ["pre-test"], () => {
-  return gulp.src(["build/web/**/*[sS]pec.js", "!build/web/*[sS]pec.js"])
+  return gulp.src(["build/**/*[sS]pec.js"])
     .pipe(jasmine({
       verbose: true,
       includeStackTrace: true,
@@ -127,7 +127,7 @@ gulp.task("unittest", ["pre-test"], () => {
 });
 
 gulp.task("e2etest", ["pre-test"], () => {
-  return gulp.src("build/web/*[sS]pec.js")
+  return gulp.src("build/*.e2e.js")
     .pipe(jasmine({
       verbose: true,
       includeStackTrace: true,
@@ -145,7 +145,8 @@ gulp.task("e2etest", ["pre-test"], () => {
 });
 
 gulp.task("test", ["build", "pre-test"], (cb) => {
-  runSequence(["remap-istanbul-unit", "tslint"], 'remap-istanbul-e2e', cb);
+  // runSequence(["remap-istanbul-unit", "tslint"], 'remap-istanbul-e2e', cb);
+  runSequence(["remap-istanbul-unit", "tslint"], cb);
 });
 
 gulp.task("copy-conf", () => {
