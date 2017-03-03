@@ -32,6 +32,20 @@ const defaultOpts = {
 };
 const getUriAsPromise = promisify(getUri);
 
+function callResizeByLongestSideFn(resizeFn: Function, md, size) {
+    const width = md.width;
+    const height = md.height;
+    const max = Math.max(width, height);
+    return resizeFn(size * width / max, size * height / max);
+}
+
+export const callResizeFn = {
+    business: (resizeFn: Function, opts, md) => resizeFn(Math.floor(md.width), Math.floor(md.height)),
+    cc: (resizeFn: Function, opts, md) => callResizeByLongestSideFn(resizeFn, md, 1080),
+    personal: (resizeFn: Function, opts, md) => callResizeByLongestSideFn(resizeFn, md, 1500),
+    thumbnail: (resizeFn: Function, opts, md) => callResizeByLongestSideFn(resizeFn, md, 100),
+};
+
 const service = (broadcast: Function, params: any): Promise<any> => {
     const opts = _.merge({}, defaultOpts.resize, Maybe.fromNullable(params.resize).getOrElse({}));
     Maybe.fromNullable(opts.type).orElse(() => opts.type = "enhanced");
@@ -39,30 +53,19 @@ const service = (broadcast: Function, params: any): Promise<any> => {
 
     const getTransformer = ({ sharp, md }) => new Promise((resolve, reject) => {
         uniqueUrl = path.join(opts.id, `${opts.type}.${md.format}`);
-        switch (opts.type) {
-            case "thumbnail":
-                resolve(sharp.resize(opts.width, opts.height));
-                break;
-            case "cc":
-                resolve(sharp
-                        .resize(Math.floor(md.width * 0.25), Math.floor(md.height * 0.25))
-                        .overlayWith(
-                            path.join(__dirname, "/../../../conf/watermark.png"),
-                            {
-                                gravity: Sharp.gravity.northwest,
-                                tile: true,
-                            }));
-                break;
-            case "personal":
-                resolve(sharp.resize(Math.floor(md.width * 0.5), Math.floor(md.height * 0.5)));
-                break;
-            case "business":
-                resolve(sharp.resize(Math.floor(md.width * 0.75), Math.floor(md.height * 0.75)));
-                resolve();
-                break;
-            default:
-                resolve(sharp);
+
+        sharp = callResizeFn[opts.type](sharp.resize, opts, md);
+
+        if (opts.type === "cc") {
+            sharp = sharp.overlayWith(
+                path.join(__dirname, "/../../../conf/watermark.png"),
+                {
+                    gravity: Sharp.gravity.northwest,
+                    tile: true,
+                });
         }
+
+        resolve(sharp);
     });
 
     const getMetadata = buff => {

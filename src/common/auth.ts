@@ -3,13 +3,12 @@ import * as _ from "lodash";
 import * as logger from "winston";
 
 import * as Datastore from "./datastore";
+import { LicenseType } from "./types";
 
 function getIdFromIdtoken(idtoken): Promise<string> {
     return firebaseAdmin.auth().verifyIdToken(idtoken)
         .then(decodedIdToken => decodedIdToken.uid) as Promise<any>;
 }
-
-type LicenseType = "business" | "personal";
 
 export function init() {
     // Init firebase
