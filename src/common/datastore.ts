@@ -28,11 +28,13 @@ const queryImages = (query, queryName): Promise<ImageResultModel[]> => {
 
 ////////////////////////
 // Exported Functions
-export function saveImageMetadata(imageMetadata: ImageMetadataModel): Promise<ImageResultModel> {
-    const kind: DatastoreKind = "Image";
+export function saveImageMetadata(ownerId: string, imageMetadata: ImageMetadataModel): Promise<ImageResultModel> {
+    const kindImage: DatastoreKind = "Image";
+    const kindUser: DatastoreKind = "User";
+
     const imageDSEntity = {
         data: imageMetadata,
-        key: datastore.key(kind),
+        key: datastore.key(kindUser, ownerId, kindImage),
     };
 
     return datastore.save(imageDSEntity)
@@ -58,7 +60,7 @@ export function getUserById(id) {
             logger.debug("info", JSON.stringify(info));
             console.timeEnd("getUserById");
 
-            return(_.extend({}, users[0]));
+            return(_.extend({id}, users[0]));
         });
 }
 

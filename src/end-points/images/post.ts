@@ -106,7 +106,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     const idtoken = params.idtoken;
 
     return Auth.isOwner(idtoken)
-        .then(() => Datastore.saveImageMetadata(new ImageMetadataModel(payLoad.metadata)))
+        .then(user => Datastore.saveImageMetadata(user.id, new ImageMetadataModel(payLoad.metadata)))
         .then(imageResultModel => {
             const id = imageResultModel.id;
             const originalImageOpts = { resize: { id } };

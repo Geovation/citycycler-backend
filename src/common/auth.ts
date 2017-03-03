@@ -42,6 +42,7 @@ export function isOwner(idtoken): Promise<any> {
             if (!user || !user.groups || !user.groups.indexOf || (user.groups.indexOf("owner") === -1)) {
                 throw "It is not an owner";
             }
+            return user;
         });
 }
 
