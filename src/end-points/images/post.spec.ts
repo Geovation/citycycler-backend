@@ -27,7 +27,7 @@ describe("images: post", () => {
     });
 
     it("datastore fails", done => {
-        spyOn(Auth, "isOwner").and.returnValue(Promise.resolve());
+        spyOn(Auth, "isOwner").and.returnValue(Promise.resolve({}));
         spyOn(Datastore, "saveImageMetadata").and.returnValue(Promise.reject(error));
 
         service(null, {body: { metadata: {}}})
@@ -44,7 +44,7 @@ describe("images: post", () => {
     it("resizeImage fails", done => {
         const id = 1;
         const imageResultModel = { id };
-        spyOn(Auth, "isOwner").and.returnValue(Promise.resolve());
+        spyOn(Auth, "isOwner").and.returnValue(Promise.resolve({}));
         spyOn(Datastore, "saveImageMetadata").and.returnValue(Promise.resolve(imageResultModel));
         const deleteImageMetadata = spyOn(Datastore, "deleteImageMetadata").and.returnValue(Promise.resolve());
 

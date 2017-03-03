@@ -72,6 +72,7 @@
     "@types/node": "^7.0.0",
     "@types/request": "0.0.39",
     "@types/seneca": "^2.1.5",
+    "@types/sharp": "^0.17.1",
     "@types/winston": "^2.2.0",
     "chai": "^3.5.0",
     "dredd": "^2.2.5",

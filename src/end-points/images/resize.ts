@@ -10,6 +10,8 @@ import * as Sharp from "sharp";
 import * as logger from "winston";
 
 import { getImageWritableStream } from "../../common/storage";
+import { LicenseType } from "../../common/types";
+import { SharpInstance } from "sharp";
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //
@@ -24,38 +26,53 @@ import { getImageWritableStream } from "../../common/storage";
 // SENECA: start //
 // ////////////////
 
-const defaultOpts = {
+type Opts = {
+    id?: any,
+    public?: boolean,
+    resize: {
+        id: any,
+        public: boolean,
+    },
+    type: LicenseType,
+}
+
+const defaultOpts: Opts = {
     resize: {
         id: "",
         public: false,
     },
+    type: "business",
 };
 const getUriAsPromise = promisify(getUri);
 
-function callResizeByLongestSideFn(resizeFn: Function, md, size) {
+function callResizeByLongestSideFn(sharp: SharpInstance, md, size) {
     const width = md.width;
     const height = md.height;
     const max = Math.max(width, height);
-    return resizeFn(size * width / max, size * height / max);
+    const newWidth = Math.round(size * width / max);
+    const newHeight = Math.round(size * height / max);
+    return sharp.resize(newWidth, newHeight);
 }
 
 export const callResizeFn = {
-    business: (resizeFn: Function, opts, md) => resizeFn(Math.floor(md.width), Math.floor(md.height)),
-    cc: (resizeFn: Function, opts, md) => callResizeByLongestSideFn(resizeFn, md, 1080),
-    personal: (resizeFn: Function, opts, md) => callResizeByLongestSideFn(resizeFn, md, 1500),
-    thumbnail: (resizeFn: Function, opts, md) => callResizeByLongestSideFn(resizeFn, md, 100),
+    business: (sharp: SharpInstance, md) => sharp.resize(Math.floor(md.width), Math.floor(md.height)),
+    cc: (sharp: SharpInstance, md) => callResizeByLongestSideFn(sharp, md, 1080),
+    personal: (sharp: SharpInstance, md) => callResizeByLongestSideFn(sharp, md, 1500),
+    thumbnail: (sharp: SharpInstance, md) => callResizeByLongestSideFn(sharp, md, 100),
 };
 
 const service = (broadcast: Function, params: any): Promise<any> => {
-    const opts = _.merge({}, defaultOpts.resize, Maybe.fromNullable(params.resize).getOrElse({}));
-    Maybe.fromNullable(opts.type).orElse(() => opts.type = "enhanced");
+    const opts: Opts = _.merge({}, defaultOpts.resize, Maybe.fromNullable(params.resize).getOrElse({}));
+    Maybe.fromNullable(opts.type).orElse(() => opts.type = "business");
     let uniqueUrl;
 
     const getTransformer = ({ sharp, md }) => new Promise((resolve, reject) => {
-        uniqueUrl = path.join(opts.id, `${opts.type}.${md.format}`);
+        uniqueUrl = path.join(opts.id, `${opts.type}.jpeg`);
 
-        sharp = callResizeFn[opts.type](sharp.resize, opts, md);
+        // resize
+        sharp = callResizeFn[opts.type](sharp, md);
 
+        // watermark
         if (opts.type === "cc") {
             sharp = sharp.overlayWith(
                 path.join(__dirname, "/../../../conf/watermark.png"),
@@ -64,6 +81,9 @@ const service = (broadcast: Function, params: any): Promise<any> => {
                     tile: true,
                 });
         }
+
+        // jpeg
+        sharp = sharp.jpeg({ quality: 100 });
 
         resolve(sharp);
     });

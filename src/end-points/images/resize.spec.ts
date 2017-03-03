@@ -1,72 +1,72 @@
 import { callResizeFn } from "./resize";
+import { SharpInstance } from "sharp";
+import createSpyObj = jasmine.createSpyObj;
 
 describe("images: resize", () => {
-    let ops;
     let md;
+    let sharp: SharpInstance;
 
     beforeEach(() => {
-        ops = {};
+        sharp = createSpyObj("SharpInstance", ["resize"]);
         md = {
             height: 5000,
             width: 4000,
         };
     });
 
-    function testLongestSideBigImage(size) {
-        return (width, height) => {
-            const max = Math.max(width, height);
-            const min = Math.min(width, height);
+    function expectLongestSide(pSharp, size) {
+        const max = Math.max(md.width, md.height);
+        const w = Math.round(size * md.width / max);
+        const h = Math.round(size * md.height / max);
 
-            expect(max).toBe(size);
-            expect(min).toBe(min / max * size);
-        };
+        expect(pSharp.resize).toHaveBeenCalledWith(w, h);
     }
 
     it("business is 100% original", () => {
-        const myFn = testLongestSideBigImage(Math.max(md.width, md.height));
-        callResizeFn.business(myFn, ops, md);
+        callResizeFn.business(sharp, md);
+        expect(sharp.resize).toHaveBeenCalledWith(md.width, md.height);
     });
 
     it("business is 100% original also for small images", () => {
         md.width = 30;
         md.height = 70;
-        const myFn = testLongestSideBigImage(Math.max(md.width, md.height));
-        callResizeFn.business(myFn, ops, md);
+        callResizeFn.business(sharp, md);
+        expect(sharp.resize).toHaveBeenCalledWith(md.width, md.height);
     });
 
     it("thumbnail is 100px the longest side", () => {
-        const myFn = testLongestSideBigImage(100);
-        callResizeFn.thumbnail(myFn, ops, md);
+        callResizeFn.thumbnail(sharp, md);
+        expectLongestSide(sharp, 100);
     });
 
     it("thumbnail is 100px the longest side also for small images", () => {
         md.width = 30;
         md.height = 70;
-        const myFn = testLongestSideBigImage(100);
-        callResizeFn.thumbnail(myFn, ops, md);
+        callResizeFn.thumbnail(sharp, md);
+        expectLongestSide(sharp, 100);
     });
 
     it("cc is 1080px the longest side", () => {
-        const myFn = testLongestSideBigImage(1080);
-        callResizeFn.cc(myFn, ops, md);
+        callResizeFn.cc(sharp, md);
+        expectLongestSide(sharp, 1080);
     });
 
     it("cc is 1080px the longest side also for small images", () => {
         md.width = 30;
         md.height = 70;
-        const myFn = testLongestSideBigImage(1080);
-        callResizeFn.cc(myFn, ops, md);
+        callResizeFn.cc(sharp, md);
+        expectLongestSide(sharp, 1080);
     });
 
     it("personal is 1500px the longest side", () => {
-        const myFn = testLongestSideBigImage(1500);
-        callResizeFn.personal(myFn, ops, md);
+        callResizeFn.personal(sharp, md);
+        expectLongestSide(sharp, 1500);
     });
 
     it("personal is 1500px the longest side also for small images", () => {
         md.width = 30;
         md.height = 70;
-        const myFn = testLongestSideBigImage(1500);
-        callResizeFn.personal(myFn, ops, md);
+        callResizeFn.personal(sharp, md);
+        expectLongestSide(sharp, 1500);
     });
 });

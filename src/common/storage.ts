@@ -1,9 +1,14 @@
 import * as gcloud from "@google-cloud/storage";
 
-const getImagesBucket = gcloud(process.env.GOOGLE_APPLICATION_CREDENTIALS)
-                        .bucket(process.env.DATASTORE_PROJECT_ID);
+let getImagesBucket;
+let getBucketFile;
 
-const getBucketFile = path => getImagesBucket.file(path);
+export function init() {
+    getImagesBucket = gcloud(process.env.GOOGLE_APPLICATION_CREDENTIALS)
+        .bucket(process.env.DATASTORE_PROJECT_ID);
+
+    getBucketFile = path => getImagesBucket.file(path);
+}
 
 /**
  *

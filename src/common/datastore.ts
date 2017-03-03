@@ -30,11 +30,18 @@ const queryImages = (query, queryName): Promise<ImageResultModel[]> => {
 // Exported Functions
 export function saveImageMetadata(ownerId: string, imageMetadata: ImageMetadataModel): Promise<ImageResultModel> {
     const kindImage: DatastoreKind = "Image";
-    const kindUser: DatastoreKind = "User";
+
+    // As we are changing the DB, there is not point to fix this.
+    // const kindUser: DatastoreKind = "User";
+
+    // const imageDSEntity = {
+    //     data: imageMetadata,
+    //     key: datastore.key(kindUser, ownerId, kindImage),
+    // };
 
     const imageDSEntity = {
         data: imageMetadata,
-        key: datastore.key(kindUser, ownerId, kindImage),
+        key: datastore.key(kindImage),
     };
 
     return datastore.save(imageDSEntity)
