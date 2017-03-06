@@ -9,7 +9,6 @@ import { ImageResultModel } from "./ImageResultModel";
 type DatastoreKind = "Image" | "User";
 const datastore = Datastore();
 const queryImages = (query, queryName): Promise<ImageResultModel[]> => {
-    console.time(queryName);
 
     return datastore.runQuery(query)
         .then( result => {
@@ -17,7 +16,6 @@ const queryImages = (query, queryName): Promise<ImageResultModel[]> => {
             const info = result[1];
             logger.debug("entities", JSON.stringify(images));
             logger.debug("info", JSON.stringify(info));
-            console.timeEnd(queryName);
 
             return images.map( (entity: ImageMetadataModel) => {
                 entity.id = entity[datastore.KEY].id;
@@ -58,15 +56,12 @@ export function getUserById(id) {
     const query = datastore.createQuery(kind)
         .filter("__key__", "=", datastore.key([kind, id]));
 
-    console.time("getUserById");
     return datastore.runQuery(query)
         .then(result => {
             const users = result[0];
             const info = result[1];
             logger.debug("entities", JSON.stringify(users));
             logger.debug("info", JSON.stringify(info));
-            console.timeEnd("getUserById");
-
             return(_.extend({id}, users[0]));
         });
 }

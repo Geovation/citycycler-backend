@@ -11,6 +11,27 @@ import * as logger from "winston";
 
 import { APIEndpoint, IEndpoint } from "./api-endpoint";
 
+const getParamName = param => Maybe
+                                .fromNullable(param.name)
+                                .map(name => name.toLowerCase())
+                                .getOrElse("");
+const getParamNames = params => params.map(param => getParamName(param));
+const parseQuery = query => qs.parse(query, { allowDots: true });
+const extractPathParams = req => nPath.parse(req.url.split("?")[0]).name;
+const extractParamsFromMessage = (parsedMsg, pNames) => _.pick(parsedMsg, pNames);
+const addParamsToObject =
+    (obj, paramDefinitions, paramsSource) =>
+        Maybe.fromNullable(paramDefinitions)
+            .map(params =>
+                _.merge(
+                    Maybe.fromNullable(obj)
+                        .getOrElse({}),
+                    extractParamsFromMessage(
+                        paramsSource,
+                        getParamNames(params))
+                )
+            );
+
 export class MicroserviceEndpoint extends APIEndpoint {
     private myService: any;
 
@@ -21,9 +42,12 @@ export class MicroserviceEndpoint extends APIEndpoint {
     }
 
     public pin () {
-        return Maybe.fromNullable(this.mySenecaOptions.role)
-                .map(role => `role:${role}`)
-                .getOrElse(`path:${this.mySenecaOptions.path}`);
+        let result;
+        Maybe.fromNullable(this.myOperation)
+            .orElse(() => result = Maybe.fromNullable(this.mySenecaOptions.role)
+                                    .map(role => `role:${role}`)
+                                    .getOrElse(`path:${this.mySenecaOptions.path}`));
+        return result;
     }
 
     public route () {
@@ -39,59 +63,11 @@ export class MicroserviceEndpoint extends APIEndpoint {
     public plugin () {
         if (this.myOperation) {
             return options => {
-                const senOpts = this.mySenecaOptions;
-
-                const getParamName = param => Maybe
-                                                .fromNullable(param.name)
-                                                .map(name => name.toLowerCase())
-                                                .getOrElse("");
-                const getParamNames = params => params.map(param => getParamName(param));
-                const parseQuery = query => qs.parse(query, { allowDots: true });
-                const extractPathParams = msg => nPath.parse(msg.request$.url.split("?")[0]).name;
-                const extractParamsFromMessage = (parsedMsg, pNames) => _.pick(parsedMsg, pNames);
-                const addParamsToObject =
-                    (obj, paramDefinitions, paramsSource) =>
-                        Maybe.fromNullable(paramDefinitions)
-                            .map(params =>
-                                    _.merge(
-                                        Maybe.fromNullable(obj.params)
-                                            .getOrElse(_.set(obj, params, {})),
-                                        extractParamsFromMessage(
-                                            paramsSource,
-                                            getParamNames(params))
-                                    )
-                                );
-
-                const service = opts => (msg, respond) => {
-                    const seneca = Maybe.fromNullable(opts.seneca);
-                    try {
-                        const payload = _.merge(
-                            senOpts,
-                            {
-                                default$: `No service matching message ${senOpts}`,
-                                fatal$: false,
-                                params: {},
-                            }
-                        );
-                        Maybe.fromNullable(this.getPathParam())
-                            .map(param => _.set(payload.params, getParamName(param), extractPathParams(msg)));
-                        addParamsToObject(payload, this.getQueryParams(), parseQuery(msg.args.query));
-                        addParamsToObject(payload, this.getHeaderParams(), msg.request$.header);
-                        Maybe.fromNullable(msg.args.body).map(body => {
-                            _.merge(payload.params, { body });
-                        });
-                        seneca.map(sen => {
-                            sen.act(payload, respond);
-                        });
-                    } catch (err) {
-                        return respond(null, err);
-                    }
-                };
                 this.registerService(
                     options,
-                    service,
+                    this.myService,
                     {
-                        path: Maybe.fromNullable(senOpts.path).getOrElse(""),
+                        path: this.mySenecaOptions.path,
                         role: "api",
                     }
                 );
@@ -117,7 +93,7 @@ export class MicroserviceEndpoint extends APIEndpoint {
         };
         this.myService = options => (msg, respond) => {
             try {
-                service(this.broadcast, msg.params)
+                service(this.broadcast, this.extractParams(msg))
                 .then(result => {
                     respond(null, { ok: true, result });
                     return result;
@@ -132,6 +108,30 @@ export class MicroserviceEndpoint extends APIEndpoint {
             }
         };
         return this;
+    }
+
+    private extractParams(message): any {
+        try {
+            const params = Maybe.fromNullable(message.params).getOrElse({});
+            Maybe.fromNullable(message.request$)
+                .map(req => {
+                        Maybe.fromNullable(req.headers)
+                            .map(headers => addParamsToObject(params, this.getHeaderParams(), headers));
+                        Maybe.fromNullable(this.getPathParam())
+                            .map(param => _.set(params, getParamName(param), extractPathParams(req)));
+                    });
+            Maybe.fromNullable(message.args)
+                .map(args => {
+                        Maybe.fromNullable(args.body)
+                            .map(body => _.merge(params, { body }));
+                        Maybe.fromNullable(args.query)
+                            .map(query => addParamsToObject(params, this.getQueryParams(), parseQuery(query)));
+                    });
+            return params;
+        } catch (e) {
+            logger.error("parameter extraction unmanaged failure", e);
+            return null;
+        }
     }
 
     /**

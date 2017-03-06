@@ -98,7 +98,7 @@ export class EndpointCollection {
         return _.reduce(
             this.endpointCollections(),
             (coll, endpointCollection) => {
-                return _.union(coll, endpointCollection[collectionMethod]());
+                return _.compact(_.union(coll, endpointCollection[collectionMethod]()));
             },
             this.endpoints().map(endpoint => endpoint[instanceMethod]())
         );

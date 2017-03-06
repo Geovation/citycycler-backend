@@ -175,6 +175,23 @@ gulp.task("serve", ["build"], () => {
   });
 });
 
+gulp.task('debug', ["build"], () => {
+  // configure nodemon
+  const envVars = {
+    NODE_ENV: 'development',
+    PROCESS_TYPE: 'web',
+    WITH_SERVICES: getOption('with_services') || true
+  }
+
+  nodemon({
+    exec: 'node --inspect --debug-brk',
+    ext: 'ts',
+    script: getOption('script'),
+    verbose: true,
+    env: envVars
+  }).on('start', ['']);
+});
+
 gulp.task('remap-istanbul-e2e', ["e2etest"], function () {
   return gulp.src('./coverage/e2e/coverage-final.json')
     .pipe(remapIstanbul({

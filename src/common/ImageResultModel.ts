@@ -1,4 +1,5 @@
 import {ImageMetadataModel} from "./ImageMetadataModel";
+import { LicenseType } from "./types";
 
 export class ImageResultModel extends ImageMetadataModel {
     public static makeFromImageMetadata(imageMetadataModel: ImageMetadataModel): ImageResultModel {
@@ -16,4 +17,8 @@ export class ImageResultModel extends ImageMetadataModel {
         cc: string;
         thumbnail: string;
     };
+}
+
+export class ResizeResultModel {
+    constructor(public type: LicenseType, public url: string) {};
 }

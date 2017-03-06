@@ -4,6 +4,7 @@
 
 import * as _ from "lodash";
 import * as yaml from  "node-yaml";
+import * as path from "path";
 import * as logger from "winston";
 
 // local modules
@@ -171,7 +172,7 @@ addHeaders(paths);
 _.merge(meta.paths, paths);
 _.merge(meta.definitions, servicesHelper.endpointCollection.endpointDefinitions());
 
-yaml.write("../../static/swagger.yaml", meta, "utf8", (err) => {
+yaml.write(path.join(process.cwd(), "build/static/swagger.yaml"), meta, "utf8", (err) => {
     if (err) {
         throw err;
     }

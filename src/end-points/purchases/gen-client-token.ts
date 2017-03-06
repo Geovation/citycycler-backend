@@ -33,7 +33,7 @@ const operation = {
             },
         },
         tags: [
-            "braintree",
+            "purchases",
         ],
     },
 };

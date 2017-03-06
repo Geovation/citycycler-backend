@@ -10,7 +10,6 @@ import * as senecaWebAdapter from "seneca-web-adapter-koa1";
 import * as logger from "winston";
 
 // local modules
-import { config } from "../config";
 import * as middleware from "../web/middleware";
 import { closeServices, servicesHelper } from "../web/services";
 import getSwaggerJson from "../web/swagger";
@@ -30,7 +29,7 @@ export const setupServer = (eventEmitter) => {
         }));
 
     // serve files in public folder (css, js etc)
-    app.use(serve(path.join(__dirname, "../static")));
+    app.use(serve(path.join(process.cwd(), "build/static")));
 
     // Seneca setup
     const senecaWebConfig = {
@@ -48,11 +47,7 @@ export const setupServer = (eventEmitter) => {
     const seneca = Seneca(options);
 
     seneca.use(SenecaWeb, senecaWebConfig)
-        .use(servicesHelper.api, { fatal$: false, seneca })
-        .client({
-            pins: servicesHelper.endpointCollection.endpointPins(),
-            type: config.services.transport,
-      });
+        .use(servicesHelper.api, { fatal$: false, seneca });
 
     seneca.ready(() => {
         logger.info("seneca ready");
