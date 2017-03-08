@@ -112,8 +112,8 @@ const meta = {
     },
     host,
     info: {
-        description: "the TimePix API.",
-        title: "timepix-api",
+        description: "the MatchMyRoute API.",
+        title: "matchmyroute-api",
         version: "1.0.0",
     },
     paths: {
