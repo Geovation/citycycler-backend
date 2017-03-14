@@ -75,10 +75,10 @@ const definitions = {
     RouteData: {
         properties: {
             cyclingSpeed: {
-                type: "string",
+                type: "number",
             },
             departureTime: {
-                type: "string",
+                type: "number",
             },
             route: {
                 schema: {
