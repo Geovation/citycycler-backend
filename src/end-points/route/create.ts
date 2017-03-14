@@ -62,23 +62,24 @@ const definitions = {
                 $ref: "#/definitions/Coordinate",
             },
         },
+        required: true,
         type: "array",
     },
     RouteData: {
         properties: {
-            cyclingSpeed: {
+            averageSpeed: {
                 type: "number",
             },
             departureTime: {
+                type: "number",
+            },
+            owner: {
                 type: "number",
             },
             route: {
                 schema: {
                     $ref: "#/definitions/Route",
                 },
-            },
-            user: {
-                type: "number",
             },
         },
         required: true,

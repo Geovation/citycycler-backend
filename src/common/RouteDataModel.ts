@@ -2,15 +2,15 @@ export class RouteDataModel {
     public id: number;
 
     public departureTime: number;
-    public cyclingSpeed: number;
-    public user: number;
+    public averageSpeed: number;
+    public owner: number;
 
     public route: number[][];
 
     constructor(obj) {
         this.departureTime = obj.departureTime;
-        this.cyclingSpeed = obj.cyclingSpeed;
-        this.user = obj.user;
+        this.averageSpeed = obj.averageSpeed;
+        this.owner = obj.owner;
         this.route = obj.route;
     }
 }

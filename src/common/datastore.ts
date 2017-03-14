@@ -53,15 +53,13 @@ pool.on("error", (err, client) => {
 // Exported Functions
 
 // Put a route in the database
-export function putRoute(routeData: RouteDataModel): Promise<RouteDataModel> {
+export function putRoute(routeData: RouteDataModel): Promise<number> {
 
-    logger.debug("routeData: " + JSON.stringify(routeData));
     const geojsonstring = {
         coordinates: routeData.route,
         type: "LineString",
     };
 
-    logger.debug("geojsonstring: " + JSON.stringify(geojsonstring));
     return new Promise((resolve, reject) => {
         // to run a query we can acquire a client from the pool,
         // run a query on the client, and then return the client to the pool
@@ -72,7 +70,7 @@ export function putRoute(routeData: RouteDataModel): Promise<RouteDataModel> {
             const query = "INSERT INTO routes (route,departureTime,averageSpeed,owner) " +
                 "VALUES (ST_SetSRID(ST_GeomFromGeoJSON($1), 27700),$2,$3,$4) " +
                 "RETURNING id";
-            const sqlParams = [geojsonstring, routeData.departureTime, routeData.cyclingSpeed, routeData.user];
+            const sqlParams = [geojsonstring, routeData.departureTime, routeData.averageSpeed, routeData.owner];
             client.query(query, sqlParams, (error, result) => {
                 // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
                 done(error);
@@ -81,34 +79,39 @@ export function putRoute(routeData: RouteDataModel): Promise<RouteDataModel> {
                     logger.error("error running query", error);
                     reject("error running query: " + error);
                 }
-                logger.debug("Received the following: " + result);
-                // result.rows.forEach(row => {
-                //     logger.debug("routeid received" + row.id);
-                // });
 
                 // return the id of the new route
-                resolve(123);
+                resolve(result.rows[0].id);
             });
         });
     });
 }
 
-export function getRouteById(id) {
-
-    // At the moment, just return an example route
+export function getRouteById(id): Promise<RouteDataModel> {
     return new Promise((resolve, reject) => {
         let numericId = parseInt(id, 10);
         if (isNaN(numericId)) {
             reject("Invalid ID type");
         } else {
-            resolve({
-                cyclingSpeed: 10,
-                departureTime: 18500,
-                id: 123,
-                route: {
-                    coordinates: [[0, 0], [1, 0], [1, 1]],
-                },
-                user: 123,
+            // Acquire a client from the pool,
+            // run a query on the client, and then return the client to the pool
+            pool.connect((err, client, done) => {
+                if (err) {
+                    return console.error("error fetching client from pool", err);
+                }
+                const query = "SELECT * FROM routes where id=$1";
+                client.query(query, [numericId], (error, result) => {
+                    // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
+                    done(error);
+
+                    if (error) {
+                        logger.error("error running query", error);
+                        reject("error running query: " + error);
+                    }
+
+                    // return the route
+                    resolve(result.rows[0]);
+                });
             });
         }
     });

@@ -19,7 +19,7 @@ const operation = {
                 in: "query",
                 name: "id",
                 required: true,
-                type: "number",
+                type: "integer",
             },
         ],
         produces: ["application/json; charset=utf-8"],
