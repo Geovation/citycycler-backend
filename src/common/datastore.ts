@@ -110,14 +110,18 @@ export function getRouteById(id): Promise<RouteDataModel> {
                         reject("error running query: " + error);
                     }
 
-                    // return the route
-                    resolve({
-                        averageSpeed: result.rows[0].averagespeed,
-                        departureTime: result.rows[0].departuretime,
-                        id: result.rows[0].id,
-                        owner: result.rows[0].owner,
-                        route: lineStringToCoords(result.rows[0].route),
-                    });
+                    if (result.rows[0]) {
+                        // return the route
+                        resolve({
+                            averageSpeed: result.rows[0].averagespeed,
+                            departureTime: result.rows[0].departuretime,
+                            id: result.rows[0].id,
+                            owner: result.rows[0].owner,
+                            route: lineStringToCoords(result.rows[0].route),
+                        });
+                    } else {
+                        reject("No route found.");
+                    }
                 });
             });
         }
