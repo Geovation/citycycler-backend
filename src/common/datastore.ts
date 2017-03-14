@@ -1,9 +1,5 @@
-// import * as Datastore from "@google-cloud/datastore";
-import * as _ from "lodash";
-import * as logger from "winston";
-
-// import { ImageMetadataModel } from "./ImageMetadataModel";
-// import { ImageResultModel } from "./ImageResultModel";
+// import * as _ from "lodash";
+// import * as logger from "winston";
 
 import { RouteDataModel } from "./RouteDataModel";
 
@@ -33,10 +29,10 @@ import { RouteDataModel } from "./RouteDataModel";
 export function putRoute(routeData: RouteDataModel): Promise<RouteDataModel> {
 
     // At the moment, just return the route that we have tried to store
-    return new Promise(function(resolve, reject) {
+    return new Promise( (resolve, reject) => {
         resolve(routeData);
-    }).then(routeData => {
-        return routeData
+    }).then(rd => {
+        return rd;
     });
 }
 

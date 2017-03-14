@@ -1,8 +1,6 @@
-import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
-
-import * as logger from "winston";
 import * as Datastore from "../../common/datastore";
-
+import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
+import * as logger from "winston";
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //
@@ -15,7 +13,6 @@ const operation = {
     post: {
         consumes: ["application/json"],
         description: "creates a new route",
-        produces: ["application/json; charset=utf-8"],
         parameters: [
             {
                 description: "The route and metadata about it",
@@ -24,9 +21,10 @@ const operation = {
                 required: true,
                 schema: {
                     $ref: "#/definitions/RouteData",
-                }
-            }
+                },
+            },
         ],
+        produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
                 description: "New route was created",
@@ -49,50 +47,50 @@ const operation = {
 
 const definitions = {
     Coordinate: {
-        type: "array",
-        required: true,
         items: {
-            type: "number",
+            maxLength: 2,
             minLength: 2,
-            maxLength: 2
-        }
+            type: "number",
+        },
+        required: true,
+        type: "array",
     },
     Route: {
         properties: {
-            type: {
-                type: "string",
-                pattern: "LineString"
-            },
             coordinates: {
-                type: "array",
                 items: {
                     minItems: 2,
                     schema: {
-                        $ref: "#/definitions/Coordinate"
-                    }
-                }
-            }
-        }
+                        $ref: "#/definitions/Coordinate",
+                    },
+                },
+                type: "array",
+            },
+            type: {
+                pattern: "LineString",
+                type: "string",
+            },
+        },
     },
     RouteData: {
-        required: true,
         properties: {
-            route: {
-                schema: {
-                    $ref: "#/definitions/Route"
-                }
+            cyclingSpeed: {
+                type: "string",
             },
             departureTime: {
                 type: "string",
             },
-            cyclingSpeed: {
-                type: "string",
+            route: {
+                schema: {
+                    $ref: "#/definitions/Route",
+                },
             },
             user: {
                 type: "number",
-            }
-        }
-    }
+            },
+        },
+        required: true,
+    },
 };
 
 // ///////////////
@@ -104,10 +102,9 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
 
     logger.debug("Processing new route for user " + payload.user);
 
-    if(typeof payload.route != "undefined"){
+    if (typeof payload.route !== undefined) {
         logger.debug("Route transmitted: \n" + payload.route);
     }
-
 
     return Datastore.putRoute(payload.route);
 
