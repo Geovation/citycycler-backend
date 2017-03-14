@@ -66,10 +66,6 @@ const definitions = {
                 },
                 type: "array",
             },
-            type: {
-                pattern: "LineString",
-                type: "string",
-            },
         },
     },
     RouteData: {
