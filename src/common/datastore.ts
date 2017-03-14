@@ -1,7 +1,7 @@
 // import * as _ from "lodash";
-// import * as logger from "winston";
-
 import { RouteDataModel } from "./RouteDataModel";
+import * as pg from "pg";
+import * as logger from "winston";
 
 // Datastore
 // type DatastoreKind = "Image" | "User";
@@ -22,40 +22,95 @@ import { RouteDataModel } from "./RouteDataModel";
 //         });
 // };
 
+// create a config to configure both pooling behavior
+// and client options
+// note: all config is optional and the environment variables
+// will be read if the config is not present
+const config = {
+    database: "matchMyRoute", // env var: PGDATABASE
+    host: "localhost", // Server hosting the postgres database
+    idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed
+    max: 10, // max number of clients in the pool
+    password: "aUZw[:Gw38H&>Jf2hUwd", // env var: PGPASSWORD
+    port: 5432, // env var: PGPORT
+    user: "postgres", // env var: PGUSER
+};
+// this initializes a connection pool
+// it will keep idle connections open for a 30 seconds
+// and set a limit of maximum 10 idle clients
+const pool = new pg.Pool(config);
+// if an error is encountered by a client while it sits idle in the pool
+// the pool itself will emit an error event with both the error and
+// the client which emitted the original error
+// this is a rare occurrence but can happen if there is a network partition
+// between your application and the database, the database restarts, etc.
+// and so you might want to handle it and at least log it out
+pool.on("error", (err, client) => {
+    console.error("idle client error", err.message, err.stack);
+});
+
 ////////////////////////
 // Exported Functions
 
 // Put a route in the database
 export function putRoute(routeData: RouteDataModel): Promise<RouteDataModel> {
 
-    // At the moment, just return the demo id
-    return new Promise( (resolve, reject) => {
-        resolve(123);
-    }).then(rd => {
-        return rd;
+    logger.debug("routeData: " + JSON.stringify(routeData));
+    const geojsonstring = {
+        coordinates: routeData.route,
+        type: "LineString",
+    };
+
+    logger.debug("geojsonstring: " + JSON.stringify(geojsonstring));
+    return new Promise((resolve, reject) => {
+        // to run a query we can acquire a client from the pool,
+        // run a query on the client, and then return the client to the pool
+        pool.connect((err, client, done) => {
+            if (err) {
+                return console.error("error fetching client from pool", err);
+            }
+            const query = "INSERT INTO routes (route,departureTime,averageSpeed,owner) " +
+                "VALUES (ST_SetSRID(ST_GeomFromGeoJSON($1), 27700),$2,$3,$4) " +
+                "RETURNING id";
+            const sqlParams = [geojsonstring, routeData.departureTime, routeData.cyclingSpeed, routeData.user];
+            client.query(query, sqlParams, (error, result) => {
+                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
+                done(error);
+
+                if (error) {
+                    logger.error("error running query", error);
+                    reject("error running query: " + error);
+                }
+                logger.debug("Received the following: " + result);
+                // result.rows.forEach(row => {
+                //     logger.debug("routeid received" + row.id);
+                // });
+
+                // return the id of the new route
+                resolve(123);
+            });
+        });
     });
 }
 
 export function getRouteById(id) {
 
     // At the moment, just return an example route
-    return new Promise( (resolve, reject) => {
+    return new Promise((resolve, reject) => {
         let numericId = parseInt(id, 10);
         if (isNaN(numericId)) {
             reject("Invalid ID type");
         } else {
             resolve({
-                    cyclingSpeed: 10,
-                    departureTime: 18500,
-                    id: 123,
-                    route: {
-                        coordinates: [[0, 0], [1, 0], [1, 1]],
-                    },
-                    user: 123,
-                });
+                cyclingSpeed: 10,
+                departureTime: 18500,
+                id: 123,
+                route: {
+                    coordinates: [[0, 0], [1, 0], [1, 1]],
+                },
+                user: 123,
+            });
         }
-    }).then(rd => {
-        return rd;
     });
 }
 

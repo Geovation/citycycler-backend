@@ -56,17 +56,13 @@ const definitions = {
         type: "array",
     },
     Route: {
-        properties: {
-            coordinates: {
-                items: {
-                    minItems: 2,
-                    schema: {
-                        $ref: "#/definitions/Coordinate",
-                    },
-                },
-                type: "array",
+        items: {
+            minItems: 2,
+            schema: {
+                $ref: "#/definitions/Coordinate",
             },
         },
+        type: "array",
     },
     RouteData: {
         properties: {
@@ -99,10 +95,10 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     logger.debug("Processing new route for user " + payload.user);
 
     if (typeof payload.route !== "undefined") {
-        logger.debug("Route transmitted: \n" + payload.route);
+        logger.debug("Route transmitted: \n" + JSON.stringify(payload.route));
     }
 
-    return Datastore.putRoute(payload.route);
+    return Datastore.putRoute(payload);
 
 };
 
