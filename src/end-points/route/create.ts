@@ -56,6 +56,7 @@ const definitions = {
         type: "array",
     },
     Route: {
+        description: "A list of [lat,long] coordinates that make up the route.",
         items: {
             minItems: 2,
             schema: {
@@ -68,15 +69,22 @@ const definitions = {
     RouteData: {
         properties: {
             averageSpeed: {
+                description: "The average speed of the owner, in km/h.",
+                required: true,
                 type: "number",
             },
             departureTime: {
+                description: "The time in seconds past midnight that the owner will start their route.",
+                required: true,
                 type: "number",
             },
             owner: {
+                description: "The userId of the user who owns this route.",
+                required: true,
                 type: "number",
             },
             route: {
+                required: true,
                 schema: {
                     $ref: "#/definitions/Route",
                 },
