@@ -40,7 +40,8 @@ export function getRouteById(id) {
 
     // At the moment, just return an example route
     return new Promise( (resolve, reject) => {
-        if (typeof id !== "number") {
+        let numericId = parseInt(id)
+        if (isNaN(numericId)) {
             reject("Invalid ID type");
         } else {
             resolve({
