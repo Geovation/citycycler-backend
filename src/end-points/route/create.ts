@@ -98,7 +98,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
 
     logger.debug("Processing new route for user " + payload.user);
 
-    if (typeof payload.route !== undefined) {
+    if (typeof payload.route !== "undefined") {
         logger.debug("Route transmitted: \n" + payload.route);
     }
 

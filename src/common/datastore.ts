@@ -36,6 +36,27 @@ export function putRoute(routeData: RouteDataModel): Promise<RouteDataModel> {
     });
 }
 
+export function getRouteById(id) {
+
+    // At the moment, just return an example route
+    return new Promise( (resolve, reject) => {
+        if (typeof id !== "number") {
+            reject("Invalid ID type");
+        } else {
+            resolve({
+                    cyclingSpeed: 10,
+                    departureTime: 18500,
+                    route: {
+                        coordinates: [[0, 0], [1, 0], [1, 1]],
+                    },
+                    user: 123,
+                });
+        }
+    }).then(rd => {
+        return rd;
+    });
+}
+
 // export function saveImageMetadata(ownerId: string, imageMetadata: ImageMetadataModel): Promise<ImageResultModel> {
 //     const kindImage: DatastoreKind = "Image";
 //
