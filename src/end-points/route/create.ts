@@ -1,4 +1,4 @@
-import * as Datastore from "../../common/datastore";
+import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 import * as logger from "winston";
 
@@ -107,7 +107,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         logger.debug("Route transmitted: \n" + JSON.stringify(payload.route));
     }
 
-    return Datastore.putRoute(payload);
+    return Database.putRoute(payload);
 
 };
 

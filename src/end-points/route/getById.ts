@@ -1,4 +1,4 @@
-import * as Datastore from "../../common/datastore";
+import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 import * as logger from "winston";
 
@@ -50,7 +50,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
 
     logger.debug("Getting route by ID: " + id);
 
-    return Datastore.getRouteById(id);
+    return Database.getRouteById(id);
 };
 
 // end point definition
