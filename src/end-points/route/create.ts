@@ -1,6 +1,8 @@
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 
 import * as logger from "winston";
+import * as Datastore from "../../common/datastore";
+
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //
@@ -83,7 +85,7 @@ const definitions = {
             departureTime: {
                 type: "string",
             },
-            arrivalTime: {
+            cyclingSpeed: {
                 type: "string",
             },
             user: {
@@ -106,12 +108,9 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         logger.debug("Route transmitted: \n" + payload.route);
     }
 
-    // TODO: cache it
-    return new Promise((resolve, reject) => {
-      setTimeout(
-          () => {resolve("blabla");
-      }, 1000);
-    });
+
+    return Datastore.putRoute(payload.route);
+
 };
 
 // end point definition
