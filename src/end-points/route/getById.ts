@@ -16,7 +16,7 @@ const operation = {
         parameters: [
             {
                 description: "The route ID",
-                in: "body",
+                in: "query",
                 name: "id",
                 required: true,
                 type: "number",
@@ -46,11 +46,11 @@ const operation = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    const payload = params.body;
+    const id = params.id;
 
-    logger.debug("Getting route by ID: " + payload.id);
+    logger.debug("Getting route by ID: " + id);
 
-    return Datastore.getRouteById(payload.id);
+    return Datastore.getRouteById(id);
 };
 
 // end point definition

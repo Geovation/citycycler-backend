@@ -12,7 +12,7 @@ import * as logger from "winston";
 const operation = {
     post: {
         consumes: ["application/json"],
-        description: "creates a new route",
+        description: "Create a new route",
         parameters: [
             {
                 description: "The route and metadata about it",

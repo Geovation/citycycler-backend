@@ -28,9 +28,9 @@ import { RouteDataModel } from "./RouteDataModel";
 // Put a route in the database
 export function putRoute(routeData: RouteDataModel): Promise<RouteDataModel> {
 
-    // At the moment, just return the route that we have tried to store
+    // At the moment, just return the demo id
     return new Promise( (resolve, reject) => {
-        resolve(routeData);
+        resolve(123);
     }).then(rd => {
         return rd;
     });
@@ -40,13 +40,14 @@ export function getRouteById(id) {
 
     // At the moment, just return an example route
     return new Promise( (resolve, reject) => {
-        let numericId = parseInt(id)
+        let numericId = parseInt(id, 10);
         if (isNaN(numericId)) {
             reject("Invalid ID type");
         } else {
             resolve({
                     cyclingSpeed: 10,
                     departureTime: 18500,
+                    id: 123,
                     route: {
                         coordinates: [[0, 0], [1, 0], [1, 1]],
                     },
