@@ -99,7 +99,8 @@ export function getRouteById(id): Promise<RouteDataModel> {
                 if (err) {
                     return console.error("error fetching client from pool", err);
                 }
-                const query = "SELECT * FROM routes where id=$1";
+                const query = "SELECT id, owner, departuretime, averagespeed, ST_AsText(route) AS route " +
+                    "FROM routes where id=$1";
                 client.query(query, [numericId], (error, result) => {
                     // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
                     done(error);
@@ -110,13 +111,33 @@ export function getRouteById(id): Promise<RouteDataModel> {
                     }
 
                     // return the route
-                    resolve(result.rows[0]);
+                    resolve({
+                        averageSpeed: result.rows[0].averagespeed,
+                        departureTime: result.rows[0].departuretime,
+                        id: result.rows[0].id,
+                        owner: result.rows[0].owner,
+                        route: lineStringToCoords(result.rows[0].route),
+                    });
                 });
             });
         }
     });
 }
 
+function lineStringToCoords(lineStr: string): number[][] {
+    if (lineStr.slice(0, 11) !== "LINESTRING(") {
+        throw "Input is not a Linestring.";
+    }
+    let coords = [];
+    const coordStr = lineStr.slice(11, lineStr.length - 1);
+    coordStr.split(",").forEach((strPair) => {
+        coords.push([
+            parseInt(strPair.split(" ")[0], 10),
+            parseInt(strPair.split(" ")[1], 10),
+        ]);
+    });
+    return coords;
+}
 // export function saveImageMetadata(ownerId: string, imageMetadata: ImageMetadataModel): Promise<ImageResultModel> {
 //     const kindImage: DatastoreKind = "Image";
 //
