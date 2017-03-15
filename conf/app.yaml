@@ -12,8 +12,7 @@ env_variables:
   PROCESS_TYPE: "web"
   WITH_SERVICES: true
   NODE_PATH: .
-#  GOOGLE_APPLICATION_CREDENTIALS: conf/key-file.json
-#  GCLOUD_PROJECT: timepix-dev
+  # GCLOUD_PROJECT: matchmyroute-backend
 #  CLOUDSDK_CORE_PROJECT: timepix-dev
 #  DATASTORE_PROJECT_ID: timepix-dev
 #  # Testing App Engine Memcache service (currently in alpha)
