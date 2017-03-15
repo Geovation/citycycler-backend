@@ -40,7 +40,9 @@ const operation = {
         responses: {
             200: {
                 description: "Search was successful",
-                type: "string",
+                schema: {
+                    $ref: "#/definitions/RouteData",
+                },
             },
             default: {
                 description: "unexpected error",
@@ -52,6 +54,59 @@ const operation = {
         tags: [
             "routeretreival",
         ],
+    },
+};
+
+// DEFINITIONS
+
+const definitions = {
+    Coordinate: {
+        items: {
+            maxLength: 2,
+            minLength: 2,
+            type: "number",
+        },
+        type: "array",
+    },
+    Route: {
+        description: "A list of [lat,long] coordinates that make up the route.",
+        items: {
+            minItems: 2,
+            schema: {
+                $ref: "#/definitions/Coordinate",
+            },
+        },
+        type: "array",
+    },
+    RouteData: {
+        properties: {
+            averageSpeed: {
+                description: "The average speed of the owner, in km/h.",
+                type: "number",
+            },
+            departureTime: {
+                description: "The time in seconds past midnight that the owner will start their route.",
+                type: "number",
+            },
+            owner: {
+                description: "The userId of the user who owns this route.",
+                type: "number",
+            },
+            route: {
+                schema: {
+                    $ref: "#/definitions/Route",
+                },
+            },
+        },
+    },
+    RouteDatas: {
+        description: "A list of routes",
+        items: {
+            schema: {
+                $ref: "#/definitions/RouteData",
+            },
+        },
+        type: "array",
     },
 };
 
@@ -70,4 +125,5 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
 // end point definition
 export const getNearbyRoute = new MicroserviceEndpoint("getNearby")
     .addSwaggerOperation(operation)
+    .addSwaggerDefinitions(definitions)
     .addService(service);
