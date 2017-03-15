@@ -46,7 +46,7 @@ const operation = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    const id = params.id;
+    const id = parseInt(params.id, 10);
 
     logger.debug("Getting route by ID: " + id);
 

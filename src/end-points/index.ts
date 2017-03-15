@@ -2,5 +2,6 @@
 // import { purchases } from "./purchases";
 // import { users } from "./users";
 import { route } from "./route";
+import { nearby } from "./route/nearby";
 
-export const endpoints = [route];
+export const endpoints = [route, nearby];

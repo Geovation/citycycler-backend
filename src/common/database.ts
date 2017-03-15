@@ -87,44 +87,39 @@ export function putRoute(routeData: RouteDataModel): Promise<number> {
     });
 }
 
-export function getRouteById(id): Promise<RouteDataModel> {
+export function getRouteById(id: number): Promise<RouteDataModel> {
     return new Promise((resolve, reject) => {
-        let numericId = parseInt(id, 10);
-        if (isNaN(numericId)) {
-            reject("Invalid ID type");
-        } else {
-            // Acquire a client from the pool,
-            // run a query on the client, and then return the client to the pool
-            pool.connect((err, client, done) => {
-                if (err) {
-                    return console.error("error fetching client from pool", err);
+        // Acquire a client from the pool,
+        // run a query on the client, and then return the client to the pool
+        pool.connect((err, client, done) => {
+            if (err) {
+                return console.error("error fetching client from pool", err);
+            }
+            const query = "SELECT id, owner, departuretime, averagespeed, ST_AsText(route) AS route " +
+                "FROM routes where id=$1";
+            client.query(query, [id], (error, result) => {
+                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
+                done(error);
+
+                if (error) {
+                    logger.error("error running query", error);
+                    reject("error running query: " + error);
                 }
-                const query = "SELECT id, owner, departuretime, averagespeed, ST_AsText(route) AS route " +
-                    "FROM routes where id=$1";
-                client.query(query, [numericId], (error, result) => {
-                    // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                    done(error);
 
-                    if (error) {
-                        logger.error("error running query", error);
-                        reject("error running query: " + error);
-                    }
-
-                    if (result.rows[0]) {
-                        // return the route
-                        resolve({
-                            averageSpeed: result.rows[0].averagespeed,
-                            departureTime: result.rows[0].departuretime,
-                            id: result.rows[0].id,
-                            owner: result.rows[0].owner,
-                            route: lineStringToCoords(result.rows[0].route),
-                        });
-                    } else {
-                        reject("No route found.");
-                    }
-                });
+                if (result.rows[0]) {
+                    // return the route
+                    resolve({
+                        averageSpeed: result.rows[0].averagespeed,
+                        departureTime: result.rows[0].departuretime,
+                        id: result.rows[0].id,
+                        owner: result.rows[0].owner,
+                        route: lineStringToCoords(result.rows[0].route),
+                    });
+                } else {
+                    reject("No route found.");
+                }
             });
-        }
+        });
     });
 }
 
@@ -142,6 +137,45 @@ function lineStringToCoords(lineStr: string): number[][] {
     });
     return coords;
 }
+
+export function getRoutesNearby(radius: number, lat: number, lon: number): Promise<RouteDataModel[]> {
+    return new Promise((resolve, reject) => {
+        if (radius > 1000 || radius < 1) {
+            reject("Radius out of bounds");
+        }
+        // Acquire a client from the pool,
+        // run a query on the client, and then return the client to the pool
+        pool.connect((err, client, done) => {
+            if (err) {
+                return console.error("error fetching client from pool", err);
+            }
+            const query = "select id, owner, departuretime, averagespeed, ST_AsText(route) AS route from routes " +
+                "where ST_DISTANCE(route, ST_GeomFromText($2, 27700) ) < $1";
+            const geoJson = "POINT(" + lat + " " + lon + ")";
+            client.query(query, [radius, geoJson], (error, result) => {
+                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
+                done(error);
+
+                if (error) {
+                    logger.error("error running query", error);
+                    reject("error running query: " + error);
+                }
+
+                resolve(result.rows.map((row) => {
+                    return {
+                        averageSpeed: row.averagespeed,
+                        departureTime: row.departuretime,
+                        id: row.id,
+                        owner: row.owner,
+                        route: lineStringToCoords(row.route),
+                    };
+                }));
+            });
+        });
+
+    });
+}
+
 // export function saveImageMetadata(ownerId: string, imageMetadata: ImageMetadataModel): Promise<ImageResultModel> {
 //     const kindImage: DatastoreKind = "Image";
 //

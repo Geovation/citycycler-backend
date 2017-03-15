@@ -74,7 +74,7 @@ describe("MatchMyRoute API", () => {
     });
 
     describe("Routes", () => {
-        let validRouteId;
+        // let validRouteId;
         describe("Valid route creation", () => {
             request({
                 headers: {
@@ -102,7 +102,7 @@ describe("MatchMyRoute API", () => {
                     done();
                 });
 
-                //validRouteId = parseInt(JSON.parse(body).result, 10);
+                // validRouteId = parseInt(JSON.parse(body).result, 10);
             });
         });
     });
