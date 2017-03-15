@@ -28,10 +28,10 @@ import * as logger from "winston";
 // will be read if the config is not present
 const config = {
     database: "matchMyRoute", // env var: PGDATABASE
-    host: "35.190.143.196", // Server hosting the postgres database
+    // host: "35.190.143.196", // Server hosting the postgres database
+    host: "/cloudsql/" + process.env.DB_CONNECTION_NAME, // Server hosting the postgres database
     idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed
     max: 10, // max number of clients in the pool
-    password: "aUZw[:Gw38H&>Jf2hUwd", // env var: PGPASSWORD
     port: 5432, // env var: PGPORT
     user: "postgres", // env var: PGUSER
 };

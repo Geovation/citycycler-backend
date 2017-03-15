@@ -12,6 +12,8 @@ env_variables:
   PROCESS_TYPE: "web"
   WITH_SERVICES: true
   NODE_PATH: .
+  PGPASSWORD: "aUZw[:Gw38H&>Jf2hUwd"
+  DB_CONNECTION_NAME: "matchmyroute-backend:us-east1:matchmyroute-database"
   # GCLOUD_PROJECT: matchmyroute-backend
 #  CLOUDSDK_CORE_PROJECT: timepix-dev
 #  DATASTORE_PROJECT_ID: timepix-dev
@@ -29,9 +31,6 @@ env_variables:
 #  memory_gb: .18
 #  disk_size_gb: 10
 
-#beta_settings:
-#  # Enable Google Cloud Endpoints API management.
-#  use_endpoints_api_management: true
-#  # Specify the Swagger API specification.
-#  endpoints_swagger_spec_file: swagger.yaml:
-#  machine_type: f1-micro
+beta_settings:
+  # Connection to the database
+  cloud_sql_instances: matchmyroute-backend:us-east1:matchmyroute-database
