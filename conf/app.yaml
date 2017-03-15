@@ -16,8 +16,6 @@ env_variables:
 #  GCLOUD_PROJECT: timepix-dev
 #  CLOUDSDK_CORE_PROJECT: timepix-dev
 #  DATASTORE_PROJECT_ID: timepix-dev
-  IMAGES_URL: https://storage.googleapis.com/timepix-dev/images
-  FIREBASE_URL: https://timepix-dev.firebaseio.com
 #  # Testing App Engine Memcache service (currently in alpha)
 #  USE_GAE_MEMCACHE: 1
 #  # otherweise we can use another service such as redislab
