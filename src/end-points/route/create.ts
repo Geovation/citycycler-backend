@@ -28,7 +28,7 @@ const operation = {
         responses: {
             200: {
                 description: "New route was created",
-                type: "string",
+                type: "number",
             },
             default: {
                 description: "unexpected error",
