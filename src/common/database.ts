@@ -52,13 +52,10 @@ pool.on("error", (err, client) => {
 ////////////////////////
 // Exported Functions
 
-// Put a route in the database
+// Put a route in the database, returning the new database ID for the route
 export function putRoute(routeData: RouteDataModel): Promise<number> {
 
-    const geojsonstring = {
-        coordinates: routeData.route,
-        type: "LineString",
-    };
+    const wkt = coordsToLineString(routeData.route);
 
     return new Promise((resolve, reject) => {
         // to run a query we can acquire a client from the pool,
@@ -68,9 +65,9 @@ export function putRoute(routeData: RouteDataModel): Promise<number> {
                 return console.error("error fetching client from pool", err);
             }
             const query = "INSERT INTO routes (route,departureTime,averageSpeed,owner) " +
-                "VALUES (ST_SetSRID(ST_GeomFromGeoJSON($1), 27700),$2,$3,$4) " +
+                "VALUES (ST_SetSRID(ST_GeomFromText($1), 27700),$2,$3,$4) " +
                 "RETURNING id";
-            const sqlParams = [geojsonstring, routeData.departureTime, routeData.averageSpeed, routeData.owner];
+            const sqlParams = [wkt, routeData.departureTime, routeData.averageSpeed, routeData.owner];
             client.query(query, sqlParams, (error, result) => {
                 // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
                 done(error);
@@ -78,6 +75,7 @@ export function putRoute(routeData: RouteDataModel): Promise<number> {
                 if (error) {
                     logger.error("error running query", error);
                     reject("error running query: " + error);
+                    return;
                 }
 
                 // return the id of the new route
@@ -93,6 +91,7 @@ export function getRouteById(id: number): Promise<RouteDataModel> {
         // run a query on the client, and then return the client to the pool
         pool.connect((err, client, done) => {
             if (err) {
+                reject("error fetching client from pool" + err);
                 return console.error("error fetching client from pool", err);
             }
             const query = "SELECT id, owner, departuretime, averagespeed, ST_AsText(route) AS route " +
@@ -104,6 +103,7 @@ export function getRouteById(id: number): Promise<RouteDataModel> {
                 if (error) {
                     logger.error("error running query", error);
                     reject("error running query: " + error);
+                    return;
                 }
 
                 if (result.rows[0]) {
@@ -136,6 +136,12 @@ function lineStringToCoords(lineStr: string): number[][] {
         ]);
     });
     return coords;
+}
+
+function coordsToLineString(coords: number[][]): string {
+    return "LINESTRING(" + coords.map((pair) => {
+        return pair.join(" ");
+    }).join(",") + ")";
 }
 
 export function getRoutesNearby(radius: number, lat: number, lon: number): Promise<RouteDataModel[]> {
