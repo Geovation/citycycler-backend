@@ -10,43 +10,21 @@ describe("MatchMyRoute API", () => {
     const startServer = !process.env.URL;
     const url = process.env.URL || "http://localhost:8080";
     let server;
-    let result = {
-        body: null,
-        error: null,
-        response: null,
-    };
-    let origin = "*";
     beforeAll(done => {
         class AppEmitter extends EventEmitter { };
         const appEmitter = new AppEmitter();
         setupServer(appEmitter);
         appEmitter.on("ready", () => {
             if (startServer) {
+                console.log("Starting server");
+                // Set up some environment variables for the server (they only persist until the end of the node task)
                 server = app.listen(process.env.PORT || "8080", () => {
                     console.log("App listening on port %s", server.address().port);
                     console.log("Press Ctrl+C to quit.");
-                    finalDone();
-                });
-
-            } else {
-                finalDone();
-            }
-        });
-
-        function finalDone() {
-            request({
-                headers: {
-                    Origin: "https://www.example.com",
-                },
-                url: url,
-            },
-                (error, response, body) => {
-                    result.error = error;
-                    result.response = response;
-                    result.body = body;
                     done();
                 });
-        }
+            }
+        });
     });
 
     afterAll(done => {
@@ -63,46 +41,54 @@ describe("MatchMyRoute API", () => {
     });
 
     describe("root level", () => {
-        it("error not null", () => {
-            expect(result.error).to.be.null;
-            expect(result.response.statusCode).to.equal(200);
-        });
-
-        it("CORS is enabled", () => {
-            expect(result.response.headers["access-control-allow-origin"]).to.equal(origin);
-        });
-    });
-
-    describe("Routes", () => {
-        // let validRouteId;
-        describe("Valid route creation", () => {
+        it("error to be null", done => {
             request({
                 headers: {
                     Origin: "https://www.example.com",
                 },
-                json: {
-                    averageSpeed: 10,
-                    departureTime: 8500,
-                    owner: 1,
-                    route: [[0, 0], [1, 0], [1, 1]],
-                },
-                method: "POST",
-                url: "http://localhost:8080/route",
+                url: url,
             }, (error, response, body) => {
-                it("should return 200", (done) => {
-                    expect(response.statusCode).to.equal(200);
-                    done();
-                });
-                it("should return valid JSON", (done) => {
-                    expect(() => { JSON.parse(body); }).not.toThrow();
-                    done();
-                });
-                it("should return an integer Route ID", (done) => {
-                    expect(() => { parseInt(JSON.parse(body).result, 10); }).not.to.equal(NaN);
-                    done();
-                });
+                expect(error).to.be.null;
+                expect(response.statusCode).to.equal(200);
+                done();
+            });
+        });
 
-                // validRouteId = parseInt(JSON.parse(body).result, 10);
+        it("CORS to be enabled", done => {
+            request({
+                headers: {
+                    Origin: "https://www.example.com",
+                },
+                url: url,
+            }, (error, response, body) => {
+                expect(response.headers["access-control-allow-origin"]).to.equal("*");
+                done();
+            });
+        });
+    });
+
+    describe("Routes", () => {
+        let validRouteId;
+        describe("Valid route creation", () => {
+            it("should return 200, valid JS and an integer ID", done => {
+                request({
+                    json: {
+                        averageSpeed: 10,
+                        departureTime: 8500,
+                        owner: 1,
+                        route: [[0, 0], [1, 0], [1, 1]],
+                    },
+                    method: "POST",
+                    url: url + "/api/v0/route",
+                }, (error, response, body) => {
+                    expect(response.statusCode).to.equal(200);
+                    expect(error).to.be.null;
+                    expect(typeof body).to.equal("object");
+                    expect(parseInt(body.result, 10)).not.NaN;
+                    // Save this route ID so we can use it later
+                    validRouteId = parseInt(body.result, 10);
+                    done();
+                });
             });
         });
     });
