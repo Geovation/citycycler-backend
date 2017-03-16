@@ -192,3 +192,31 @@ export function deleteRoute(id: number): Promise<Boolean> {
         });
     });
 }
+
+// Put a new user in the database, returning the new user ID
+export function putUser(name, email, pwh, salt, rounds): Promise<number> {
+    return new Promise((resolve, reject) => {
+        // to run a query we can acquire a client from the pool,
+        // run a query on the client, and then return the client to the pool
+        pool.connect((err, client, done) => {
+            if (err) {
+                return console.error("error fetching client from pool", err);
+            }
+            const query = "INSERT INTO users (name, email, pwh, salt, rounds) " +
+                "VALUES ($1,$2,$3,$4,$5) RETURNING id";
+            const sqlParams = [name, email, pwh, salt, rounds];
+            client.query(query, sqlParams, (error, result) => {
+                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
+                done(error);
+
+                if (error) {
+                    logger.error("error running query", error);
+                    reject("error running query: " + error);
+                    return;
+                }
+                // return the id of the new route
+                resolve(result.rows[0].id);
+            });
+        });
+    });
+}
