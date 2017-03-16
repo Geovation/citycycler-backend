@@ -1,5 +1,6 @@
 // import * as _ from "lodash";
 import { RouteDataModel } from "./RouteDataModel";
+import { UserDataModel } from "./UserDataModel";
 import * as pg from "pg";
 import * as logger from "winston";
 
@@ -194,7 +195,7 @@ export function deleteRoute(id: number): Promise<Boolean> {
 }
 
 // Put a new user in the database, returning the new user ID
-export function putUser(name, email, pwh, salt, rounds): Promise<number> {
+export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<number> {
     return new Promise((resolve, reject) => {
         // to run a query we can acquire a client from the pool,
         // run a query on the client, and then return the client to the pool
@@ -202,9 +203,9 @@ export function putUser(name, email, pwh, salt, rounds): Promise<number> {
             if (err) {
                 return console.error("error fetching client from pool", err);
             }
-            const query = "INSERT INTO users (name, email, pwh, salt, rounds) " +
-                "VALUES ($1,$2,$3,$4,$5) RETURNING id";
-            const sqlParams = [name, email, pwh, salt, rounds];
+            const query = "INSERT INTO users (name, email, pwh, salt, rounds, jwt_secret) " +
+                "VALUES ($1,$2,$3,$4,$5,$6) RETURNING id";
+            const sqlParams = [name, email, pwh, salt, rounds, jwtSecret];
             client.query(query, sqlParams, (error, result) => {
                 // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
                 done(error);
@@ -216,6 +217,32 @@ export function putUser(name, email, pwh, salt, rounds): Promise<number> {
                 }
                 // return the id of the new route
                 resolve(result.rows[0].id);
+            });
+        });
+    });
+}
+
+// Get a user from the database by email
+export function getUserByEmail(email): Promise<UserDataModel> {
+    return new Promise((resolve, reject) => {
+        // to run a query we can acquire a client from the pool,
+        // run a query on the client, and then return the client to the pool
+        pool.connect((err, client, done) => {
+            if (err) {
+                return console.error("error fetching client from pool", err);
+            }
+            const query = "SELECT * FROM users WHERE email=$1";
+            client.query(query, [email], (error, result) => {
+                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
+                done(error);
+
+                if (error) {
+                    logger.error("error running query", error);
+                    reject("error running query: " + error);
+                    return;
+                }
+                // return the id of the new user
+                resolve(new UserDataModel(result.rows[0]));
             });
         });
     });

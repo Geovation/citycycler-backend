@@ -81,6 +81,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     // We are using PBKDF2 with 50000 iterations and sha512.
     const rounds = 50000;
     const salt = crypto.randomBytes(128);
+    const jwtSecret = crypto.randomBytes(20).toString("base64");
     return new Promise((resolve, reject) => {
         crypto.pbkdf2(password, salt, rounds, 512, "sha512", (err, key) => {
             if (err) {
@@ -90,7 +91,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
             }
         });
     }).then(pwh => {
-        return Database.putUser(name, email, pwh, salt, rounds);
+        return Database.putUser(name, email, pwh, salt, rounds, jwtSecret);
     }, err => {
         throw "Couldn't generate password hash: " + err;
     });

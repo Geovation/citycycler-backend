@@ -39,6 +39,7 @@
     "data.maybe": "^1.2.2",
     "es6-promisify": "^5.0.0",
     "joi": "^10.0.0",
+    "jsonwebtoken": "^7.3.0",
     "koa": "^1.2.4",
     "koa-cors": "0.0.16",
     "koa-qs": "^2.0.0",
