@@ -90,13 +90,7 @@ export function getRouteById(id: number): Promise<RouteDataModel> {
 
                 if (result.rows[0]) {
                     // return the route
-                    resolve({
-                        averageSpeed: result.rows[0].averagespeed,
-                        departureTime: result.rows[0].departuretime,
-                        id: result.rows[0].id,
-                        owner: result.rows[0].owner,
-                        route: lineStringToCoords(result.rows[0].route),
-                    });
+                    resolve(RouteDataModel.fromSQLRow(result.rows[0]));
                 } else {
                     reject("Route doesn't exist");
                 }
@@ -105,7 +99,7 @@ export function getRouteById(id: number): Promise<RouteDataModel> {
     });
 }
 
-function lineStringToCoords(lineStr: string): number[][] {
+export function lineStringToCoords(lineStr: string): number[][] {
     if (lineStr.slice(0, 11) !== "LINESTRING(") {
         throw "Input is not a Linestring.";
     }
@@ -120,7 +114,7 @@ function lineStringToCoords(lineStr: string): number[][] {
     return coords;
 }
 
-function coordsToLineString(coords: number[][]): string {
+export function coordsToLineString(coords: number[][]): string {
     return "LINESTRING(" + coords.map((pair) => {
         return pair.join(" ");
     }).join(",") + ")";
@@ -149,15 +143,7 @@ export function getRoutesNearby(radius: number, lat: number, lon: number): Promi
                     reject("error running query: " + error);
                 }
 
-                resolve(result.rows.map((row) => {
-                    return {
-                        averageSpeed: row.averagespeed,
-                        departureTime: row.departuretime,
-                        id: row.id,
-                        owner: row.owner,
-                        route: lineStringToCoords(row.route),
-                    };
-                }));
+                resolve(result.rows.map(RouteDataModel.fromSQLRow));
             });
         });
 
