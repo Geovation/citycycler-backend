@@ -8,7 +8,7 @@ const expect = chai.expect;
 
 describe("MatchMyRoute API", () => {
     const startServer = !process.env.URL;
-    // const url = process.env.URL || "http://localhost:8080";
+    const url = process.env.URL || "http://localhost:8080";
     let server;
     let result = {
         body: null,
@@ -38,7 +38,7 @@ describe("MatchMyRoute API", () => {
                 headers: {
                     Origin: "https://www.example.com",
                 },
-                url: "http://localhost:8080",
+                url: url,
             },
                 (error, response, body) => {
                     result.error = error;

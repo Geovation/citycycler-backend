@@ -29,7 +29,7 @@ export const setupServer = (eventEmitter) => {
         }));
 
     // serve files in public folder (css, js etc)
-    app.use(serve(path.join(process.cwd(), process.env.STATIC_DIR)));
+    app.use(serve(path.join(process.cwd(), process.env.STATIC_DIR || "build/static")));
 
     // Seneca setup
     const senecaWebConfig = {
