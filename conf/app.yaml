@@ -13,18 +13,8 @@ env_variables:
   WITH_SERVICES: true
   NODE_PATH: .
   PGPASSWORD: "aUZw[:Gw38H&>Jf2hUwd"
-  DB_CONNECTION_NAME: "matchmyroute-backend:us-east1:matchmyroute-database"
-  # GCLOUD_PROJECT: matchmyroute-backend
-#  CLOUDSDK_CORE_PROJECT: timepix-dev
-#  DATASTORE_PROJECT_ID: timepix-dev
-#  # Testing App Engine Memcache service (currently in alpha)
-#  USE_GAE_MEMCACHE: 1
-#  # otherweise we can use another service such as redislab
-#  # MEMCACHE_URL: pub-memcache-16904.us-east-1-2.1.ec2.garantiadata.com:16904
-#  # If you are using a Memcached server with SASL authentiation enabled,
-#  # fill in these values with your username and password.
-#  #  MEMCACHE_USERNAME: sebastian.ovide@geovation.uk
-#  #  MEMCACHE_PASSWORD: 4hflupdoTV1R
+  DB_CONNECTION_PATH: "/cloudsql/matchmyroute-backend:us-east1:matchmyroute-database"
+  DOCURL: "https://matchmyroute-backend.appspot.com"
 
 #resources:
 #  cpu: .1
