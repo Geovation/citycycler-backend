@@ -3,7 +3,7 @@
  */
 
 import * as _ from "lodash";
-import * as yaml from  "node-yaml";
+import * as yaml from "node-yaml";
 import * as path from "path";
 import * as logger from "winston";
 
@@ -85,10 +85,10 @@ const meta = {
                 "test",
             ],
             title: "AppMessage",
-             type: "object",
+            type: "object",
         },
         Error: {
-             properties: {
+            properties: {
                 detail: {
                     type: "object",
                 },
@@ -172,13 +172,13 @@ addHeaders(paths);
 _.merge(meta.paths, paths);
 _.merge(meta.definitions, servicesHelper.endpointCollection.endpointDefinitions());
 
-yaml.write(path.join(process.cwd(), "build/static/swagger.yaml"), meta, "utf8", (err) => {
+yaml.write(path.join(process.cwd(), "static/swagger.yaml"), meta, "utf8", (err) => {
     if (err) {
         throw err;
     }
     logger.log("info", "swagger.yaml saved");
 });
 
-export default function * (next) {
+export default function* (next) {
     return meta;
 };

@@ -29,7 +29,7 @@ export const setupServer = (eventEmitter) => {
         }));
 
     // serve files in public folder (css, js etc)
-    app.use(serve(path.join(process.cwd(), "build/static")));
+    app.use(serve(path.join(process.cwd(), "static")));
 
     // Seneca setup
     const senecaWebConfig = {
@@ -57,7 +57,7 @@ export const setupServer = (eventEmitter) => {
         app.use(senecaExport().routes());
 
         /* tslint:disable only-arrow-functions */
-        app.use(function * (next) {
+        app.use(function* (next) {
             if (this.path === "/swagger.json") {
                 try {
 
@@ -76,7 +76,7 @@ export const setupServer = (eventEmitter) => {
             }
         });
 
-        app.use(function * (next) {
+        app.use(function* (next) {
             yield next;
 
             this.body = JSON.stringify({

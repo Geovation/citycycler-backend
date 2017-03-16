@@ -41,7 +41,7 @@ const operation = {
             200: {
                 description: "Search was successful",
                 schema: {
-                    $ref: "#/definitions/RouteData",
+                    $ref: "#/definitions/RouteDatas",
                 },
             },
             default: {
