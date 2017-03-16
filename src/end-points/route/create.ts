@@ -13,7 +13,6 @@ import * as logger from "winston";
 const operation = {
     post: {
         consumes: ["application/json"],
-        description: "Create a new route",
         parameters: [
             {
                 description: "The route and metadata about it",
@@ -38,6 +37,7 @@ const operation = {
                 },
             },
         },
+        summary: "Create a new route",
         tags: [
             "routecreation",
         ],
@@ -47,22 +47,23 @@ const operation = {
 // DEFINITIONS
 
 const definitions = {
-    Coordinate: {
-        items: {
-            maxLength: 2,
-            minLength: 2,
-            type: "number",
-        },
-        required: true,
-        type: "array",
-    },
-    Route: {
+    CoordList: {
         description: "A list of [lat,long] coordinates that make up the route.",
+        example: [[0, 0], [1, 1]],
         items: {
             minItems: 2,
             schema: {
                 $ref: "#/definitions/Coordinate",
             },
+        },
+        required: true,
+        type: "array",
+    },
+    Coordinate: {
+        items: {
+            maxLength: 2,
+            minLength: 2,
+            type: "integer",
         },
         required: true,
         type: "array",
@@ -77,17 +78,17 @@ const definitions = {
             departureTime: {
                 description: "The time in seconds past midnight that the owner will start their route.",
                 required: true,
-                type: "number",
+                type: "integer",
             },
             owner: {
                 description: "The userId of the user who owns this route.",
                 required: true,
-                type: "number",
+                type: "integer",
             },
             route: {
                 required: true,
                 schema: {
-                    $ref: "#/definitions/Route",
+                    $ref: "#/definitions/CoordList",
                 },
             },
 

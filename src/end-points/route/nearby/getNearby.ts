@@ -12,14 +12,17 @@ import * as logger from "winston";
 const operation = {
     get: {
         consumes: ["application/json"],
-        description: "Find routes near a given point",
         parameters: [
             {
                 description: "The radius in which to search for routes, in meters.",
+                example: 100,
+                format: "int32",
                 in: "query",
+                max: 1000,
+                min: 1,
                 name: "radius",
                 required: true,
-                type: "number",
+                type: "integer",
             },
             {
                 description: "The lattitude of the center of the circle in which to search for routes.",
@@ -51,6 +54,7 @@ const operation = {
                 },
             },
         },
+        summary: "Find routes near a given point",
         tags: [
             "routeretreival",
         ],
@@ -60,21 +64,22 @@ const operation = {
 // DEFINITIONS
 
 const definitions = {
-    Coordinate: {
-        items: {
-            maxLength: 2,
-            minLength: 2,
-            type: "number",
-        },
-        type: "array",
-    },
-    Route: {
+    CoordList: {
         description: "A list of [lat,long] coordinates that make up the route.",
+        example: [[0, 0], [1, 1]],
         items: {
             minItems: 2,
             schema: {
                 $ref: "#/definitions/Coordinate",
             },
+        },
+        type: "array",
+    },
+    Coordinate: {
+        items: {
+            maxLength: 2,
+            minLength: 2,
+            type: "number",
         },
         type: "array",
     },
@@ -86,15 +91,15 @@ const definitions = {
             },
             departureTime: {
                 description: "The time in seconds past midnight that the owner will start their route.",
-                type: "number",
+                type: "integer",
             },
             owner: {
                 description: "The userId of the user who owns this route.",
-                type: "number",
+                type: "integer",
             },
             route: {
                 schema: {
-                    $ref: "#/definitions/Route",
+                    $ref: "#/definitions/CoordList",
                 },
             },
         },
