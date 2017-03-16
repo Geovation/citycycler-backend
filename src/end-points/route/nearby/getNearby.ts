@@ -15,11 +15,10 @@ const operation = {
         parameters: [
             {
                 description: "The radius in which to search for routes, in meters.",
-                example: 100,
                 format: "int32",
                 in: "query",
-                max: 1000,
-                min: 1,
+                maximum: 1000,
+                minimum: 1,
                 name: "radius",
                 required: true,
                 type: "integer",

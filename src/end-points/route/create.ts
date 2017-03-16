@@ -27,7 +27,6 @@ const operation = {
         responses: {
             200: {
                 description: "New route was created",
-                type: "number",
             },
             default: {
                 description: "unexpected error",
@@ -85,7 +84,6 @@ const definitions = {
                 type: "integer",
             },
             route: {
-                required: true,
                 schema: {
                     $ref: "#/definitions/CoordList",
                 },
