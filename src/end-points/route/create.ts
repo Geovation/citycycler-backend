@@ -1,6 +1,6 @@
+import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 
-import * as pg from "pg";
 import * as logger from "winston";
 
 // /////////////////////////////////////////////////////////////
@@ -13,7 +13,7 @@ import * as logger from "winston";
 const operation = {
     post: {
         consumes: ["application/json"],
-        description: "creates a new route",
+        description: "Create a new route",
         parameters: [
             {
                 description: "The route and metadata about it",
@@ -29,7 +29,7 @@ const operation = {
         responses: {
             200: {
                 description: "New route was created",
-                type: "string",
+                type: "number",
             },
             default: {
                 description: "unexpected error",
@@ -57,38 +57,40 @@ const definitions = {
         type: "array",
     },
     Route: {
-        properties: {
-            coordinates: {
-                items: {
-                    minItems: 2,
-                    schema: {
-                        $ref: "#/definitions/Coordinate",
-                    },
-                },
-                type: "array",
-            },
-            type: {
-                pattern: "LineString",
-                type: "string",
+        description: "A list of [lat,long] coordinates that make up the route.",
+        items: {
+            minItems: 2,
+            schema: {
+                $ref: "#/definitions/Coordinate",
             },
         },
+        required: true,
+        type: "array",
     },
     RouteData: {
         properties: {
-            arrivalTime: {
-                type: "string",
+            averageSpeed: {
+                description: "The average speed of the owner, in km/h.",
+                required: true,
+                type: "number",
             },
             departureTime: {
-                type: "string",
+                description: "The time in seconds past midnight that the owner will start their route.",
+                required: true,
+                type: "number",
+            },
+            owner: {
+                description: "The userId of the user who owns this route.",
+                required: true,
+                type: "number",
             },
             route: {
+                required: true,
                 schema: {
                     $ref: "#/definitions/Route",
                 },
             },
-            user: {
-                type: "number",
-            },
+
         },
         required: true,
     },
@@ -104,18 +106,11 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     logger.debug("Processing new route for user " + payload.user);
 
     if (typeof payload.route !== "undefined") {
-        logger.debug("Route transmitted: \n" + payload.route);
-        const geojsonString = JSON.stringify(payload.route);
-        storeRoute(geojsonString);
+        logger.debug("Route transmitted: \n" + JSON.stringify(payload.route));
     }
 
-    // TODO: cache it
-    return new Promise((resolve, reject) => {
-        setTimeout(
-            () => {
-                resolve("blabla");
-            }, 1000);
-    });
+    return Database.putRoute(payload);
+
 };
 
 const storeRoute = (route: string) => {

@@ -4,8 +4,10 @@ import { EndpointCollection } from "../../microservices-framework/web/services/e
 
 // Import Endpoints
 import { create } from "./create";
+import { getRouteById } from "./getById";
 
 export const route: EndpointCollection = new EndpointCollection(path.parse(__dirname).name);
 
 // export Endpoints
 route.addEndpoint(create);
+route.addEndpoint(getRouteById);

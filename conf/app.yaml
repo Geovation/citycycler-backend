@@ -12,29 +12,15 @@ env_variables:
   PROCESS_TYPE: "web"
   WITH_SERVICES: true
   NODE_PATH: .
-#  GOOGLE_APPLICATION_CREDENTIALS: conf/key-file.json
-#  GCLOUD_PROJECT: timepix-dev
-#  CLOUDSDK_CORE_PROJECT: timepix-dev
-#  DATASTORE_PROJECT_ID: timepix-dev
-  IMAGES_URL: https://storage.googleapis.com/timepix-dev/images
-  FIREBASE_URL: https://timepix-dev.firebaseio.com
-#  # Testing App Engine Memcache service (currently in alpha)
-#  USE_GAE_MEMCACHE: 1
-#  # otherweise we can use another service such as redislab
-#  # MEMCACHE_URL: pub-memcache-16904.us-east-1-2.1.ec2.garantiadata.com:16904
-#  # If you are using a Memcached server with SASL authentiation enabled,
-#  # fill in these values with your username and password.
-#  #  MEMCACHE_USERNAME: sebastian.ovide@geovation.uk
-#  #  MEMCACHE_PASSWORD: 4hflupdoTV1R
+  PGPASSWORD: "aUZw[:Gw38H&>Jf2hUwd"
+  DB_CONNECTION_PATH: "/cloudsql/matchmyroute-backend:us-east1:matchmyroute-database"
+  DOCURL: "https://matchmyroute-backend.appspot.com"
 
 #resources:
 #  cpu: .1
 #  memory_gb: .18
 #  disk_size_gb: 10
 
-#beta_settings:
-#  # Enable Google Cloud Endpoints API management.
-#  use_endpoints_api_management: true
-#  # Specify the Swagger API specification.
-#  endpoints_swagger_spec_file: swagger.yaml:
-#  machine_type: f1-micro
+beta_settings:
+  # Connection to the database
+  cloud_sql_instances: matchmyroute-backend:us-east1:matchmyroute-database

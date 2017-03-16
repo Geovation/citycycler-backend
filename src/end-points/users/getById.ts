@@ -1,9 +1,9 @@
-import * as Maybe from "data.maybe";
+// import * as Maybe from "data.maybe";
 
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 
-import * as Auth from "../../common/auth";
-import * as Datastore from "../../common/datastore";
+// import * as Auth from "../../common/auth";
+// import * as Datastore from "../../common/datastore";
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //
@@ -62,18 +62,18 @@ const operation = {
 // SENECA: start //
 // ////////////////
 
-const service = (broadcast: Function, params: any): any => {
-    const id: string = Maybe.fromNullable(params.id).getOrElse("");
-    const idtoken: string = Maybe.fromNullable(params.idtoken).getOrElse("");
-
-    return Auth.isUser(idtoken, id)
-        .then( () => Datastore.getUserById(id));
-};
+// const service = (broadcast: Function, params: any): any => {
+//     const id: string = Maybe.fromNullable(params.id).getOrElse("");
+//     const idtoken: string = Maybe.fromNullable(params.idtoken).getOrElse("");
+//
+//     return Auth.isUser(idtoken, id)
+//         .then( () => Datastore.getUserById(id));
+// };
 
 // //////////////
 // SENECA: end //
 // //////////////
 
 export const getById = new MicroserviceEndpoint("loadUser")
-    .addSwaggerOperation(operation)
-    .addService(service);
+    .addSwaggerOperation(operation);
+    // .addService(service);
