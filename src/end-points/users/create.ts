@@ -98,7 +98,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
 };
 
 // end point definition
-export const createUser = new MicroserviceEndpoint("create")
+export const createUser = new MicroserviceEndpoint("createUser")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);

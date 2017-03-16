@@ -84,8 +84,8 @@ const definitions = {
     },
     RouteData: {
         properties: {
-            averageSpeed: {
-                description: "The average speed of the owner, in km/h.",
+            arrivalTime: {
+                description: "The time in seconds past midnight that the owner will arrive at their destination.",
                 type: "number",
             },
             departureTime: {

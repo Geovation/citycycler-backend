@@ -68,10 +68,10 @@ const definitions = {
     },
     RouteData: {
         properties: {
-            averageSpeed: {
-                description: "The average speed of the owner, in km/h.",
+            arrivalTime: {
+                description: "The time in seconds past midnight that the owner arrives at their destination.",
                 required: true,
-                type: "number",
+                type: "integer",
             },
             departureTime: {
                 description: "The time in seconds past midnight that the owner will start their route.",
@@ -104,7 +104,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
 };
 
 // end point definition
-export const createRoute = new MicroserviceEndpoint("create")
+export const createRoute = new MicroserviceEndpoint("createRoute")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);
