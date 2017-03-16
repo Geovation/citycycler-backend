@@ -3,7 +3,7 @@ import { UserDataModel } from "../../../common/UserDataModel";
 import { MicroserviceEndpoint } from "../../../microservices-framework/web/services/microservice-endpoint";
 import * as crypto from "crypto";
 import * as jwt from "jsonwebtoken";
-import * as logger from "winston";
+// import * as logger from "winston";
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //
@@ -76,22 +76,17 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     const { email, password } = payload;
     // Check that the password has matches what we have stored.
     // TODO: Check that the user's stored rounds is current. Re-hash if not.
-    const rounds = 50000;
     return Database.getUserByEmail(email).then((user) => {
         return new Promise((resolve, reject) => {
             crypto.pbkdf2(password, user.salt, user.rounds, 512, "sha512", (err, key) => {
                 if (err) {
                     reject(err);
                 } else if (Buffer.compare(key, user.pwh) === 0) {
-                    resolve(true);
+                    resolve(generateJWTFor(user));
                 } else {
                     reject("Invalid password");
                 }
             });
-        }).then(success => {
-            return generateJWTFor(user);
-        }, err => {
-            throw err;
         });
     });
 };

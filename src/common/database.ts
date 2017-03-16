@@ -241,7 +241,33 @@ export function getUserByEmail(email): Promise<UserDataModel> {
                     reject("error running query: " + error);
                     return;
                 }
-                // return the id of the new user
+                // return the user
+                resolve(new UserDataModel(result.rows[0]));
+            });
+        });
+    });
+}
+
+// Get a user from the database by ID
+export function getUserById(id): Promise<UserDataModel> {
+    return new Promise((resolve, reject) => {
+        // to run a query we can acquire a client from the pool,
+        // run a query on the client, and then return the client to the pool
+        pool.connect((err, client, done) => {
+            if (err) {
+                return console.error("error fetching client from pool", err);
+            }
+            const query = "SELECT * FROM users WHERE id=$1";
+            client.query(query, [id], (error, result) => {
+                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
+                done(error);
+
+                if (error) {
+                    logger.error("error running query", error);
+                    reject("error running query: " + error);
+                    return;
+                }
+                // return the user
                 resolve(new UserDataModel(result.rows[0]));
             });
         });
