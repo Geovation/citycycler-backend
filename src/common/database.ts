@@ -97,7 +97,7 @@ export function getRouteById(id: number): Promise<RouteDataModel> {
                         route: lineStringToCoords(result.rows[0].route),
                     });
                 } else {
-                    reject("No route found.");
+                    reject("Route doesn't exist");
                 }
             });
         });
@@ -160,5 +160,35 @@ export function getRoutesNearby(radius: number, lat: number, lon: number): Promi
             });
         });
 
+    });
+}
+
+export function deleteRoute(id: number): Promise<Boolean> {
+    return new Promise((resolve, reject) => {
+        // Acquire a client from the pool,
+        // run a query on the client, and then return the client to the pool
+        pool.connect((err, client, done) => {
+            if (err) {
+                reject("error fetching client from pool" + err);
+                return console.error("error fetching client from pool", err);
+            }
+            const query = "DELETE FROM ROUTES where id=$1";
+            client.query(query, [id], (error, result) => {
+                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
+                done(error);
+
+                if (error) {
+                    logger.error("error running query", error);
+                    reject("error running query: " + error);
+                    return;
+                }
+
+                if (result.rowCount) {
+                    resolve(true);
+                } else {
+                    reject("Route doesn't exist");
+                }
+            });
+        });
     });
 }

@@ -56,7 +56,7 @@ const operation = {
         },
         summary: "Find routes near a given point",
         tags: [
-            "routeretreival",
+            "Route Retreival",
         ],
     },
 };

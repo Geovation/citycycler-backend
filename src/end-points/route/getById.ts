@@ -1,6 +1,6 @@
 import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
-import * as logger from "winston";
+// import * as logger from "winston";
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //
@@ -38,7 +38,7 @@ const operation = {
         },
         summary: "Retreive a route by it's ID",
         tags: [
-            "routeretreival",
+            "Route Retreival",
         ],
     },
 };
@@ -94,9 +94,6 @@ const definitions = {
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const id = parseInt(params.id, 10);
-
-    logger.debug("Getting route by ID: " + id);
-
     return Database.getRouteById(id);
 };
 

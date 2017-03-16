@@ -1,7 +1,6 @@
 import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
-
-import * as logger from "winston";
+// import * as logger from "winston";
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //
@@ -39,7 +38,7 @@ const operation = {
         },
         summary: "Create a new route",
         tags: [
-            "routecreation",
+            "Route Creation",
         ],
     },
 };
@@ -103,19 +102,11 @@ const definitions = {
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
-
-    logger.debug("Processing new route for user " + payload.user);
-
-    if (typeof payload.route !== "undefined") {
-        logger.debug("Route transmitted: \n" + JSON.stringify(payload.route));
-    }
-
     return Database.putRoute(payload);
-
 };
 
 // end point definition
-export const create = new MicroserviceEndpoint("create")
+export const createRoute = new MicroserviceEndpoint("create")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);
