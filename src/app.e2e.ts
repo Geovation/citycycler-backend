@@ -46,7 +46,7 @@ describe("MatchMyRoute API", () => {
                 headers: {
                     Origin: "https://www.example.com",
                 },
-                url: url,
+                url,
             }, (error, response, body) => {
                 expect(error).to.be.null;
                 expect(response.statusCode).to.equal(200);
@@ -59,7 +59,7 @@ describe("MatchMyRoute API", () => {
                 headers: {
                     Origin: "https://www.example.com",
                 },
-                url: url,
+                url,
             }, (error, response, body) => {
                 expect(response.headers["access-control-allow-origin"]).to.equal("*");
                 done();
@@ -70,7 +70,7 @@ describe("MatchMyRoute API", () => {
     describe("Routes", () => {
         let validRouteId;
         describe("Valid route creation", () => {
-            it("should return 200, valid JS and an integer ID", done => {
+            it("should create a valid route", done => {
                 request({
                     json: {
                         averageSpeed: 10,
@@ -87,6 +87,33 @@ describe("MatchMyRoute API", () => {
                     expect(parseInt(body.result, 10)).not.NaN;
                     // Save this route ID so we can use it later
                     validRouteId = parseInt(body.result, 10);
+                    done();
+                });
+            });
+        });
+        describe("Route retreival by ID", () => {
+            it("should get back the route that we just made", done => {
+                request({
+                    url: url + "/api/v0/route?id=" + validRouteId,
+                }, (error, response, body) => {
+                    expect(response.statusCode).to.equal(200);
+                    expect(typeof body).to.equal("string");
+                    let route = {
+                        averageSpeed: 10,
+                        departureTime: 8500,
+                        owner: 1,
+                        route: [[0, 0], [1, 0], [1, 1]],
+                    };
+                    expect(JSON.parse(body).result).to.contain.all.keys(route);
+                    expect(JSON.parse(body).result).to.contain.all.keys(["id"]);
+                    done();
+                });
+            });
+            it("should return a 500 when we use an invalid ID", done => {
+                request({
+                    url: url + "/api/v0/route?id=-1",   // -1 should always be an invalid id
+                }, (error, response, body) => {
+                    expect(response.statusCode).to.equal(500);
                     done();
                 });
             });
