@@ -172,7 +172,7 @@ addHeaders(paths);
 _.merge(meta.paths, paths);
 _.merge(meta.definitions, servicesHelper.endpointCollection.endpointDefinitions());
 
-yaml.write(path.join(process.cwd(), process.env.STATIC_DIR + "/swagger.yaml"), meta, "utf8", (err) => {
+yaml.write(path.join(process.cwd(), (process.env.STATIC_DIR || "build/static") + "/swagger.yaml"), meta, "utf8", (err) => {
     if (err) {
         throw err;
     }
