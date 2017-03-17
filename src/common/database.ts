@@ -1,6 +1,7 @@
 // import * as _ from "lodash";
 import { RouteDataModel } from "./RouteDataModel";
 import { UserFullDataModel } from "./UserFullDataModel";
+import { UserLiteDataModel } from "./UserLiteDataModel";
 import * as pg from "pg";
 import * as logger from "winston";
 
