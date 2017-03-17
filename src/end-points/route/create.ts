@@ -1,3 +1,4 @@
+import { isUser } from "../../common/auth";
 import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 // import * as logger from "winston";
@@ -21,6 +22,13 @@ const operation = {
                 schema: {
                     $ref: "#/definitions/RouteData",
                 },
+            },
+            {
+                description: "The user's JWT token",
+                in: "header",
+                name: "Authorisation",
+                required: true,
+                type: "string",
             },
         ],
         produces: ["application/json; charset=utf-8"],
@@ -110,7 +118,12 @@ const definitions = {
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
-    return Database.putRoute(payload);
+    if (isUser(params.authorisation, payload.owner)) {
+        return Database.putRoute(payload);
+    } else {
+        return new Promise((resolve, reject) => { reject("Invalid authorisation"); });
+    }
+
 };
 
 // end point definition

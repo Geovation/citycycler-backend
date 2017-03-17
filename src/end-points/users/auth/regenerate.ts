@@ -67,11 +67,7 @@ const definitions = {
 
 export const service = (broadcast: Function, params: any): Promise<string> => {
     return new Promise((resolve, reject) => {
-        const [scheme, oldToken] = params.authorisation.split(" ");
-        if (scheme !== "Bearer") {
-            reject("Invalid Authorisation scheme. This API requires 'Bearer JWT'");
-        }
-        getIdFromJWT(oldToken).then(userid => {
+        getIdFromJWT(params.authorisation).then(userid => {
             Database.getUserById(userid).then(user => {
                 resolve(generateJWTFor(user));
             });

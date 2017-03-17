@@ -3,22 +3,26 @@ import { UserDataModel } from "./UserDataModel";
 import * as jwt from "jsonwebtoken";
 
 /**
- * check if the token belongs to the given user
- * @param token
+ * check if the header was authorsed by the given user
+ * @param authHeader
  * @param uid
  */
-export function isUser(token: string, uid: number): Promise<boolean> {
-    return getIdFromJWT(token)
+export function isUser(authHeader: string, uid: number): Promise<boolean> {
+    return getIdFromJWT(authHeader)
         .then(id => {
             return id === uid;
-        }) as Promise<any>;
+        });
 }
 
 /**
  * Return the user ID from a given token, after verifying that this is the correct user
- * @param token
+ * @param authHeader
  */
-export function getIdFromJWT(token: string): Promise<number> {
+export function getIdFromJWT(authHeader: string): Promise<number> {
+    const [scheme, token] = authHeader.split(" ");
+    if (scheme !== "Bearer") {
+        throw "Invalid Authorisation scheme. This API requires 'Bearer JWT'";
+    }
     const payload = jwt.decode(token, {
         json: true,
     });

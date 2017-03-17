@@ -1,3 +1,4 @@
+import { isUser } from "../../common/auth";
 import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 // import * as logger from "winston";
@@ -19,6 +20,13 @@ const operation = {
                 name: "id",
                 required: true,
                 type: "integer",
+            },
+            {
+                description: "The user's JWT token",
+                in: "header",
+                name: "Authorisation",
+                required: true,
+                type: "string",
             },
         ],
         produces: ["application/json; charset=utf-8"],
@@ -47,8 +55,11 @@ const operation = {
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const id = parseInt(params.id, 10);
 
-    return Database.deleteRoute(id);
-
+    if (isUser(params.authorisation, id)) {
+        return Database.deleteRoute(id);
+    } else {
+        return new Promise((resolve, reject) => { reject("Invalid authorisation"); });
+    }
 };
 
 // end point definition
