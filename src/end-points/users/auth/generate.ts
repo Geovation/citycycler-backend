@@ -31,6 +31,9 @@ const operation = {
         responses: {
             200: {
                 description: "User was authorised",
+                schema: {
+                    $ref: "#/definitions/JWTResponse",
+                },
             },
             default: {
                 description: "unexpected error",
@@ -65,6 +68,16 @@ const definitions = {
         },
         required: true,
     },
+    JWTResponse: {
+        description: "The JWT generated",
+        properties: {
+            result: {
+                example: "eyJhbGciOiJI...28ZZEY",
+                required: true,
+                type: "string",
+            },
+        },
+    },
 };
 
 // ///////////////
@@ -92,7 +105,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
 };
 
 // end point definition
-export const generate = new MicroserviceEndpoint("auth")
+export const generate = new MicroserviceEndpoint("newAuth")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);

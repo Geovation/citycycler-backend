@@ -30,7 +30,7 @@ const operation = {
             200: {
                 description: "New user was created",
                 schema: {
-                    $ref: "#/definitions/CreateResult",
+                    $ref: "#/definitions/CreateResponse",
                 },
             },
             default: {
@@ -50,22 +50,31 @@ const operation = {
 // DEFINITIONS
 
 const definitions = {
-    CreateResult: {
+    CreateResponse: {
         description: "The new user's ID and an authorised JWT",
         properties: {
             result: {
-                properties: {
-                    id: {
-                        description: "The new user's ID",
-                        format: "int32",
-                        type: "number",
-                    },
-                    jwt: {
-                        description: "The authorised JWT",
-                        type: "string",
-                    },
+                required: true,
+                schema: {
+                    $ref: "#/definitions/Result",
                 },
                 type: "object",
+            },
+        },
+    },
+    Result: {
+        properties: {
+            id: {
+                description: "The new user's ID",
+                format: "int32",
+                required: true,
+                type: "number",
+            },
+            jwt: {
+                description: "The authorised JWT",
+                example: "eyJhbGciOiJI...28ZZEY",
+                required: true,
+                type: "string",
             },
         },
     },

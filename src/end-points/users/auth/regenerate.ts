@@ -82,6 +82,6 @@ export const service = (broadcast: Function, params: any): Promise<string> => {
 };
 
 // end point definition
-export const regenerate = new MicroserviceEndpoint("auth")
+export const regenerate = new MicroserviceEndpoint("reAuth")
     .addSwaggerOperation(operation)
     .addService(service);
