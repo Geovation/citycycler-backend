@@ -1,4 +1,4 @@
-// import { config } from "./microservices-framework/config";
+/* tslint:disable */
 import { app, gracefulShutdown, setupServer } from "./microservices-framework/web/server";
 import * as chai from "chai";
 import * as EventEmitter from "events";

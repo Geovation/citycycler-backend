@@ -65,6 +65,7 @@
     "@types/seneca": "^2.1.5",
     "@types/winston": "^2.2.0",
     "chai": "^3.5.0",
+    "chai-as-promised": "^6.0.0",
     "dredd": "^2.2.5",
     "gulp": "^3.9.1",
     "gulp-clean": "^0.3.2",

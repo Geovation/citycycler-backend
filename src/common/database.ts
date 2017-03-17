@@ -35,6 +35,31 @@ pool.on("error", (err, client) => {
 ////////////////////////
 // Exported Functions
 
+// Execute an arbritary SQL command.
+export function sql(query: string, params: Array<string> = []): Promise<any> {
+    return new Promise((resolve, reject) => {
+        // to run a query we can acquire a client from the pool,
+        // run a query on the client, and then return the client to the pool
+        pool.connect((err, client, done) => {
+            if (err) {
+                console.error("error fetching client from pool", err);
+                resolve(err);
+            }
+            client.query(query, params, (error, result) => {
+                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
+                done(error);
+
+                if (error) {
+                    // logger.error("error running query", error);
+                    reject("error running query: " + error);
+                    return;
+                }
+                resolve(result);
+            });
+        });
+    });
+}
+
 // Put a route in the database, returning the new database ID for the route
 export function putRoute(routeData: RouteDataModel): Promise<number> {
 
@@ -56,7 +81,7 @@ export function putRoute(routeData: RouteDataModel): Promise<number> {
                 done(error);
 
                 if (error) {
-                    logger.error("error running query", error);
+                    // logger.error("error running query", error);
                     reject("error running query: " + error);
                     return;
                 }
@@ -84,7 +109,7 @@ export function getRouteById(id: number): Promise<RouteDataModel> {
                 done(error);
 
                 if (error) {
-                    logger.error("error running query", error);
+                    // logger.error("error running query", error);
                     reject("error running query: " + error);
                     return;
                 }
@@ -140,7 +165,7 @@ export function getRoutesNearby(radius: number, lat: number, lon: number): Promi
                 done(error);
 
                 if (error) {
-                    logger.error("error running query", error);
+                    // logger.error("error running query", error);
                     reject("error running query: " + error);
                 }
 
@@ -160,13 +185,13 @@ export function deleteRoute(id: number): Promise<Boolean> {
                 reject("error fetching client from pool" + err);
                 return console.error("error fetching client from pool", err);
             }
-            const query = "DELETE FROM ROUTES where id=$1";
+            const query = "DELETE FROM routes WHERE id=$1";
             client.query(query, [id], (error, result) => {
                 // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
                 done(error);
 
                 if (error) {
-                    logger.error("error running query", error);
+                    // logger.error("error running query", error);
                     reject("error running query: " + error);
                     return;
                 }
@@ -198,7 +223,7 @@ export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<User
                 done(error);
 
                 if (error) {
-                    logger.error("error running query", error);
+                    // logger.error("error running query", error);
                     reject("error running query: " + error);
                     return;
                 }
@@ -224,12 +249,16 @@ export function getUserByEmail(email: string): Promise<UserFullDataModel> {
                 done(error);
 
                 if (error) {
-                    logger.error("error running query", error);
+                    // logger.error("error running query", error);
                     reject("error running query: " + error);
                     return;
                 }
                 // return the user
-                resolve(new UserLiteDataModel(result.rows[0]));
+                if (result.rowCount) {
+                    resolve(new UserFullDataModel(result.rows[0]));
+                } else {
+                    reject("User doesn't exist");
+                }
             });
         });
     });
@@ -250,12 +279,47 @@ export function getUserById(id: number): Promise<UserFullDataModel> {
                 done(error);
 
                 if (error) {
-                    logger.error("error running query", error);
+                    // logger.error("error running query", error);
                     reject("error running query: " + error);
                     return;
                 }
                 // return the user
-                resolve(new UserFullDataModel(result.rows[0]));
+                if (result.rowCount) {
+                    resolve(new UserFullDataModel(result.rows[0]));
+                } else {
+                    reject("User doesn't exist");
+                }
+            });
+        });
+    });
+}
+
+
+export function deleteUser(id: number): Promise<Boolean> {
+    return new Promise((resolve, reject) => {
+        // Acquire a client from the pool,
+        // run a query on the client, and then return the client to the pool
+        pool.connect((err, client, done) => {
+            if (err) {
+                reject("error fetching client from pool" + err);
+                return console.error("error fetching client from pool", err);
+            }
+            const query = "DELETE FROM users WHERE id=$1";
+            client.query(query, [id], (error, result) => {
+                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
+                done(error);
+
+                if (error) {
+                    // logger.error("error running query", error);
+                    reject("error running query: " + error);
+                    return;
+                }
+
+                if (result.rowCount) {
+                    resolve(true);
+                } else {
+                    reject("User doesn't exist");
+                }
             });
         });
     });

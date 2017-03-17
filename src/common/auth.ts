@@ -11,6 +11,8 @@ export function isUser(authHeader: string, uid: number): Promise<boolean> {
     return getIdFromJWT(authHeader)
         .then(id => {
             return id === uid;
+        }, err => {
+            return false;
         });
 }
 
@@ -37,24 +39,28 @@ export function doIfUser(authHeader: string, uid: number, onAuth: Function): Pro
  * @param authHeader
  */
 export function getIdFromJWT(authHeader: string): Promise<number> {
-    const [scheme, token] = authHeader.split(" ");
-    if (scheme !== "Bearer") {
-        throw "Invalid Authorisation scheme. This API requires 'Bearer JWT'";
-    }
-    const payload = jwt.decode(token, {
-        json: true,
-    });
-    // Get the user, so we can use their secret to verify the JWT
-    return Database.getUserById(payload.id).then((user) => {
-        try {
-            jwt.verify(token, user.jwtSecret, {
-                algorithms: ["HS256"],
-                issuer: "MatchMyRoute Backend",
-            });
-            return user.id;
-        } catch (err) {
-            throw "Invalid token for this user " + err;
+    return new Promise((resolve, reject) => {
+        const [scheme, token] = authHeader.split(" ");
+        if (scheme !== "Bearer") {
+            reject("Invalid Authorisation scheme. This API requires 'Bearer JWT'");
         }
+        const payload = jwt.decode(token, {
+            json: true,
+        });
+        // Get the user, so we can use their secret to verify the JWT
+        Database.getUserById(payload.id).then(user => {
+            try {
+                jwt.verify(token, user.jwtSecret, {
+                    algorithms: ["HS256"],
+                    issuer: "MatchMyRoute Backend",
+                });
+                resolve(user.id);
+            } catch (err) {
+                reject("Invalid token for this user " + err);
+            }
+        }, err => {
+            reject("Error getting user " + err);
+        });
     });
 }
 
