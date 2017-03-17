@@ -21,12 +21,14 @@ export function isUser(authHeader: string, uid: number): Promise<boolean> {
  * @param onAuth
  */
 export function doIfUser(authHeader: string, uid: number, onAuth: Function): Promise<any> {
-    return isUser(authHeader, uid).then(valid => {
-        if (valid) {
-            return onAuth();
-        } else {
-            throw "Invalid authorisation";
-        }
+    return new Promise((resolve, reject) => {
+        isUser(authHeader, uid).then(valid => {
+            if (valid) {
+                resolve(onAuth());
+            } else {
+                reject("Invalid authorisation");
+            }
+        });
     });
 }
 
@@ -51,7 +53,7 @@ export function getIdFromJWT(authHeader: string): Promise<number> {
             });
             return user.id;
         } catch (err) {
-            throw "Invalid token for this user" + err;
+            throw "Invalid token for this user " + err;
         }
     });
 }

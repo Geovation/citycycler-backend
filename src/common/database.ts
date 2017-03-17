@@ -210,7 +210,7 @@ export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<User
 }
 
 // Get a user from the database by email
-export function getUserByEmail(email): Promise<UserFullDataModel> {
+export function getUserByEmail(email: string): Promise<UserFullDataModel> {
     return new Promise((resolve, reject) => {
         // to run a query we can acquire a client from the pool,
         // run a query on the client, and then return the client to the pool
@@ -229,14 +229,14 @@ export function getUserByEmail(email): Promise<UserFullDataModel> {
                     return;
                 }
                 // return the user
-                resolve(new UserFullDataModel(result.rows[0]));
+                resolve(new UserLiteDataModel(result.rows[0]));
             });
         });
     });
 }
 
 // Get a user from the database by ID
-export function getUserById(id): Promise<UserFullDataModel> {
+export function getUserById(id: number): Promise<UserFullDataModel> {
     return new Promise((resolve, reject) => {
         // to run a query we can acquire a client from the pool,
         // run a query on the client, and then return the client to the pool

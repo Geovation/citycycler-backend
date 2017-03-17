@@ -84,11 +84,13 @@ const definitions = {
         properties: {
             email: {
                 description: "The user's email address",
+                example: "joe@blogs.com",
                 required: true,
                 type: "string",
             },
             name: {
                 description: "The user's full name",
+                example: "Joe Blogs",
                 required: true,
                 type: "string",
             },
