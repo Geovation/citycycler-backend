@@ -181,7 +181,7 @@ export function deleteRoute(id: number): Promise<Boolean> {
 }
 
 // Put a new user in the database, returning the new user ID
-export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<number> {
+export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<UserDataModel> {
     return new Promise((resolve, reject) => {
         // to run a query we can acquire a client from the pool,
         // run a query on the client, and then return the client to the pool
@@ -190,7 +190,7 @@ export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<numb
                 return console.error("error fetching client from pool", err);
             }
             const query = "INSERT INTO users (name, email, pwh, salt, rounds, jwt_secret) " +
-                "VALUES ($1,$2,$3,$4,$5,$6) RETURNING id";
+                "VALUES ($1,$2,$3,$4,$5,$6) RETURNING *";
             const sqlParams = [name, email, pwh, salt, rounds, jwtSecret];
             client.query(query, sqlParams, (error, result) => {
                 // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
@@ -201,8 +201,8 @@ export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<numb
                     reject("error running query: " + error);
                     return;
                 }
-                // return the id of the new route
-                resolve(result.rows[0].id);
+                // return the new user
+                resolve(new UserDataModel(result.rows[0]));
             });
         });
     });
