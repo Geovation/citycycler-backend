@@ -29,6 +29,9 @@ const operation = {
         responses: {
             200: {
                 description: "New user was created",
+                schema: {
+                    $ref: "#/definitions/CreateResult",
+                },
             },
             default: {
                 description: "unexpected error",
@@ -47,6 +50,25 @@ const operation = {
 // DEFINITIONS
 
 const definitions = {
+    CreateResult: {
+        description: "The new user's ID and an authorised JWT",
+        properties: {
+            result: {
+                properties: {
+                    id: {
+                        description: "The new user's ID",
+                        format: "int32",
+                        type: "number",
+                    },
+                    jwt: {
+                        description: "The authorised JWT",
+                        type: "string",
+                    },
+                },
+                type: "object",
+            },
+        },
+    },
     User: {
         description: "A User object",
         // example: [[0, 0], [1, 1]],
@@ -94,8 +116,8 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     }).then(pwh => {
         return Database.putUser(name, email, pwh, salt, rounds, jwtSecret).then((user) => {
             return {
-                jwt: generateJWTFor(user),
                 id: user.id,
+                jwt: generateJWTFor(user),
             };
         });
     }, err => {
