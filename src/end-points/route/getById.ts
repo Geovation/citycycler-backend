@@ -26,7 +26,7 @@ const operation = {
             200: {
                 description: "Route was retreived",
                 schema: {
-                    $ref: "#/definitions/RouteData",
+                    $ref: "#/definitions/GetResponse",
                 },
             },
             default: {
@@ -48,6 +48,7 @@ const definitions = {
         description: "A list of [lat,long] coordinates that make up the route.",
         example: [[0, 0], [1, 1]],
         items: {
+            description: "A lattitude,longitude pair",
             minItems: 2,
             schema: {
                 $ref: "#/definitions/Coordinate",
@@ -63,10 +64,21 @@ const definitions = {
         },
         type: "array",
     },
+    GetResponse: {
+        properties: {
+            result: {
+                required: true,
+                schema: {
+                    $ref: "#/definitions/RouteData",
+                },
+                type: "object",
+            },
+        },
+    },
     RouteData: {
         properties: {
             arrivalTime: {
-                description: "The time in secodns past midnight that the owner will arrive at their destination.",
+                description: "The time in seconds past midnight that the owner will arrive at their destination.",
                 example: 10,
                 type: "number",
             },
@@ -79,6 +91,7 @@ const definitions = {
                 type: "number",
             },
             route: {
+                description: "A list of [lat,long] coordinates that make up the route.",
                 schema: {
                     $ref: "#/definitions/CoordList",
                 },

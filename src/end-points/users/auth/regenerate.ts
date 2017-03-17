@@ -29,6 +29,9 @@ const operation = {
         responses: {
             200: {
                 description: "New JWT produced",
+                schema: {
+                    $ref: "#/definitions/JWTResponse",
+                },
             },
             default: {
                 description: "unexpected error",
@@ -41,6 +44,21 @@ const operation = {
         tags: [
             "Users",
         ],
+    },
+};
+
+// DEFINITIONS
+
+const definitions = {
+    JWTResponse: {
+        description: "The JWT generated",
+        properties: {
+            result: {
+                example: "eyJhbGciOiJI...28ZZEY",
+                required: true,
+                type: "string",
+            },
+        },
     },
 };
 
@@ -84,4 +102,5 @@ export const service = (broadcast: Function, params: any): Promise<string> => {
 // end point definition
 export const regenerate = new MicroserviceEndpoint("reAuth")
     .addSwaggerOperation(operation)
+    .addSwaggerDefinitions(definitions)
     .addService(service);

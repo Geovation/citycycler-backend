@@ -43,7 +43,7 @@ const operation = {
             200: {
                 description: "Search was successful",
                 schema: {
-                    $ref: "#/definitions/RouteDatas",
+                    $ref: "#/definitions/GetNearbyResponse",
                 },
             },
             default: {
@@ -82,6 +82,17 @@ const definitions = {
         },
         type: "array",
     },
+    GetNearbyResponse: {
+        properties: {
+            result: {
+                required: true,
+                schema: {
+                    $ref: "#/definitions/RoutesResult",
+                },
+                type: "object",
+            },
+        },
+    },
     RouteData: {
         properties: {
             arrivalTime: {
@@ -103,8 +114,8 @@ const definitions = {
             },
         },
     },
-    RouteDatas: {
-        description: "A list of routes",
+    RoutesResult: {
+        description: "A list of Routes that were found near the given point",
         items: {
             schema: {
                 $ref: "#/definitions/RouteData",

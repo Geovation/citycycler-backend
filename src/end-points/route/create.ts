@@ -66,6 +66,16 @@ const definitions = {
         required: true,
         type: "array",
     },
+    CreateResponse: {
+        description: "The User's ID",
+        properties: {
+            result: {
+                format: "int32",
+                required: true,
+                type: "number",
+            },
+        },
+    },
     RouteData: {
         properties: {
             arrivalTime: {

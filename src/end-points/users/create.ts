@@ -56,13 +56,13 @@ const definitions = {
             result: {
                 required: true,
                 schema: {
-                    $ref: "#/definitions/Result",
+                    $ref: "#/definitions/NewUserResult",
                 },
                 type: "object",
             },
         },
     },
-    Result: {
+    NewUserResult: {
         properties: {
             id: {
                 description: "The new user's ID",
