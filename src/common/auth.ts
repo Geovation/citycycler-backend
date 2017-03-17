@@ -1,50 +1,49 @@
-// import * as _ from "lodash";
-// import * as logger from "winston";
-
-// import * as Datastore from "./datastore";
-
-// function getIdFromIdtoken(idtoken): Promise<string> {
-//     return firebaseAdmin.auth().verifyIdToken(idtoken)
-//         .then(decodedIdToken => decodedIdToken.uid) as Promise<any>;
-// }
-
-// export function init() {
-//     // Init firebase
-//     firebaseAdmin.initializeApp(
-//         {
-//             credential: firebaseAdmin.credential.cert(process.env.GOOGLE_APPLICATION_CREDENTIALS),
-//             databaseURL: process.env.FIREBASE_URL,
-//         }
-//     );
-// }
+import * as Database from "./database";
+import { UserDataModel } from "./UserDataModel";
+import * as jwt from "jsonwebtoken";
 
 /**
  * check if the token belongs to the given user
- * @param idtoken
+ * @param token
  * @param uid
  */
-// export function isUser(idtoken, uid): Promise<any> {
-//     return getIdFromIdtoken(idtoken)
-//         .then(id => {
-//             if (id !== uid) {
-//                 throw `${uid} is not ${id}`;
-//             }
-//
-//             return id;
-//         }) as Promise<any>;
-// }
+export function isUser(token: string, uid: number): Promise<boolean> {
+    return getIdFromJWT(token)
+        .then(id => {
+            return id === uid;
+        }) as Promise<any>;
+}
 
-// export function isOwner(idtoken): Promise<any> {
-//     return getUser(idtoken)
-//         .then( user => {
-//             if (!user || !user.groups || !user.groups.indexOf || (user.groups.indexOf("owner") === -1)) {
-//                 throw "It is not an owner";
-//             }
-//             return user;
-//         });
-// }
+/**
+ * Return the user ID from a given token, after verifying that this is the correct user
+ * @param token
+ */
+export function getIdFromJWT(token: string): Promise<number> {
+    const payload = jwt.decode(token, {
+        json: true,
+    });
+    // Get the user, so we can use their secret to verify the JWT
+    return Database.getUserById(payload.id).then((user) => {
+        try {
+            jwt.verify(token, user.jwtSecret, {
+                algorithms: ["HS256"],
+                issuer: "MatchMyRoute Backend",
+            });
+            return user.id;
+        } catch (err) {
+            throw "Invalid token for this user" + err;
+        }
+    });
+}
 
-// export function getUser(idtoken): Promise<any>  {
-//     return getIdFromIdtoken(idtoken)
-//         .then(Datastore.getUserById);
-// }
+/**
+ * Generates a JWT for this user id, that expires in 2 weeks
+ * @param user
+ */
+export const generateJWTFor = (user: UserDataModel): string => {
+    return jwt.sign({ id: user.id }, user.jwtSecret, {
+        algorithm: "HS256",
+        expiresIn: 1209600,	// 2 weeks
+        issuer: "MatchMyRoute Backend",
+    });
+};

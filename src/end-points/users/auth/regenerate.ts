@@ -1,7 +1,6 @@
+import { generateJWTFor, getIdFromJWT } from "../../../common/auth";
 import * as Database from "../../../common/database";
 import { MicroserviceEndpoint } from "../../../microservices-framework/web/services/microservice-endpoint";
-import { generateJWTFor } from "./generate";
-import * as jwt from "jsonwebtoken";
 // import * as logger from "winston";
 
 // /////////////////////////////////////////////////////////////
@@ -72,29 +71,10 @@ export const service = (broadcast: Function, params: any): Promise<string> => {
         if (scheme !== "Bearer") {
             reject("Invalid Authorisation scheme. This API requires 'Bearer JWT'");
         }
-        // Decode the old JWT to get the user ID
-        // This does NOT verify the JWT
-        let payload;
-        try {
-            payload = jwt.decode(oldToken, {
-                json: true,
-            });
-        } catch (err) {
-            resolve("Invalid token. " + err);
-        }
-        // Get the user, so we can use their secret to verify the JWT
-        Database.getUserById(payload.id).then((user) => {
-            try {
-                jwt.verify(oldToken, user.jwtSecret, {
-                    algorithms: ["HS256"],
-                    issuer: "MatchMyRoute Backend",
-                });
+        getIdFromJWT(oldToken).then(userid => {
+            Database.getUserById(userid).then(user => {
                 resolve(generateJWTFor(user));
-            } catch (err) {
-                reject("Invalid token for this user" + err);
-            }
-        }, err => {
-            resolve("Error querying database: " + err);
+            });
         });
     });
 };

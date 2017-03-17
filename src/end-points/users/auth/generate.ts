@@ -1,8 +1,7 @@
+import { generateJWTFor } from "../../../common/auth";
 import * as Database from "../../../common/database";
-import { UserDataModel } from "../../../common/UserDataModel";
 import { MicroserviceEndpoint } from "../../../microservices-framework/web/services/microservice-endpoint";
 import * as crypto from "crypto";
-import * as jwt from "jsonwebtoken";
 // import * as logger from "winston";
 
 // /////////////////////////////////////////////////////////////
@@ -109,12 +108,3 @@ export const generate = new MicroserviceEndpoint("newAuth")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);
-
-// Generates a JWT for this user id, that expires in 2 weeks
-export const generateJWTFor = (user: UserDataModel): string => {
-    return jwt.sign({ id: user.id }, user.jwtSecret, {
-        algorithm: "HS256",
-        expiresIn: 1209600,	// 2 weeks
-        issuer: "MatchMyRoute Backend",
-    });
-};
