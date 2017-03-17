@@ -1,5 +1,5 @@
 import * as Database from "./database";
-import { UserDataModel } from "./UserDataModel";
+import { UserFullDataModel } from "./UserFullDataModel";
 import * as jwt from "jsonwebtoken";
 
 /**
@@ -60,7 +60,7 @@ export function getIdFromJWT(authHeader: string): Promise<number> {
  * Generates a JWT for this user id, that expires in 2 weeks
  * @param user
  */
-export const generateJWTFor = (user: UserDataModel): string => {
+export const generateJWTFor = (user: UserFullDataModel): string => {
     return jwt.sign({ id: user.id }, user.jwtSecret, {
         algorithm: "HS256",
         expiresIn: 1209600,	// 2 weeks

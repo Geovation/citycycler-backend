@@ -1,6 +1,6 @@
 // import * as _ from "lodash";
 import { RouteDataModel } from "./RouteDataModel";
-import { UserDataModel } from "./UserDataModel";
+import { UserFullDataModel } from "./UserFullDataModel";
 import * as pg from "pg";
 import * as logger from "winston";
 
@@ -181,7 +181,7 @@ export function deleteRoute(id: number): Promise<Boolean> {
 }
 
 // Put a new user in the database, returning the new user ID
-export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<UserDataModel> {
+export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<UserFullDataModel> {
     return new Promise((resolve, reject) => {
         // to run a query we can acquire a client from the pool,
         // run a query on the client, and then return the client to the pool
@@ -202,14 +202,14 @@ export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<User
                     return;
                 }
                 // return the new user
-                resolve(new UserDataModel(result.rows[0]));
+                resolve(new UserFullDataModel(result.rows[0]));
             });
         });
     });
 }
 
 // Get a user from the database by email
-export function getUserByEmail(email): Promise<UserDataModel> {
+export function getUserByEmail(email): Promise<UserFullDataModel> {
     return new Promise((resolve, reject) => {
         // to run a query we can acquire a client from the pool,
         // run a query on the client, and then return the client to the pool
@@ -228,14 +228,14 @@ export function getUserByEmail(email): Promise<UserDataModel> {
                     return;
                 }
                 // return the user
-                resolve(new UserDataModel(result.rows[0]));
+                resolve(new UserFullDataModel(result.rows[0]));
             });
         });
     });
 }
 
 // Get a user from the database by ID
-export function getUserById(id): Promise<UserDataModel> {
+export function getUserById(id): Promise<UserFullDataModel> {
     return new Promise((resolve, reject) => {
         // to run a query we can acquire a client from the pool,
         // run a query on the client, and then return the client to the pool
@@ -254,7 +254,7 @@ export function getUserById(id): Promise<UserDataModel> {
                     return;
                 }
                 // return the user
-                resolve(new UserDataModel(result.rows[0]));
+                resolve(new UserFullDataModel(result.rows[0]));
             });
         });
     });

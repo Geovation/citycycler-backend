@@ -1,4 +1,4 @@
-export class UserDataModel {
+export class UserFullDataModel {
     public id: number;
     public email: string;
     public name: string;
