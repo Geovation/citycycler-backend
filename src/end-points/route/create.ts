@@ -1,4 +1,4 @@
-import { isUser } from "../../common/auth";
+import { doIfUser } from "../../common/auth";
 import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 // import * as logger from "winston";
@@ -118,12 +118,9 @@ const definitions = {
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
-    if (isUser(params.authorisation, payload.owner)) {
+    return doIfUser(params.authorisation, payload.owner, () => {
         return Database.putRoute(payload);
-    } else {
-        return new Promise((resolve, reject) => { reject("Invalid authorisation"); });
-    }
-
+    });
 };
 
 // end point definition

@@ -15,6 +15,22 @@ export function isUser(authHeader: string, uid: number): Promise<boolean> {
 }
 
 /**
+ * Does a given function if the user is authorised
+ * @param authHeader
+ * @param uid
+ * @param onAuth
+ */
+export function doIfUser(authHeader: string, uid: number, onAuth: Function): Promise<any> {
+    return isUser(authHeader, uid).then(valid => {
+        if (valid) {
+            return onAuth();
+        } else {
+            throw "Invalid authorisation";
+        }
+    });
+}
+
+/**
  * Return the user ID from a given token, after verifying that this is the correct user
  * @param authHeader
  */

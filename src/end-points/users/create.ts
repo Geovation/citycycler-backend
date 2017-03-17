@@ -1,6 +1,6 @@
+import { generateJWTFor } from "../../common/auth";
 import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
-import { generateJWTFor } from "./auth/generate";
 import * as crypto from "crypto";
 // import * as logger from "winston";
 
