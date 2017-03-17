@@ -43,6 +43,11 @@ const operation = {
                 },
             },
         },
+        security: [
+            {
+                userAuth: [],
+            },
+        ],
         summary: "Create a new route",
         tags: [
             "Route Creation",

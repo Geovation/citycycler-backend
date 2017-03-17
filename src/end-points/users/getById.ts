@@ -33,7 +33,7 @@ const operation = {
         produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
-                description: "A welcome message.",
+                description: "The requested User or an empty object",
                 schema: {
                     $ref: "#/definitions/GetUserResponse",
                 },
@@ -45,6 +45,11 @@ const operation = {
                 },
             },
         },
+        security: [
+            {
+                userAuth: [],
+            },
+        ],
         summary: "Get a user by ID",
         tags: [
             "Users",

@@ -17,7 +17,7 @@ const operation = {
         "Should be called when the old JWT is within a day of it's expiration.",
         parameters: [
             {
-                description: "This should present the JWT as Bearer: JWT",
+                description: "The user's JWT token",
                 in: "header",
                 name: "Authorisation",
                 required: true,
@@ -39,7 +39,12 @@ const operation = {
                 },
             },
         },
-        summary: "Swap an old token for a new one",
+        security: [
+            {
+                userAuth: [],
+            },
+        ],
+        summary: "Get a new token",
         tags: [
             "Users",
         ],

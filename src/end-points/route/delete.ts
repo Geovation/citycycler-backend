@@ -41,6 +41,11 @@ const operation = {
                 },
             },
         },
+        security: [
+            {
+                userAuth: [],
+            },
+        ],
         summary: "Delete a route",
         tags: [
             "Route Deletion",
