@@ -1,68 +1,77 @@
-import * as firebaseAdmin from "firebase-admin";
-import * as _ from "lodash";
-import * as logger from "winston";
+import * as Database from "./database";
+import { UserFullDataModel } from "./UserFullDataModel";
+import * as jwt from "jsonwebtoken";
 
-import * as Datastore from "./datastore";
-import { LicenseType } from "./types";
-
-function getIdFromIdtoken(idtoken): Promise<string> {
-    return firebaseAdmin.auth().verifyIdToken(idtoken)
-        .then(decodedIdToken => decodedIdToken.uid) as Promise<any>;
-}
-
-export function init() {
-    // Init firebase
-    firebaseAdmin.initializeApp(
-        {
-            credential: firebaseAdmin.credential.cert(process.env.GOOGLE_APPLICATION_CREDENTIALS),
-            databaseURL: process.env.FIREBASE_URL,
-        }
-    );
+/**
+ * check if the header was authorsed by the given user
+ * @param authHeader
+ * @param uid
+ */
+export function isUser(authHeader: string, uid: number): Promise<boolean> {
+    return getIdFromJWT(authHeader)
+        .then(id => {
+            return id === uid;
+        }, err => {
+            return false;
+        });
 }
 
 /**
- * check if the token belongs to the given user
- * @param idtoken
+ * Does a given function if the user is authorised
+ * @param authHeader
  * @param uid
+ * @param onAuth
  */
-export function isUser(idtoken, uid): Promise<any> {
-    return getIdFromIdtoken(idtoken)
-        .then(id => {
-            if (id !== uid) {
-                throw `${uid} is not ${id}`;
+export function doIfUser(authHeader: string, uid: number, onAuth: Function): Promise<any> {
+    return new Promise((resolve, reject) => {
+        isUser(authHeader, uid).then(valid => {
+            if (valid) {
+                resolve(onAuth());
+            } else {
+                reject("Invalid authorisation");
             }
-
-            return id;
-        }) as Promise<any>;
+        });
+    });
 }
 
-export function isOwner(idtoken): Promise<any> {
-    return getUser(idtoken)
-        .then( user => {
-            if (!user || !user.groups || !user.groups.indexOf || (user.groups.indexOf("owner") === -1)) {
-                throw "It is not an owner";
+/**
+ * Return the user ID from a given token, after verifying that this is the correct user
+ * @param authHeader
+ */
+export function getIdFromJWT(authHeader: string): Promise<number> {
+    return new Promise((resolve, reject) => {
+        const [scheme, token] = authHeader.split(" ");
+        if (scheme !== "Bearer") {
+            reject("Invalid Authorisation scheme. This API requires 'Bearer JWT'");
+        }
+        const payload = jwt.decode(token, {
+            json: true,
+        });
+        // Get the user, so we can use their secret to verify the JWT
+        Database.getUserById(payload.id).then(user => {
+            try {
+                jwt.verify(token, user.jwtSecret, {
+                    algorithms: ["HS256"],
+                    issuer: "MatchMyRoute Backend",
+                });
+                resolve(user.id);
+            } catch (err) {
+                reject("Invalid token for this user " + err);
             }
-            return user;
+        }, err => {
+            reject("Error getting user " + err);
         });
+    });
 }
 
-export function getUser(idtoken): Promise<any>  {
-    return getIdFromIdtoken(idtoken)
-        .then(Datastore.getUserById);
-}
-
-export function getImageLicense(idtoken: string, imageId: Number): Promise<LicenseType> {
-    return this.getUser(idtoken)
-        .then(user => {
-            // find imageId in purchases
-            const idx = _.findIndex(user.purchases, (purchase: any) => {
-                return Number(purchase.image.name) === imageId;
-            });
-
-            return user.purchases[idx].license;
-        })
-        .catch(e => {
-            logger.warn(e);
-            throw e;
-        });
-}
+/**
+ * Generates a JWT for this user id, that expires in 2 weeks
+ * @param user
+ */
+export const generateJWTFor = (user: UserFullDataModel): string => {
+    return jwt.sign({ id: user.id }, user.jwtSecret, {
+        algorithm: "HS256",
+        expiresIn: 1209600,	// 2 weeks
+        issuer: "MatchMyRoute Backend",
+    });
+};

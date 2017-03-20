@@ -1,4 +1,3 @@
-import { doIfUser } from "../../common/auth";
 import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 // import * as logger from "winston";
@@ -11,30 +10,24 @@ import { MicroserviceEndpoint } from "../../microservices-framework/web/services
 // TODO:
 // PATH
 const operation = {
-    post: {
+    get: {
         consumes: ["application/json"],
         parameters: [
             {
-                description: "The route and metadata about it",
-                in: "body",
-                name: "route",
+                description: "The route ID",
+                in: "query",
+                name: "id",
                 required: true,
-                schema: {
-                    $ref: "#/definitions/RouteData",
-                },
-            },
-            {
-                description: "The user's JWT token",
-                in: "header",
-                name: "Authorisation",
-                required: true,
-                type: "string",
+                type: "integer",
             },
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
-                description: "New route was created",
+                description: "Route was retrieved",
+                schema: {
+                    $ref: "#/definitions/GetResponse",
+                },
             },
             default: {
                 description: "unexpected error",
@@ -43,77 +36,68 @@ const operation = {
                 },
             },
         },
-        security: [
-            {
-                userAuth: [],
-            },
-        ],
-        summary: "Create a new route",
+        summary: "Retreive a route by it's ID",
         tags: [
-            "Route Creation",
+            "Route Retrieval",
         ],
     },
 };
-
-// DEFINITIONS
 
 const definitions = {
     CoordList: {
         description: "A list of [lat,long] coordinates that make up the route.",
         example: [[0, 0], [1, 1]],
         items: {
+            description: "A latitude,longitude pair",
             minItems: 2,
             schema: {
                 $ref: "#/definitions/Coordinate",
             },
         },
-        required: true,
         type: "array",
     },
     Coordinate: {
         items: {
             maxLength: 2,
             minLength: 2,
-            type: "integer",
+            type: "number",
         },
-        required: true,
         type: "array",
     },
-    CreateResponse: {
-        description: "The User's ID",
+    GetResponse: {
         properties: {
             result: {
-                format: "int32",
                 required: true,
-                type: "number",
+                schema: {
+                    $ref: "#/definitions/RouteData",
+                },
+                type: "object",
             },
         },
     },
     RouteData: {
         properties: {
             arrivalTime: {
-                description: "The time in seconds past midnight that the owner arrives at their destination.",
-                required: true,
-                type: "integer",
+                description: "The time in seconds past midnight that the owner will arrive at their destination.",
+                example: 10,
+                type: "number",
             },
             departureTime: {
                 description: "The time in seconds past midnight that the owner will start their route.",
-                required: true,
-                type: "integer",
+                type: "number",
             },
             owner: {
                 description: "The userId of the user who owns this route.",
-                required: true,
-                type: "integer",
+                type: "number",
             },
             route: {
+                description: "A list of [lat,long] coordinates that make up the route.",
                 schema: {
                     $ref: "#/definitions/CoordList",
                 },
             },
 
         },
-        required: true,
     },
 };
 
@@ -122,14 +106,12 @@ const definitions = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    const payload = params.body;
-    return doIfUser(params.authorisation, payload.owner, () => {
-        return Database.putRoute(payload);
-    });
+    const id = parseInt(params.id, 10);
+    return Database.getRouteById(id);
 };
 
 // end point definition
-export const createRoute = new MicroserviceEndpoint("createRoute")
+export const getRouteById = new MicroserviceEndpoint("getRouteById")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);

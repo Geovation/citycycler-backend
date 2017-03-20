@@ -1,7 +1,6 @@
-import { doIfUser } from "../../common/auth";
-import * as Database from "../../common/database";
-import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
-// import * as logger from "winston";
+import * as Database from "../../../common/database";
+import { MicroserviceEndpoint } from "../../../microservices-framework/web/services/microservice-endpoint";
+import * as logger from "winston";
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //
@@ -11,30 +10,41 @@ import { MicroserviceEndpoint } from "../../microservices-framework/web/services
 // TODO:
 // PATH
 const operation = {
-    post: {
+    get: {
         consumes: ["application/json"],
         parameters: [
             {
-                description: "The route and metadata about it",
-                in: "body",
-                name: "route",
+                description: "The radius in which to search for routes, in meters.",
+                format: "int32",
+                in: "query",
+                maximum: 1000,
+                minimum: 1,
+                name: "radius",
                 required: true,
-                schema: {
-                    $ref: "#/definitions/RouteData",
-                },
+                type: "integer",
             },
             {
-                description: "The user's JWT token",
-                in: "header",
-                name: "Authorisation",
+                description: "The latitude of the center of the circle in which to search for routes.",
+                in: "query",
+                name: "lat",
                 required: true,
-                type: "string",
+                type: "number",
+            },
+            {
+                description: "The longitude of the center of the circle in which to search for routes.",
+                in: "query",
+                name: "lon",
+                required: true,
+                type: "number",
             },
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
-                description: "New route was created",
+                description: "Search was successful",
+                schema: {
+                    $ref: "#/definitions/GetNearbyResponse",
+                },
             },
             default: {
                 description: "unexpected error",
@@ -43,14 +53,9 @@ const operation = {
                 },
             },
         },
-        security: [
-            {
-                userAuth: [],
-            },
-        ],
-        summary: "Create a new route",
+        summary: "Find routes near a given point",
         tags: [
-            "Route Creation",
+            "Route Retreival",
         ],
     },
 };
@@ -67,43 +72,39 @@ const definitions = {
                 $ref: "#/definitions/Coordinate",
             },
         },
-        required: true,
         type: "array",
     },
     Coordinate: {
         items: {
             maxLength: 2,
             minLength: 2,
-            type: "integer",
+            type: "number",
         },
-        required: true,
         type: "array",
     },
-    CreateResponse: {
-        description: "The User's ID",
+    GetNearbyResponse: {
         properties: {
             result: {
-                format: "int32",
                 required: true,
-                type: "number",
+                schema: {
+                    $ref: "#/definitions/RoutesResult",
+                },
+                type: "object",
             },
         },
     },
     RouteData: {
         properties: {
             arrivalTime: {
-                description: "The time in seconds past midnight that the owner arrives at their destination.",
-                required: true,
-                type: "integer",
+                description: "The time in seconds past midnight that the owner will arrive at their destination.",
+                type: "number",
             },
             departureTime: {
                 description: "The time in seconds past midnight that the owner will start their route.",
-                required: true,
                 type: "integer",
             },
             owner: {
                 description: "The userId of the user who owns this route.",
-                required: true,
                 type: "integer",
             },
             route: {
@@ -111,9 +112,16 @@ const definitions = {
                     $ref: "#/definitions/CoordList",
                 },
             },
-
         },
-        required: true,
+    },
+    RoutesResult: {
+        description: "A list of Routes that were found near the given point",
+        items: {
+            schema: {
+                $ref: "#/definitions/RouteData",
+            },
+        },
+        type: "array",
     },
 };
 
@@ -122,14 +130,15 @@ const definitions = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    const payload = params.body;
-    return doIfUser(params.authorisation, payload.owner, () => {
-        return Database.putRoute(payload);
-    });
+    const { radius, lat, lon } = params;
+
+    logger.debug("Searching for routes within " + radius + "m of (" + lat + "," + lon + ")");
+
+    return Database.getRoutesNearby(parseInt(radius, 10), parseInt(lat, 10), parseInt(lon, 10));
 };
 
 // end point definition
-export const createRoute = new MicroserviceEndpoint("createRoute")
+export const getNearbyRoute = new MicroserviceEndpoint("getNearby")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);
