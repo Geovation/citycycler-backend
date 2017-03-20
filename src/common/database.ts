@@ -206,7 +206,15 @@ export function deleteRoute(id: number): Promise<Boolean> {
     });
 }
 
-// Put a new user in the database, returning the new user ID
+/**
+ * Put a new user in the database, returning the new user ID
+ * @param name - The new user's name.
+ * @param email - Email address. Must be unique.
+ * @param pwh - The password hash, as generated in src/end-points/users/create.ts
+ * @param salt - The password salt
+ * @param rounds - How many rounds of hashing PBKDF2 should do.
+ * @param jwtSecret - A random secret used to sign JSON Web Tokens given to this user
+ */
 export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<UserFullDataModel> {
     return new Promise((resolve, reject) => {
         // to run a query we can acquire a client from the pool,

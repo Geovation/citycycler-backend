@@ -91,7 +91,7 @@ describe("MatchMyRoute API", () => {
                 });
             });
         });
-        describe("Route retreival by ID", () => {
+        describe("Route retrieval by ID", () => {
             it("should get back the route that we just made", done => {
                 request({
                     url: url + "/api/v0/route?id=" + validRouteId,

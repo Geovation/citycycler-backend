@@ -24,7 +24,7 @@ const operation = {
         produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
-                description: "Route was retreived",
+                description: "Route was retrieved",
                 schema: {
                     $ref: "#/definitions/GetResponse",
                 },
@@ -38,7 +38,7 @@ const operation = {
         },
         summary: "Retreive a route by it's ID",
         tags: [
-            "Route Retreival",
+            "Route Retrieval",
         ],
     },
 };
@@ -48,7 +48,7 @@ const definitions = {
         description: "A list of [lat,long] coordinates that make up the route.",
         example: [[0, 0], [1, 1]],
         items: {
-            description: "A lattitude,longitude pair",
+            description: "A latitude,longitude pair",
             minItems: 2,
             schema: {
                 $ref: "#/definitions/Coordinate",

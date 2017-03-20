@@ -24,7 +24,7 @@ const operation = {
                 type: "integer",
             },
             {
-                description: "The lattitude of the center of the circle in which to search for routes.",
+                description: "The latitude of the center of the circle in which to search for routes.",
                 in: "query",
                 name: "lat",
                 required: true,
