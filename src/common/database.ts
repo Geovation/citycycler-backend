@@ -21,7 +21,8 @@ const config = {
 // this initializes a connection pool
 // it will keep idle connections open for a 30 seconds
 // and set a limit of maximum 10 idle clients
-const pool = new pg.Pool(config);
+let pool;
+startUpPool();
 // if an error is encountered by a client while it sits idle in the pool
 // the pool itself will emit an error event with both the error and
 // the client which emitted the original error
@@ -58,6 +59,19 @@ export function sql(query: string, params: Array<string> = []): Promise<any> {
             });
         });
     });
+}
+
+// This shuts down the pool right away
+// Normally this shouldn't matter, but during tests the pool will
+// wait 30s before closing, which makes the tests take ages
+export function shutDownPool(): void {
+    pool.end();
+}
+
+// This starts up a pool. It should usually only be called once on app startup.
+// We need to call it multiple times to run our tests though
+export function startUpPool(): void {
+    pool = new pg.Pool(config);
 }
 
 // Put a route in the database, returning the new database ID for the route

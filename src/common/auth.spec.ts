@@ -11,10 +11,14 @@ chai.use(chaiAsPromised);
 
 // Test the auth Functions
 describe("MatchMyRoute Auth Functions", () => {
-    // Set up a test user in the database
     const secret = crypto.randomBytes(20).toString("base64");
     let uid;
     beforeAll(done => {
+        // Shut down any running database pools
+        Database.shutDownPool();
+        // Start a new database pool
+        Database.startUpPool();
+        // Create a test user
         Database.putUser(
             "Test User",
             "test@example.com",
@@ -31,8 +35,10 @@ describe("MatchMyRoute Auth Functions", () => {
     // Remove the test user
     afterAll(done => {
         Database.deleteUser(uid).then(() => {
+            Database.shutDownPool();
             done();
         }, err => {
+            Database.shutDownPool();
             done();
         });
     });

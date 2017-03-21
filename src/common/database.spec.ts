@@ -12,6 +12,12 @@ chai.use(chaiAsPromised);
 describe("MatchMyRoute Database Functions", () => {
     let userIds = [];	// These are to assist wiht cleanup afterwards
     let routeIds = [];
+    beforeAll(() => {
+        // Shut down any running database pools
+        Database.shutDownPool();
+        // Start a new database pool
+        Database.startUpPool();
+    });
     afterAll(done => {
         let promises = [];
         routeIds.forEach(id => {
@@ -21,8 +27,10 @@ describe("MatchMyRoute Database Functions", () => {
             promises.push(Database.sql("DELETE FROM users WHERE id=$1", [id]));
         });
         Promise.all(promises).then(() => {
+            Database.shutDownPool();
             done();
-        }, () => {
+        }).catch((err) => {
+            Database.shutDownPool();
             done();
         });
     });
