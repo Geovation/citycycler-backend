@@ -2,15 +2,7 @@ machine:
   node:
     version: 6
   environment:
-    GOOGLE_APPLICATION_CREDENTIALS: conf/key-file.json
-    GCLOUD_PROJECT: matchmyroute-backend
-    CLOUDSDK_CORE_PROJECT: matchmyroute-backend
-    DATASTORE_PROJECT_ID: matchmyroute-backend
-    DOCURL: https://matchmyroute-backend.appspot.com
-    DB_CONNECTION_PATH: 127.0.0.1
-    PGPASSWORD: aUZw[:Gw38H&>Jf2hUwd
-    PGPORT: 3306
-    STATIC_DIR: build/static
+    NODE_ENV: staging
 
 dependencies:
   cache_directories:
