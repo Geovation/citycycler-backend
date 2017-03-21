@@ -13,7 +13,6 @@ const config = {
     host: process.env.DB_CONNECTION_PATH, // Server hosting the postgres database
     idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed
     max: 10, // max number of clients in the pool
-    port: 5432, // env var: PGPORT
     user: "postgres", // env var: PGUSER
 };
 // this initializes a connection pool
