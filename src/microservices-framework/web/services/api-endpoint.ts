@@ -5,6 +5,7 @@
 import * as Maybe from "data.maybe";
 import * as _ from "lodash";
 import * as R from "ramda";
+import * as logger from "winston";
 
 import { functions as F } from "../../common/utilities";
 
@@ -12,6 +13,7 @@ export class APIEndpoint {
     public broadcast: Function;
     protected myOperation: Object;
     protected myDefinitions: Object;
+    protected mySecurityDefinitions: Object;
     protected mySenecaOptions: any;
     protected myPrefix: string;
     protected getCachedParamsFromSwaggerJSON: Function = R.memoize(this.getParamsFromSwaggerJSON);
@@ -48,8 +50,8 @@ export class APIEndpoint {
 
     public path(): Object {
         return Maybe.fromNullable(this.myPrefix)
-                .map(prefix => _.set({}, prefix, this.myOperation))
-                .getOrElse(this.myOperation);
+            .map(prefix => _.set({}, prefix, this.myOperation))
+            .getOrElse(this.myOperation);
     }
 
     public addSwaggerDefinitions(definitions): IEndpoint {
@@ -57,8 +59,17 @@ export class APIEndpoint {
         return this;
     }
 
+    public addSwaggerSecurityDefinitions(securityDefinitions): IEndpoint {
+        this.mySecurityDefinitions = securityDefinitions;
+        return this;
+    }
+
     public definitions(): Object {
         return this.myDefinitions;
+    }
+
+    public securityDefinitions(): Object {
+        return this.mySecurityDefinitions;
     }
 
     // END SWAGGER SPEC
@@ -69,11 +80,11 @@ export class APIEndpoint {
         return undefined;
     }
 
-    public route () {
+    public route() {
         return undefined;
     }
 
-    public plugin () {
+    public plugin() {
         return undefined;
     }
 
@@ -81,7 +92,7 @@ export class APIEndpoint {
         return undefined;
     }
 
-    public addService(service: (broadcast: Function, params: any) => Promise <any> ): IEndpoint {
+    public addService(service: (broadcast: Function, params: any) => Promise<any>): IEndpoint {
         return this;
     }
 
@@ -95,10 +106,21 @@ export class APIEndpoint {
 
     // END SENECA SPEC
 
-    protected getParameters (path: any, result = []) {
+    protected getParameters(path: any, result = []) {
         _.each(path, (val, key) => {
             if (key === "parameters") {
                 _.each(val, param => result.push(param));
+            } else if (key === "security") {
+                // Olly's Addition
+                // add each type of security definition parameter to the params
+                _.each(val, securityObj => {
+                    const securityType = Object.keys(securityObj)[0];
+                    try {
+                        result.push(this.mySecurityDefinitions[securityType]);
+                    } catch (err) {
+                        logger.error("Couldn't add securty definition " + securityType);
+                    }
+                });
             } else if (_.isObject(val)) {
                 this.getParameters(val, result);
             }
@@ -106,7 +128,7 @@ export class APIEndpoint {
         return result;
     }
 
-    protected getParamsFromSwaggerJSON (location) {
+    protected getParamsFromSwaggerJSON(location) {
         return _.filter(
             this.getParameters(this.myOperation),
             param => {
@@ -117,17 +139,17 @@ export class APIEndpoint {
         );
     }
 
-    protected getPathParam () {
+    protected getPathParam() {
         return this.getCachedParamsFromSwaggerJSON("path")[0];
     }
 
-    protected getQueryParams () {
+    protected getQueryParams() {
         return this.getCachedParamsFromSwaggerJSON("query");
     }
 
-    protected getHeaderParams () {
+    protected getHeaderParams() {
         return this.getCachedParamsFromSwaggerJSON("header");
     }
 };
 
-export interface IEndpoint extends APIEndpoint {};
+export interface IEndpoint extends APIEndpoint { };

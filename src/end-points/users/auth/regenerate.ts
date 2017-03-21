@@ -15,15 +15,7 @@ const operation = {
         consumes: ["application/json"],
         description: "This endpoint accepts an old JWT and returns a current JWT. " +
         "Should be called when the old JWT is within a day of it's expiration.",
-        parameters: [
-            {
-                description: "The user's JWT token",
-                in: "header",
-                name: "Authorisation",
-                required: true,
-                type: "string",
-            },
-        ],
+        parameters: [],
         produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
@@ -51,6 +43,15 @@ const operation = {
     },
 };
 
+const securityDefinitions = {
+    userAuth: {
+        description: "JWT based user authetication system. Expects a value of 'Bearer JWT'",
+        in: "header",
+        name: "Authorisation",
+        type: "apiKey",
+    },
+};
+
 // ///////////////
 // SWAGGER: END //
 // ///////////////
@@ -68,4 +69,5 @@ export const service = (broadcast: Function, params: any): Promise<string> => {
 // end point definition
 export const regenerate = new MicroserviceEndpoint("reAuth")
     .addSwaggerOperation(operation)
+    .addSwaggerSecurityDefinitions(securityDefinitions)
     .addService(service);

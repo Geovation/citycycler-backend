@@ -12,9 +12,9 @@ import * as logger from "winston";
 import { APIEndpoint, IEndpoint } from "./api-endpoint";
 
 const getParamName = param => Maybe
-                                .fromNullable(param.name)
-                                .map(name => name.toLowerCase())
-                                .getOrElse("");
+    .fromNullable(param.name)
+    .map(name => name.toLowerCase())
+    .getOrElse("");
 const getParamNames = params => params.map(param => getParamName(param));
 const parseQuery = query => qs.parse(query, { allowDots: true });
 const extractPathParams = req => nPath.parse(req.url.split("?")[0]).name;
@@ -41,16 +41,16 @@ export class MicroserviceEndpoint extends APIEndpoint {
         super(path);
     }
 
-    public pin () {
+    public pin() {
         let result;
         Maybe.fromNullable(this.myOperation)
             .orElse(() => result = Maybe.fromNullable(this.mySenecaOptions.role)
-                                    .map(role => `role:${role}`)
-                                    .getOrElse(`path:${this.mySenecaOptions.path}`));
+                .map(role => `role:${role}`)
+                .getOrElse(`path:${this.mySenecaOptions.path}`));
         return result;
     }
 
-    public route () {
+    public route() {
         const path = this.mySenecaOptions.path;
         const route = _.set({}, path, { name: "" });
         const op = Maybe.fromNullable(this.myOperation).getOrElse({ path: "INVALID" });
@@ -60,7 +60,7 @@ export class MicroserviceEndpoint extends APIEndpoint {
         return route;
     }
 
-    public plugin () {
+    public plugin() {
         if (this.myOperation) {
             return options => {
                 this.registerService(
@@ -77,7 +77,7 @@ export class MicroserviceEndpoint extends APIEndpoint {
         }
     }
 
-    public service () {
+    public service() {
         return options => {
             this.registerService(options, this.myService, this.mySenecaOptions);
             return {
@@ -87,21 +87,21 @@ export class MicroserviceEndpoint extends APIEndpoint {
         };
     }
 
-    public addService (service: Function): IEndpoint {
+    public addService(service: Function): IEndpoint {
         const formatError = e => {
             return _.has(e, "ok") ? e : { ok: false, result: { err: e, status: 500 } };
         };
         this.myService = options => (msg, respond) => {
             try {
                 service(this.broadcast, this.extractParams(msg))
-                .then(result => {
-                    respond(null, { ok: true, result });
-                    return result;
-                })
-                .catch(error => {
-                    logger.error("service managed failure", error);
-                    respond(null, formatError(error));
-                });
+                    .then(result => {
+                        respond(null, { ok: true, result, msg });
+                        return result;
+                    })
+                    .catch(error => {
+                        logger.error("service managed failure", error);
+                        respond(null, formatError(error));
+                    });
             } catch (e) {
                 logger.error("service unmanaged failure", e);
                 respond(null, formatError(e));
@@ -115,18 +115,20 @@ export class MicroserviceEndpoint extends APIEndpoint {
             const params = Maybe.fromNullable(message.params).getOrElse({});
             Maybe.fromNullable(message.request$)
                 .map(req => {
-                        Maybe.fromNullable(req.headers)
-                            .map(headers => addParamsToObject(params, this.getHeaderParams(), headers));
-                        Maybe.fromNullable(this.getPathParam())
-                            .map(param => _.set(params, getParamName(param), extractPathParams(req)));
-                    });
+                    Maybe.fromNullable(req.headers)
+                        .map(headers => addParamsToObject(params, this.getHeaderParams(), headers));
+                    // Maybe.fromNullable(req.headers)
+                    //     .map(headers => addParamsToObject(params, this.getAuthParams(), headers));
+                    Maybe.fromNullable(this.getPathParam())
+                        .map(param => _.set(params, getParamName(param), extractPathParams(req)));
+                });
             Maybe.fromNullable(message.args)
                 .map(args => {
-                        Maybe.fromNullable(args.body)
-                            .map(body => _.merge(params, { body }));
-                        Maybe.fromNullable(args.query)
-                            .map(query => addParamsToObject(params, this.getQueryParams(), parseQuery(query)));
-                    });
+                    Maybe.fromNullable(args.body)
+                        .map(body => _.merge(params, { body }));
+                    Maybe.fromNullable(args.query)
+                        .map(query => addParamsToObject(params, this.getQueryParams(), parseQuery(query)));
+                });
             return params;
         } catch (e) {
             logger.error("parameter extraction unmanaged failure", e);
@@ -139,29 +141,29 @@ export class MicroserviceEndpoint extends APIEndpoint {
      * will resolve when the first receiving microservice resolves (since we have no way of knowing what will
      * respond to any broadcast message).
      */
-    private broadcastUsingSeneca (seneca, pattern, params) {
+    private broadcastUsingSeneca(seneca, pattern, params) {
         return new Promise((resolve, reject) => {
             Maybe.fromNullable(seneca)
-            .map(sen => {
-                sen.act({ params, path: pattern }, (err, res) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        if (res.ok) {
-                            resolve(res.result);
+                .map(sen => {
+                    sen.act({ params, path: pattern }, (err, res) => {
+                        if (err) {
+                            reject(err);
                         } else {
-                            reject(res.result);
+                            if (res.ok) {
+                                resolve(res.result);
+                            } else {
+                                reject(res.result);
+                            }
                         }
-                    }
+                    });
+                })
+                .orElse(() => {
+                    resolve(params);
                 });
-            })
-            .orElse(() => {
-                resolve(params);
-            });
         });
     }
 
-    private registerService (options, service, params): IEndpoint {
+    private registerService(options, service, params): IEndpoint {
         Maybe.fromNullable(options.seneca)
             .map(seneca => Maybe.fromNullable(service)
                 .map(svc => seneca.add(params, svc(options)))
