@@ -121,7 +121,7 @@ gulp.task("set-env-vars", function() {
             setProductionEnvVars();
             break;
         case "staging":
-            setProductionEnvVars();
+            setStagingEnvVars();
             break;
         default:
             setDevelopmentEnvVars();
