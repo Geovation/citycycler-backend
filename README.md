@@ -8,7 +8,7 @@ Install node and npm, then install this project's dependencies:
 npm install
 ```
 
-## Deveopment
+## Development
 
 Create a server to monitor the `.ts` files and convert them to `.js`:
 
