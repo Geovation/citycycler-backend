@@ -51,21 +51,6 @@ const operation = {
     },
 };
 
-// DEFINITIONS
-
-const definitions = {
-    JWTResponse: {
-        description: "The JWT generated",
-        properties: {
-            result: {
-                example: "eyJhbGciOiJI...28ZZEY",
-                required: true,
-                type: "string",
-            },
-        },
-    },
-};
-
 // ///////////////
 // SWAGGER: END //
 // ///////////////
@@ -83,5 +68,4 @@ export const service = (broadcast: Function, params: any): Promise<string> => {
 // end point definition
 export const regenerate = new MicroserviceEndpoint("reAuth")
     .addSwaggerOperation(operation)
-    .addSwaggerDefinitions(definitions)
     .addService(service);

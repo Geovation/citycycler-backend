@@ -20,7 +20,7 @@ const operation = {
                 name: "route",
                 required: true,
                 schema: {
-                    $ref: "#/definitions/RouteData",
+                    $ref: "#/definitions/NewRouteData",
                 },
             },
             {
@@ -35,6 +35,9 @@ const operation = {
         responses: {
             200: {
                 description: "New route was created",
+                schema: {
+                    $ref: "#/definitions/CreateRouteResponse",
+                },
             },
             default: {
                 description: "unexpected error",
@@ -59,61 +62,48 @@ const operation = {
 
 const definitions = {
     CoordList: {
-        description: "A list of [lat,long] coordinates that make up the route.",
+        description: "A list of [lat,long] coordinates that make up the route",
         example: [[0, 0], [1, 1]],
         items: {
-            minItems: 2,
-            schema: {
-                $ref: "#/definitions/Coordinate",
+            items: {
+                maxLength: 2,
+                minLength: 2,
+                type: "integer",
             },
+            minItems: 2,
+            type: "array",
         },
-        required: true,
         type: "array",
     },
-    Coordinate: {
-        items: {
-            maxLength: 2,
-            minLength: 2,
-            type: "integer",
-        },
-        required: true,
-        type: "array",
-    },
-    CreateResponse: {
-        description: "The User's ID",
+    CreateRouteResponse: {
+        description: "The Route's ID",
         properties: {
             result: {
                 format: "int32",
-                required: true,
                 type: "number",
             },
         },
+        required: ["result"],
     },
-    RouteData: {
+    NewRouteData: {
         properties: {
             arrivalTime: {
-                description: "The time in seconds past midnight that the owner arrives at their destination.",
-                required: true,
+                description: "The time in seconds past midnight that the owner arrives at their destination",
                 type: "integer",
             },
             departureTime: {
-                description: "The time in seconds past midnight that the owner will start their route.",
-                required: true,
+                description: "The time in seconds past midnight that the owner will start their route",
                 type: "integer",
             },
             owner: {
-                description: "The userId of the user who owns this route.",
-                required: true,
+                description: "The userId of the user who owns this route",
                 type: "integer",
             },
             route: {
-                schema: {
-                    $ref: "#/definitions/CoordList",
-                },
+                $ref: "#/definitions/CoordList",
             },
-
         },
-        required: true,
+        required: ["arrivalTime", "departureTime", "owner", "route"],
     },
 };
 

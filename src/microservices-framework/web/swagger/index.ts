@@ -36,13 +36,6 @@ const headers = {
 const meta = {
     basePath: config.server.prefix,
     definitions: {
-        APIMessage: {
-            properties: {
-                message: {
-                    type: "string",
-                },
-            },
-        },
         AppMessage: {
             properties: {
                 node: {
@@ -112,7 +105,7 @@ const meta = {
     },
     host,
     info: {
-        description: "The MatchMyRoute API.",
+        description: "The MatchMyRoute API",
         title: "matchmyroute-api",
         version: "1.0.0",
     },

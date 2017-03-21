@@ -44,60 +44,33 @@ const operation = {
 };
 
 const definitions = {
-    CoordList: {
-        description: "A list of [lat,long] coordinates that make up the route.",
-        example: [[0, 0], [1, 1]],
-        items: {
-            description: "A latitude,longitude pair",
-            minItems: 2,
-            schema: {
-                $ref: "#/definitions/Coordinate",
-            },
-        },
-        type: "array",
-    },
-    Coordinate: {
-        items: {
-            maxLength: 2,
-            minLength: 2,
-            type: "number",
-        },
-        type: "array",
-    },
     GetResponse: {
         properties: {
             result: {
-                required: true,
-                schema: {
-                    $ref: "#/definitions/RouteData",
-                },
-                type: "object",
+                $ref: "#/definitions/RouteData",
             },
         },
+        required: ["result"],
     },
     RouteData: {
         properties: {
             arrivalTime: {
-                description: "The time in seconds past midnight that the owner will arrive at their destination.",
-                example: 10,
-                type: "number",
+                description: "The time in seconds past midnight that the owner will arrive at their destination",
+                type: "integer",
             },
             departureTime: {
-                description: "The time in seconds past midnight that the owner will start their route.",
-                type: "number",
+                description: "The time in seconds past midnight that the owner will start their route",
+                type: "integer",
             },
             owner: {
-                description: "The userId of the user who owns this route.",
-                type: "number",
+                description: "The userId of the user who owns this route",
+                type: "integer",
             },
             route: {
-                description: "A list of [lat,long] coordinates that make up the route.",
-                schema: {
-                    $ref: "#/definitions/CoordList",
-                },
+                $ref: "#/definitions/CoordList",
             },
-
         },
+        required: ["arrivalTime", "departureTime", "owner", "route", "id"],
     },
 };
 

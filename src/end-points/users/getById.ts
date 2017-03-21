@@ -64,21 +64,17 @@ const definitions = {
         description: "The requested User or an empty object",
         properties: {
             result: {
-                required: true,
-                schema: {
-                    $ref: "#/definitions/UserResult",
-                },
-                type: "object",
+                $ref: "#/definitions/User",
             },
         },
+        required: ["result"],
     },
-    UserResult: {
+    User: {
         description: "A User object",
         properties: {
             email: {
                 description: "The user's email address",
                 example: "joe@blogs.com",
-                required: true,
                 type: "string",
             },
             id: {
@@ -88,11 +84,10 @@ const definitions = {
             name: {
                 description: "The user's full name",
                 example: "Joe Blogs",
-                required: true,
                 type: "string",
             },
         },
-        required: true,
+        required: ["email", "id", "name"],
     },
 };
 

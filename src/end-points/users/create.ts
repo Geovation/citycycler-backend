@@ -21,7 +21,7 @@ const operation = {
                 name: "user",
                 required: true,
                 schema: {
-                    $ref: "#/definitions/User",
+                    $ref: "#/definitions/NewUser",
                 },
             },
         ],
@@ -54,53 +54,46 @@ const definitions = {
         description: "The new user's ID and an authorised JWT",
         properties: {
             result: {
-                required: true,
-                schema: {
-                    $ref: "#/definitions/NewUserResult",
-                },
-                type: "object",
+                $ref: "#/definitions/NewUserResult",
             },
         },
+        required: ["result"],
     },
-    NewUserResult: {
-        properties: {
-            id: {
-                description: "The new user's ID",
-                format: "int32",
-                required: true,
-                type: "number",
-            },
-            jwt: {
-                description: "The authorised JWT",
-                example: "eyJhbGciOiJI...28ZZEY",
-                required: true,
-                type: "string",
-            },
-        },
-    },
-    User: {
+    NewUser: {
         description: "A User object",
         // example: [[0, 0], [1, 1]],
         properties: {
             email: {
                 description: "The user's email address",
                 example: "joe@blogs.com",
-                required: true,
                 type: "string",
             },
             name: {
                 description: "The user's full name",
                 example: "Joe Blogs",
-                required: true,
                 type: "string",
             },
             password: {
                 description: "The user's password",
-                required: true,
                 type: "string",
             },
         },
-        required: true,
+        required: ["email", "name", "password"],
+    },
+    NewUserResult: {
+        properties: {
+            id: {
+                description: "The new user's ID",
+                format: "int32",
+                type: "number",
+            },
+            jwt: {
+                description: "The authorised JWT",
+                example: "eyJhbGciOiJI...28ZZEY",
+                type: "string",
+            },
+        },
+        required: ["id", "jwt"],
     },
 };
 

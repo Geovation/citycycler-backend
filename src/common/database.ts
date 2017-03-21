@@ -1,9 +1,8 @@
 // import * as _ from "lodash";
 import { RouteDataModel } from "./RouteDataModel";
 import { UserFullDataModel } from "./UserFullDataModel";
-import { UserLiteDataModel } from "./UserLiteDataModel";
 import * as pg from "pg";
-import * as logger from "winston";
+// import * as logger from "winston";
 
 // create a config to configure both pooling behavior
 // and client options
@@ -301,7 +300,6 @@ export function getUserById(id: number): Promise<UserFullDataModel> {
         });
     });
 }
-
 
 export function deleteUser(id: number): Promise<Boolean> {
     return new Promise((resolve, reject) => {
