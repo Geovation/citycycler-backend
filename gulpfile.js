@@ -85,7 +85,7 @@ function setDevelopmentEnvVars() {
     setBaseEnvVars();
     env.set({
         DB_CONNECTION_PATH: "localhost",
-        PGPORT: "5432",
+        PGPORT: 5432,
         DOCURL: "http://localhost:8080",
         STATIC_DIR: "build/static",
     });
@@ -96,7 +96,7 @@ function setProductionEnvVars() {
     setBaseEnvVars();
     env.set({
         DB_CONNECTION_PATH: "/cloudsql/matchmyroute-backend:us-east1:matchmyroute-database",
-        PGPORT: "5432",
+        PGPORT: 5432,
         DOCURL: "https://matchmyroute-backend.appspot.com",
         STATIC_DIR: "static",
     });
@@ -107,7 +107,7 @@ function setStagingEnvVars() {
     setProductionEnvVars()
     env.set({
         DB_CONNECTION_PATH: "127.0.0.1",
-        PGPORT: "3306",
+        PGPORT: 3307,
     });
     return;
 };
