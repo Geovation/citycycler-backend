@@ -13,13 +13,13 @@ const config = {
     database: "matchMyRoute", // env var: PGDATABASE
     // host: "35.190.143.196", // Server hosting the postgres database
     host: process.env.DB_CONNECTION_PATH, // Server hosting the postgres database
-    idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed
+    idleTimeoutMillis: 1000, // how long a client is allowed to remain idle before being closed
     max: 10, // max number of clients in the pool
     port: 5432, // env var: PGPORT
     user: "postgres", // env var: PGUSER
 };
 // this initializes a connection pool
-// it will keep idle connections open for a 30 seconds
+// it will keep idle connections open for a 1 second
 // and set a limit of maximum 10 idle clients
 const pool = new pg.Pool(config);
 // if an error is encountered by a client while it sits idle in the pool
@@ -52,7 +52,6 @@ export function sql(query: string, params: Array<string> = []): Promise<any> {
                 if (error) {
                     // logger.error("error running query", error);
                     reject("error running query: " + error);
-                    return;
                 }
                 resolve(result);
             });
