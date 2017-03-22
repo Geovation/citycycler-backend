@@ -88,6 +88,7 @@ function setDevelopmentEnvVars() {
         PGPORT: 5432,
         DOCURL: "http://localhost:8080",
         STATIC_DIR: "build/static",
+        NODE_ENV: "development"
     });
     return;
 };
@@ -99,6 +100,7 @@ function setProductionEnvVars() {
         PGPORT: 5432,
         DOCURL: "https://matchmyroute-backend.appspot.com",
         STATIC_DIR: "static",
+        NODE_ENV: "production",
     });
     return;
 };
@@ -108,6 +110,7 @@ function setStagingEnvVars() {
     env.set({
         DB_CONNECTION_PATH: "127.0.0.1",
         PGPORT: 3307,
+        NODE_ENV: "staging",
     });
     return;
 };
