@@ -44,7 +44,8 @@ export function sql(query: string, params: Array<string> = []): Promise<any> {
         pool.connect((err, client, done) => {
             if (err) {
                 console.error("error fetching client from pool", err);
-                resolve(err);
+                reject(err);
+                return;
             }
             client.query(query, params, (error, result) => {
                 // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
@@ -64,8 +65,13 @@ export function sql(query: string, params: Array<string> = []): Promise<any> {
 // This shuts down the pool right away
 // Normally this shouldn't matter, but during tests the pool will
 // wait 30s before closing, which makes the tests take ages
-export function shutDownPool(): void {
-    pool.end();
+export function shutDownPool(): Promise<boolean> {
+    return pool.end().then(() => {
+        return true;
+    }, err => {
+        console.error(err);
+        return false;
+    });
 }
 
 // This starts up a pool. It should usually only be called once on app startup.
@@ -84,7 +90,9 @@ export function putRoute(routeData: RouteDataModel): Promise<number> {
         // run a query on the client, and then return the client to the pool
         pool.connect((err, client, done) => {
             if (err) {
-                return console.error("error fetching client from pool", err);
+                console.error("error fetching client from pool", err);
+                reject(err);
+                return;
             }
             const query = "INSERT INTO routes (route, departureTime, arrivalTime, owner) " +
                 "VALUES (ST_SetSRID(ST_GeomFromText($1), 27700),$2,$3,$4) " +
@@ -113,7 +121,7 @@ export function getRouteById(id: number): Promise<RouteDataModel> {
         // run a query on the client, and then return the client to the pool
         pool.connect((err, client, done) => {
             if (err) {
-                reject("error fetching client from pool" + err);
+                reject(err);
                 return console.error("error fetching client from pool", err);
             }
             const query = "SELECT id, owner, departuretime, arrivalTime, ST_AsText(route) AS route " +
@@ -164,11 +172,13 @@ export function getRoutesNearby(radius: number, lat: number, lon: number): Promi
     return new Promise((resolve, reject) => {
         if (radius > 1000 || radius < 1) {
             reject("Radius out of bounds");
+            return;
         }
         // Acquire a client from the pool,
         // run a query on the client, and then return the client to the pool
         pool.connect((err, client, done) => {
             if (err) {
+                reject(err);
                 return console.error("error fetching client from pool", err);
             }
             const query = "select id, owner, departuretime, arrivalTime, ST_AsText(route) AS route from routes " +
@@ -181,6 +191,7 @@ export function getRoutesNearby(radius: number, lat: number, lon: number): Promi
                 if (error) {
                     // logger.error("error running query", error);
                     reject("error running query: " + error);
+                    return;
                 }
 
                 resolve(result.rows.map(RouteDataModel.fromSQLRow));
@@ -196,7 +207,7 @@ export function deleteRoute(id: number): Promise<Boolean> {
         // run a query on the client, and then return the client to the pool
         pool.connect((err, client, done) => {
             if (err) {
-                reject("error fetching client from pool" + err);
+                reject(err);
                 return console.error("error fetching client from pool", err);
             }
             const query = "DELETE FROM routes WHERE id=$1";
@@ -214,6 +225,7 @@ export function deleteRoute(id: number): Promise<Boolean> {
                     resolve(true);
                 } else {
                     reject("Route doesn't exist");
+                    return;
                 }
             });
         });
@@ -235,6 +247,7 @@ export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<User
         // run a query on the client, and then return the client to the pool
         pool.connect((err, client, done) => {
             if (err) {
+                reject(err);
                 return console.error("error fetching client from pool", err);
             }
             const query = "INSERT INTO users (name, email, pwh, salt, rounds, jwt_secret) " +
@@ -263,6 +276,7 @@ export function getUserByEmail(email: string): Promise<UserFullDataModel> {
         // run a query on the client, and then return the client to the pool
         pool.connect((err, client, done) => {
             if (err) {
+                reject(err);
                 return console.error("error fetching client from pool", err);
             }
             const query = "SELECT * FROM users WHERE email=$1";
@@ -280,6 +294,7 @@ export function getUserByEmail(email: string): Promise<UserFullDataModel> {
                     resolve(new UserFullDataModel(result.rows[0]));
                 } else {
                     reject("User doesn't exist");
+                    return;
                 }
             });
         });
@@ -293,6 +308,7 @@ export function getUserById(id: number): Promise<UserFullDataModel> {
         // run a query on the client, and then return the client to the pool
         pool.connect((err, client, done) => {
             if (err) {
+                reject(err);
                 return console.error("error fetching client from pool", err);
             }
             const query = "SELECT * FROM users WHERE id=$1";
@@ -310,6 +326,7 @@ export function getUserById(id: number): Promise<UserFullDataModel> {
                     resolve(new UserFullDataModel(result.rows[0]));
                 } else {
                     reject("User doesn't exist");
+                    return;
                 }
             });
         });
@@ -323,7 +340,7 @@ export function deleteUser(id: number): Promise<Boolean> {
         // run a query on the client, and then return the client to the pool
         pool.connect((err, client, done) => {
             if (err) {
-                reject("error fetching client from pool" + err);
+                reject(err);
                 return console.error("error fetching client from pool", err);
             }
             const query = "DELETE FROM users WHERE id=$1";
@@ -341,6 +358,7 @@ export function deleteUser(id: number): Promise<Boolean> {
                     resolve(true);
                 } else {
                     reject("User doesn't exist");
+                    return;
                 }
             });
         });
