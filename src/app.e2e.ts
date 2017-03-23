@@ -54,12 +54,6 @@ describe("MatchMyRoute API", () => {
                             done();
                         });
                     } else {
-                        if (server !== undefined) {
-                            server.close((err) => {
-                                console.log("Server shut down.");
-                                done();
-                            });
-                        }
                         gracefulShutdown();
                         done();
                     }
