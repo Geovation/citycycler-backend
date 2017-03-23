@@ -24,6 +24,7 @@ test:
     - tar -cvzf temp/build.tgz build
     - cp -a temp/build.tgz $CIRCLE_ARTIFACTS/
 
+
 deployment:
   production:
     branch: master
