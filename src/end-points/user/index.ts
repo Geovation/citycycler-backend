@@ -4,10 +4,12 @@ import { EndpointCollection } from "../../microservices-framework/web/services/e
 import { createUser } from "./create";
 import { deleteUser } from "./delete";
 import { getById } from "./getById";
+import { updateUser } from "./update";
 
 export const user: EndpointCollection = new EndpointCollection("user");
 
 // export Endpoints
 user.addEndpoint(getById);
 user.addEndpoint(createUser);
+user.addEndpoint(updateUser);
 user.addEndpoint(deleteUser);

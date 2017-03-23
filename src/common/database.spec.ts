@@ -7,6 +7,8 @@ import * as logger from "winston";
 
 const before = mocha.before;
 const after = mocha.after;
+const beforeEach = mocha.beforeEach;
+const afterEach = mocha.afterEach;
 const describe = mocha.describe;
 const it = mocha.it;
 const expect = chai.expect;
@@ -110,6 +112,64 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(result.rowCount).to.equal(0);
                 });
             });
+        });
+        describe("Updating", () => {
+            // NOTE: These tests are all atomic!
+            let thisUserId; // The userId that the tests can use to get/update users
+            beforeEach("Create the user to run tests against", done => {
+                Database.putUser(
+                    "Non-updated Test User",
+                    "non-updated@example.com",
+                    new Buffer("non-updated"),
+                    new Buffer("salt"),
+                    5,
+                    "secret"
+                ).then(user => {
+                    thisUserId = user.id;
+                    done();
+                });
+            });
+            afterEach("Delete the user that this test used", () => {
+                return Database.deleteUser(thisUserId);
+            });
+            // Go through these objects and try to update the user with them
+            let updateables = [
+                {name: "Updated Test User"},
+                {email: "updated@example.com"},
+                {pwh: new Buffer("updated")},
+                {rounds: 10},
+                {profile_photo: "http://lorempixel.com/400/400/people/Updated"},
+                {profile_bio: "Updated Biography"},
+                {
+                    email: "updated@example.com",
+                    name: "Updated Test User",
+                    profile_bio: "Updated Biography",
+                    profile_photo: "http://lorempixel.com/400/400/people/Updated",
+                    pwh: new Buffer("updated"),
+                    rounds: 10,
+                },
+            ];
+            for (let i = 0; i < updateables.length; i++) {
+                let updates = updateables[i];
+                let keys = Object.keys(updates).join(", ");
+                it("should update " + keys, () => {
+                    return Database.updateUser(thisUserId, updates).then(() => {
+                        return Database.sql("SELECT name, email, pwh, rounds, profile_photo, profile_bio " +
+                            "FROM users WHERE id=$1;", [thisUserId]).then(result => {
+                                return result.rows[0];
+                            });
+                    }).then(user => {
+                        for (let key of Object.keys(updates)) {
+                            if (user[key] instanceof Buffer) {
+                                expect(Buffer.compare(user[key], updates[key]))
+                                    .to.equal(0);
+                            } else {
+                                expect(user[key]).to.equal(updates[key]);
+                            }
+                        }
+                    });
+                });
+            }
         });
     });
     describe("General Route Functions", () => {

@@ -1,6 +1,10 @@
 import * as Database from "./database";
-import { UserFullDataModel } from "./UserFullDataModel";
+import { IUserSettings } from "./UserDataModels";
 import * as jwt from "jsonwebtoken";
+
+// The minimum number of hashing rounds required for passwords to be considered secure
+// Updating this will cause any user who logs in or updates their password to have a new, more secure password generated
+export const minimumHashingRounds = 30000;
 
 /**
  * check if the header was authorsed by the given user
