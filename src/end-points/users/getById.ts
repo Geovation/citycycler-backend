@@ -22,13 +22,6 @@ const operation = {
                 required: true,
                 type: "number",
             },
-            {
-                description: "The user's JWT token",
-                in: "header",
-                name: "Authorisation",
-                required: true,
-                type: "string",
-            },
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
@@ -64,21 +57,17 @@ const definitions = {
         description: "The requested User or an empty object",
         properties: {
             result: {
-                required: true,
-                schema: {
-                    $ref: "#/definitions/UserResult",
-                },
-                type: "object",
+                $ref: "#/definitions/User",
             },
         },
+        required: ["result"],
     },
-    UserResult: {
+    User: {
         description: "A User object",
         properties: {
             email: {
                 description: "The user's email address",
                 example: "joe@blogs.com",
-                required: true,
                 type: "string",
             },
             id: {
@@ -88,11 +77,19 @@ const definitions = {
             name: {
                 description: "The user's full name",
                 example: "Joe Blogs",
-                required: true,
                 type: "string",
             },
         },
-        required: true,
+        required: ["email", "id", "name"],
+    },
+};
+
+const securityDefinitions = {
+    userAuth: {
+        description: "JWT based user authetication system. Expects a value of 'Bearer JWT'",
+        in: "header",
+        name: "Authorisation",
+        type: "apiKey",
     },
 };
 
@@ -118,4 +115,5 @@ const service = (broadcast: Function, params: any): any => {
 export const getById = new MicroserviceEndpoint("getUser")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
+    .addSwaggerSecurityDefinitions(securityDefinitions)
     .addService(service);

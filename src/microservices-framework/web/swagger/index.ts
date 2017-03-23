@@ -11,7 +11,7 @@ import * as logger from "winston";
 import { config } from "../../config";
 import { servicesHelper } from "../services";
 
-const host = process.env.DOCURL ? process.env.DOCURL.split("//")[1] : "timepix-dev.appspot.com";
+const host = process.env.DOCURL ? process.env.DOCURL.split("//")[1] : "https://matchmyroute-backend.appspot.com";
 
 // default headers to be added to all endpoints
 const headers = {
@@ -36,13 +36,6 @@ const headers = {
 const meta = {
     basePath: config.server.prefix,
     definitions: {
-        APIMessage: {
-            properties: {
-                message: {
-                    type: "string",
-                },
-            },
-        },
         AppMessage: {
             properties: {
                 node: {
@@ -112,7 +105,7 @@ const meta = {
     },
     host,
     info: {
-        description: "the MatchMyRoute API.",
+        description: "The MatchMyRoute API",
         title: "matchmyroute-api",
         version: "1.0.0",
     },
@@ -141,14 +134,6 @@ const meta = {
                 },
                 tags: ["application"],
             },
-        },
-    },
-    securityDefinitions: {
-        userAuth: {
-            description: "JWT based user authetication system. Expects a value of 'Bearer JWT'",
-            in: "header",
-            name: "Authorisation",
-            type: "apiKey",
         },
     },
     swagger: "2.0",

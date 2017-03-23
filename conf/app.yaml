@@ -8,7 +8,7 @@ automatic_scaling:
 #    target_utilization: 0.5
 
 env_variables:
-  NODE_ENV: "production"
+  GULP_INSERT: "HERE"
 
 #resources:
 #  cpu: .1

@@ -14,7 +14,7 @@ const operation = {
         consumes: ["application/json"],
         parameters: [
             {
-                description: "The radius in which to search for routes, in meters.",
+                description: "The radius in which to search for routes, in meters",
                 format: "int32",
                 in: "query",
                 maximum: 1000,
@@ -24,14 +24,14 @@ const operation = {
                 type: "integer",
             },
             {
-                description: "The latitude of the center of the circle in which to search for routes.",
+                description: "The latitude of the center of the circle in which to search for routes",
                 in: "query",
                 name: "lat",
                 required: true,
                 type: "number",
             },
             {
-                description: "The longitude of the center of the circle in which to search for routes.",
+                description: "The longitude of the center of the circle in which to search for routes",
                 in: "query",
                 name: "lon",
                 required: true,
@@ -63,63 +63,18 @@ const operation = {
 // DEFINITIONS
 
 const definitions = {
-    CoordList: {
-        description: "A list of [lat,long] coordinates that make up the route.",
-        example: [[0, 0], [1, 1]],
-        items: {
-            minItems: 2,
-            schema: {
-                $ref: "#/definitions/Coordinate",
-            },
-        },
-        type: "array",
-    },
-    Coordinate: {
-        items: {
-            maxLength: 2,
-            minLength: 2,
-            type: "number",
-        },
-        type: "array",
-    },
     GetNearbyResponse: {
         properties: {
             result: {
-                required: true,
-                schema: {
-                    $ref: "#/definitions/RoutesResult",
-                },
-                type: "object",
+                $ref: "#/definitions/RoutesResult",
             },
         },
-    },
-    RouteData: {
-        properties: {
-            arrivalTime: {
-                description: "The time in seconds past midnight that the owner will arrive at their destination.",
-                type: "number",
-            },
-            departureTime: {
-                description: "The time in seconds past midnight that the owner will start their route.",
-                type: "integer",
-            },
-            owner: {
-                description: "The userId of the user who owns this route.",
-                type: "integer",
-            },
-            route: {
-                schema: {
-                    $ref: "#/definitions/CoordList",
-                },
-            },
-        },
+        required: ["result"],
     },
     RoutesResult: {
         description: "A list of Routes that were found near the given point",
         items: {
-            schema: {
-                $ref: "#/definitions/RouteData",
-            },
+            $ref: "#/definitions/RouteData",
         },
         type: "array",
     },

@@ -21,13 +21,6 @@ const operation = {
                 required: true,
                 type: "integer",
             },
-            {
-                description: "The user's JWT token",
-                in: "header",
-                name: "Authorisation",
-                required: true,
-                type: "string",
-            },
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
@@ -53,6 +46,15 @@ const operation = {
     },
 };
 
+const securityDefinitions = {
+    userAuth: {
+        description: "JWT based user authetication system. Expects a value of 'Bearer JWT'",
+        in: "header",
+        name: "Authorisation",
+        type: "apiKey",
+    },
+};
+
 // ///////////////
 // SWAGGER: END //
 // ///////////////
@@ -71,4 +73,5 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
 // end point definition
 export const deleteRoute = new MicroserviceEndpoint("delete")
     .addSwaggerOperation(operation)
+    .addSwaggerSecurityDefinitions(securityDefinitions)
     .addService(service);

@@ -14,7 +14,7 @@ import * as crypto from "crypto";
 const operation = {
     post: {
         consumes: ["application/json"],
-        description: "This endpoint accepts a user's email and password, and returns a JWT that expires after 1 week.",
+        description: "This endpoint accepts a user's email and password, and returns a JWT that expires after 1 week",
         parameters: [
             {
                 description: "The data needed to authorise this user",
@@ -56,26 +56,24 @@ const definitions = {
         properties: {
             email: {
                 description: "The user's email address",
-                required: true,
                 type: "string",
             },
             password: {
                 description: "The user's password",
-                required: true,
                 type: "string",
             },
         },
-        required: true,
+        required: ["email", "password"],
     },
     JWTResponse: {
         description: "The JWT generated",
         properties: {
             result: {
                 example: "eyJhbGciOiJI...28ZZEY",
-                required: true,
                 type: "string",
             },
         },
+        required: ["result"],
     },
 };
 
