@@ -23,6 +23,9 @@ test:
     - mkdir -p temp
     - tar -cvzf temp/build.tgz build
     - cp -a temp/build.tgz $CIRCLE_ARTIFACTS/
+    - echo '!!!The below step is meant to be temporary! They should be moved back to production!!!'
+    - URL=https://matchmyroute-backend.appspot.com npm run e2etest
+
 
 deployment:
   production:
