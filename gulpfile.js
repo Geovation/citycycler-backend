@@ -71,63 +71,67 @@ function populateWithEnvVariables() {
 
 gulp.task("default", ["build"]);
 
-function setBaseEnvVars() {
-    env.set({
+function getBaseEnvVars() {
+    return {
         PROCESS_TYPE: "web",
         WITH_SERVICES: true,
         NODE_PATH: ".",
         PGPASSWORD: "aUZw[:Gw38H&>Jf2hUwd",
-    });
-    return;
+    };
 };
 
-function setDevelopmentEnvVars() {
-    setBaseEnvVars();
-    env.set({
+function getDevelopmentEnvVars() {
+    return Object.assign(getBaseEnvVars(),
+    {
         DB_CONNECTION_PATH: "localhost",
         PGPORT: 5432,
         DOCURL: "http://localhost:8080",
         STATIC_DIR: "build/static",
         NODE_ENV: "development"
     });
-    return;
 };
 
-function setProductionEnvVars() {
-    setBaseEnvVars();
-    env.set({
+function getProductionEnvVars() {
+    return Object.assign(getBaseEnvVars(),
+    {
         DB_CONNECTION_PATH: "/cloudsql/matchmyroute-backend:us-east1:matchmyroute-database",
         PGPORT: 5432,
         DOCURL: "https://matchmyroute-backend.appspot.com",
         STATIC_DIR: "static",
         NODE_ENV: "production",
     });
-    return;
 };
 
-function setStagingEnvVars() {
-    setProductionEnvVars()
-    env.set({
+function getStagingEnvVars() {
+    return Object.assign(getBaseEnvVars(),
+    {
         DB_CONNECTION_PATH: "127.0.0.1",
         PGPORT: 3307,
         NODE_ENV: "staging",
     });
-    return;
 };
+
+// Format an object of {key:value} as key: value with the given indentation
+function formatYaml(obj, indentation) {
+    const indent = Array((indentation||0)+1).join(' ');
+    return Object.keys(obj).map(function(key) {
+        return indent + key + ': ' + obj[key];
+    }).join('\n')
+}
 
 gulp.task("set-env-vars", function() {
     switch(process.env.NODE_ENV) {
         case "development":
-            setDevelopmentEnvVars();
+            env.set(getDevelopmentEnvVars());
             break;
         case "production":
-            setProductionEnvVars();
+            env.set(getProductionEnvVars());
             break;
         case "staging":
-            setStagingEnvVars();
+            env.set(getStagingEnvVars());
             break;
         default:
-            setDevelopmentEnvVars();
+            env.set(getDevelopmentEnvVars());
             break;
     }
 });
@@ -211,7 +215,10 @@ gulp.task("copy-conf", () => {
 });
 
 gulp.task("build", ["typescript", "swagger-ui", "info", "copy-conf", "set-env-vars"], () => {
-  gulp.src(['conf/app.yaml', 'package.json'])
+  gulp.src('package.json')
+    .pipe(gulp.dest('build'));
+  gulp.src('conf/app.yaml')
+    .pipe(replace('  GULP_INSERT: "HERE"', formatYaml(getProductionEnvVars(),2) ))
     .pipe(gulp.dest('build'));
 });
 
