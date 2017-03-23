@@ -95,7 +95,7 @@ export class MicroserviceEndpoint extends APIEndpoint {
             try {
                 service(this.broadcast, this.extractParams(msg))
                     .then(result => {
-                        respond(null, { ok: true, result, msg });
+                        respond(null, { ok: true, result });
                         return result;
                     })
                     .catch(error => {

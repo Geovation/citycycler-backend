@@ -8,6 +8,7 @@ import * as R from "ramda";
 import * as logger from "winston";
 
 import { functions as F } from "../../common/utilities";
+import { getSwaggerJson } from "../swagger";
 
 export class APIEndpoint {
     public broadcast: Function;
@@ -61,6 +62,9 @@ export class APIEndpoint {
 
     public addSwaggerSecurityDefinitions(securityDefinitions): IEndpoint {
         this.mySecurityDefinitions = securityDefinitions;
+        console.log("This security definition can only be referenced by this endpoint. " +
+            "To add a securityDefinition globally you need to add it to " +
+            "/src/microservices-framework/web/swagger/index.ts");
         return this;
     }
 
@@ -116,9 +120,16 @@ export class APIEndpoint {
                 _.each(val, securityObj => {
                     const securityType = Object.keys(securityObj)[0];
                     try {
+                        // Try to find this securityDefinition locally (on this endpoint)
                         result.push(this.mySecurityDefinitions[securityType]);
                     } catch (err) {
-                        logger.error("Couldn't add securty definition " + securityType);
+                        // Try to find this securityDefinition in the root
+                        try {
+                            let swaggerJson = getSwaggerJson();
+                            result.push(swaggerJson.securityDefinitions[securityType]);
+                        } catch (err) {
+                            logger.error("Couldn't add securty definition " + securityType);
+                        }
                     }
                 });
             } else if (_.isObject(val)) {

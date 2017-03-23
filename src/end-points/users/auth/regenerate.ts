@@ -43,15 +43,6 @@ const operation = {
     },
 };
 
-const securityDefinitions = {
-    userAuth: {
-        description: "JWT based user authetication system. Expects a value of 'Bearer JWT'",
-        in: "header",
-        name: "Authorisation",
-        type: "apiKey",
-    },
-};
-
 // ///////////////
 // SWAGGER: END //
 // ///////////////
@@ -71,5 +62,4 @@ export const service = (broadcast: Function, params: any): Promise<string> => {
 // end point definition
 export const regenerate = new MicroserviceEndpoint("reAuth")
     .addSwaggerOperation(operation)
-    .addSwaggerSecurityDefinitions(securityDefinitions)
     .addService(service);
