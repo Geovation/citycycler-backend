@@ -22,13 +22,6 @@ const operation = {
                 required: true,
                 type: "number",
             },
-            // {
-            //     description: "The user's JWT token",
-            //     in: "header",
-            //     name: "Authorisation",
-            //     required: true,
-            //     type: "string",
-            // },
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
