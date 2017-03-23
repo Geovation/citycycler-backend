@@ -117,6 +117,16 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     const salt = crypto.randomBytes(128);
     const jwtSecret = crypto.randomBytes(20).toString("base64");
     return new Promise((resolve, reject) => {
+        if (email.trim().length === 0) {
+            reject("Email required");
+            return;
+        } else if (password.trim().length === 0) {
+            reject("Password required");
+            return;
+        } else if (name.trim().length === 0) {
+            reject("Name required");
+            return;
+        }
         crypto.pbkdf2(password, salt, rounds, 512, "sha512", (err, key) => {
             if (err) {
                 reject(err);
@@ -132,7 +142,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
             };
         });
     }, err => {
-        throw "Couldn't generate password hash: " + err;
+        throw "Couldn't create user: " + err;
     });
 };
 

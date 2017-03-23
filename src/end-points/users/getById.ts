@@ -1,4 +1,4 @@
-import { doIfUser } from "../../common/auth";
+import { getIdFromJWT } from "../../common/auth";
 import * as Database from "../../common/database";
 import { UserLiteDataModel } from "../../common/UserLiteDataModel";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
@@ -12,7 +12,7 @@ import { MicroserviceEndpoint } from "../../microservices-framework/web/services
 const operation = {
     get: {
         consumes: ["application/json"],
-        description: "Returns an user matching the passed ID. If the user is not present, an empty object will be " +
+        description: "Returns a user matching the passed ID. If the user is not present, an empty object will be " +
         "returned.",
         parameters: [
             {
@@ -102,11 +102,17 @@ const definitions = {
 
 const service = (broadcast: Function, params: any): any => {
     const id = parseInt(params.id, 10);
-    return doIfUser(params.authorisation, id, () => {
+    try {
+        if (!params.authorisation) {
+            throw "Invalid Authentication";
+        }
+        getIdFromJWT(params.authorisation);
         return Database.getUserById(id).then(user => {
             return new UserLiteDataModel(user);
         });
-    });
+    } catch (err) {
+        throw err;
+    }
 };
 
 export const getById = new MicroserviceEndpoint("getUser")

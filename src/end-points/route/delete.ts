@@ -59,8 +59,12 @@ const operation = {
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const id = parseInt(params.id, 10);
-    return doIfUser(params.authorisation, id, () => {
-        return Database.deleteRoute(id);
+    return Database.getRouteById(id).then(route => {
+        return doIfUser(params.authorisation, route.owner, () => {
+            return Database.deleteRoute(id);
+        });
+    }, err => {
+        throw "Invalid Authentication";
     });
 };
 
