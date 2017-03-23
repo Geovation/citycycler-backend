@@ -17,6 +17,7 @@ describe("MatchMyRoute API", () => {
     let userJwts = [];  // JWTs corresponding to the respective users in userIds
     let routeIds = [];  // A list of routes created that will be deleted at the end of this test run
     beforeAll(done => {
+        console.log("startServer is: " + startServer);
         if (startServer) {
             class AppEmitter extends EventEmitter { };
             const appEmitter = new AppEmitter();
@@ -53,6 +54,13 @@ describe("MatchMyRoute API", () => {
                             done();
                         });
                     } else {
+                        if (server !== undefined) {
+                            server.close((err) => {
+                                console.log("Server shut down.");
+                                done();
+                            });
+                        }
+                        gracefulShutdown();
                         done();
                     }
                 });
