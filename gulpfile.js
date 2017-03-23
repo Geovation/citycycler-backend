@@ -71,6 +71,67 @@ function populateWithEnvVariables() {
 
 gulp.task("default", ["build"]);
 
+function setBaseEnvVars() {
+    env.set({
+        PROCESS_TYPE: "web",
+        WITH_SERVICES: true,
+        NODE_PATH: ".",
+        PGPASSWORD: "aUZw[:Gw38H&>Jf2hUwd",
+    });
+    return;
+};
+
+function setDevelopmentEnvVars() {
+    setBaseEnvVars();
+    env.set({
+        DB_CONNECTION_PATH: "localhost",
+        PGPORT: 5432,
+        DOCURL: "http://localhost:8080",
+        STATIC_DIR: "build/static",
+        NODE_ENV: "development"
+    });
+    return;
+};
+
+function setProductionEnvVars() {
+    setBaseEnvVars();
+    env.set({
+        DB_CONNECTION_PATH: "/cloudsql/matchmyroute-backend:us-east1:matchmyroute-database",
+        PGPORT: 5432,
+        DOCURL: "https://matchmyroute-backend.appspot.com",
+        STATIC_DIR: "static",
+        NODE_ENV: "production",
+    });
+    return;
+};
+
+function setStagingEnvVars() {
+    setProductionEnvVars()
+    env.set({
+        DB_CONNECTION_PATH: "127.0.0.1",
+        PGPORT: 3307,
+        NODE_ENV: "staging",
+    });
+    return;
+};
+
+gulp.task("set-env-vars", function() {
+    switch(process.env.NODE_ENV) {
+        case "development":
+            setDevelopmentEnvVars();
+            break;
+        case "production":
+            setProductionEnvVars();
+            break;
+        case "staging":
+            setStagingEnvVars();
+            break;
+        default:
+            setDevelopmentEnvVars();
+            break;
+    }
+});
+
 gulp.task("tslint", () => {
   return tsProject.src()
     .pipe(tslint({
@@ -95,14 +156,8 @@ gulp.task("clean", () => {
     .pipe(clean());
 });
 
-gulp.task("pre-test", ["typescript"], () => {
-  const envs = env.set({
-    NODE_ENV: "development",
-    PROCESS_TYPE: 'web',
-    WITH_SERVICES: getOption('with_services') || true
-  })
+gulp.task("pre-test", ["typescript", "set-env-vars"], () => {
   return gulp.src(["build/**/*.js", "!build/_*", "!build/**/**[sS]pec.js", "!build/static/**/*.js",])
-    .pipe(envs)
     .pipe(istanbul({includeUntested: true}))
     .pipe(istanbul.hookRequire());
 });
@@ -155,24 +210,17 @@ gulp.task("copy-conf", () => {
     .pipe(gulp.dest('build/conf/'));
 });
 
-gulp.task("build", ["typescript", "swagger-ui", "info", "copy-conf"], () => {
+gulp.task("build", ["typescript", "swagger-ui", "info", "copy-conf", "set-env-vars"], () => {
   gulp.src(['conf/app.yaml', 'package.json'])
     .pipe(gulp.dest('build'));
 });
 
 gulp.task("serve", ["build"], () => {
   // configure nodemon
-  const envVars = {
-    NODE_ENV: 'development',
-    PROCESS_TYPE: 'web',
-    WITH_SERVICES: getOption('with_services') || true
-  }
-
   nodemon({
     script: getOption('script'),
     ext: 'ts',
     tasks: ["test"],
-    env: envVars,
   });
 });
 

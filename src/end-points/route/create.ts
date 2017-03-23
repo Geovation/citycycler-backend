@@ -1,5 +1,6 @@
 import { doIfUser } from "../../common/auth";
 import * as Database from "../../common/database";
+import { RouteDataModel } from "../../common/RouteDataModel";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 // import * as logger from "winston";
 
@@ -114,7 +115,7 @@ const securityDefinitions = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    const payload = params.body;
+    const payload = new RouteDataModel(params.body);
     return doIfUser(params.authorisation, payload.owner, () => {
         return Database.putRoute(payload);
     });

@@ -62,6 +62,8 @@ export const service = (broadcast: Function, params: any): Promise<string> => {
             Database.getUserById(userid).then(user => {
                 resolve(generateJWTFor(user));
             });
+        }, err => {
+            reject(err);
         });
     });
 };
