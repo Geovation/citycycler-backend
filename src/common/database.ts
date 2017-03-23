@@ -1,9 +1,7 @@
 // import * as _ from "lodash";
 import { RouteDataModel } from "./RouteDataModel";
 import { UserFullDataModel } from "./UserFullDataModel";
-import { UserLiteDataModel } from "./UserLiteDataModel";
 import * as pg from "pg";
-import * as logger from "winston";
 
 // create a config to configure both pooling behavior
 // and client options
@@ -15,13 +13,13 @@ const config = {
     host: process.env.DB_CONNECTION_PATH, // Server hosting the postgres database
     idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed
     max: 10, // max number of clients in the pool
-    port: 5432, // env var: PGPORT
     user: "postgres", // env var: PGUSER
 };
 // this initializes a connection pool
 // it will keep idle connections open for a 30 seconds
 // and set a limit of maximum 10 idle clients
-const pool = new pg.Pool(config);
+let pool;
+startUpPool();
 // if an error is encountered by a client while it sits idle in the pool
 // the pool itself will emit an error event with both the error and
 // the client which emitted the original error
@@ -43,7 +41,8 @@ export function sql(query: string, params: Array<string> = []): Promise<any> {
         pool.connect((err, client, done) => {
             if (err) {
                 console.error("error fetching client from pool", err);
-                resolve(err);
+                reject(err);
+                return;
             }
             client.query(query, params, (error, result) => {
                 // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
@@ -60,6 +59,24 @@ export function sql(query: string, params: Array<string> = []): Promise<any> {
     });
 }
 
+// This shuts down the pool right away
+// Normally this shouldn't matter, but during tests the pool will
+// wait 30s before closing, which makes the tests take ages
+export function shutDownPool(): Promise<boolean> {
+    return pool.end().then(() => {
+        return true;
+    }, err => {
+        console.error(err);
+        return false;
+    });
+}
+
+// This starts up a pool. It should usually only be called once on app startup.
+// We need to call it multiple times to run our tests though
+export function startUpPool(): void {
+    pool = new pg.Pool(config);
+}
+
 // Put a route in the database, returning the new database ID for the route
 export function putRoute(routeData: RouteDataModel): Promise<number> {
 
@@ -70,7 +87,9 @@ export function putRoute(routeData: RouteDataModel): Promise<number> {
         // run a query on the client, and then return the client to the pool
         pool.connect((err, client, done) => {
             if (err) {
-                return console.error("error fetching client from pool", err);
+                console.error("error fetching client from pool", err);
+                reject(err);
+                return;
             }
             const query = "INSERT INTO routes (route, departureTime, arrivalTime, owner) " +
                 "VALUES (ST_SetSRID(ST_GeomFromText($1), 27700),$2,$3,$4) " +
@@ -99,7 +118,7 @@ export function getRouteById(id: number): Promise<RouteDataModel> {
         // run a query on the client, and then return the client to the pool
         pool.connect((err, client, done) => {
             if (err) {
-                reject("error fetching client from pool" + err);
+                reject(err);
                 return console.error("error fetching client from pool", err);
             }
             const query = "SELECT id, owner, departuretime, arrivalTime, ST_AsText(route) AS route " +
@@ -150,11 +169,13 @@ export function getRoutesNearby(radius: number, lat: number, lon: number): Promi
     return new Promise((resolve, reject) => {
         if (radius > 1000 || radius < 1) {
             reject("Radius out of bounds");
+            return;
         }
         // Acquire a client from the pool,
         // run a query on the client, and then return the client to the pool
         pool.connect((err, client, done) => {
             if (err) {
+                reject(err);
                 return console.error("error fetching client from pool", err);
             }
             const query = "select id, owner, departuretime, arrivalTime, ST_AsText(route) AS route from routes " +
@@ -167,6 +188,7 @@ export function getRoutesNearby(radius: number, lat: number, lon: number): Promi
                 if (error) {
                     // logger.error("error running query", error);
                     reject("error running query: " + error);
+                    return;
                 }
 
                 resolve(result.rows.map(RouteDataModel.fromSQLRow));
@@ -182,7 +204,7 @@ export function deleteRoute(id: number): Promise<Boolean> {
         // run a query on the client, and then return the client to the pool
         pool.connect((err, client, done) => {
             if (err) {
-                reject("error fetching client from pool" + err);
+                reject(err);
                 return console.error("error fetching client from pool", err);
             }
             const query = "DELETE FROM routes WHERE id=$1";
@@ -200,6 +222,7 @@ export function deleteRoute(id: number): Promise<Boolean> {
                     resolve(true);
                 } else {
                     reject("Route doesn't exist");
+                    return;
                 }
             });
         });
@@ -221,6 +244,7 @@ export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<User
         // run a query on the client, and then return the client to the pool
         pool.connect((err, client, done) => {
             if (err) {
+                reject(err);
                 return console.error("error fetching client from pool", err);
             }
             const query = "INSERT INTO users (name, email, pwh, salt, rounds, jwt_secret) " +
@@ -249,6 +273,7 @@ export function getUserByEmail(email: string): Promise<UserFullDataModel> {
         // run a query on the client, and then return the client to the pool
         pool.connect((err, client, done) => {
             if (err) {
+                reject(err);
                 return console.error("error fetching client from pool", err);
             }
             const query = "SELECT * FROM users WHERE email=$1";
@@ -266,6 +291,7 @@ export function getUserByEmail(email: string): Promise<UserFullDataModel> {
                     resolve(new UserFullDataModel(result.rows[0]));
                 } else {
                     reject("User doesn't exist");
+                    return;
                 }
             });
         });
@@ -279,6 +305,7 @@ export function getUserById(id: number): Promise<UserFullDataModel> {
         // run a query on the client, and then return the client to the pool
         pool.connect((err, client, done) => {
             if (err) {
+                reject(err);
                 return console.error("error fetching client from pool", err);
             }
             const query = "SELECT * FROM users WHERE id=$1";
@@ -296,12 +323,12 @@ export function getUserById(id: number): Promise<UserFullDataModel> {
                     resolve(new UserFullDataModel(result.rows[0]));
                 } else {
                     reject("User doesn't exist");
+                    return;
                 }
             });
         });
     });
 }
-
 
 export function deleteUser(id: number): Promise<Boolean> {
     return new Promise((resolve, reject) => {
@@ -309,7 +336,7 @@ export function deleteUser(id: number): Promise<Boolean> {
         // run a query on the client, and then return the client to the pool
         pool.connect((err, client, done) => {
             if (err) {
-                reject("error fetching client from pool" + err);
+                reject(err);
                 return console.error("error fetching client from pool", err);
             }
             const query = "DELETE FROM users WHERE id=$1";
@@ -327,6 +354,7 @@ export function deleteUser(id: number): Promise<Boolean> {
                     resolve(true);
                 } else {
                     reject("User doesn't exist");
+                    return;
                 }
             });
         });

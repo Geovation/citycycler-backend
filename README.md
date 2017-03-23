@@ -1,4 +1,5 @@
-# MatchMyRoute backend
+MatchMyRoute Backend
+====================
 
 ## Install
 
@@ -8,19 +9,14 @@ Install node and npm, then install this project's dependencies:
 npm install
 ```
 
-## Deveopment
+## Development
 
-Create a server to monitor the `.ts` files and convert them to `.js`:
-
-```
-npm run watch
-```
-
-Then start the app so it serves at http://localhost:8080 you can run:
+Start the app so it serves at http://localhost:8080:
 
 ```
 npm run serve
 ```
+This will automatically rebuild '.ts` files when they change.
 
 To lint your code:
 
@@ -60,46 +56,31 @@ npm run e2etest
 
 The unit tests don't require a server, the end to end tests automatically start
 and stop one if it is needed. You can configure which URL the tests are run
-against using the `URL` environment varibale descirbed next.
+against using the `NODE_ENV` environment variable descirbed next.
+
+All end to end tests must be specified in `.e2e.ts` files in the `src` directory
+(these will be converted to `.e2e.js` files in the `build` directory).
 
 WARNING: As part of the continuous delivery process, the end to end tests are
 also run against the live deployed site so they shouldn't make breaking
 changes.
 
-Jasmine is the test runner we are using. The spec files to be executed as unit
-tests need to be specified manually in `conf/jasmine_unit_tests.json`
-and those for the end to end tests are specified in
-`conf/jasmine_e2e_tests.json`. If you create a new `.spec.ts` file make
-sure the current regexes result in it being run in the correct test suite, and
-modify them if necessary.
+## Setting The Environment
 
+We use the environment variable `NODE_ENV` to switch between the 3 environments
+in which the server must run:
 
-### Configuring the target URL
-
-Some of the tests are end to end tests (e2e) that need to run against a real
-server. By default, they will run against `http://localhost:8080`.
-
-After successful local test and deployment, you will probably want to run the
-end to end tests against the live running server too. You can do this by
-setting the `URL` environment variable.
-
-For example, to run the tests against live, you can run:
-
-```
-URL=http://localhost:8080 npm run test
-```
-
-WARNING: It is important not to add a trailing slash to the end of the URL.
-Here, the first `/` forms part of the path added by the application and tests,
-not part of the base URL.
-
-By default the base URL that appears in the docs is
-`https://timepix-dev.appspot.com/`. When you run `npm run
-serve`, the docs get generated for the local server instead.
-
-The `circle.yml` file sets this variable for testing live after a deployment,
-but it makes no effort to rollback if the tests fail. This must be done
-manually, so keep a close eye on the build output for master in Slack.
+ - `development` - Also the default when `NODE_ENV` is undefined, this will run
+ all tests against localhost, and will attempt to access a database at
+ `localhost:5432`.
+ - `staging` - The server will act like `production`, except it will connect
+ through the [google cloud SQL proxy](https://cloud.google.com/sql/docs/postgres/connect-external-app)
+ (see step 2 onwards). This is set in `circle.yml` which is used by CircleCI,
+ but can also be set manually if you want your local server to run using the
+ production database, using `NODE_ENV=staging npm run serve`.
+ - `production` - The server will connect to the Cloud SQL database directly,
+ without needing the proxy. This is set in `app.yaml` which is used by Google
+ App Engine.
 
 ## Deployment
 
@@ -113,7 +94,7 @@ To be able to deploy there are three steps:
    ```gcloud components install beta```
 
 2. Create a Service Account in the
-   [Credentials](https://console.cloud.google.com/apis/credentials?project=timepix-dev)
+   [Credentials](https://console.cloud.google.com/apis/credentials?project=matchmyroute-backend)
    section of the API Manger section of the web console for the project you are
    working on. Download the JSON key file and save it as `conf/key-file.json`.
 
@@ -128,7 +109,7 @@ To be able to deploy there are three steps:
 From this point on you can deploy like this:
 
 ```
-CLOUDSDK_CORE_PROJECT=timepix-dev npm run deploy
+npm run deploy
 ```
 
 The `predeploy` step currently just runs a build (and lint) and the tests.
@@ -139,7 +120,7 @@ If you don't want to have to keep setting the project explicilty with the
 environment variable above, you can run:
 
 ```
-gcloud config set project timepix-dev
+gcloud config set project matchmyroute-backend
 ```
 
 Explicit is usually better though.
@@ -200,8 +181,8 @@ follow the node style and start with an error parameter.
 
 Update the version number in the `package.json` and in all the API comments.
 Put any changed API doc comments in the `src/_apidocts` file so that the online
-docs are versioned too. You also need to edit `conf/apidoc.conf` to set the
-version there.
+docs are versioned too. You also need to edit
+`src/microservices-framework/web/swagger/index.ts` to set the version there.
 
 Make sure that rest API version matches the semver code. e.g. `0.1.0` =>
 `/api/v0`, `1.3.1` => `v1`.

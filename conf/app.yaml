@@ -8,14 +8,7 @@ automatic_scaling:
 #    target_utilization: 0.5
 
 env_variables:
-  NODE_ENV: "development"
-  PROCESS_TYPE: "web"
-  WITH_SERVICES: true
-  NODE_PATH: .
-  PGPASSWORD: "aUZw[:Gw38H&>Jf2hUwd"
-  DB_CONNECTION_PATH: "/cloudsql/matchmyroute-backend:us-east1:matchmyroute-database"
-  DOCURL: "https://matchmyroute-backend.appspot.com"
-  STATIC_DIR: "static"
+  NODE_ENV: "production"
 
 #resources:
 #  cpu: .1

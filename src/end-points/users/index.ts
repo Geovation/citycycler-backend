@@ -4,8 +4,8 @@ import { EndpointCollection } from "../../microservices-framework/web/services/e
 
 // Import Endpoints
 import { createUser } from "./create";
-import { getById } from "./getById";
 import { deleteUser } from "./delete";
+import { getById } from "./getById";
 
 export const users: EndpointCollection = new EndpointCollection(path.parse(__dirname).name);
 

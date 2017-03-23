@@ -17,6 +17,9 @@ export class RouteDataModel {
     public route: number[][];
 
     constructor(obj) {
+        if (obj.arrivalTime < obj.departureTime) {
+            throw "Arrival time is before Departure time";
+        }
         this.arrivalTime = obj.arrivalTime;
         this.departureTime = obj.departureTime;
         this.id = obj.id;
