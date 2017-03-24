@@ -37,10 +37,11 @@ describe("Various useful functions", () => {
                 route: [[0, 0], [1, 1], [2, 2]],
             }
             const route = new RouteDataModel(obj);
-            expect(route.arrivalTime).to.equal(1234);
-            expect(route.departureTime).to.equal(1000);
-            expect(route.id).to.equal(321);
-            expect(route.owner).to.equal(123);
+            expect(route.arrivalTime).to.equal(1234, "Arrival time is wrong! expected 1234, got " + route.arrivalTime);
+            expect(route.departureTime).to.equal(1000, "Departure time is wrong! expected 1000, got " +
+                route.departureTime);
+            expect(route.id).to.equal(321, "ID is wrong! expected 321, got " + route.id);
+            expect(route.owner).to.equal(123, "Owner is wrong! expected 123, got " + route.owner);
             expect(route.route).to.eql([[0, 0], [1, 1], [2, 2]]);
         });
         it("should throw an error if the arrival is before departure", () => {
@@ -64,10 +65,11 @@ describe("Various useful functions", () => {
                 route: "LINESTRING(0 0,1 1,2 2)",
             }
             const route = RouteDataModel.fromSQLRow(row);
-            expect(route.arrivalTime).to.equal(1234);
-            expect(route.departureTime).to.equal(1000);
-            expect(route.id).to.equal(321);
-            expect(route.owner).to.equal(123);
+            expect(route.arrivalTime).to.equal(1234, "Arrival time is wrong! expected 1234, got " + route.arrivalTime);
+            expect(route.departureTime).to.equal(1000, "Departure time is wrong! expected 1000, got " +
+                route.departureTime);
+            expect(route.id).to.equal(321, "ID is wrong! expected 321, got " + route.id);
+            expect(route.owner).to.equal(123, "Owner is wrong! expected 123, got " + route.owner);
             expect(route.route).to.eql([[0, 0], [1, 1], [2, 2]]);
         });
     });
