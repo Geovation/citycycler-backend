@@ -19,7 +19,7 @@ profile_rating_sum integer DEFAULT 0    -- Average rating = rating_sum/help_coun
 
 CREATE TABLE routes (
 id serial PRIMARY KEY,
-route geography NOT NULL,		-- The route itself
+route geometry NOT NULL,		-- The route itself
 departureTime integer NOT NULL,	-- Seconds past midnight that the owner cycles this route
 arrivalTime integer NOT NULL,	-- The time that a user arrives in seconds past midnight
 days smallint NOT NULL,			-- A bitmask of the days of the week a user cycles this route
