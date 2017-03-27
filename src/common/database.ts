@@ -91,10 +91,11 @@ export function putRoute(routeData: RouteDataModel): Promise<number> {
                 reject(err);
                 return;
             }
-            const query = "INSERT INTO routes (route, departureTime, arrivalTime, owner) " +
-                "VALUES (ST_SetSRID(ST_GeomFromText($1), 27700),$2,$3,$4) " +
+            const query = "INSERT INTO routes (route, departureTime, arrivalTime, days, owner) " +
+                "VALUES (ST_GeogFromText($1),$2,$3,$4,$5) " +
                 "RETURNING id";
-            const sqlParams = [wkt, routeData.departureTime, routeData.arrivalTime, routeData.owner];
+            const sqlParams = [wkt, routeData.departureTime, routeData.arrivalTime,
+                routeData.getDaysBitmask(), routeData.owner];
             client.query(query, sqlParams, (error, result) => {
                 // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
                 done(error);
@@ -121,7 +122,7 @@ export function getRouteById(id: number): Promise<RouteDataModel> {
                 reject(err);
                 return console.error("error fetching client from pool", err);
             }
-            const query = "SELECT id, owner, departuretime, arrivalTime, ST_AsText(route) AS route " +
+            const query = "SELECT id, owner, departuretime, arrivalTime, days, ST_AsText(route) AS route " +
                 "FROM routes where id=$1";
             client.query(query, [id], (error, result) => {
                 // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
@@ -179,7 +180,7 @@ export function getRoutesNearby(radius: number, lat: number, lon: number): Promi
                 return console.error("error fetching client from pool", err);
             }
             const query = "select id, owner, departuretime, arrivalTime, ST_AsText(route) AS route from routes " +
-                "where ST_DISTANCE(route, ST_GeomFromText($2, 27700) ) < $1";
+                "where ST_DISTANCE(route, ST_GeogFromText($2) ) < $1";
             const geoJson = "POINT(" + lat + " " + lon + ")";
             client.query(query, [radius, geoJson], (error, result) => {
                 // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
