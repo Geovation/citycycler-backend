@@ -95,9 +95,16 @@ const definitions = {
                 type: "number",
             },
             jwt: {
-                description: "The authorised JWT",
-                example: "eyJhbGciOiJI...28ZZEY",
-                type: "string",
+                properties: {
+                    expires: {
+                        example: 123456789,
+                        type: "integer",
+                    },
+                    token: {
+                        example: "eyJhbGciOiJI...28ZZEY",
+                        type: "string",
+                    },
+                },
             },
         },
         required: ["id", "jwt"],

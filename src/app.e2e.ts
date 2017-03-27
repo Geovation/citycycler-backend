@@ -137,9 +137,12 @@ describe("MatchMyRoute API", () => {
                         expect(typeof body.result).to.equal("object", "Result is of unexpected type. Got " +
                             JSON.stringify(body));
                         expect(parseInt(body.result.id, 10)).to.not.be.NaN;
+                        expect(typeof body.result.jwt).to.contain.keys(["token", "expires"],
+                            "Expecting something like {token:'sdfasdf',expires:1234}, but got: " +
+                            JSON.stringify(body.result));
 
                         userIds.push(parseInt(body.result.id, 10));
-                        userJwts.push(body.result.jwt);
+                        userJwts.push(body.result.jwt.token);
                         done();
                     });
                 });
@@ -156,8 +159,12 @@ describe("MatchMyRoute API", () => {
                             "Body is of unexpected type, expected object, " + "but it's a " + typeof body);
                         expect(parseInt(body.result.id, 10)).to.not.equal(NaN,
                             "Id returned was not a number. result is: " + JSON.stringify(body.result));
+                        expect(typeof body.result.jwt).to.contain.keys(["token", "expires"],
+                            "Expecting something like {token:'sdfasdf',expires:1234}, but got: " +
+                            JSON.stringify(body.result));
+
                         userIds.push(parseInt(body.result.id, 10));
-                        userJwts.push(body.result.jwt);
+                        userJwts.push(body.result.jwt.token);
                         done();
                     });
                 });
@@ -347,8 +354,12 @@ describe("MatchMyRoute API", () => {
                         }, (error, response, body) => {
                             expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                                 response.statusCode + ", error given is: " + error);
-                            expect(typeof body.result).to.equal("string", "JWT returned was not a string." +
-                                " Got response: " + JSON.stringify(body));
+                            if (typeof body === "string") {
+                                body = JSON.parse(body);
+                            }
+                            expect(typeof body.result).to.contain.keys(["token", "expires"],
+                                "Expecting something like {token:'sdfasdf',expires:1234}, but got: " +
+                                JSON.stringify(body.result));
                             done();
                         });
                     });
@@ -392,8 +403,12 @@ describe("MatchMyRoute API", () => {
                         }, (error, response, body) => {
                             expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                                 response.statusCode + ", error given is: " + error);
-                            expect(typeof body.result).to.equal("string", "JWT returned was not a string." +
-                                " Got response: " + JSON.stringify(body));
+                            if (typeof body === "string") {
+                                body = JSON.parse(body);
+                            }
+                            expect(typeof body.result).to.contain.keys(["token", "expires"],
+                                "Expecting something like {token:'sdfasdf',expires:1234}, but got: " +
+                                JSON.stringify(body.result));
                             done();
                         });
                     });
@@ -437,7 +452,7 @@ describe("MatchMyRoute API", () => {
                     url: url + "/user",
                 }, (error, response, body) => {
                     userIds.push(parseInt(body.result.id, 10));
-                    userJwts.push(body.result.jwt);
+                    userJwts.push(body.result.jwt.token);
                     done();
                 });
             });

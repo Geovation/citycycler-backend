@@ -75,8 +75,17 @@ const definitions = {
         description: "The JWT generated",
         properties: {
             result: {
-                example: "eyJhbGciOiJI...28ZZEY",
-                type: "string",
+                description: "The JWT for this user and it's expiry date",
+                properties: {
+                    expires: {
+                        example: 123456789,
+                        type: "integer",
+                    },
+                    token: {
+                        example: "eyJhbGciOiJI...28ZZEY",
+                        type: "string",
+                    },
+                },
             },
         },
         required: ["result"],

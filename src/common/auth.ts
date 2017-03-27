@@ -71,10 +71,13 @@ export function getIdFromJWT(authHeader: string): Promise<number> {
  * Generates a JWT for this user id, that expires in 2 weeks
  * @param user
  */
-export const generateJWTFor = (user: UserFullDataModel): string => {
-    return jwt.sign({ id: user.id }, user.jwtSecret, {
-        algorithm: "HS256",
-        expiresIn: 1209600,	// 2 weeks
-        issuer: "MatchMyRoute Backend",
-    });
+export const generateJWTFor = (user: IUserSettings): { token: string; expires: number } => {
+    return {
+        expires: Math.trunc((new Date()).getTime() / 1000) + 1209600,
+        token: jwt.sign({ id: user.id }, user.jwtSecret, {
+            algorithm: "HS256",
+            expiresIn: 1209600,	// 2 weeks
+            issuer: "MatchMyRoute Backend",
+        }),
+    };
 };
