@@ -43,7 +43,7 @@ gulp.task("copy-swagger", () => {
 
 gulp.task("swagger-ui", ["copy-swagger"], () => {
   return gulp.src('./node_modules/swagger-ui/dist/index.html')
-    .pipe(replace('http://petstore.swagger.io/v2/swagger.json', process.env.DOCURL + '/swagger.yaml'))
+    .pipe(replace('http://petstore.swagger.io/v2/swagger.json', process.env.DOCURL + '/swagger.json'))
     .pipe(gulp.dest('./build/static'))
 });
 
