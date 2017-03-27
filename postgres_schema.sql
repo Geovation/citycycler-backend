@@ -22,7 +22,7 @@ id serial PRIMARY KEY,
 route geometry NOT NULL,		-- The route itself
 departureTime integer NOT NULL,	-- Seconds past midnight that the owner cycles this route
 arrivalTime integer NOT NULL,	-- The time that a user arrives in seconds past midnight
-days smallint NOT NULL,			-- A bitmask of the days of the week a user cycles this route
+--days smallint NOT NULL,			-- A bitmask of the days of the week a user cycles this route
 owner integer REFERENCES users ON DELETE CASCADE	-- User who created this route
 );
 
