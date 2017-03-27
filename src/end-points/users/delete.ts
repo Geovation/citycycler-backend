@@ -46,15 +46,6 @@ const operation = {
     },
 };
 
-const securityDefinitions = {
-    userAuth: {
-        description: "JWT based user authetication system. Expects a value of 'Bearer JWT'",
-        in: "header",
-        name: "Authorisation",
-        type: "apiKey",
-    },
-};
-
 // ///////////////
 // SWAGGER: END //
 // ///////////////
@@ -69,5 +60,4 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
 // end point definition
 export const deleteUser = new MicroserviceEndpoint("deleteUser")
     .addSwaggerOperation(operation)
-    .addSwaggerSecurityDefinitions(securityDefinitions)
     .addService(service);

@@ -136,6 +136,14 @@ const meta = {
             },
         },
     },
+    securityDefinitions: {
+        userAuth: {
+            description: "JWT based user authetication system. Expects a value of 'Bearer JWT'",
+            in: "header",
+            name: "Authorisation",
+            type: "apiKey",
+        },
+    },
     swagger: "2.0",
 };
 
@@ -160,10 +168,13 @@ const addHeaders = path => {
     });
 };
 
-const paths = servicesHelper.endpointCollection.endpointPaths();
-addHeaders(paths);
-_.merge(meta.paths, paths);
-_.merge(meta.definitions, servicesHelper.endpointCollection.endpointDefinitions());
+const compileSwagger = () => {
+    const paths = servicesHelper.endpointCollection.endpointPaths();
+    addHeaders(paths);
+    _.merge(meta.paths, paths);
+    _.merge(meta.definitions, servicesHelper.endpointCollection.endpointDefinitions());
+    _.merge(meta.securityDefinitions, servicesHelper.endpointCollection.endpointSecurityDefinitions());
+};
 
 yaml.write(path.join(process.cwd(), (process.env.STATIC_DIR || "build/static") + "/swagger.yaml"),
     meta, "utf8", (err) => {
@@ -173,6 +184,12 @@ yaml.write(path.join(process.cwd(), (process.env.STATIC_DIR || "build/static") +
         logger.log("info", "swagger.yaml saved");
     });
 
-export default function* (next) {
+export const getSwaggerJson = () => {
     return meta;
 };
+/* tslint:disable only-arrow-functions */
+export const getSwaggerJsonGenerator = function* (next) {
+    compileSwagger();
+    return meta;
+};
+/* tslint:enable only-arrow-functions */

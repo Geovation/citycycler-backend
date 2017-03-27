@@ -12,7 +12,7 @@ import * as logger from "winston";
 // local modules
 import * as middleware from "../web/middleware";
 import { closeServices, servicesHelper } from "../web/services";
-import getSwaggerJson from "../web/swagger";
+import { getSwaggerJsonGenerator } from "../web/swagger";
 
 export const app = new Koa();
 
@@ -61,7 +61,7 @@ export const setupServer = (eventEmitter) => {
             if (this.path === "/swagger.json") {
                 try {
 
-                    this.body = yield getSwaggerJson;
+                    this.body = yield getSwaggerJsonGenerator;
                 } catch (err) {
                     this.status = 500;
                     return {

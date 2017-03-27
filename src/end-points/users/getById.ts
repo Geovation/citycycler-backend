@@ -84,15 +84,6 @@ const definitions = {
     },
 };
 
-const securityDefinitions = {
-    userAuth: {
-        description: "JWT based user authetication system. Expects a value of 'Bearer JWT'",
-        in: "header",
-        name: "Authorisation",
-        type: "apiKey",
-    },
-};
-
 // ///////////////
 // SWAGGER: end //
 // ///////////////
@@ -115,5 +106,4 @@ const service = (broadcast: Function, params: any): any => {
 export const getById = new MicroserviceEndpoint("getUser")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
-    .addSwaggerSecurityDefinitions(securityDefinitions)
     .addService(service);

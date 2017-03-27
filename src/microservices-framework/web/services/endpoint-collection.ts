@@ -47,6 +47,10 @@ export class EndpointCollection {
         return this.mergeProperties("definitions", "endpointDefinitions", {});
     }
 
+    public endpointSecurityDefinitions(): Object {
+        return this.mergeProperties("securityDefinitions", "endpointSecurityDefinitions", {});
+    }
+
     public endpointRoutes(): Object {
         return this.mergeProperties("route", "endpointRoutes", {});
     }
@@ -79,10 +83,10 @@ export class EndpointCollection {
         const joinStrings = R.curry((char, s1, s2) => [s1, s2].join(char));
         const joinConfigPrefix = joinStrings("/", config.server.prefix);
         const addToRoutes = prefix => routes.push({
-                map: this.endpointRoutes(),
-                pin: "role:api,path:*",
-                prefix: joinConfigPrefix(prefix),
-            });
+            map: this.endpointRoutes(),
+            pin: "role:api,path:*",
+            prefix: joinConfigPrefix(prefix),
+        });
         Maybe.fromNullable(this.myPrefix).map(addToRoutes);
         return routes;
     }
