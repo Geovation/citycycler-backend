@@ -52,10 +52,11 @@ describe("MatchMyRoute Auth Functions", () => {
                 issuer: "MatchMyRoute Backend",
             });
             const promise = Auth.getIdFromJWT("Bearer " + valid_token).then(decodedUid => {
-                expect(decodedUid).to.equal(uid);
+                expect(decodedUid).to.equal(uid, "Incorrect uid decoded from token. Expected " + uid +
+                    " but got " + decodedUid);
                 done();
             }, err => {
-                assert.fail(err, 0, "Promise was rejected").and.notify(done);
+                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
         it("should not accept auth not in the Bearer <token> format", done => {
@@ -118,10 +119,11 @@ describe("MatchMyRoute Auth Functions", () => {
                     }).id
                 }
                 expect(decodeFunction).not.to.throw;
-                expect(decodeFunction()).to.equal(uid);
+                expect(decodeFunction()).to.equal(uid, "Decoding the token gave " + decodeFunction() +
+                    ", but expected it to give " + uid);
                 done();
             }, err => {
-                assert.fail(err, 0, "Promise was rejected").and.notify(done);
+                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
     });
@@ -134,7 +136,8 @@ describe("MatchMyRoute Auth Functions", () => {
                 issuer: "MatchMyRoute Backend",
             });
             const promise = Auth.isUser("Bearer " + valid_token, uid);
-            expect(promise).to.eventually.equal(true).and.notify(done);
+            expect(promise).to.eventually.equal(true, ".isUser said that the valid token did not belong to the user")
+                .and.notify(done);
         });
         it("should resolve false for invalid user token", done => {
             const invalid_token = jwt.sign({ id: uid + 1 }, secret, {
@@ -143,7 +146,8 @@ describe("MatchMyRoute Auth Functions", () => {
                 issuer: "MatchMyRoute Backend",
             });
             const promise = Auth.isUser("Bearer " + invalid_token, uid);
-            expect(promise).to.eventually.equal(false).and.notify(done);
+            expect(promise).to.eventually.equal(false, ".isUser said that the invalid token did belong to the user")
+                .and.notify(done);
         });
     });
     describe("doIfUser", () => {
@@ -160,7 +164,8 @@ describe("MatchMyRoute Auth Functions", () => {
             }).catch(err => {
                 return "rejected!"
             });
-            expect(promise).to.eventually.equal("executed!").and.notify(done);
+            expect(promise).to.eventually.equal("executed!", "doIfUser rejected the valid auth given")
+                .and.notify(done);
         });
         it("should not complete the function with invalid auth", done => {
             const invalid_token = jwt.sign({ id: uid + 1 }, secret, {
@@ -173,7 +178,8 @@ describe("MatchMyRoute Auth Functions", () => {
             }).catch(err => {
                 return "rejected!";
             });
-            expect(promise).to.eventually.equal("rejected!").and.notify(done);
+            expect(promise).to.eventually.equal("rejected!", "doIfUser accepted the invalid auth given")
+                .and.notify(done);
         });
     });
 });

@@ -48,7 +48,8 @@ describe("MatchMyRoute Database Functions", () => {
         const rowCount = Database.sql("select count(*) from pg_stat_activity").then(result => {
             return result.rowCount;
         });
-        expect(rowCount).to.eventually.be.above(0).and.notify(done);
+        expect(rowCount).to.eventually.be.above(0, "pg reports " + rowCount + " connections to the DB")
+            .and.notify(done);
     });
     describe("User related functions", () => {
         it("should create new users", done => {
@@ -63,7 +64,7 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(user.jwtSecret).to.equal("secret");
                     done();
                 }, err => {
-                    assert.fail(err, 0, "Promise was rejected").and.notify(done);
+                    assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
                 });
         });
         it("should fail to create users with duplicate emails", done => {
@@ -75,7 +76,7 @@ describe("MatchMyRoute Database Functions", () => {
                 userIds.push(user.id);
                 done();
             }, err => {
-                assert.fail(err, 0, "Promise was rejected").and.notify(done);
+                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
         it("should get a user by ID", done => {
@@ -83,7 +84,7 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(user.name).to.equal("Test User");
                 done();
             }, err => {
-                assert.fail(err, 0, "Promise was rejected").and.notify(done);
+                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
         it("should not get a user by an invalid ID", done => {
@@ -95,7 +96,7 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(user.name).to.equal("Test User");
                 done();
             }, err => {
-                assert.fail(err, 0, "Promise was rejected").and.notify(done);
+                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
         it("should not get a user by an invalid email", done => {
@@ -112,10 +113,10 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(result.rowCount).to.equal(0);
                     done();
                 }, err => {
-                    assert.fail(err, 0, "Inner Promise was rejected (Database.sql)").and.notify(done);
+                    assert.fail(err, 0, "Inner Promise was rejected (Database.sql): " + err).and.notify(done);
                 });
             }, err => {
-                assert.fail(err, 0, "Promise was rejected").and.notify(done);
+                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
     });
@@ -136,10 +137,10 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(result.rows[0].owner).to.equal(route.owner);
                     done();
                 }, err => {
-                    assert.fail(err, 0, "Inner Promise was rejected (Database.sql)").and.notify(done);
+                    assert.fail(err, 0, "Inner Promise was rejected (Database.sql): " + err).and.notify(done);
                 });
             }, err => {
-                assert.fail(err, 0, "Promise was rejected").and.notify(done);
+                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
         it("should not create a route for an invalid owner", done => {
@@ -166,7 +167,7 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(result.owner).to.equal(route.owner);
                 done();
             }, err => {
-                assert.fail(err, 0, "Promise was rejected").and.notify(done);
+                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
         it("should not get a route by and invalid ID", done => {
@@ -181,7 +182,7 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(rids).to.contain(routeIds[0]);
                 done();
             }, err => {
-                assert.fail(err, 0, "Promise was rejected").and.notify(done);
+                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
         it("should not get a far away route", done => {
@@ -192,7 +193,7 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(rids).not.to.contain(routeIds[0]);
                 done();
             }, err => {
-                assert.fail(err, 0, "Promise was rejected").and.notify(done);
+                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
         it("should not delete any routes with an invalid id", done => {
@@ -207,7 +208,7 @@ describe("MatchMyRoute Database Functions", () => {
                     done();
                 });
             }, err => {
-                assert.fail(err, 0, "Promise was rejected").and.notify(done);
+                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
         it("should delete any routes associated with a user, when that user is deleted", done => {
@@ -224,13 +225,13 @@ describe("MatchMyRoute Database Functions", () => {
                         expect(result.rowCount).to.equal(0);
                         done();
                     }, err => {
-                        assert.fail(err, 0, "Inner Promise was rejected (Database.sql)").and.notify(done);
+                        assert.fail(err, 0, "Inner Promise was rejected (Database.sql): " + err).and.notify(done);
                     });
                 }, err => {
-                    assert.fail(err, 0, "Inner Promise was rejected (Database.deleteUser)").and.notify(done);
+                    assert.fail(err, 0, "Inner Promise was rejected (Database.deleteUser): " + err).and.notify(done);
                 });
             }, err => {
-                assert.fail(err, 0, "Promise was rejected").and.notify(done);
+                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
     });

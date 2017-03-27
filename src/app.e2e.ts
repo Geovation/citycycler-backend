@@ -35,6 +35,7 @@ describe("MatchMyRoute API", () => {
     });
 
     afterAll(done => {
+        console.log("Cleaning up...")
         let promises = [];
         routeIds.forEach(id => {
             promises.push(Database.sql("DELETE FROM routes WHERE id=$1", [id]));
@@ -71,7 +72,8 @@ describe("MatchMyRoute API", () => {
                 url,
             }, (error, response, body) => {
                 expect(error).to.be.null;
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + error);
                 done();
             });
         });
@@ -82,7 +84,8 @@ describe("MatchMyRoute API", () => {
                 },
                 url,
             }, (error, response, body) => {
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + error);
                 expect(response.headers["access-control-allow-origin"]).to.equal("*");
                 done();
             });
@@ -97,7 +100,8 @@ describe("MatchMyRoute API", () => {
                         json: user,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(200, "Got non 200 response");
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
                         expect(typeof body).to.equal("object", "Body is of unexpected type");
                         expect(parseInt(body.result.id, 10)).to.not.be.NaN;
 
@@ -113,10 +117,12 @@ describe("MatchMyRoute API", () => {
                         json: user,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(200, "Got non 200 response");
-                        expect(typeof body).to.equal("object", "Body is of unexpected type");
-                        expect(parseInt(body.result.id, 10)).to.not.be.NaN;
-
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        expect(typeof body).to.equal("object",
+                            "Body is of unexpected type, expected object, " + "but it's a " + typeof body);
+                        expect(parseInt(body.result.id, 10)).to.not.equal(NaN,
+                            "Id returned was not a number. result is: " + JSON.stringify(body.result));
                         userIds.push(parseInt(body.result.id, 10));
                         userJwts.push(body.result.jwt);
                         done();
@@ -129,7 +135,8 @@ describe("MatchMyRoute API", () => {
                         json: user,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500);
+                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
                         done();
                     });
                 });
@@ -140,7 +147,8 @@ describe("MatchMyRoute API", () => {
                         json: user,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500);
+                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
                         done();
                     });
                 });
@@ -151,7 +159,8 @@ describe("MatchMyRoute API", () => {
                         json: user,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500);
+                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
                         done();
                     });
                 });
@@ -162,7 +171,8 @@ describe("MatchMyRoute API", () => {
                         json: user,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500);
+                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
                         done();
                     });
                 });
@@ -176,11 +186,14 @@ describe("MatchMyRoute API", () => {
                         url: url + "/users/" + userIds[0],
                         method: "GET",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(200);
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
                         if (typeof body === "string") {
                             body = JSON.parse(body);
                         }
-                        expect(body.result.name).to.equal("Test User", "Got a different name than expected");
+                        expect(body.result.name).to.equal("Test User",
+                            "Got a different name than expected. Expected: \"Test User\", got \"" +
+                            body.result.name + "\". Full response body is: " + JSON.stringify(body));
                         done();
                     });
                 });
@@ -189,7 +202,8 @@ describe("MatchMyRoute API", () => {
                         url: url + "/users/" + userIds[0],
                         method: "GET",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500);
+                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
                         done();
                     });
                 });
@@ -201,11 +215,14 @@ describe("MatchMyRoute API", () => {
                         url: url + "/users/" + userIds[0],
                         method: "GET",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(200);
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
                         if (typeof body === "string") {
                             body = JSON.parse(body);
                         }
-                        expect(body.result.name).to.equal("Test User");
+                        expect(body.result.name).to.equal("Test User",
+                            "Expected result name to be \"Test User\", but it got \"" + body.result.name +
+                            "\". Full response body is: " + JSON.stringify(body));
                         done();
                     });
                 });
@@ -217,7 +234,8 @@ describe("MatchMyRoute API", () => {
                         url: url + "/users/" + -1,
                         method: "GET",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500);
+                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
                         done();
                     });
                 });
@@ -231,7 +249,8 @@ describe("MatchMyRoute API", () => {
                         url: url + "/users?id=" + -1,
                         method: "DELETE",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500);
+                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
                         done();
                     });
                 });
@@ -240,7 +259,8 @@ describe("MatchMyRoute API", () => {
                         url: url + "/users?id=" + userIds[0],
                         method: "DELETE",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500);
+                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
                         done();
                     });
                 });
@@ -252,7 +272,8 @@ describe("MatchMyRoute API", () => {
                         url: url + "/users?id=" + userIds[0],
                         method: "DELETE",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500);
+                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
                         done();
                     });
                 });
@@ -264,7 +285,8 @@ describe("MatchMyRoute API", () => {
                         url: url + "/users?id=" + userIds[0],
                         method: "DELETE",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(200);
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
                         done();
                     });
                 });
@@ -278,11 +300,13 @@ describe("MatchMyRoute API", () => {
                             json: auth,
                             method: "POST",
                         }, (error, response, body) => {
-                            expect(response.statusCode).to.equal(200);
+                            expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                                response.statusCode + ", error given is: " + error);
                             if (typeof body === "string") {
                                 body = JSON.parse(body);
                             }
-                            expect(typeof body.result).to.equal("string");
+                            expect(typeof body.result).to.equal("string", "JWT returned was not a string." +
+                                " Got response: " + JSON.stringify(body));
                             done();
                         });
                     });
@@ -293,7 +317,8 @@ describe("MatchMyRoute API", () => {
                             json: auth,
                             method: "POST",
                         }, (error, response, body) => {
-                            expect(response.statusCode).to.equal(500);
+                            expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                                response.statusCode + ", body returned is: " + JSON.stringify(body));
                             done();
                         });
                     });
@@ -304,7 +329,8 @@ describe("MatchMyRoute API", () => {
                             json: auth,
                             method: "POST",
                         }, (error, response, body) => {
-                            expect(response.statusCode).to.equal(500);
+                            expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                                response.statusCode + ", body returned is: " + JSON.stringify(body));
                             done();
                         });
                     });
@@ -318,11 +344,13 @@ describe("MatchMyRoute API", () => {
                             },
                             method: "GET",
                         }, (error, response, body) => {
-                            expect(response.statusCode).to.equal(200);
+                            expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                                response.statusCode + ", error given is: " + error);
                             if (typeof body === "string") {
                                 body = JSON.parse(body);
                             }
-                            expect(typeof body.result).to.equal("string");
+                            expect(typeof body.result).to.equal("string", "JWT returned was not a string." +
+                                " Got response: " + JSON.stringify(body));
                             done();
                         });
                     });
@@ -331,7 +359,8 @@ describe("MatchMyRoute API", () => {
                             url: url + "/users/auth",
                             method: "GET",
                         }, (error, response, body) => {
-                            expect(response.statusCode).to.equal(500);
+                            expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                                response.statusCode + ", body returned is: " + JSON.stringify(body));
                             done();
                         });
                     });
@@ -343,7 +372,8 @@ describe("MatchMyRoute API", () => {
                             },
                             method: "GET",
                         }, (error, response, body) => {
-                            expect(response.statusCode).to.equal(500);
+                            expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                                response.statusCode + ", body returned is: " + JSON.stringify(body));
                             done();
                         });
                     });
@@ -380,9 +410,12 @@ describe("MatchMyRoute API", () => {
                         json: route,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(200, "Got non 200 response");
-                        expect(typeof body).to.equal("object", "Body is of unexpected type");
-                        expect(parseInt(body.result, 10)).to.not.be.NaN;
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        expect(typeof body).to.equal("object", "Body is of unexpected type. " +
+                            "Expected object, but got a " + typeof body);
+                        expect(parseInt(body.result, 10)).to.not.equal(NaN, "The returned ID is NaN. " +
+                            "Full response body is: " + JSON.stringify(body));
                         routeIds.push(parseInt(body.result, 10));
                         done();
                     });
@@ -402,7 +435,8 @@ describe("MatchMyRoute API", () => {
                         json: route,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500);
+                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
                         done();
                     });
                 });
@@ -421,7 +455,8 @@ describe("MatchMyRoute API", () => {
                         json: route,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500);
+                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
                         done();
                     });
                 });
@@ -440,7 +475,8 @@ describe("MatchMyRoute API", () => {
                         json: route,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500);
+                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
                         done();
                     });
                 });
@@ -456,7 +492,8 @@ describe("MatchMyRoute API", () => {
                         json: route,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500);
+                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
                         done();
                     });
                 });
@@ -468,11 +505,14 @@ describe("MatchMyRoute API", () => {
                             url: url + "/route?id=" + routeIds[0],
                             method: "GET",
                         }, (error, response, body) => {
-                            expect(response.statusCode).to.equal(200);
+                            expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                                response.statusCode + ", error given is: " + error);
                             if (typeof body === "string") {
                                 body = JSON.parse(body);
                             }
-                            expect(body.result.owner).to.equal(userIds[1]);
+                            expect(body.result.owner).to.equal(userIds[1], "Route belongs to another user." +
+                                "Expected owner to be " + userIds[1] + ", but it was " + body.result.owner +
+                                ". Full response body is: " + JSON.stringify(body));
                             done();
                         });
                     });
@@ -481,7 +521,8 @@ describe("MatchMyRoute API", () => {
                             url: url + "/route?id=" + -1,
                             method: "GET",
                         }, (error, response, body) => {
-                            expect(response.statusCode).to.equal(500);
+                            expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                                response.statusCode + ", body returned is: " + JSON.stringify(body));
                             done();
                         });
                     });
@@ -519,7 +560,8 @@ describe("MatchMyRoute API", () => {
                         url: url + "/route?id=" + -1,
                         method: "DELETE",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500);
+                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
                         done();
                     });
                 });
@@ -528,7 +570,8 @@ describe("MatchMyRoute API", () => {
                         url: url + "/route?id=" + routeIds[0],
                         method: "DELETE",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500);
+                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
                         done();
                     });
                 });
@@ -540,7 +583,8 @@ describe("MatchMyRoute API", () => {
                         url: url + "/route?id=" + routeIds[0],
                         method: "DELETE",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500);
+                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
                         done();
                     });
                 });
@@ -552,16 +596,18 @@ describe("MatchMyRoute API", () => {
                         url: url + "/route?id=" + routeIds[0],
                         method: "DELETE",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(200);
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
                         Database.sql("SELECT id from routes where id=$1;", [routeIds[0]]).then(result => {
-                            expect(result.rowCount).to.equal(0);
+                            expect(result.rowCount).to.equal(0, "Route was not deleted! Found this in database: " +
+                                JSON.stringify(result.rows));
                             done();
                         }, err => {
                             assert.fail(err, 0, "Inner Promise was rejected (Database.sql) " + err);
                         });
                     });
                 });
-                it("should delete any routes beloning to a user, when a user is deleted", done => {
+                it("should delete any routes belonging to a user, when a user is deleted", done => {
                     // Should delete routeIds[1], which we setup in beforeAll
                     request({
                         headers: {
@@ -570,9 +616,11 @@ describe("MatchMyRoute API", () => {
                         url: url + "/users?id=" + userIds[2],
                         method: "DELETE",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(200);
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
                         Database.sql("SELECT id from routes where id=$1;", [routeIds[1]]).then(result => {
-                            expect(result.rowCount).to.equal(0);
+                            expect(result.rowCount).to.equal(0, "Route was not deleted! Found this in database: " +
+                                JSON.stringify(result.rows));
                             done();
                         }, err => {
                             assert.fail(err, 0, "Inner Promise was rejected (Database.sql) " + err);
