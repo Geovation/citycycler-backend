@@ -12,7 +12,7 @@ import { MicroserviceEndpoint } from "../../microservices-framework/web/services
 // TODO:
 // PATH
 const operation = {
-    post: {
+    put: {
         consumes: ["application/json"],
         parameters: [
             {
@@ -47,7 +47,7 @@ const operation = {
         ],
         summary: "Create a new route",
         tags: [
-            "Route Creation",
+            "Routes",
         ],
     },
 };
@@ -60,12 +60,18 @@ const definitions = {
         example: [[0, 0], [1, 1]],
         items: {
             items: {
-                maxLength: 2,
-                minLength: 2,
-                type: "integer",
+                $ref: "#/definitions/Coordinate",
             },
             minItems: 2,
             type: "array",
+        },
+        type: "array",
+    },
+    Coordinate: {
+        items: {
+            maxLength: 2,
+            minLength: 2,
+            type: "integer",
         },
         type: "array",
     },
@@ -85,6 +91,16 @@ const definitions = {
                 description: "The time in seconds past midnight that the owner arrives at their destination",
                 type: "integer",
             },
+            days: {
+                description: "Which days of the week the owner cycles this route",
+                example: ["monday", "wednesday", "friday"],
+                items: {
+                    description: "A day of the week",
+                    enum: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+                    type: "string",
+                },
+                type: "array",
+            },
             departureTime: {
                 description: "The time in seconds past midnight that the owner will start their route",
                 type: "integer",
@@ -97,7 +113,7 @@ const definitions = {
                 $ref: "#/definitions/CoordList",
             },
         },
-        required: ["arrivalTime", "departureTime", "owner", "route"],
+        required: ["arrivalTime", "departureTime", "owner", "route", "days"],
     },
 };
 

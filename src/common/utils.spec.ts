@@ -14,10 +14,23 @@ describe("Various useful functions", () => {
             expect(Database.lineStringToCoords(lineString)).to.eql(coords);
         });
         it("should not convert an invalid linestring into coords", () => {
-            let lineString = "POINT(0 2 5)";
+            const lineString = "POINT(0 2 5)";
             expect(() => {
                 Database.lineStringToCoords(lineString);
             }).to.throw("Input is not a Linestring.");
+        });
+    });
+    describe("pointStringToCoords", () => {
+        it("should convert a pointstring into coords", () => {
+            const pointString = "POINT(5 6.6)";
+            const coords = [5, 6.6];
+            expect(Database.pointStringToCoords(pointString)).to.eql(coords);
+        });
+        it("should not convert an invalid pointstring into coords", () => {
+            const pointString = "LINESTRING(0 2,5 6)";
+            expect(() => {
+                Database.pointStringToCoords(pointString);
+            }).to.throw("Input is not a Point.");
         });
     });
     describe("coordsToLineString", () => {

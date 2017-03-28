@@ -92,7 +92,7 @@ export function putRoute(routeData: RouteDataModel): Promise<number> {
                 return;
             }
             const query = "INSERT INTO routes (route, departureTime, arrivalTime, days, owner) " +
-                "VALUES (ST_GeogFromText($1),$2,$3,$4,$5) " +
+                "VALUES (ST_GeogFromText($1),$2,$3,$4::integer::bit(7),$5) " +
                 "RETURNING id";
             const sqlParams = [wkt, routeData.departureTime, routeData.arrivalTime,
                 routeData.getDaysBitmask(), routeData.owner];
@@ -122,7 +122,7 @@ export function getRouteById(id: number): Promise<RouteDataModel> {
                 reject(err);
                 return console.error("error fetching client from pool", err);
             }
-            const query = "SELECT id, owner, departuretime, arrivalTime, days, ST_AsText(route) AS route " +
+            const query = "SELECT id, owner, departuretime, arrivalTime, days::integer, ST_AsText(route) AS route " +
                 "FROM routes where id=$1";
             client.query(query, [id], (error, result) => {
                 // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
@@ -160,6 +160,14 @@ export function lineStringToCoords(lineStr: string): number[][] {
     return coords;
 }
 
+export function pointStringToCoords(pointStr: string): number[] {
+    if (pointStr.slice(0, 6) !== "POINT(") {
+        throw "Input is not a Point.";
+    }
+    const coordStr = pointStr.slice(6, pointStr.length - 1);
+    return coordStr.split(" ").map(parseFloat);
+}
+
 export function coordsToLineString(coords: number[][]): string {
     return "LINESTRING(" + coords.map((pair) => {
         return pair.join(" ");
@@ -168,7 +176,7 @@ export function coordsToLineString(coords: number[][]): string {
 
 export function getRoutesNearby(radius: number, lat: number, lon: number): Promise<RouteDataModel[]> {
     return new Promise((resolve, reject) => {
-        if (radius > 1000 || radius < 1) {
+        if (radius > 2000 || radius < 1) {
             reject("Radius out of bounds");
             return;
         }
@@ -193,6 +201,134 @@ export function getRoutesNearby(radius: number, lat: number, lon: number): Promi
                 }
 
                 resolve(result.rows.map(RouteDataModel.fromSQLRow));
+            });
+        });
+
+    });
+}
+
+/**
+ * The function this service is built around - route matching!
+ * @param matchParams - The parameters that we use for matching - see the type definiton here or in the swagger docs
+ *
+ * @returns routes - A list of RouteDataModels
+ */
+export function matchRoutes(
+    matchParams: {
+        start: {
+            latitude: number,
+            longitude: number,
+            radius: number,
+        },
+        end: {
+            latitude: number,
+            longitude: number,
+            radius: number,
+        },
+        days?: string[],
+        time?: number,
+    }
+): Promise<{
+    id: number,
+    meetingTime: number,
+    days: string[],
+    owner: number,
+    meetingPoint: number[],
+    divorcePoint: number[]
+}[]> {
+    return new Promise((resolve, reject) => {
+        if (matchParams.start.radius > 2000 || matchParams.start.radius < 1) {
+            reject("Start radius out of bounds. Must be between 1m and 2km");
+            return;
+        } else if (matchParams.end.radius > 2000 || matchParams.end.radius < 1) {
+            reject("End radius out of bounds. Must be between 1m and 2km");
+            return;
+        }
+        // Acquire a client from the pool,
+        // run a query on the client, and then return the client to the pool
+        pool.connect((err, client, done) => {
+            if (err) {
+                reject(err);
+                return console.error("error fetching client from pool", err);
+            }
+            let query = "" +
+                "SELECT id, " +
+                "       departureTime + distFromStart*(arrivalTime - departureTime) AS meetingTime, " +
+                "       (days & $5::integer::bit(7))::integer AS days, " +
+                "       ST_AsText(ST_LineInterpolatePoint(route::geometry, distFromStart)) AS meetingPoint, " +
+                "       ST_AsText(ST_LineInterpolatePoint(route::geometry, distFromEnd)) AS divorcePoint, " +
+                "       owner " +
+                "FROM ( " +
+                "   SELECT  id, " +
+                "           (ST_LineLocatePoint(route::geometry, ST_GeogFromText($1)::geometry)) " +
+                "               AS distFromStart, " +
+                "           (ST_LineLocatePoint(route::geometry, ST_GeogFromText($2)::geometry)) " +
+                "               AS distFromEnd, " +
+                "           arrivalTime, " +
+                "           departureTime, " +
+                "           days, " +
+                "           owner, " +
+                "           route " +
+                "   FROM routes WHERE " +
+                "       ST_DWithin(ST_GeogFromText($1), route, $3) " +
+                "   AND" +
+                "       ST_DWithin(ST_GeogFromText($2), route, $4) " +
+                ") AS matchingRoutes " +
+                "WHERE " +
+                "   distFromStart < distFromEnd ";
+            const startPoint = "POINT(" + matchParams.start.latitude + " " + matchParams.start.longitude + ")";
+            const endPoint = "POINT(" + matchParams.end.latitude + " " + matchParams.end.longitude + ")";
+            let queryParams = [startPoint, endPoint, matchParams.start.radius, matchParams.end.radius];
+
+            // Add a filter for days of the week
+            if (matchParams.days !== undefined) {
+                /* tslint:disable no-bitwise */
+                const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+                const daysBitmask = matchParams.days.map((day) => {
+                    return 1 << daysOfWeek.indexOf(day);
+                }).reduce((days, day) => {
+                    return days | day;
+                }, 0);
+                /* tslint:enable no-bitwise */
+                query += "AND (days & $5::integer::bit(7) != b'0000000') ";
+                queryParams.push(daysBitmask);
+            } else {
+                queryParams.push(127);  // 127 = 1111111
+            }
+            // Add sorting by time
+            if (matchParams.time !== undefined) {
+                query += "ORDER BY ABS(" +
+                    "departureTime + distFromStart*(departureTime - arrivalTime) - $6)";
+                queryParams.push(matchParams.time);
+            } else {
+                query += "ORDER BY departureTime + distFromStart*(departureTime - arrivalTime)";
+            }
+            client.query(query + ";", queryParams, (error, result) => {
+                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
+                done(error);
+
+                if (error) {
+                    // logger.error("error running query", error);
+                    reject("error running query: " + error);
+                    return;
+                }
+
+                resolve(result.rows.map((row) => {
+                    const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+                    /* tslint:disable no-bitwise */
+                    const days = daysOfWeek.filter((day, i) => {
+                        return row.days & 1 << i;
+                    });
+                    /* tslint:enable no-bitwise */
+                    return {
+                        days,
+                        divorcePoint: pointStringToCoords(row.divorcepoint),
+                        id: row.id,
+                        meetingPoint: pointStringToCoords(row.meetingpoint),
+                        meetingTime: row.meetingtime,
+                        owner: row.owner,
+                    };
+                }));
             });
         });
 

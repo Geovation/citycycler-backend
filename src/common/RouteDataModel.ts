@@ -41,6 +41,9 @@ export class RouteDataModel {
         } else if (obj.owner === undefined || obj.owner === null) {
             throw "Route requires an owner";
         }
+        if (!obj.days) {
+            obj.days = [];
+        }
         this.arrivalTime = obj.arrivalTime;
         this.days = obj.days;
         this.departureTime = obj.departureTime;
@@ -57,7 +60,7 @@ export class RouteDataModel {
             return 1 << daysOfWeek.indexOf(day);
         }).reduce((days, day) => {
             return days | day;
-        });
+        }, 0);
     }
     /* tslint:enable no-bitwise */
 }

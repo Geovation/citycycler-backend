@@ -418,7 +418,7 @@ describe("MatchMyRoute API", () => {
                         },
                         url: url + "/route",
                         json: route,
-                        method: "POST",
+                        method: "PUT",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
@@ -443,7 +443,7 @@ describe("MatchMyRoute API", () => {
                         },
                         url: url + "/route",
                         json: route,
-                        method: "POST",
+                        method: "PUT",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
@@ -463,7 +463,7 @@ describe("MatchMyRoute API", () => {
                         },
                         url: url + "/route",
                         json: route,
-                        method: "POST",
+                        method: "PUT",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
@@ -483,7 +483,7 @@ describe("MatchMyRoute API", () => {
                         },
                         url: url + "/route",
                         json: route,
-                        method: "POST",
+                        method: "PUT",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
@@ -500,7 +500,7 @@ describe("MatchMyRoute API", () => {
                     request({
                         url: url + "/route",
                         json: route,
-                        method: "POST",
+                        method: "PUT",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
@@ -556,7 +556,7 @@ describe("MatchMyRoute API", () => {
                         },
                         url: url + "/route",
                         json: route,
-                        method: "POST",
+                        method: "PUT",
                     }, (error, response, body) => {
                         routeIds.push(parseInt(body.result, 10));
                         done();

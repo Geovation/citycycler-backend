@@ -38,7 +38,7 @@ const operation = {
         },
         summary: "Retreive a route by it's ID",
         tags: [
-            "Route Retrieval",
+            "Routes",
         ],
     },
 };
@@ -58,8 +58,22 @@ const definitions = {
                 description: "The time in seconds past midnight that the owner will arrive at their destination",
                 type: "integer",
             },
+            days: {
+                description: "Which days of the week the owner cycles this route",
+                example: ["monday", "wednesday", "friday"],
+                items: {
+                    description: "A day of the week",
+                    enum: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+                    type: "string",
+                },
+                type: "array",
+            },
             departureTime: {
                 description: "The time in seconds past midnight that the owner will start their route",
+                type: "integer",
+            },
+            id: {
+                description: "This route's internal id",
                 type: "integer",
             },
             owner: {
