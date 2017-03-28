@@ -90,6 +90,16 @@ describe("MatchMyRoute API", () => {
                 done();
             });
         });
+        it("should have a valid Swagger schema", done => {
+            request({
+                url: "http://online.swagger.io/validator/debug?url=https://matchmyroute-backend.appspot.com/swagger.json",
+            }, (error, response, body) => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + error);
+                expect(body).to.equal("{}", "Got swagger validation errors: " + JSON.stringify(body));
+                done();
+            });
+        });
 
         describe("Users", () => {
             describe("Creation", () => {
