@@ -94,7 +94,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
                 } else if (Buffer.compare(key, user.pwh) === 0) {
                     resolve(generateJWTFor(user));
                 } else {
-                    reject("Invalid password");
+                    reject({ ok: false, result: { error: "Incorrect Password", status: 403 } });
                 }
             });
         });

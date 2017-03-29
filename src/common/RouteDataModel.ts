@@ -27,19 +27,31 @@ export class RouteDataModel {
 
     constructor(obj) {
         if (obj.arrivalTime === undefined || obj.arrivalTime === null) {
-            throw "Route requires an arrival time";
+            throw { ok: false, result: { error: "Route requires an arrival time", status: 400 } };
         } else if (obj.departureTime === undefined || obj.departureTime === null) {
-            throw "Route requires a departure time";
+            throw { ok: false, result: { error: "Route requires a departure time", status: 400 } };
         } else if (obj.arrivalTime < obj.departureTime) {
-            throw "Arrival time is before Departure time";
+            throw { ok: false, result: { error: "Arrival time is before Departure time", status: 400 } };
         } else if (obj.route.length < 2) {
-            throw "Route requires at least 2 points";
+            throw { ok: false, result: { error: "Route requires at least 2 points", status: 400 } };
         } else if (Math.max(...obj.route.map(pair => { return pair.length; })) > 2) {
-            throw "Coordinates in a Route should only have 2 items in them, [latitude, longitude]";
+            throw {
+                ok: false, result:
+                {
+                    error: "Coordinates in a Route should only have 2 items in them, [latitude, longitude]",
+                    status: 400
+                }
+            };
         } else if (Math.min(...obj.route.map(pair => { return pair.length; })) < 2) {
-            throw "Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]";
+            throw {
+                ok: false, result:
+                {
+                    error: "Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]",
+                    status: 400
+                }
+            };
         } else if (obj.owner === undefined || obj.owner === null) {
-            throw "Route requires an owner";
+            throw { ok: false, result: { error: "Route requires an owner", status: 400 } };
         }
         if (!obj.days) {
             obj.days = [];

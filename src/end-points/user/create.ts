@@ -111,13 +111,13 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     const jwtSecret = crypto.randomBytes(20).toString("base64");
     return new Promise((resolve, reject) => {
         if (email.trim().length === 0) {
-            reject("Email required");
+            reject({ ok: false, result: { error: "Email Required", status: 400 } });
             return;
         } else if (password.trim().length === 0) {
-            reject("Password required");
+            reject({ ok: false, result: { error: "Password Required", status: 400 } });
             return;
         } else if (name.trim().length === 0) {
-            reject("Name required");
+            reject({ ok: false, result: { error: "Name Required", status: 400 } });
             return;
         }
         crypto.pbkdf2(password, salt, rounds, 512, "sha512", (err, key) => {
@@ -134,8 +134,6 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
                 jwt: generateJWTFor(user),
             };
         });
-    }, err => {
-        throw "Couldn't create user: " + err;
     });
 };
 
