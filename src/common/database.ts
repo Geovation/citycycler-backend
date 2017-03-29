@@ -138,7 +138,7 @@ export function getRouteById(id: number): Promise<RouteDataModel> {
                     // return the route
                     resolve(RouteDataModel.fromSQLRow(result.rows[0]));
                 } else {
-                    reject("Route doesn't exist");
+                    reject({ ok: false, result: { error: "Route doesn't exist", status: 404 } });
                 }
             });
         });
@@ -147,7 +147,7 @@ export function getRouteById(id: number): Promise<RouteDataModel> {
 
 export function lineStringToCoords(lineStr: string): number[][] {
     if (lineStr.slice(0, 11) !== "LINESTRING(") {
-        throw "Input is not a Linestring.";
+        throw { ok: false, result: { error: "Input is not a Linestring", status: 400 } };
     }
     let coords = [];
     const coordStr = lineStr.slice(11, lineStr.length - 1);
@@ -421,7 +421,7 @@ export function deleteRoute(id: number): Promise<Boolean> {
                 if (result.rowCount) {
                     resolve(true);
                 } else {
-                    reject("Route doesn't exist");
+                    reject({ ok: false, result: { error: "Route doesn't exist", status: 404 } });
                     return;
                 }
             });
@@ -490,7 +490,7 @@ export function getUserByEmail(email: string): Promise<UserFullDataModel> {
                 if (result.rowCount) {
                     resolve(new UserFullDataModel(result.rows[0]));
                 } else {
-                    reject("User doesn't exist");
+                    reject({ ok: false, result: { error: "User doesn't exist", status: 404 } });
                     return;
                 }
             });
@@ -522,7 +522,7 @@ export function getUserById(id: number): Promise<UserFullDataModel> {
                 if (result.rowCount) {
                     resolve(new UserFullDataModel(result.rows[0]));
                 } else {
-                    reject("User doesn't exist");
+                    reject({ ok: false, result: { error: "User doesn't exist", status: 404 } });
                     return;
                 }
             });
@@ -553,7 +553,7 @@ export function deleteUser(id: number): Promise<Boolean> {
                 if (result.rowCount) {
                     resolve(true);
                 } else {
-                    reject("User doesn't exist");
+                    reject({ ok: false, result: { error: "User doesn't exist", status: 404 } });
                     return;
                 }
             });

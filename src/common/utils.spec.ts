@@ -5,6 +5,7 @@ import * as chai from "chai";
 import * as logger from "winston";
 
 const expect = chai.expect;
+const assert = chai.assert;
 
 describe("Various useful functions", () => {
     describe("lineStringToCoords", () => {
@@ -17,7 +18,13 @@ describe("Various useful functions", () => {
             const lineString = "POINT(0 2 5)";
             expect(() => {
                 Database.lineStringToCoords(lineString);
-            }).to.throw("Input is not a Linestring.");
+                assert.fail(0, 1, "lineStringToCoords should have thrown an error. Instead got: " +
+                    JSON.stringify(Database.lineStringToCoords(lineString)));
+            } catch (err) {
+                expect(err.ok).not.to.be.ok
+                expect(err.result.error).to.equal("Input is not a Linestring");
+                expect(err.result.status).to.equal(400);
+            }
         });
     });
     describe("pointStringToCoords", () => {
@@ -92,9 +99,18 @@ describe("Various useful functions", () => {
                 owner: 123,
                 route: [[0, 0], [1, 1], [2, 2]],
             }
+            try {
+                const route = new RouteDataModel(obj);
+                assert.fail(0, 1, "RouteDataModel constructor should have thrown an error. Instead got: " +
+                    JSON.stringify(route));
+            } catch (err) {
+                expect(err.ok).not.to.be.ok
+                expect(err.result.error).to.equal("Arrival time is before Departure time");
+                expect(err.result.status).to.equal(400);
+            }
             expect(() => {
                 const route = new RouteDataModel(obj);
-            }).to.throw("Arrival time is before Departure time");
+            }).to.throw;
         });
         it("should throw an error if there is only one coordinate passed", () => {
             const obj = {
