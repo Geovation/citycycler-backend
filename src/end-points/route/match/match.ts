@@ -43,7 +43,7 @@ const operation = {
                 userAuth: [],
             },
         ],
-        summary: "Find routes near a given point",
+        summary: "Find routes that pass through 2 points",
         tags: [
             "Routes",
         ],

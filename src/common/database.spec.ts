@@ -176,7 +176,7 @@ describe("MatchMyRoute Database Functions", () => {
                 assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
-        it("should not get a route by and invalid ID", done => {
+        it("should not get a route by an invalid ID", done => {
             const promise = Database.getRouteById(-1);
             expect(promise).to.be.rejected.and.notify(done);
         });
@@ -453,6 +453,172 @@ describe("MatchMyRoute Database Functions", () => {
         it("should not get a route in a huuuge radius (>2km)", done => {
             const promise = Database.getRoutesNearby(2001, 1.6, 2.4);
             expect(promise).to.be.rejected.and.notify(done);
+        });
+        describe("Updating", () => {
+            it("should update all properties at once", done => {
+                const updates = {
+                    id: routeIds[0],
+                    days: ["tuesday"],
+                    arrivalTime: 1500,
+                    departureTime: 900,
+                    route: [[0, 0], [1, 0], [1, 1], [0, 1]],
+                };
+                const promise = Database.getRouteById(routeIds[0]).then(originalRoute => {
+                    return Database.updateRoute(originalRoute, updates);
+                }).then(() => {
+                    return Database.getRouteById(routeIds[0]);
+                }).then(newRoute => {
+                    expect(newRoute.days).to.eql(["tuesday"]);
+                    expect(newRoute.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
+                    expect(newRoute.arrivalTime).to.equal(1500);
+                    expect(newRoute.departureTime).to.equal(900);
+                    done();
+                });
+            });
+            it("should update one property at a time - arrivalTime", done => {
+                const updates = {
+                    id: routeIds[0],
+                    arrivalTime: 15000,
+                };
+                const promise = Database.getRouteById(routeIds[0]).then(originalRoute => {
+                    return Database.updateRoute(originalRoute, updates);
+                }).then(() => {
+                    return Database.getRouteById(routeIds[0]);
+                }).then(newRoute => {
+                    expect(newRoute.days).to.eql(["tuesday"]);
+                    expect(newRoute.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
+                    expect(newRoute.arrivalTime).to.equal(15000);
+                    expect(newRoute.departureTime).to.equal(900);
+                    done();
+                });
+            });
+            it("should update one property at a time - departureTime", done => {
+                const updates = {
+                    id: routeIds[0],
+                    departureTime: 14000,
+                };
+                const promise = Database.getRouteById(routeIds[0]).then(originalRoute => {
+                    return Database.updateRoute(originalRoute, updates);
+                }).then(() => {
+                    return Database.getRouteById(routeIds[0]);
+                }).then(newRoute => {
+                    expect(newRoute.days).to.eql(["tuesday"]);
+                    expect(newRoute.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
+                    expect(newRoute.arrivalTime).to.equal(15000);
+                    expect(newRoute.departureTime).to.equal(14000);
+                    done();
+                });
+            });
+            it("should update one property at a time - days", done => {
+                const updates = {
+                    id: routeIds[0],
+                    days: ["thursday", "friday"],
+                };
+                const promise = Database.getRouteById(routeIds[0]).then(originalRoute => {
+                    return Database.updateRoute(originalRoute, updates);
+                }).then(() => {
+                    return Database.getRouteById(routeIds[0]);
+                }).then(newRoute => {
+                    expect(newRoute.days).to.eql(["thursday", "friday"]);
+                    expect(newRoute.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
+                    expect(newRoute.arrivalTime).to.equal(15000);
+                    expect(newRoute.departureTime).to.equal(14000);
+                    done();
+                });
+            });
+            it("should update one property at a time - route", done => {
+                const updates = {
+                    id: routeIds[0],
+                    route: [[0, 0], [1, 0], [1, 1]],
+                };
+                const promise = Database.getRouteById(routeIds[0]).then(originalRoute => {
+                    return Database.updateRoute(originalRoute, updates);
+                }).then(() => {
+                    return Database.getRouteById(routeIds[0]);
+                }).then(newRoute => {
+                    expect(newRoute.days).to.eql(["thursday", "friday"]);
+                    expect(newRoute.route).to.eql([[0, 0], [1, 0], [1, 1]]);
+                    expect(newRoute.arrivalTime).to.equal(15000);
+                    expect(newRoute.departureTime).to.equal(14000);
+                    done();
+                });
+            });
+            it("should not be able to update ownership", done => {
+                const updates = {
+                    id: routeIds[0],
+                    owner: userIds[0],
+                };
+                const promise = Database.getRouteById(routeIds[0]).then(originalRoute => {
+                    return Database.updateRoute(originalRoute, updates);
+                }).then(() => {
+                    return Database.getRouteById(routeIds[0]);
+                }).then(newRoute => {
+                    expect(newRoute.owner).to.eql(userIds[1]);
+                    done();
+                });
+            });
+            it("should not be able to update to an invalid departureTime", done => {
+                const updates = {
+                    id: routeIds[0],
+                    departureTime: 16000,
+                };
+                const promise = Database.getRouteById(routeIds[0]).then(originalRoute => {
+                    return Database.updateRoute(originalRoute, updates);
+                }, err => { });
+                expect(promise).to.be.rejected.and.notify(done);
+            });
+            it("should not be able to update to an invalid arrivalTime", done => {
+                const updates = {
+                    id: routeIds[0],
+                    arrivalTime: 100,
+                };
+                const promise = Database.getRouteById(routeIds[0]).then(originalRoute => {
+                    return Database.updateRoute(originalRoute, updates);
+                });
+                expect(promise).to.be.rejected.and.notify(done);
+            });
+            it("should not be able to update to an invalid departureTime + arrivalTime", done => {
+                const updates = {
+                    id: routeIds[0],
+                    departureTime: 16000,
+                    arrivalTime: 15999,
+                };
+                const promise = Database.getRouteById(routeIds[0]).then(originalRoute => {
+                    return Database.updateRoute(originalRoute, updates);
+                });
+                expect(promise).to.be.rejected.and.notify(done);
+            });
+            it("should not be able to update to an invalid length route", done => {
+                const updates = {
+                    id: routeIds[0],
+                    route: [[5, 6.2]],
+                };
+                const promise = Database.getRouteById(routeIds[0]).then(originalRoute => {
+                    return Database.updateRoute(originalRoute, updates);
+                });
+                expect(promise).to.be.rejected.and.notify(done);
+            });
+            it("should not be able to update to a route with 1D coordinates", done => {
+                const updates = {
+                    id: routeIds[0],
+                    route: [[5, 6.2], [7.125], [8.5, 6.3]],
+                };
+                const promise = Database.getRouteById(routeIds[0]).then(originalRoute => {
+                    return Database.updateRoute(originalRoute, updates);
+                });
+                expect(promise).to.be.rejected.and.notify(done);
+            });
+            it("should not be able to update to a route with 3D coordinates", done => {
+                const updates = {
+                    id: routeIds[0],
+                    route: [[5, 6.2], [7.125, 4.7, 0.12], [8.5, 6.3]],
+                };
+                const promise = Database.getRouteById(routeIds[0]).then(originalRoute => {
+                    return Database.updateRoute(originalRoute, updates);
+                });
+                expect(promise).to.be.rejected.and.notify(done);
+            });
+
         });
         it("should not delete any routes with an invalid id", done => {
             const promise = Database.deleteRoute(-1);

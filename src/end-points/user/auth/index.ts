@@ -6,7 +6,7 @@ import { EndpointCollection } from "../../../microservices-framework/web/service
 import { generate } from "./generate";
 import { regenerate } from "./regenerate";
 
-export const auth: EndpointCollection = new EndpointCollection("users/" + path.parse(__dirname).name);
+export const auth: EndpointCollection = new EndpointCollection("user/" + path.parse(__dirname).name);
 
 // export Endpoints
 auth.addEndpoint(generate);
