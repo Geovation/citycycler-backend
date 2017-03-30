@@ -22,19 +22,28 @@ describe("MatchMyRoute Auth Functions", () => {
         Database.shutDownPool();
         // Start a new database pool
         Database.startUpPool(true);
-        // Create a test user
-        Database.putUser(
-            "Test User",
-            "test@example.com",
-            new Buffer("test"),
-            new Buffer("test"),
-            1,
-            secret).then((u) => {
+
+        Database.resetDatabase().then(
+            // this should go into the respective tests to be atomic
+            // Create a test user
+            e => {
+                return Database.putUser(
+                    "Test User",
+                    "test@example.com",
+                    new Buffer("test"),
+                    new Buffer("test"),
+                    1,
+                    secret)
+            }
+        ).then(
+            (u) => {
+                console.log("user successfully created");
                 uid = u.id
                 done();
-            }, err => {
-                done();
-            });
+            }
+            ).catch(
+            err => { return (err) }
+            )
     });
     // Remove the test user
     after(done => {

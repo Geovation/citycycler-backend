@@ -77,6 +77,7 @@ function getBaseEnvVars() {
         PROCESS_TYPE: "web",
         WITH_SERVICES: true,
         NODE_PATH: ".",
+        PGDATABASE: "matchMyRoute",
     };
 };
 
@@ -87,7 +88,7 @@ function getDevelopmentEnvVars() {
         PGPORT: 5432,
         DOCURL: "http://localhost:8080",
         STATIC_DIR: "build/static",
-        NODE_ENV: "development"
+        NODE_ENV: "development",
     });
 };
 
@@ -99,6 +100,7 @@ function getProductionEnvVars() {
         DOCURL: "https://matchmyroute-backend.appspot.com",
         STATIC_DIR: "static",
         NODE_ENV: "production",
+        PGUSER: "postgres",
         PGPASSWORD: "aUZw[:Gw38H&>Jf2hUwd",
     });
 };
@@ -107,9 +109,10 @@ function getStagingEnvVars() {
     return Object.assign(getBaseEnvVars(),
     {
         DB_CONNECTION_PATH: "127.0.0.1",
-        PGPORT: 3307,
+        PGPORT: 5432,
         NODE_ENV: "staging",
-        PGPASSWORD: "aUZw[:Gw38H&>Jf2hUwd",
+        PGUSER: "testuser",
+        PGPASSWORD: "test",
     });
 };
 

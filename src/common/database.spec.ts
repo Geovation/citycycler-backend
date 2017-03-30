@@ -18,33 +18,17 @@ chai.use(chaiAsPromised);
 describe("MatchMyRoute Database Functions", () => {
     let userIds = [];	// These are to assist wiht cleanup afterwards
     let routeIds = [];
-    const testSchema = 'public';
     before(done => {
         // Shut down any running database pools
         Database.shutDownPool().then(result => {
             if (result) {
                 // Start a new database pool
                 Database.startUpPool(true);
-                console.info('will delete schema');
-                Database.sql('DROP SCHEMA IF EXISTS ' + testSchema + ' CASCADE;', [])
-                    .then(result => {
-                        return Database.sql('CREATE SCHEMA ' + testSchema + ' AUTHORIZATION postgres; ALTER USER postgres SET search_path TO ' + testSchema + ';', [])
-                    })
-                    .then(result => {
-                        return new Promise((resolve, reject) => {
-                            fs.readFile('postgres_schema.sql', 'utf8', function(err, data) {
-                                if (err) {
-                                    reject(new Error("Could not read schema file"));
-                                }
-                                const schemaRecreateCommands = data;
-                                resolve(Database.sql(schemaRecreateCommands));
-                            });
-                        });
-                    })
-                    .then(result => {
-                        console.info('Database recreated successfully');
-                        done();
-                    });
+                Database.resetDatabase().then(
+                    e => { done() }
+                ).catch(
+                    err => { return (err) }
+                    )
 
             } else {
                 console.error("Couldn't shut down old pool!");
