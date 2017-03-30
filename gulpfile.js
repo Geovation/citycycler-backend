@@ -8,8 +8,9 @@ const env = require("gulp-env");
 const tslint = require("gulp-tslint");
 const jsonfile = require('jsonfile');
 const run = require('gulp-run');
-const jasmine = require('gulp-jasmine');
+// const jasmine = require('gulp-jasmine');
 const istanbul = require('gulp-istanbul');
+const mocha = require('gulp-mocha');
 const nodemon = require('gulp-nodemon');
 const runSequence = require('run-sequence');
 const replace = require('gulp-replace');
@@ -169,7 +170,7 @@ gulp.task("pre-test", ["typescript", "set-env-vars"], () => {
 
 gulp.task("unittest", ["pre-test"], () => {
   return gulp.src(["build/**/*[sS]pec.js"])
-    .pipe(jasmine({
+    .pipe(mocha({
       verbose: true,
       includeStackTrace: true,
     }))
@@ -189,9 +190,10 @@ gulp.task("unittest", ["pre-test"], () => {
 
 gulp.task("e2etest", ["pre-test"], () => {
   return gulp.src("build/*.e2e.js")
-    .pipe(jasmine({
+    .pipe(mocha({
       verbose: true,
       includeStackTrace: true,
+      timeout: 20000
     }))
     .on('error', () => {
       if (process.argv[2] !== 'serve') {

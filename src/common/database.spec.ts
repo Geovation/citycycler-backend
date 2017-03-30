@@ -5,7 +5,10 @@ import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
 import * as logger from "winston";
 import * as fs from "fs";
+import * as mocha from "mocha";
 
+const before = mocha.before;
+const after = mocha.after;
 const expect = chai.expect;
 const assert = chai.assert;
 const should = chai.should;
@@ -16,7 +19,7 @@ describe("MatchMyRoute Database Functions", () => {
     let userIds = [];	// These are to assist wiht cleanup afterwards
     let routeIds = [];
     const testSchema = 'public';
-    beforeAll(done => {
+    before(done => {
         // Shut down any running database pools
         Database.shutDownPool().then(result => {
             if (result) {
@@ -49,7 +52,7 @@ describe("MatchMyRoute Database Functions", () => {
             }
         });
     });
-    afterAll(done => {
+    after(done => {
         let promises = [];
         // routeIds.forEach(id => {
         //     promises.push(Database.sql("DELETE FROM routes WHERE id=$1", [id]));
@@ -73,7 +76,7 @@ describe("MatchMyRoute Database Functions", () => {
         expect(rowCount).to.eventually.be.above(0, "pg reports " + rowCount + " connections to the DB")
             .and.notify(done);
     });
-    // describe("User related functions", () => {
+    describe("User related functions", () => {
     it("should create new users", done => {
         console.log("Trying to create user");
         const promise = Database.putUser("Test User", "test@example.com", "pwhash", "salty", 5, "secret").then(
@@ -144,8 +147,8 @@ describe("MatchMyRoute Database Functions", () => {
             assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
         });
     });
-    // });
-    // describe("Route Functions", () => {
+    });
+    describe("Route Functions", () => {
     it("should create a route", done => {
         const route = new RouteDataModel({
             "arrivalTime": 15000,
@@ -723,7 +726,7 @@ describe("MatchMyRoute Database Functions", () => {
             assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
         });
     });
-    // });
+    });
     describe("Database shutdown", () => {
         it("should shut down the database", done => {
             expect(Database.shutDownPool()).to.eventually.equal(true).and.notify(done);

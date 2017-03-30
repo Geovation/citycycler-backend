@@ -5,16 +5,19 @@ import * as crypto from "crypto";
 import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
 import * as jwt from "jsonwebtoken";
+import * as mocha from "mocha";
 
 const expect = chai.expect;
 const assert = chai.assert;
+const before = mocha.before;
+const after = mocha.after;
 chai.use(chaiAsPromised);
 
 // Test the auth Functions
 describe("MatchMyRoute Auth Functions", () => {
     const secret = crypto.randomBytes(20).toString("base64");
     let uid;
-    beforeAll(done => {
+    before(done => {
         // Shut down any running database pools
         Database.shutDownPool();
         // Start a new database pool
@@ -34,7 +37,7 @@ describe("MatchMyRoute Auth Functions", () => {
             });
     });
     // Remove the test user
-    afterAll(done => {
+    after(done => {
         Database.deleteUser(uid).then(() => {
             Database.shutDownPool();
             done();
