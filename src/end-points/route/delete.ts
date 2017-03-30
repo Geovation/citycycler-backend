@@ -41,7 +41,7 @@ const operation = {
         ],
         summary: "Delete a route",
         tags: [
-            "Route Deletion",
+            "Routes",
         ],
     },
 };

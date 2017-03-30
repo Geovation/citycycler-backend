@@ -1,3 +1,4 @@
+import { getIdFromJWT } from "../../common/auth";
 import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 // import * as logger from "winston";
@@ -10,23 +11,25 @@ import { MicroserviceEndpoint } from "../../microservices-framework/web/services
 // TODO:
 // PATH
 const operation = {
-    get: {
+    post: {
         consumes: ["application/json"],
         parameters: [
             {
-                description: "The route ID",
-                in: "query",
-                name: "id",
+                description: "The route and metadata about it",
+                in: "body",
+                name: "route",
                 required: true,
-                type: "integer",
+                schema: {
+                    $ref: "#/definitions/RouteChanges",
+                },
             },
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
-                description: "Route was retrieved",
+                description: "Route was updated",
                 schema: {
-                    $ref: "#/definitions/GetResponse",
+                    $ref: "#/definitions/UpdateRouteResponse",
                 },
             },
             default: {
@@ -36,26 +39,25 @@ const operation = {
                 },
             },
         },
-        summary: "Retreive a route by it's ID",
+        security: [
+            {
+                userAuth: [],
+            },
+        ],
+        summary: "Update an existing route",
         tags: [
             "Routes",
         ],
     },
 };
 
+// DEFINITIONS
+
 const definitions = {
-    GetResponse: {
-        properties: {
-            result: {
-                $ref: "#/definitions/RouteData",
-            },
-        },
-        required: ["result"],
-    },
-    RouteData: {
+    RouteChanges: {
         properties: {
             arrivalTime: {
-                description: "The time in seconds past midnight that the owner will arrive at their destination",
+                description: "The time in seconds past midnight that the owner arrives at their destination",
                 type: "integer",
             },
             days: {
@@ -73,18 +75,24 @@ const definitions = {
                 type: "integer",
             },
             id: {
-                description: "This route's internal id",
-                type: "integer",
-            },
-            owner: {
-                description: "The userId of the user who owns this route",
+                description: "The internal id of this route",
+                format: "int32",
                 type: "integer",
             },
             route: {
                 $ref: "#/definitions/CoordList",
             },
         },
-        required: ["arrivalTime", "departureTime", "owner", "route", "id"],
+        required: ["id"],
+    },
+    UpdateRouteResponse: {
+        description: "Whether the update succeded",
+        properties: {
+            result: {
+                type: "boolean",
+            },
+        },
+        required: ["result"],
     },
 };
 
@@ -93,12 +101,28 @@ const definitions = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    const id = parseInt(params.id, 10);
-    return Database.getRouteById(id);
+    const payload = params.body;
+    return getIdFromJWT(params.authorisation).then(userId => {
+        if (userId !== undefined) {
+            return Database.getRouteById(payload.id).then(route => {
+                if (route.owner === userId) {
+                    return Database.updateRoute(route, payload);
+                } else {
+                    throw "Invalid authorisation";
+                }
+            }, err => {
+                throw err;
+            });
+        } else {
+            throw "Invalid authorisation";
+        }
+    }, err => {
+        throw err;
+    });
 };
 
 // end point definition
-export const getRouteById = new MicroserviceEndpoint("getRouteById")
+export const updateRoute = new MicroserviceEndpoint("updateRoute")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);

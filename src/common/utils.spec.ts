@@ -14,10 +14,23 @@ describe("Various useful functions", () => {
             expect(Database.lineStringToCoords(lineString)).to.eql(coords);
         });
         it("should not convert an invalid linestring into coords", () => {
-            let lineString = "POINT(0 2 5)";
+            const lineString = "POINT(0 2 5)";
             expect(() => {
                 Database.lineStringToCoords(lineString);
             }).to.throw("Input is not a Linestring.");
+        });
+    });
+    describe("pointStringToCoords", () => {
+        it("should convert a pointstring into coords", () => {
+            const pointString = "POINT(5 6.6)";
+            const coords = [5, 6.6];
+            expect(Database.pointStringToCoords(pointString)).to.eql(coords);
+        });
+        it("should not convert an invalid pointstring into coords", () => {
+            const pointString = "LINESTRING(0 2,5 6)";
+            expect(() => {
+                Database.pointStringToCoords(pointString);
+            }).to.throw("Input is not a Point.");
         });
     });
     describe("coordsToLineString", () => {
@@ -31,6 +44,7 @@ describe("Various useful functions", () => {
         it("should be constructed correctly", () => {
             const obj = {
                 arrivalTime: 1234,
+                days: ["tuesday", "sunday"],
                 departureTime: 1000,
                 id: 321,
                 owner: 123,
@@ -42,11 +56,37 @@ describe("Various useful functions", () => {
                 route.departureTime);
             expect(route.id).to.equal(321, "ID is wrong! expected 321, got " + route.id);
             expect(route.owner).to.equal(123, "Owner is wrong! expected 123, got " + route.owner);
+            expect(route.days).to.eql(["tuesday", "sunday"], "Days is wrong!");
             expect(route.route).to.eql([[0, 0], [1, 1], [2, 2]]);
+        });
+        it("should throw an error if there is no arrival time", () => {
+            const obj = {
+                days: ["tuesday", "sunday"],
+                departureTime: 1000,
+                id: 321,
+                owner: 123,
+                route: [[0, 0], [1, 1], [2, 2]],
+            }
+            expect(() => {
+                const route = new RouteDataModel(obj);
+            }).to.throw("Route requires an arrival time");
+        });
+        it("should throw an error if there is no departure time", () => {
+            const obj = {
+                arrivalTime: 999,
+                days: ["tuesday", "sunday"],
+                id: 321,
+                owner: 123,
+                route: [[0, 0], [1, 1], [2, 2]],
+            }
+            expect(() => {
+                const route = new RouteDataModel(obj);
+            }).to.throw("Route requires a departure time");
         });
         it("should throw an error if the arrival is before departure", () => {
             const obj = {
                 arrivalTime: 999,
+                days: ["tuesday", "sunday"],
                 departureTime: 1000,
                 id: 321,
                 owner: 123,
@@ -56,9 +96,61 @@ describe("Various useful functions", () => {
                 const route = new RouteDataModel(obj);
             }).to.throw("Arrival time is before Departure time");
         });
+        it("should throw an error if there is only one coordinate passed", () => {
+            const obj = {
+                arrivalTime: 1999,
+                days: ["tuesday", "sunday"],
+                departureTime: 1000,
+                id: 321,
+                owner: 123,
+                route: [[0, 0]],
+            }
+            expect(() => {
+                const route = new RouteDataModel(obj);
+            }).to.throw("Route requires at least 2 points");
+        });
+        it("should throw an error if there is a 3D coordinate present", () => {
+            const obj = {
+                arrivalTime: 1999,
+                days: ["tuesday", "sunday"],
+                departureTime: 1000,
+                id: 321,
+                owner: 123,
+                route: [[0, 0], [1, 1, 1], [2, 2]],
+            }
+            expect(() => {
+                const route = new RouteDataModel(obj);
+            }).to.throw("Coordinates in a Route should only have 2 items in them, [latitude, longitude]");
+        });
+        it("should throw an error if there is a 1D coordinate present", () => {
+            const obj = {
+                arrivalTime: 1999,
+                days: ["tuesday", "sunday"],
+                departureTime: 1000,
+                id: 321,
+                owner: 123,
+                route: [[0, 0], [1], [2, 2]],
+            }
+            expect(() => {
+                const route = new RouteDataModel(obj);
+            }).to.throw("Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]");
+        });
+        it("should throw an error if there is no owner", () => {
+            const obj = {
+                arrivalTime: 1999,
+                days: ["tuesday", "sunday"],
+                departureTime: 1000,
+                id: 321,
+                route: [[0, 0], [1, 1], [2, 2]],
+            }
+            expect(() => {
+                const route = new RouteDataModel(obj);
+            }).to.throw("Route requires an owner");
+        });
         it("should be constructed correctly from an SQL row", () => {
             const row = {
                 arrivaltime: 1234,
+                days: 66,
                 departuretime: 1000,
                 id: 321,
                 owner: 123,
@@ -70,6 +162,8 @@ describe("Various useful functions", () => {
                 route.departureTime);
             expect(route.id).to.equal(321, "ID is wrong! expected 321, got " + route.id);
             expect(route.owner).to.equal(123, "Owner is wrong! expected 123, got " + route.owner);
+            expect(route.days).to.eql(["tuesday", "sunday"], "Days is wrong! expected ['tuesday', 'sunday'], " +
+                "got " + route.days);
             expect(route.route).to.eql([[0, 0], [1, 1], [2, 2]]);
         });
     });
