@@ -301,7 +301,7 @@ export function matchRoutes(
                     "departureTime + distFromStart*(departureTime - arrivalTime) - $6)";
                 queryParams.push(matchParams.time);
             } else {
-                query += "ORDER BY departureTime + distFromStart*(departureTime - arrivalTime)";
+                query += "ORDER BY meetingTime";
             }
             client.query(query + ";", queryParams, (error, result) => {
                 // call `done(err)` to release the client back to the pool (or destroy it if there is an error)

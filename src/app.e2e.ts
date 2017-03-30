@@ -551,7 +551,7 @@ describe("MatchMyRoute API", () => {
                 });
                 describe("By Matching", () => {
                     beforeAll(done => {
-                        // Set up a long rtraight route that is easy to reason about
+                        // Set up a long straight route that is easy to reason about
                         const route = new RouteDataModel({
                             "arrivalTime": 660,
                             "departureTime": 60,
@@ -921,7 +921,7 @@ describe("MatchMyRoute API", () => {
                             });
                     });
                 });
-                it("should not be able update ownership", done => {
+                it("should not be able to update ownership", done => {
                     const updates = {
                         id: routeIds[0],
                         owner: userIds[0],
