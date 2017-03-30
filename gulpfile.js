@@ -76,7 +76,6 @@ function getBaseEnvVars() {
         PROCESS_TYPE: "web",
         WITH_SERVICES: true,
         NODE_PATH: ".",
-        PGPASSWORD: "aUZw[:Gw38H&>Jf2hUwd",
     };
 };
 
@@ -99,6 +98,7 @@ function getProductionEnvVars() {
         DOCURL: "https://matchmyroute-backend.appspot.com",
         STATIC_DIR: "static",
         NODE_ENV: "production",
+        PGPASSWORD: "aUZw[:Gw38H&>Jf2hUwd",
     });
 };
 
@@ -108,6 +108,7 @@ function getStagingEnvVars() {
         DB_CONNECTION_PATH: "127.0.0.1",
         PGPORT: 3307,
         NODE_ENV: "staging",
+        PGPASSWORD: "aUZw[:Gw38H&>Jf2hUwd",
     });
 };
 

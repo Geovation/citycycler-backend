@@ -8,7 +8,7 @@ import * as pg from "pg";
 // note: all config is optional and the environment variables
 // will be read if the config is not present
 const config = {
-    database: "matchMyRoute", // env var: PGDATABASE
+    database: "matchMyRouteTest", // env var: PGDATABASE
     // host: "35.190.143.196", // Server hosting the postgres database
     host: process.env.DB_CONNECTION_PATH, // Server hosting the postgres database
     idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed
@@ -78,7 +78,7 @@ export function startUpPool(): void {
 }
 
 // Put a route in the database, returning the new database ID for the route
-export function putRoute(routeData: RouteDataModel): Promise<number> {
+export function putRoute(routeData: RouteDataModel): Promise<any> {
 
     const wkt = coordsToLineString(routeData.route);
 
@@ -107,7 +107,7 @@ export function putRoute(routeData: RouteDataModel): Promise<number> {
                 }
 
                 // return the id of the new route
-                resolve(result.rows[0].id);
+                resolve({ client, result: result.rows[0].id });
             });
         });
     });
