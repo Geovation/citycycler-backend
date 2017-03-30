@@ -8,18 +8,22 @@ import * as pg from "pg";
 // note: all config is optional and the environment variables
 // will be read if the config is not present
 const config = {
-    database: "matchMyRouteTest", // env var: PGDATABASE
+    database: "matchMyRoute", // env var: PGDATABASE
     // host: "35.190.143.196", // Server hosting the postgres database
     host: process.env.DB_CONNECTION_PATH, // Server hosting the postgres database
     idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed
     max: 10, // max number of clients in the pool
     user: "postgres", // env var: PGUSER
 };
+
+const testDatabase = "matchMyRouteTest";
+const prodDatabase = "matchMyRoute";
+
 // this initializes a connection pool
 // it will keep idle connections open for a 30 seconds
 // and set a limit of maximum 10 idle clients
 let pool;
-startUpPool();
+startUpPool(false);
 // if an error is encountered by a client while it sits idle in the pool
 // the pool itself will emit an error event with both the error and
 // the client which emitted the original error
@@ -73,12 +77,17 @@ export function shutDownPool(): Promise<boolean> {
 
 // This starts up a pool. It should usually only be called once on app startup.
 // We need to call it multiple times to run our tests though
-export function startUpPool(): void {
+export function startUpPool(testing: boolean): void {
+    if (testing) {
+        config.database = testDatabase;
+    } else {
+        config.database = prodDatabase;
+    }
     pool = new pg.Pool(config);
 }
 
 // Put a route in the database, returning the new database ID for the route
-export function putRoute(routeData: RouteDataModel): Promise<any> {
+export function putRoute(routeData: RouteDataModel): Promise<number> {
 
     const wkt = coordsToLineString(routeData.route);
 
@@ -107,7 +116,7 @@ export function putRoute(routeData: RouteDataModel): Promise<any> {
                 }
 
                 // return the id of the new route
-                resolve({ client, result: result.rows[0].id });
+                resolve(result.rows[0].id);
             });
         });
     });

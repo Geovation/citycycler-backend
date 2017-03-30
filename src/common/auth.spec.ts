@@ -21,7 +21,7 @@ describe("MatchMyRoute Auth Functions", () => {
         // Shut down any running database pools
         Database.shutDownPool();
         // Start a new database pool
-        Database.startUpPool();
+        Database.startUpPool(true);
         // Create a test user
         Database.putUser(
             "Test User",

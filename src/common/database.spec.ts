@@ -24,7 +24,7 @@ describe("MatchMyRoute Database Functions", () => {
         Database.shutDownPool().then(result => {
             if (result) {
                 // Start a new database pool
-                Database.startUpPool();
+                Database.startUpPool(true);
                 console.info('will delete schema');
                 Database.sql('DROP SCHEMA IF EXISTS ' + testSchema + ' CASCADE;', [])
                     .then(result => {
@@ -54,12 +54,12 @@ describe("MatchMyRoute Database Functions", () => {
     });
     after(done => {
         let promises = [];
-        // routeIds.forEach(id => {
-        //     promises.push(Database.sql("DELETE FROM routes WHERE id=$1", [id]));
-        // });
-        // userIds.forEach(id => {
-        //     promises.push(Database.sql("DELETE FROM users WHERE id=$1", [id]));
-        // });
+        routeIds.forEach(id => {
+            promises.push(Database.sql("DELETE FROM routes WHERE id=$1", [id]));
+        });
+        userIds.forEach(id => {
+            promises.push(Database.sql("DELETE FROM users WHERE id=$1", [id]));
+        });
         Promise.all(promises).then(() => {
             Database.shutDownPool();
             done();
@@ -77,101 +77,74 @@ describe("MatchMyRoute Database Functions", () => {
             .and.notify(done);
     });
     describe("User related functions", () => {
-    it("should create new users", done => {
-        console.log("Trying to create user");
-        const promise = Database.putUser("Test User", "test@example.com", "pwhash", "salty", 5, "secret").then(
-            user => {
+        it("should create new users", done => {
+            console.log("Trying to create user");
+            const promise = Database.putUser("Test User", "test@example.com", "pwhash", "salty", 5, "secret").then(
+                user => {
+                    userIds.push(user.id);
+                    expect(user.name).to.equal("Test User");
+                    expect(user.email).to.equal("test@example.com");
+                    expect(Buffer.compare(new Buffer("pwhash"), user.pwh)).to.equal(0);
+                    expect(Buffer.compare(new Buffer("salty"), user.salt)).to.equal(0);
+                    expect(user.rounds).to.equal(5);
+                    expect(user.jwtSecret).to.equal("secret");
+                    done();
+                }, err => {
+                    assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
+                })
+                .catch(error => { console.error('useradd failed because ' + error); }
+                );
+        });
+        it("should fail to create users with duplicate emails", done => {
+            const promise = Database.putUser("Test User2", "test@example.com", "pwhash2", "salty2", 5, "secret2");
+            expect(promise).to.be.rejected.and.notify(done);
+        });
+        it("should escape SQL injections", done => {
+            const promise = Database.putUser("Test User');DROP TABLE users;", "test2@example.com", "pwhash2", "salty2", 5, "secret2").then(user => {
                 userIds.push(user.id);
-                expect(user.name).to.equal("Test User");
-                expect(user.email).to.equal("test@example.com");
-                expect(Buffer.compare(new Buffer("pwhash"), user.pwh)).to.equal(0);
-                expect(Buffer.compare(new Buffer("salty"), user.salt)).to.equal(0);
-                expect(user.rounds).to.equal(5);
-                expect(user.jwtSecret).to.equal("secret");
                 done();
             }, err => {
                 assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
-            })
-            .catch(error => { console.error('useradd failed because ' + error); }
-            );
-    });
-    it("should fail to create users with duplicate emails", done => {
-        const promise = Database.putUser("Test User2", "test@example.com", "pwhash2", "salty2", 5, "secret2");
-        expect(promise).to.be.rejected.and.notify(done);
-    });
-    it("should escape SQL injections", done => {
-        const promise = Database.putUser("Test User');DROP TABLE users;", "test2@example.com", "pwhash2", "salty2", 5, "secret2").then(user => {
-            userIds.push(user.id);
-            done();
-        }, err => {
-            assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
-        });
-    });
-    it("should get a user by ID", done => {
-        const promise = Database.getUserById(userIds[0]).then(user => {
-            expect(user.name).to.equal("Test User");
-            done();
-        }, err => {
-            assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
-        });
-    });
-    it("should not get a user by an invalid ID", done => {
-        const promise = Database.getUserById(-1);
-        expect(promise).to.be.rejected.and.notify(done);
-    });
-    it("should get a user by email", done => {
-        const promise = Database.getUserByEmail("test@example.com").then(user => {
-            expect(user.name).to.equal("Test User");
-            done();
-        }, err => {
-            assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
-        });
-    });
-    it("should not get a user by an invalid email", done => {
-        const promise = Database.getUserByEmail("idontexist@example.com");
-        expect(promise).to.be.rejected.and.notify(done);
-    });
-    it("should not delete any users with an invalid id", done => {
-        const promise = Database.deleteUser(-1);
-        expect(promise).to.be.rejected.and.notify(done);
-    });
-    it("should delete a user", done => {
-        const promise = Database.deleteUser(userIds[0]).then(() => {
-            const userCount = Database.sql("SELECT * FROM users WHERE id=$1", [userIds[0]]).then(result => {
-                expect(result.rowCount).to.equal(0);
-                done();
-            }, err => {
-                assert.fail(err, 0, "Inner Promise was rejected (Database.sql): " + err).and.notify(done);
             });
-        }, err => {
-            assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
         });
-    });
-    });
-    describe("Route Functions", () => {
-    it("should create a route", done => {
-        const route = new RouteDataModel({
-            "arrivalTime": 15000,
-            "departureTime": 14000,
-            "owner": userIds[1],
-            "route": [[0, 0], [1, 0], [1, 1]],
-        });
-        console.log("Route to put is: " + JSON.stringify(route));
-        const promise = Database.putRoute(route);
-        promise.then(response => {
-            const routeId = response.result;
-            routeIds.push(routeId);
-            console.log('trying to get route with id ' + routeId);
-            Database.sql("SELECT * FROM routes WHERE id=$1", ["" + routeId]).then(result => {
-                expect(result.rows[0].arrivaltime).to.equal(route.arrivalTime);
-                expect(result.rows[0].departuretime).to.equal(route.departureTime);
-                expect(result.rows[0].owner).to.equal(route.owner);
-                response.client.query('ROLLBACK', err => {
-                    console.error('Error trying to roll back')
-                });
+        it("should get a user by ID", done => {
+            const promise = Database.getUserById(userIds[0]).then(user => {
+                expect(user.name).to.equal("Test User");
                 done();
             }, err => {
-                assert.fail(err, 0, "Inner Promise was rejected (Database.sql): " + err).and.notify(done);
+                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
+            });
+        });
+        it("should not get a user by an invalid ID", done => {
+            const promise = Database.getUserById(-1);
+            expect(promise).to.be.rejected.and.notify(done);
+        });
+        it("should get a user by email", done => {
+            const promise = Database.getUserByEmail("test@example.com").then(user => {
+                expect(user.name).to.equal("Test User");
+                done();
+            }, err => {
+                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
+            });
+        });
+        it("should not get a user by an invalid email", done => {
+            const promise = Database.getUserByEmail("idontexist@example.com");
+            expect(promise).to.be.rejected.and.notify(done);
+        });
+        it("should not delete any users with an invalid id", done => {
+            const promise = Database.deleteUser(-1);
+            expect(promise).to.be.rejected.and.notify(done);
+        });
+        it("should delete a user", done => {
+            const promise = Database.deleteUser(userIds[0]).then(() => {
+                const userCount = Database.sql("SELECT * FROM users WHERE id=$1", [userIds[0]]).then(result => {
+                    expect(result.rowCount).to.equal(0);
+                    done();
+                }, err => {
+                    assert.fail(err, 0, "Inner Promise was rejected (Database.sql): " + err).and.notify(done);
+                });
+            }, err => {
+                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         }, err => {
             assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
@@ -491,25 +464,17 @@ describe("MatchMyRoute Database Functions", () => {
             }, err => {
                 assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
-            expect(rids).not.to.contain(routeIds[0]);
-            done();
-        }, err => {
-            assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
         });
-    });
-    it("should not delete any routes with an invalid id", done => {
-        const promise = Database.deleteRoute(-1);
-        expect(promise).to.be.rejected.and.notify(done);
-    });
-    it("should delete a route", done => {
-        const promise = Database.deleteRoute(routeIds[0]);
-        promise.then(() => {
-            Database.sql("SELECT * FROM routes WHERE id=$1;", [routeIds[0]]).then(result => {
-                expect(result.rowCount).to.equal(0);
+        it("should not get a far away route", done => {
+            const promise = Database.getRoutesNearby(1, 1.6, 2.4).then(routes => {
+                const rids = routes.map((r) => {
+                    return r.id;
+                });
+                expect(rids).not.to.contain(routeIds[0]);
                 done();
+            }, err => {
+                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
-        }, err => {
-            assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
         });
         it("should not get a route in a tiny radius (<1m)", done => {
             const promise = Database.getRoutesNearby(0.5, 1.6, 2.4);
@@ -689,9 +654,10 @@ describe("MatchMyRoute Database Functions", () => {
             const promise = Database.deleteRoute(-1);
             expect(promise).to.be.rejected.and.notify(done);
         });
-        Database.putRoute(route).then(routeId => {
-            Database.deleteUser(userIds[1]).then(() => {
-                Database.sql("SELECT * FROM routes WHERE id=$1;", ["" + routeId]).then(result => {
+        it("should delete a route", done => {
+            const promise = Database.deleteRoute(routeIds[0]);
+            promise.then(() => {
+                Database.sql("SELECT * FROM routes WHERE id=$1;", [routeIds[0]]).then(result => {
                     expect(result.rowCount).to.equal(0);
                     done();
                 });
@@ -706,26 +672,22 @@ describe("MatchMyRoute Database Functions", () => {
                 "departureTime": 14000,
                 "owner": userIds[1],
                 "route": [[0, 0], [1, 0], [1, 1]],
-                "days": ["tuesday", "sunday"],
             });
-            Database.putRoute(route).then(routeId => {
-                Database.deleteUser(userIds[1]).then(() => {
-                    Database.sql("SELECT * FROM routes WHERE id=$1;", ["" + routeId]).then(result => {
-                        expect(result.rowCount).to.equal(0);
-                        done();
-                    }, err => {
-                        assert.fail(err, 0, "Inner Promise was rejected (Database.sql): " + err).and.notify(done);
-                    });
-                }, err => {
-                    assert.fail(err, 0, "Inner Promise was rejected (Database.sql): " + err).and.notify(done);
-                });
-            }, err => {
-                assert.fail(err, 0, "Inner Promise was rejected (Database.deleteUser): " + err).and.notify(done);
+
+            let routeId;
+
+            Database.putRoute(route).then(id => {
+                routeId = id;
+                return Database.deleteUser(userIds[1])
+            }).then(() => {
+                return Database.sql("SELECT * FROM routes WHERE id=$1;", ["" + routeId]);
+            }).then((result: any) => {
+                expect(result.rowCount).to.equal(0);
+                done();
+            }).catch(err => {
+                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
-        }, err => {
-            assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
         });
-    });
     });
     describe("Database shutdown", () => {
         it("should shut down the database", done => {
