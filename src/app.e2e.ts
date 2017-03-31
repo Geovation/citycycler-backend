@@ -4,7 +4,6 @@ import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
 import * as EventEmitter from "events";
 import * as request from "request";
-import * as Database from "./common/database";
 import * as mocha from "mocha";
 import { RouteDataModel } from "./common/RouteDataModel";
 
@@ -44,29 +43,35 @@ describe("MatchMyRoute API", () => {
     after(done => {
         console.log("Cleaning up...")
         let promises = [];
-        routeIds.forEach(id => {
-            promises.push(Database.sql("DELETE FROM routes WHERE id=$1", [id]));
-        });
-        userIds.forEach(id => {
-            console.log("Deleting user " + id);
-            promises.push(Database.sql("DELETE FROM users WHERE id=$1", [id]));
-        });
-        Promise.all(promises).then(() => {
-            setTimeout(() => {  // 1s wait for any pending database operations
-                Database.shutDownPool().then(() => {
-                    if (startServer) {
-                        console.log("Shutting down server...");
-                        gracefulShutdown();
-                        server.close((err) => {
-                            console.log("done.");
-                            done();
-                        });
+        userIds.forEach((id, i) => {
+            promises.push(new Promise((resolve, reject) => {
+                request({
+                    headers: {
+                        "Authorisation": "Bearer " + userJwts[i],
+                    },
+                    url: url + "/route?id=" + id,
+                    method: "DELETE",
+                }, (error, response, body) => {
+                    if (error) {
+                        reject(error);
                     } else {
-                        gracefulShutdown();
-                        done();
+                        resolve(body);
                     }
                 });
-            }, 1000);
+            }));
+        });
+        Promise.all(promises).then(() => {
+            if (startServer) {
+                console.log("Shutting down server...");
+                gracefulShutdown();
+                server.close((err) => {
+                    console.log("done.");
+                    done();
+                });
+            } else {
+                gracefulShutdown();
+                done();
+            }
         });
     });
 
@@ -92,7 +97,8 @@ describe("MatchMyRoute API", () => {
                 url,
             }, (error, response, body) => {
                 expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
-                    response.statusCode + ", error given is: " + error);
+                    response.statusCode + ", error given is: " + error + " body returned is: " +
+                    JSON.stringify(body), " response returned is: " + JSON.stringify(response));
                 expect(response.headers["access-control-allow-origin"]).to.equal("*");
                 done();
             });
@@ -563,13 +569,21 @@ describe("MatchMyRoute API", () => {
                             "route": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6]],
                             "days": ["tuesday", "friday", "sunday"],
                         });
-                        const promise = Database.putRoute(route);
-                        promise.then(routeId => {
-                            routeIds.push(routeId); // Should be routeIds[1]
-                            done();
-                        }, err => {
-                            console.log("Error while setting up the route to test route matching");
-                            throw err;
+                        request({
+                            headers: {
+                                "Authorisation": "Bearer " + userJwts[1],
+                            },
+                            url: url + "/route",
+                            json: route,
+                            method: "PUT",
+                        }, (error, response, body) => {
+                            if (response.statusCode !== 200) {
+                                console.log("Error while setting up the route to test route matching");
+                                throw error;
+                            } else {
+                                routeIds.push(body.result); // Should be routeIds[1]
+                                done();
+                            }
                         });
                     });
                     it("should match a route", done => {
@@ -765,24 +779,24 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
-                        Database.sql("SELECT id, owner, ST_AsText(route) as route, days::integer as days, " +
-                            "departureTime, arrivalTime FROM routes WHERE id=$1;", [routeIds[0]]).then(result => {
-                                let route;
-                                try {
-                                    route = RouteDataModel.fromSQLRow(result.rows[0]);
-                                } catch (err) {
-                                    assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
-                                        err).and.notify(done);
-                                }
-                                expect(route.days).to.eql(["tuesday"]);
-                                expect(route.arrivalTime).to.equal(1500);
-                                expect(route.departureTime).to.equal(900);
-                                expect(route.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
-                                done();
-                            }, err => {
-                                assert.fail(0, 1, "Error getting the route from the database to check that it's " +
-                                    "updated: " + err).and.notify(done);
-                            });
+                        request({
+                            url: url + "/route?id=" + routeIds[0],
+                            method: "GET",
+                            json: true,
+                        }, (error, response, body) => {
+                            let route;
+                            try {
+                                route = new RouteDataModel(body.result);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
+                                    err).and.notify(done);
+                            }
+                            expect(route.days).to.eql(["tuesday"]);
+                            expect(route.arrivalTime).to.equal(1500);
+                            expect(route.departureTime).to.equal(900);
+                            expect(route.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
+                            done();
+                        });
                     });
                 });
                 it("should update one property at a time - arrivalTime", done => {
@@ -800,24 +814,24 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
-                        Database.sql("SELECT id, owner, ST_AsText(route) as route, days::integer as days, " +
-                            "departureTime, arrivalTime FROM routes WHERE id=$1;", [routeIds[0]]).then(result => {
-                                let route;
-                                try {
-                                    route = RouteDataModel.fromSQLRow(result.rows[0]);
-                                } catch (err) {
-                                    assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
-                                        err).and.notify(done);
-                                }
-                                expect(route.days).to.eql(["tuesday"]);
-                                expect(route.arrivalTime).to.equal(1200);
-                                expect(route.departureTime).to.equal(900);
-                                expect(route.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
-                                done();
-                            }, err => {
-                                assert.fail(0, 1, "Error getting the route from the database to check that it's " +
-                                    "updated: " + err).and.notify(done);
-                            });
+                        request({
+                            url: url + "/route?id=" + routeIds[0],
+                            method: "GET",
+                            json: true,
+                        }, (error, response, body) => {
+                            let route;
+                            try {
+                                route = new RouteDataModel(body.result);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
+                                    err).and.notify(done);
+                            }
+                            expect(route.days).to.eql(["tuesday"]);
+                            expect(route.arrivalTime).to.equal(1200);
+                            expect(route.departureTime).to.equal(900);
+                            expect(route.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
+                            done();
+                        });
                     });
                 });
                 it("should update one property at a time - departureTime", done => {
@@ -835,24 +849,24 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
-                        Database.sql("SELECT id, owner, ST_AsText(route) as route, days::integer as days, " +
-                            "departureTime, arrivalTime FROM routes WHERE id=$1;", [routeIds[0]]).then(result => {
-                                let route;
-                                try {
-                                    route = RouteDataModel.fromSQLRow(result.rows[0]);
-                                } catch (err) {
-                                    assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
-                                        err).and.notify(done);
-                                }
-                                expect(route.days).to.eql(["tuesday"]);
-                                expect(route.arrivalTime).to.equal(1200);
-                                expect(route.departureTime).to.equal(600);
-                                expect(route.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
-                                done();
-                            }, err => {
-                                assert.fail(0, 1, "Error getting the route from the database to check that it's " +
-                                    "updated: " + err).and.notify(done);
-                            });
+                        request({
+                            url: url + "/route?id=" + routeIds[0],
+                            method: "GET",
+                            json: true,
+                        }, (error, response, body) => {
+                            let route;
+                            try {
+                                route = new RouteDataModel(body.result);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
+                                    err).and.notify(done);
+                            }
+                            expect(route.days).to.eql(["tuesday"]);
+                            expect(route.arrivalTime).to.equal(1200);
+                            expect(route.departureTime).to.equal(600);
+                            expect(route.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
+                            done();
+                        });
                     });
                 });
                 it("should update one property at a time - days", done => {
@@ -870,24 +884,24 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
-                        Database.sql("SELECT id, owner, ST_AsText(route) as route, days::integer as days, " +
-                            "departureTime, arrivalTime FROM routes WHERE id=$1;", [routeIds[0]]).then(result => {
-                                let route;
-                                try {
-                                    route = RouteDataModel.fromSQLRow(result.rows[0]);
-                                } catch (err) {
-                                    assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
-                                        err).and.notify(done);
-                                }
-                                expect(route.days).to.eql(["monday", "sunday"]);
-                                expect(route.arrivalTime).to.equal(1200);
-                                expect(route.departureTime).to.equal(600);
-                                expect(route.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
-                                done();
-                            }, err => {
-                                assert.fail(0, 1, "Error getting the route from the database to check that it's " +
-                                    "updated: " + err).and.notify(done);
-                            });
+                        request({
+                            url: url + "/route?id=" + routeIds[0],
+                            method: "GET",
+                            json: true,
+                        }, (error, response, body) => {
+                            let route;
+                            try {
+                                route = new RouteDataModel(body.result);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
+                                    err).and.notify(done);
+                            }
+                            expect(route.days).to.eql(["monday", "sunday"]);
+                            expect(route.arrivalTime).to.equal(1200);
+                            expect(route.departureTime).to.equal(600);
+                            expect(route.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
+                            done();
+                        });
                     });
                 });
                 it("should update one property at a time - route", done => {
@@ -905,24 +919,24 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
-                        Database.sql("SELECT id, owner, ST_AsText(route) as route, days::integer as days, " +
-                            "departureTime, arrivalTime FROM routes WHERE id=$1;", [routeIds[0]]).then(result => {
-                                let route;
-                                try {
-                                    route = RouteDataModel.fromSQLRow(result.rows[0]);
-                                } catch (err) {
-                                    assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
-                                        err).and.notify(done);
-                                }
-                                expect(route.days).to.eql(["monday", "sunday"]);
-                                expect(route.arrivalTime).to.equal(1200);
-                                expect(route.departureTime).to.equal(600);
-                                expect(route.route).to.eql([[0, 0], [1, 0], [1, 1]]);
-                                done();
-                            }, err => {
-                                assert.fail(0, 1, "Error getting the route from the database to check that it's " +
-                                    "updated: " + err).and.notify(done);
-                            });
+                        request({
+                            url: url + "/route?id=" + routeIds[0],
+                            method: "GET",
+                            json: true,
+                        }, (error, response, body) => {
+                            let route;
+                            try {
+                                route = new RouteDataModel(body.result);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
+                                    err).and.notify(done);
+                            }
+                            expect(route.days).to.eql(["monday", "sunday"]);
+                            expect(route.arrivalTime).to.equal(1200);
+                            expect(route.departureTime).to.equal(600);
+                            expect(route.route).to.eql([[0, 0], [1, 0], [1, 1]]);
+                            done();
+                        });
                     });
                 });
                 it("should not be able to update ownership", done => {
@@ -940,21 +954,21 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
-                        Database.sql("SELECT id, owner, ST_AsText(route) as route, days::integer as days, " +
-                            "departureTime, arrivalTime FROM routes WHERE id=$1;", [routeIds[0]]).then(result => {
-                                let route;
-                                try {
-                                    route = RouteDataModel.fromSQLRow(result.rows[0]);
-                                } catch (err) {
-                                    assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
-                                        err).and.notify(done);
-                                }
-                                expect(route.owner).to.equal(userIds[1]);
-                                done();
-                            }, err => {
-                                assert.fail(0, 1, "Error getting the route from the database to check that it's " +
-                                    "not updated: " + err).and.notify(done);
-                            });
+                        request({
+                            url: url + "/route?id=" + routeIds[0],
+                            method: "GET",
+                            json: true,
+                        }, (error, response, body) => {
+                            let route;
+                            try {
+                                route = new RouteDataModel(body.result);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
+                                    err).and.notify(done);
+                            }
+                            expect(route.owner).to.equal(userIds[1]);
+                            done();
+                        });
                     });
                 });
                 it("should not allow updating to invalid departureTime", done => {
@@ -1118,17 +1132,20 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
-                        Database.sql("SELECT id from routes where id=$1;", [routeIds[0]]).then(result => {
-                            expect(result.rowCount).to.equal(0, "Route was not deleted! Found this in database: " +
-                                JSON.stringify(result.rows));
+                        request({
+                            url: url + "/route?id=" + routeIds[0],
+                            method: "GET",
+                        }, (error, response, body) => {
+                            expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                                response.statusCode + ", body returned is: " + JSON.stringify(body) +
+                                ". This means the route was not deleted");
                             done();
-                        }, err => {
-                            assert.fail(err, 0, "Inner Promise was rejected (Database.sql) " + err);
                         });
                     });
                 });
                 it("should delete any routes belonging to a user, when a user is deleted", done => {
-                    // Should delete routeIds[1], which we setup in before
+                    // Should delete routeIds[2], which we setup in before
+                    console.log("Deleting user " + userIds[2]);
                     request({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[2],
@@ -1138,12 +1155,14 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
-                        Database.sql("SELECT id from routes where id=$1;", [routeIds[2]]).then(result => {
-                            expect(result.rowCount).to.equal(0, "Route was not deleted! Found this in database: " +
-                                JSON.stringify(result.rows));
+                        request({
+                            url: url + "/route?id=" + routeIds[2],
+                            method: "GET",
+                        }, (error, response, body) => {
+                            expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                                response.statusCode + ", body returned is: " + JSON.stringify(body) +
+                                ". This means the route was not deleted");
                             done();
-                        }, err => {
-                            assert.fail(err, 0, "Inner Promise was rejected (Database.sql) " + err);
                         });
                     });
                 });
