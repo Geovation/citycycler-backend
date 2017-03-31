@@ -5,36 +5,50 @@ import * as crypto from "crypto";
 import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
 import * as jwt from "jsonwebtoken";
+import * as mocha from "mocha";
 
 const expect = chai.expect;
 const assert = chai.assert;
+const before = mocha.before;
+const after = mocha.after;
+const describe = mocha.describe;
+const it = mocha.it;
 chai.use(chaiAsPromised);
 
 // Test the auth Functions
 describe("MatchMyRoute Auth Functions", () => {
     const secret = crypto.randomBytes(20).toString("base64");
     let uid;
-    beforeAll(done => {
+    before(done => {
         // Shut down any running database pools
         Database.shutDownPool();
         // Start a new database pool
-        Database.startUpPool();
-        // Create a test user
-        Database.putUser(
-            "Test User",
-            "test@example.com",
-            new Buffer("test"),
-            new Buffer("test"),
-            1,
-            secret).then((u) => {
+        Database.startUpPool(true);
+
+        Database.resetDatabase().then(
+            // this should go into the respective tests to be atomic
+            // Create a test user
+            e => {
+                return Database.putUser(
+                    "Test User",
+                    "test@example.com",
+                    new Buffer("test"),
+                    new Buffer("test"),
+                    1,
+                    secret)
+            }
+        ).then(
+            (u) => {
+                console.log("user successfully created");
                 uid = u.id
                 done();
-            }, err => {
-                done();
-            });
+            }
+            ).catch(
+            err => { return (err) }
+            )
     });
     // Remove the test user
-    afterAll(done => {
+    after(done => {
         Database.deleteUser(uid).then(() => {
             Database.shutDownPool();
             done();

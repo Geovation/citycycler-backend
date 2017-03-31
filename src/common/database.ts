@@ -1,6 +1,7 @@
 // import * as _ from "lodash";
 import { RouteDataModel } from "./RouteDataModel";
 import { UserFullDataModel } from "./UserFullDataModel";
+import * as fs from "fs";
 import * as pg from "pg";
 
 // create a config to configure both pooling behavior
@@ -13,13 +14,16 @@ const config = {
     host: process.env.DB_CONNECTION_PATH, // Server hosting the postgres database
     idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed
     max: 10, // max number of clients in the pool
-    user: "postgres", // env var: PGUSER
+    // user: "postgres", // env var: PGUSER
 };
+
+const testDatabase = "matchMyRouteTest";
+
 // this initializes a connection pool
 // it will keep idle connections open for a 30 seconds
 // and set a limit of maximum 10 idle clients
 let pool;
-startUpPool();
+startUpPool(false);
 // if an error is encountered by a client while it sits idle in the pool
 // the pool itself will emit an error event with both the error and
 // the client which emitted the original error
@@ -73,8 +77,36 @@ export function shutDownPool(): Promise<boolean> {
 
 // This starts up a pool. It should usually only be called once on app startup.
 // We need to call it multiple times to run our tests though
-export function startUpPool(): void {
+export function startUpPool(testing: boolean): void {
+    console.log("starting up pool in env " + process.env.NODE_ENV);
+    if (testing) {
+        config.database = testDatabase;
+    }
     pool = new pg.Pool(config);
+}
+
+/**
+ * resetDatabase - resets the database schema in the given database to original state
+ */
+export function resetDatabase(): Promise<boolean> {
+    return sql("DROP SCHEMA IF EXISTS public CASCADE;", [])
+        .then(result => {
+            return sql("CREATE SCHEMA public AUTHORIZATION " + process.env.PGUSER + ";", []);
+        })
+        .then(result => {
+            return new Promise((resolve, reject) => {
+                fs.readFile("postgres_schema.sql", "utf8", (err, data) => {
+                    if (err) {
+                        reject(new Error("Could not read schema file"));
+                    }
+                    const schemaRecreateCommands = data;
+                    resolve(sql(schemaRecreateCommands));
+                });
+            });
+        })
+        .then(result => {
+            console.info("Database recreated successfully");
+        });
 }
 
 // Put a route in the database, returning the new database ID for the route

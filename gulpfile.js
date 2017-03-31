@@ -8,8 +8,9 @@ const env = require("gulp-env");
 const tslint = require("gulp-tslint");
 const jsonfile = require('jsonfile');
 const run = require('gulp-run');
-const jasmine = require('gulp-jasmine');
+// const jasmine = require('gulp-jasmine');
 const istanbul = require('gulp-istanbul');
+const mocha = require('gulp-mocha');
 const nodemon = require('gulp-nodemon');
 const runSequence = require('run-sequence');
 const replace = require('gulp-replace');
@@ -76,7 +77,7 @@ function getBaseEnvVars() {
         PROCESS_TYPE: "web",
         WITH_SERVICES: true,
         NODE_PATH: ".",
-        PGPASSWORD: "aUZw[:Gw38H&>Jf2hUwd",
+        PGDATABASE: "matchMyRoute",
     };
 };
 
@@ -87,7 +88,7 @@ function getDevelopmentEnvVars() {
         PGPORT: 5432,
         DOCURL: "http://localhost:8080",
         STATIC_DIR: "build/static",
-        NODE_ENV: "development"
+        NODE_ENV: "development",
     });
 };
 
@@ -99,6 +100,8 @@ function getProductionEnvVars() {
         DOCURL: "https://matchmyroute-backend.appspot.com",
         STATIC_DIR: "static",
         NODE_ENV: "production",
+        PGUSER: "postgres",
+        PGPASSWORD: "aUZw[:Gw38H&>Jf2hUwd",
     });
 };
 
@@ -106,8 +109,10 @@ function getStagingEnvVars() {
     return Object.assign(getBaseEnvVars(),
     {
         DB_CONNECTION_PATH: "127.0.0.1",
-        PGPORT: 3307,
+        PGPORT: 5432,
         NODE_ENV: "staging",
+        PGUSER: "testuser",
+        PGPASSWORD: "test",
     });
 };
 
@@ -168,9 +173,10 @@ gulp.task("pre-test", ["typescript", "set-env-vars"], () => {
 
 gulp.task("unittest", ["pre-test"], () => {
   return gulp.src(["build/**/*[sS]pec.js"])
-    .pipe(jasmine({
+    .pipe(mocha({
       verbose: true,
       includeStackTrace: true,
+      timeout: 5000
     }))
     .on('error', (err) => {
       console.log("error: ", err);
@@ -188,9 +194,10 @@ gulp.task("unittest", ["pre-test"], () => {
 
 gulp.task("e2etest", ["pre-test"], () => {
   return gulp.src("build/*.e2e.js")
-    .pipe(jasmine({
+    .pipe(mocha({
       verbose: true,
       includeStackTrace: true,
+      timeout: 20000
     }))
     .on('error', () => {
       if (process.argv[2] !== 'serve') {

@@ -5,12 +5,16 @@ import * as chaiAsPromised from "chai-as-promised";
 import * as EventEmitter from "events";
 import * as request from "request";
 import * as Database from "./common/database";
+import * as mocha from "mocha";
 import { RouteDataModel } from "./common/RouteDataModel";
 
 const expect = chai.expect;
 const assert = chai.assert;
-chai.use(chaiAsPromised);
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 20000;   // Some things take a while...
+const before = mocha.before;
+const after = mocha.after;
+const describe = mocha.describe;
+const it = mocha.it;
+// jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;   // Some things take a while...
 
 describe("MatchMyRoute API", () => {
     const startServer = !process.env.URL;
@@ -19,7 +23,7 @@ describe("MatchMyRoute API", () => {
     let userIds = [];   // A list of users created that will be deleted at the end of this test run
     let userJwts = [];  // JWTs corresponding to the respective users in userIds
     let routeIds = [];  // A list of routes created that will be deleted at the end of this test run
-    beforeAll(done => {
+    before(done => {
         console.log("startServer is: " + startServer);
         if (startServer) {
             class AppEmitter extends EventEmitter { };
@@ -37,7 +41,7 @@ describe("MatchMyRoute API", () => {
         }
     });
 
-    afterAll(done => {
+    after(done => {
         console.log("Cleaning up...")
         let promises = [];
         routeIds.forEach(id => {
@@ -399,7 +403,7 @@ describe("MatchMyRoute API", () => {
             });
         });
         describe("Routes", () => {
-            beforeAll(done => {
+            before(done => {
                 // Create another test user (userIds[2])
                 const user = { "email": "test2@example.com", "name": "Test User3", "password": "test" };
                 request({
@@ -550,7 +554,7 @@ describe("MatchMyRoute API", () => {
                     it("Skipping this because it might soon be depreciated", () => { });
                 });
                 describe("By Matching", () => {
-                    beforeAll(done => {
+                    before(done => {
                         // Set up a long straight route that is easy to reason about
                         const route = new RouteDataModel({
                             "arrivalTime": 660,
@@ -1048,7 +1052,7 @@ describe("MatchMyRoute API", () => {
                 });
             });
             describe("Deletion", () => {
-                beforeAll(done => {
+                before(done => {
                     // Set up another route belonging to userIds[2]
                     const route = {
                         "arrivalTime": 1200,
@@ -1124,7 +1128,7 @@ describe("MatchMyRoute API", () => {
                     });
                 });
                 it("should delete any routes belonging to a user, when a user is deleted", done => {
-                    // Should delete routeIds[1], which we setup in beforeAll
+                    // Should delete routeIds[1], which we setup in before
                     request({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[2],
