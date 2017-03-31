@@ -78,6 +78,8 @@ function getBaseEnvVars() {
         WITH_SERVICES: true,
         NODE_PATH: ".",
         PGDATABASE: "matchMyRoute",
+        PGUSER: "postgres",
+        PGPASSWORD: "aUZw[:Gw38H&>Jf2hUwd",
     };
 };
 
