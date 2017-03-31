@@ -272,15 +272,15 @@ export function matchRoutes(
         if (matchParams.start.radius > 2000 || matchParams.start.radius < 1) {
             reject({
                 ok: false, result: {
-                    error: "Start radius out of bounds. Must be between 1m and 2km", status: 400
-                }
+                    error: "Start radius out of bounds. Must be between 1m and 2km", status: 400,
+                },
             });
             return;
         } else if (matchParams.end.radius > 2000 || matchParams.end.radius < 1) {
             reject({
                 ok: false, result: {
-                    error: "End radius out of bounds. Must be between 1m and 2km", status: 400
-                }
+                    error: "End radius out of bounds. Must be between 1m and 2km", status: 400,
+                },
             });
             return;
         }
@@ -404,8 +404,8 @@ export function updateRoute(
                 ok: false, result:
                 {
                     error: "Coordinates in a Route should only have 2 items in them, [latitude, longitude]",
-                    status: 400
-                }
+                    status: 400,
+                },
             });
             return;
         } else if (Math.min(...existingRoute.route.map(pair => { return pair.length; })) < 2) {
@@ -413,8 +413,8 @@ export function updateRoute(
                 ok: false, result:
                 {
                     error: "Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]",
-                    status: 400
-                }
+                    status: 400,
+                },
             });
             return;
         }
@@ -508,10 +508,10 @@ export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<User
 
                 if (error) {
                     // logger.error("error running query", error);
-                    if (error.message == "duplicate key value violates unique constraint \"users_email_key\"") {
+                    if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
                         reject({
                             ok: false,
-                            result: { error: "An account already exists using this email", status: 409 }
+                            result: { error: "An account already exists using this email", status: 409 },
                         });
                     }
                     reject("error running query: " + error);

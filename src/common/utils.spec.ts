@@ -1,17 +1,15 @@
-/* tslint:disable */
 import * as Database from "./database";
 import { RouteDataModel } from "./RouteDataModel";
 import * as chai from "chai";
-import * as logger from "winston";
 import * as mocha from "mocha";
 
-const before = mocha.before;
-const after = mocha.after;
+// const before = mocha.before;
+// const after = mocha.after;
 const describe = mocha.describe;
 const it = mocha.it;
 const expect = chai.expect;
 const assert = chai.assert;
-const should = chai.should;
+// const should = chai.should;
 
 describe("Various useful functions", () => {
     describe("lineStringToCoords", () => {
@@ -27,7 +25,7 @@ describe("Various useful functions", () => {
                 assert.fail(0, 1, "lineStringToCoords should have thrown an error. Instead got: " +
                     JSON.stringify(Database.lineStringToCoords(lineString)));
             } catch (err) {
-                expect(err.ok).not.to.be.ok
+                expect(err.ok).not.to.be.ok;
                 expect(err.result.error).to.equal("Input is not a Linestring");
                 expect(err.result.status).to.equal(400);
             }
@@ -62,7 +60,7 @@ describe("Various useful functions", () => {
                 id: 321,
                 owner: 123,
                 route: [[0, 0], [1, 1], [2, 2]],
-            }
+            };
             const route = new RouteDataModel(obj);
             expect(route.arrivalTime).to.equal(1234, "Arrival time is wrong! expected 1234, got " + route.arrivalTime);
             expect(route.departureTime).to.equal(1000, "Departure time is wrong! expected 1000, got " +
@@ -79,13 +77,13 @@ describe("Various useful functions", () => {
                 id: 321,
                 owner: 123,
                 route: [[0, 0], [1, 1], [2, 2]],
-            }
+            };
             try {
                 const route = new RouteDataModel(obj);
                 assert.fail(0, 1, "RouteDataModel constructor should have thrown an error. Instead got: " +
                     JSON.stringify(route));
             } catch (err) {
-                expect(err.ok).not.to.be.ok
+                expect(err.ok).not.to.be.ok;
                 expect(err.result.error).to.equal("Route requires an arrival time");
                 expect(err.result.status).to.equal(400);
             }
@@ -97,13 +95,13 @@ describe("Various useful functions", () => {
                 id: 321,
                 owner: 123,
                 route: [[0, 0], [1, 1], [2, 2]],
-            }
+            };
             try {
                 const route = new RouteDataModel(obj);
                 assert.fail(0, 1, "RouteDataModel constructor should have thrown an error. Instead got: " +
                     JSON.stringify(route));
             } catch (err) {
-                expect(err.ok).not.to.be.ok
+                expect(err.ok).not.to.be.ok;
                 expect(err.result.error).to.equal("Route requires a departure time");
                 expect(err.result.status).to.equal(400);
             }
@@ -116,19 +114,16 @@ describe("Various useful functions", () => {
                 id: 321,
                 owner: 123,
                 route: [[0, 0], [1, 1], [2, 2]],
-            }
+            };
             try {
                 const route = new RouteDataModel(obj);
                 assert.fail(0, 1, "RouteDataModel constructor should have thrown an error. Instead got: " +
                     JSON.stringify(route));
             } catch (err) {
-                expect(err.ok).not.to.be.ok
+                expect(err.ok).not.to.be.ok;
                 expect(err.result.error).to.equal("Arrival time is before Departure time");
                 expect(err.result.status).to.equal(400);
             }
-            expect(() => {
-                const route = new RouteDataModel(obj);
-            }).to.throw;
         });
         it("should throw an error if there is only one coordinate passed", () => {
             const obj = {
@@ -138,13 +133,13 @@ describe("Various useful functions", () => {
                 id: 321,
                 owner: 123,
                 route: [[0, 0]],
-            }
+            };
             try {
                 const route = new RouteDataModel(obj);
                 assert.fail(0, 1, "RouteDataModel constructor should have thrown an error. Instead got: " +
                     JSON.stringify(route));
             } catch (err) {
-                expect(err.ok).not.to.be.ok
+                expect(err.ok).not.to.be.ok;
                 expect(err.result.error).to.equal("Route requires at least 2 points");
                 expect(err.result.status).to.equal(400);
             }
@@ -157,13 +152,13 @@ describe("Various useful functions", () => {
                 id: 321,
                 owner: 123,
                 route: [[0, 0], [1, 1, 1], [2, 2]],
-            }
+            };
             try {
                 const route = new RouteDataModel(obj);
                 assert.fail(0, 1, "RouteDataModel constructor should have thrown an error. Instead got: " +
                     JSON.stringify(route));
             } catch (err) {
-                expect(err.ok).not.to.be.ok
+                expect(err.ok).not.to.be.ok;
                 expect(err.result.error)
                     .to.equal("Coordinates in a Route should only have 2 items in them, [latitude, longitude]");
                 expect(err.result.status).to.equal(400);
@@ -177,13 +172,13 @@ describe("Various useful functions", () => {
                 id: 321,
                 owner: 123,
                 route: [[0, 0], [1], [2, 2]],
-            }
+            };
             try {
                 const route = new RouteDataModel(obj);
                 assert.fail(0, 1, "RouteDataModel constructor should have thrown an error. Instead got: " +
                     JSON.stringify(route));
             } catch (err) {
-                expect(err.ok).not.to.be.ok
+                expect(err.ok).not.to.be.ok;
                 expect(err.result.error)
                     .to.equal("Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]");
                 expect(err.result.status).to.equal(400);
@@ -196,13 +191,13 @@ describe("Various useful functions", () => {
                 departureTime: 1000,
                 id: 321,
                 route: [[0, 0], [1, 1], [2, 2]],
-            }
+            };
             try {
                 const route = new RouteDataModel(obj);
                 assert.fail(0, 1, "RouteDataModel constructor should have thrown an error. Instead got: " +
                     JSON.stringify(route));
             } catch (err) {
-                expect(err.ok).not.to.be.ok
+                expect(err.ok).not.to.be.ok;
                 expect(err.result.error).to.equal("Route requires an owner");
                 expect(err.result.status).to.equal(400);
             }
@@ -215,7 +210,7 @@ describe("Various useful functions", () => {
                 id: 321,
                 owner: 123,
                 route: "LINESTRING(0 0,1 1,2 2)",
-            }
+            };
             const route = RouteDataModel.fromSQLRow(row);
             expect(route.arrivalTime).to.equal(1234, "Arrival time is wrong! expected 1234, got " + route.arrivalTime);
             expect(route.departureTime).to.equal(1000, "Departure time is wrong! expected 1000, got " +
