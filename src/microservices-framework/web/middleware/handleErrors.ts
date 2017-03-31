@@ -6,7 +6,7 @@ import * as logger from "winston";
 
 /* tslint:disable only-arrow-functions */
 export const handleErrorsFactory = () => {
-    return function * (next) {
+    return function* (next) {
         // formats error according to Swagger error definition (web/router/swagger/index)
         const formatError = (err) => {
             logger.error("middleware handling error", err);
@@ -21,6 +21,11 @@ export const handleErrorsFactory = () => {
                     this.body = formatError(this.body.result);
                 } else {
                     this.body = _.omit(this.body, ["ok"]);
+                    // If the response has a status code, set it
+                    if (_.has(this.body, "result") && _.has(this.body.result, "status")) {
+                        this.status = this.body.result.status || 200;
+                        this.body.result = _.omit(this.body.result, ["status"]);
+                    }
                 }
             }
         } catch (err) {

@@ -1,5 +1,6 @@
 import { generateJWTFor } from "../../common/auth";
 import * as Database from "../../common/database";
+import { UserFullDataModel } from "../../common/UserFullDataModel";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 import * as crypto from "crypto";
 // import * as logger from "winston";
@@ -27,7 +28,7 @@ const operation = {
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
-            200: {
+            201: {
                 description: "New user was created",
                 schema: {
                     $ref: "#/definitions/CreateResponse",
@@ -128,12 +129,13 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
             }
         });
     }).then(pwh => {
-        return Database.putUser(name, email, pwh, salt, rounds, jwtSecret).then((user) => {
-            return {
-                id: user.id,
-                jwt: generateJWTFor(user),
-            };
-        });
+        return Database.putUser(name, email, pwh, salt, rounds, jwtSecret);
+    }).then((user: UserFullDataModel) => {
+        return {
+            id: user.id,
+            jwt: generateJWTFor(user),
+            status: 201,
+        };
     });
 };
 

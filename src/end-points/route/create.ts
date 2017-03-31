@@ -27,7 +27,7 @@ const operation = {
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
-            200: {
+            201: {
                 description: "New route was created",
                 schema: {
                     $ref: "#/definitions/CreateRouteResponse",
@@ -79,8 +79,13 @@ const definitions = {
         description: "The Route's ID",
         properties: {
             result: {
-                format: "int32",
-                type: "number",
+                properties: {
+                    id: {
+                        format: "int32",
+                        type: "number",
+                    },
+                },
+                required: ["id"],
             },
         },
         required: ["result"],
@@ -125,6 +130,8 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = new RouteDataModel(params.body);
     return doIfUser(params.authorisation, payload.owner, () => {
         return Database.putRoute(payload);
+    }).then(routeId => {
+        return { id: routeId, status: 201 };
     });
 };
 

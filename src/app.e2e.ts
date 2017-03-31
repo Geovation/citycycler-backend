@@ -131,7 +131,7 @@ describe("MatchMyRoute API", () => {
                         method: "POST",
                         url: url + "/user",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                        expect(response.statusCode).to.equal(201, "Expected 201 response but got " +
                             response.statusCode + ", error given is: " + error);
                         expect(typeof body).to.equal("object", "Body is of unexpected type");
                         expect(typeof body.result).to.equal("object", "Result is of unexpected type. Got " +
@@ -150,7 +150,7 @@ describe("MatchMyRoute API", () => {
                         method: "POST",
                         url: url + "/user",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                        expect(response.statusCode).to.equal(201, "Expected 201 response but got " +
                             response.statusCode + ", error given is: " + error);
                         expect(typeof body).to.equal("object",
                             "Body is of unexpected type, expected object, " + "but it's a " + typeof body);
@@ -458,13 +458,13 @@ describe("MatchMyRoute API", () => {
                         method: "PUT",
                         url: url + "/route",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                        expect(response.statusCode).to.equal(201, "Expected 201 response but got " +
                             response.statusCode + ", error given is: " + error);
                         expect(typeof body).to.equal("object", "Body is of unexpected type. " +
                             "Expected object, but got a " + typeof body);
                         expect(parseInt(body.result, 10)).to.not.equal(NaN, "The returned ID is NaN. " +
                             "Full response body is: " + JSON.stringify(body));
-                        routeIds.push(parseInt(body.result, 10));
+                        routeIds.push(parseInt(body.result.id, 10));
                         done();
                     });
                 });
@@ -609,7 +609,7 @@ describe("MatchMyRoute API", () => {
                                 logger.error("Error while setting up the route to test route matching");
                                 throw error;
                             } else {
-                                routeIds.push(body.result); // Should be routeIds[1]
+                                routeIds.push(body.result.id); // Should be routeIds[1]
                                 done();
                             }
                         });
@@ -1113,7 +1113,7 @@ describe("MatchMyRoute API", () => {
                         method: "PUT",
                         url: url + "/route",
                     }, (error, response, body) => {
-                        routeIds.push(parseInt(body.result, 10));
+                        routeIds.push(parseInt(body.result.id, 10));
                         done();
                     });
                 });
