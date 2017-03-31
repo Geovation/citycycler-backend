@@ -44,12 +44,14 @@ describe("MatchMyRoute API", () => {
         console.log("Cleaning up...")
         let promises = [];
         userIds.forEach((id, i) => {
+            const jwt = userJwts[i];
+            console.log("Deleting test user " + id);
             promises.push(new Promise((resolve, reject) => {
                 request({
                     headers: {
-                        "Authorisation": "Bearer " + userJwts[i],
+                        "Authorisation": "Bearer " + jwt,
                     },
-                    url: url + "/route?id=" + id,
+                    url: url + "/user?id=" + id,
                     method: "DELETE",
                 }, (error, response, body) => {
                     if (error) {
@@ -1145,7 +1147,6 @@ describe("MatchMyRoute API", () => {
                 });
                 it("should delete any routes belonging to a user, when a user is deleted", done => {
                     // Should delete routeIds[2], which we setup in before
-                    console.log("Deleting user " + userIds[2]);
                     request({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[2],
