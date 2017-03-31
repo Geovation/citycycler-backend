@@ -12,6 +12,8 @@ const expect = chai.expect;
 const assert = chai.assert;
 const before = mocha.before;
 const after = mocha.after;
+const describe = mocha.describe;
+const it = mocha.it;
 // jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;   // Some things take a while...
 
 describe("MatchMyRoute API", () => {
