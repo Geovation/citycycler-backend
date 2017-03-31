@@ -9,6 +9,8 @@ import * as mocha from "mocha";
 
 const before = mocha.before;
 const after = mocha.after;
+const describe = mocha.describe;
+const it = mocha.it;
 const expect = chai.expect;
 const assert = chai.assert;
 const should = chai.should;
