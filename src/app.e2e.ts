@@ -95,25 +95,21 @@ describe("MatchMyRoute API", () => {
                 done();
             });
         });
-        if (!startServer) {
-            // This will only work if we are testing against the live system
-            it("should have a valid Swagger schema", done => {
-                request({
-                    url: "http://online.swagger.io/validator/debug?url=https://matchmyroute-backend.appspot.com/swagger.json",
-                }, (error, response, body) => {
-                    expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
-                        response.statusCode + ", error given is: " + error);
-                    expect(body).to.equal("{}", "Got swagger validation errors: " + JSON.stringify(body));
-                    done();
-                });
+        it("should have a valid Swagger schema", done => {
+            defaultRequest({
+                url: "http://online.swagger.io/validator/debug?url=https://matchmyroute-backend.appspot.com/swagger.json",
+            }, (error, response, body) => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + error);
+                expect(body).to.eql({}, "Got swagger validation errors: " + JSON.stringify(body));
+                done();
             });
-        }
-
+        });
         describe("Users", () => {
             describe("Creation", () => {
                 it("should create a new user", done => {
                     const user = { "email": "test@example.com", "name": "Test User", "password": "test" };
-                    request({
+                    defaultRequest({
                         url: url + "/user",
                         json: user,
                         method: "POST",
@@ -132,7 +128,7 @@ describe("MatchMyRoute API", () => {
                 });
                 it("should create a second user with different details", done => {
                     const user = { "email": "test1@example.com", "name": "Test User2", "password": "test" };
-                    request({
+                    defaultRequest({
                         url: url + "/user",
                         json: user,
                         method: "POST",
@@ -150,7 +146,7 @@ describe("MatchMyRoute API", () => {
                 });
                 it("shouldn't create a user with no name", done => {
                     const user = { "email": "test2@example.com", "name": "", "password": "test" };
-                    request({
+                    defaultRequest({
                         url: url + "/user",
                         json: user,
                         method: "POST",
@@ -164,7 +160,7 @@ describe("MatchMyRoute API", () => {
                 });
                 it("shouldn't create a user with no email", done => {
                     const user = { "email": "", "name": "Test User", "password": "test" };
-                    request({
+                    defaultRequest({
                         url: url + "/user",
                         json: user,
                         method: "POST",
@@ -178,7 +174,7 @@ describe("MatchMyRoute API", () => {
                 });
                 it("shouldn't create a user with no password", done => {
                     const user = { "email": "test3@example.com", "name": "Test User", "password": "" };
-                    request({
+                    defaultRequest({
                         url: url + "/user",
                         json: user,
                         method: "POST",
@@ -192,13 +188,15 @@ describe("MatchMyRoute API", () => {
                 });
                 it("shouldn't create a user with a duplicate email", done => {
                     const user = { "email": "test@example.com", "name": "Test User", "password": "test" };
-                    request({
+                    defaultRequest({
                         url: url + "/user",
                         json: user,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                        expect(response.statusCode).to.equal(409, "Expected 490 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("An account already exists using this email");
+                        expect(body.status).to.equal(409);
                         done();
                     });
                 });
@@ -222,7 +220,7 @@ describe("MatchMyRoute API", () => {
                     });
                 });
                 it("should not get a user if auth is missing", done => {
-                    request({
+                    defaultRequest({
                         url: url + "/user/" + userIds[0],
                         method: "GET",
                     }, (error, response, body) => {
@@ -283,7 +281,7 @@ describe("MatchMyRoute API", () => {
                     });
                 });
                 it("should not delete a user with a no auth", done => {
-                    request({
+                    defaultRequest({
                         url: url + "/user?id=" + userIds[0],
                         method: "DELETE",
                     }, (error, response, body) => {
@@ -327,7 +325,7 @@ describe("MatchMyRoute API", () => {
                 describe("Initial", () => {
                     it("should provide a JWT", done => {
                         const auth = { email: "test1@example.com", password: "test" };
-                        request({
+                        defaultRequest({
                             url: url + "/user/auth",
                             json: auth,
                             method: "POST",
@@ -341,7 +339,7 @@ describe("MatchMyRoute API", () => {
                     });
                     it("should not provide a JWT if the password is incorrect", done => {
                         const auth = { email: "test1@example.com", password: "iforgot" };
-                        request({
+                        defaultRequest({
                             url: url + "/user/auth",
                             json: auth,
                             method: "POST",
@@ -355,7 +353,7 @@ describe("MatchMyRoute API", () => {
                     });
                     it("should not provide a JWT if the email doesn't exist", done => {
                         const auth = { email: "test@example.com", password: "test" };
-                        request({
+                        defaultRequest({
                             url: url + "/user/auth",
                             json: auth,
                             method: "POST",
@@ -370,7 +368,7 @@ describe("MatchMyRoute API", () => {
                 });
                 describe("Subsequent", () => {
                     it("should provide a JWT", done => {
-                        request({
+                        defaultRequest({
                             url: url + "/user/auth",
                             headers: {
                                 Authorisation: "Bearer " + userJwts[1],
@@ -385,7 +383,7 @@ describe("MatchMyRoute API", () => {
                         });
                     });
                     it("should not provide a JWT if there is no auth", done => {
-                        request({
+                        defaultRequest({
                             url: url + "/user/auth",
                             method: "GET",
                         }, (error, response, body) => {
@@ -397,7 +395,7 @@ describe("MatchMyRoute API", () => {
                         });
                     });
                     it("should not provide a JWT if there is invalid auth", done => {
-                        request({
+                        defaultRequest({
                             url: url + "/user/auth",
                             headers: {
                                 Authorisation: "Bearer " + userJwts[0],
@@ -418,7 +416,7 @@ describe("MatchMyRoute API", () => {
             beforeAll(done => {
                 // Create another test user (userIds[2])
                 const user = { "email": "test2@example.com", "name": "Test User3", "password": "test" };
-                request({
+                defaultRequest({
                     url: url + "/user",
                     json: user,
                     method: "POST",
@@ -989,8 +987,10 @@ describe("MatchMyRoute API", () => {
                         json: updates,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
-                            response.statusCode + ", response is: " + JSON.stringify(response));
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Arrival time is before Departure time");
+                        expect(body.status).to.equal(400);
                         console.log("Got " + error);
                         done();
                     });
@@ -1009,8 +1009,10 @@ describe("MatchMyRoute API", () => {
                         method: "POST",
                     }, (error, response, body) => {
                         console.log("Got " + error);
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
-                            response.statusCode + ", response is: " + JSON.stringify(response));
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Arrival time is before Departure time");
+                        expect(body.status).to.equal(400);
                         done();
                     });
                 });
@@ -1028,8 +1030,10 @@ describe("MatchMyRoute API", () => {
                         json: updates,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
-                            response.statusCode + ", response is: " + JSON.stringify(response));
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Arrival time is before Departure time");
+                        expect(body.status).to.equal(400);
                         done();
                     });
                 });
@@ -1046,8 +1050,11 @@ describe("MatchMyRoute API", () => {
                         json: updates,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
-                            response.statusCode + ", response is: " + JSON.stringify(response));
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Coordinates in a Route should only have 2 items in them," +
+                            " [latitude, longitude]");
+                        expect(body.status).to.equal(400);
                         done();
                     });
                 });
@@ -1064,8 +1071,10 @@ describe("MatchMyRoute API", () => {
                         json: updates,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
-                            response.statusCode + ", response is: " + response);
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorisation");
+                        expect(body.status).to.equal(403);
                         done();
                     });
                 });
