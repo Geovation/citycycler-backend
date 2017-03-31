@@ -39,16 +39,16 @@ export class RouteDataModel {
                 ok: false, result:
                 {
                     error: "Coordinates in a Route should only have 2 items in them, [latitude, longitude]",
-                    status: 400
-                }
+                    status: 400,
+                },
             };
         } else if (Math.min(...obj.route.map(pair => { return pair.length; })) < 2) {
             throw {
                 ok: false, result:
                 {
                     error: "Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]",
-                    status: 400
-                }
+                    status: 400,
+                },
             };
         } else if (obj.owner === undefined || obj.owner === null) {
             throw { ok: false, result: { error: "Route requires an owner", status: 400 } };
