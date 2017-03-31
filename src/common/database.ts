@@ -85,6 +85,9 @@ export function startUpPool(testing: boolean): void {
     pool = new pg.Pool(config);
 }
 
+/**
+ * resetDatabase - resets the database schema in the given database to original state
+ */
 export function resetDatabase(): Promise<boolean> {
     return sql("DROP SCHEMA IF EXISTS public CASCADE;", [])
         .then(result => {

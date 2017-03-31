@@ -6,6 +6,7 @@ import * as EventEmitter from "events";
 import * as request from "request";
 import * as Database from "./common/database";
 import * as mocha from "mocha";
+import { RouteDataModel } from "./common/RouteDataModel";
 
 const expect = chai.expect;
 const assert = chai.assert;
