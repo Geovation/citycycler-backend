@@ -630,7 +630,7 @@ describe("MatchMyRoute API", () => {
                             time: 500,
                             days: ["thursday", "friday", "sunday"],
                         };
-                        request({
+                        defaultRequest({
                             headers: {
                                 "Authorisation": "Bearer " + userJwts[1],
                             },
@@ -679,7 +679,7 @@ describe("MatchMyRoute API", () => {
                             time: 500,
                             days: ["thursday", "friday", "sunday"],
                         };
-                        request({
+                        defaultRequest({
                             headers: {
                                 "Authorisation": "Bearer " + userJwts[1],
                             },
@@ -717,7 +717,7 @@ describe("MatchMyRoute API", () => {
                             time: 500,
                             days: ["thursday"],
                         };
-                        request({
+                        defaultRequest({
                             headers: {
                                 "Authorisation": "Bearer " + userJwts[1],
                             },
@@ -753,7 +753,7 @@ describe("MatchMyRoute API", () => {
                                 radius: 500,
                             },
                         };
-                        request({
+                        defaultRequest({
                             headers: {
                                 "Authorisation": "Bearer " + userJwts[1],
                             },
@@ -798,7 +798,7 @@ describe("MatchMyRoute API", () => {
                         departureTime: 900,
                         route: [[0, 0], [1, 0], [1, 1], [0, 1]],
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -833,7 +833,7 @@ describe("MatchMyRoute API", () => {
                         id: routeIds[0],
                         arrivalTime: 1200,
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -868,7 +868,7 @@ describe("MatchMyRoute API", () => {
                         id: routeIds[0],
                         departureTime: 600,
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -903,7 +903,7 @@ describe("MatchMyRoute API", () => {
                         id: routeIds[0],
                         days: ["monday", "sunday"],
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -938,7 +938,7 @@ describe("MatchMyRoute API", () => {
                         id: routeIds[0],
                         route: [[0, 0], [1, 0], [1, 1]],
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -973,7 +973,7 @@ describe("MatchMyRoute API", () => {
                         id: routeIds[0],
                         owner: userIds[0],
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -1005,7 +1005,7 @@ describe("MatchMyRoute API", () => {
                         id: routeIds[0],
                         departureTime: 1500,
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -1026,7 +1026,7 @@ describe("MatchMyRoute API", () => {
                         id: routeIds[0],
                         arrivalTime: 500,
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -1048,7 +1048,7 @@ describe("MatchMyRoute API", () => {
                         departureTime: 1500,
                         arrivalTime: 1000
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -1068,7 +1068,7 @@ describe("MatchMyRoute API", () => {
                         id: routeIds[0],
                         route: [[0, 0, 0], [1], [2, 2]],
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -1089,7 +1089,7 @@ describe("MatchMyRoute API", () => {
                         id: routeIds[0],
                         days: ["friday"],
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[2],
                         },
