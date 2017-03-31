@@ -56,8 +56,6 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         return doIfUser(params.authorisation, route.owner, () => {
             return Database.deleteRoute(id);
         });
-    }, err => {
-        throw "Invalid Authentication";
     });
 };
 

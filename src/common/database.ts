@@ -138,7 +138,7 @@ export function getRouteById(id: number): Promise<RouteDataModel> {
                     // return the route
                     resolve(RouteDataModel.fromSQLRow(result.rows[0]));
                 } else {
-                    reject("Route doesn't exist");
+                    reject({ ok: false, result: { error: "Route doesn't exist", status: 404 } });
                 }
             });
         });
@@ -147,7 +147,7 @@ export function getRouteById(id: number): Promise<RouteDataModel> {
 
 export function lineStringToCoords(lineStr: string): number[][] {
     if (lineStr.slice(0, 11) !== "LINESTRING(") {
-        throw "Input is not a Linestring.";
+        throw { ok: false, result: { error: "Input is not a Linestring", status: 400 } };
     }
     let coords = [];
     const coordStr = lineStr.slice(11, lineStr.length - 1);
@@ -177,7 +177,7 @@ export function coordsToLineString(coords: number[][]): string {
 export function getRoutesNearby(radius: number, lat: number, lon: number): Promise<RouteDataModel[]> {
     return new Promise((resolve, reject) => {
         if (radius > 2000 || radius < 1) {
-            reject("Radius out of bounds");
+            reject({ ok: false, result: { error: "Radius out of bounds", status: 400 } });
             return;
         }
         // Acquire a client from the pool,
@@ -238,10 +238,18 @@ export function matchRoutes(
 }[]> {
     return new Promise((resolve, reject) => {
         if (matchParams.start.radius > 2000 || matchParams.start.radius < 1) {
-            reject("Start radius out of bounds. Must be between 1m and 2km");
+            reject({
+                ok: false, result: {
+                    error: "Start radius out of bounds. Must be between 1m and 2km", status: 400,
+                },
+            });
             return;
         } else if (matchParams.end.radius > 2000 || matchParams.end.radius < 1) {
-            reject("End radius out of bounds. Must be between 1m and 2km");
+            reject({
+                ok: false, result: {
+                    error: "End radius out of bounds. Must be between 1m and 2km", status: 400,
+                },
+            });
             return;
         }
         // Acquire a client from the pool,
@@ -354,16 +362,28 @@ export function updateRoute(
         existingRoute.route = updates.route !== undefined ? updates.route : existingRoute.route;
 
         if (existingRoute.arrivalTime < existingRoute.departureTime) {
-            reject("Arrival time is before Departure time");
+            reject({ ok: false, result: { error: "Arrival time is before Departure time", status: 400 } });
             return;
         } else if (existingRoute.route.length < 2) {
-            reject("Route requires at least 2 points");
+            reject({ ok: false, result: { error: "Route requires at least 2 points", status: 400 } });
             return;
         } else if (Math.max(...existingRoute.route.map(pair => { return pair.length; })) > 2) {
-            reject("Coordinates in a Route should only have 2 items in them, [latitude, longitude]");
+            reject({
+                ok: false, result:
+                {
+                    error: "Coordinates in a Route should only have 2 items in them, [latitude, longitude]",
+                    status: 400,
+                },
+            });
             return;
         } else if (Math.min(...existingRoute.route.map(pair => { return pair.length; })) < 2) {
-            reject("Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]");
+            reject({
+                ok: false, result:
+                {
+                    error: "Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]",
+                    status: 400,
+                },
+            });
             return;
         }
 
@@ -421,7 +441,7 @@ export function deleteRoute(id: number): Promise<Boolean> {
                 if (result.rowCount) {
                     resolve(true);
                 } else {
-                    reject("Route doesn't exist");
+                    reject({ ok: false, result: { error: "Route doesn't exist", status: 404 } });
                     return;
                 }
             });
@@ -456,6 +476,12 @@ export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<User
 
                 if (error) {
                     // logger.error("error running query", error);
+                    if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
+                        reject({
+                            ok: false,
+                            result: { error: "An account already exists using this email", status: 409 },
+                        });
+                    }
                     reject("error running query: " + error);
                     return;
                 }
@@ -490,7 +516,7 @@ export function getUserByEmail(email: string): Promise<UserFullDataModel> {
                 if (result.rowCount) {
                     resolve(new UserFullDataModel(result.rows[0]));
                 } else {
-                    reject("User doesn't exist");
+                    reject({ ok: false, result: { error: "User doesn't exist", status: 404 } });
                     return;
                 }
             });
@@ -522,7 +548,7 @@ export function getUserById(id: number): Promise<UserFullDataModel> {
                 if (result.rowCount) {
                     resolve(new UserFullDataModel(result.rows[0]));
                 } else {
-                    reject("User doesn't exist");
+                    reject({ ok: false, result: { error: "User doesn't exist", status: 404 } });
                     return;
                 }
             });
@@ -553,7 +579,7 @@ export function deleteUser(id: number): Promise<Boolean> {
                 if (result.rowCount) {
                     resolve(true);
                 } else {
-                    reject("User doesn't exist");
+                    reject({ ok: false, result: { error: "User doesn't exist", status: 404 } });
                     return;
                 }
             });

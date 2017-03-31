@@ -12,6 +12,14 @@ const assert = chai.assert;
 chai.use(chaiAsPromised);
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 20000;   // Some things take a while...
 
+// Set some defaults for our requests
+const defaultRequest = request.defaults({
+    headers: {
+        Origin: "https://www.example.com",
+    },
+    json: true,
+});
+
 describe("MatchMyRoute API", () => {
     const startServer = !process.env.URL;
     const url = (process.env.URL || "http://localhost:8080") + "/api/v0";
@@ -68,10 +76,7 @@ describe("MatchMyRoute API", () => {
 
     describe("Root", () => {
         it("should resolve with a 200", done => {
-            request({
-                headers: {
-                    Origin: "https://www.example.com",
-                },
+            defaultRequest({
                 url,
             }, (error, response, body) => {
                 expect(error).to.be.null;
@@ -81,10 +86,7 @@ describe("MatchMyRoute API", () => {
             });
         });
         it("should have CORS enabled", done => {
-            request({
-                headers: {
-                    Origin: "https://www.example.com",
-                },
+            defaultRequest({
                 url,
             }, (error, response, body) => {
                 expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
@@ -93,25 +95,21 @@ describe("MatchMyRoute API", () => {
                 done();
             });
         });
-        if (!startServer) {
-            // This will only work if we are testing against the live system
-            it("should have a valid Swagger schema", done => {
-                request({
-                    url: "http://online.swagger.io/validator/debug?url=https://matchmyroute-backend.appspot.com/swagger.json",
-                }, (error, response, body) => {
-                    expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
-                        response.statusCode + ", error given is: " + error);
-                    expect(body).to.equal("{}", "Got swagger validation errors: " + JSON.stringify(body));
-                    done();
-                });
+        it("should have a valid Swagger schema", done => {
+            defaultRequest({
+                url: "http://online.swagger.io/validator/debug?url=https://matchmyroute-backend.appspot.com/swagger.json",
+            }, (error, response, body) => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + error);
+                expect(body).to.eql({}, "Got swagger validation errors: " + JSON.stringify(body));
+                done();
             });
-        }
-
+        });
         describe("Users", () => {
             describe("Creation", () => {
                 it("should create a new user", done => {
                     const user = { "email": "test@example.com", "name": "Test User", "password": "test" };
-                    request({
+                    defaultRequest({
                         url: url + "/user",
                         json: user,
                         method: "POST",
@@ -130,7 +128,7 @@ describe("MatchMyRoute API", () => {
                 });
                 it("should create a second user with different details", done => {
                     const user = { "email": "test1@example.com", "name": "Test User2", "password": "test" };
-                    request({
+                    defaultRequest({
                         url: url + "/user",
                         json: user,
                         method: "POST",
@@ -148,67 +146,73 @@ describe("MatchMyRoute API", () => {
                 });
                 it("shouldn't create a user with no name", done => {
                     const user = { "email": "test2@example.com", "name": "", "password": "test" };
-                    request({
+                    defaultRequest({
                         url: url + "/user",
                         json: user,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Name Required");
+                        expect(body.status).to.equal(400);
                         done();
                     });
                 });
                 it("shouldn't create a user with no email", done => {
                     const user = { "email": "", "name": "Test User", "password": "test" };
-                    request({
+                    defaultRequest({
                         url: url + "/user",
                         json: user,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Email Required");
+                        expect(body.status).to.equal(400);
                         done();
                     });
                 });
                 it("shouldn't create a user with no password", done => {
                     const user = { "email": "test3@example.com", "name": "Test User", "password": "" };
-                    request({
+                    defaultRequest({
                         url: url + "/user",
                         json: user,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Password Required");
+                        expect(body.status).to.equal(400);
                         done();
                     });
                 });
                 it("shouldn't create a user with a duplicate email", done => {
                     const user = { "email": "test@example.com", "name": "Test User", "password": "test" };
-                    request({
+                    defaultRequest({
                         url: url + "/user",
                         json: user,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                        expect(response.statusCode).to.equal(409, "Expected 490 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("An account already exists using this email");
+                        expect(body.status).to.equal(409);
                         done();
                     });
                 });
             });
             describe("Getting", () => {
                 it("should get a user by a valid id", done => {
-                    request({
+                    defaultRequest({
                         headers: {
-                            "Authorisation": "Bearer " + userJwts[0],
+                            Authorisation: "Bearer " + userJwts[0],
                         },
                         url: url + "/user/" + userIds[0],
                         method: "GET",
                     }, (error, response, body) => {
+                        console.log("Response type: " + JSON.stringify(response.headers["content-type"]));
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
-                        if (typeof body === "string") {
-                            body = JSON.parse(body);
-                        }
                         expect(body.result.name).to.equal("Test User",
                             "Got a different name than expected. Expected: \"Test User\", got \"" +
                             body.result.name + "\". Full response body is: " + JSON.stringify(body));
@@ -216,28 +220,28 @@ describe("MatchMyRoute API", () => {
                     });
                 });
                 it("should not get a user if auth is missing", done => {
-                    request({
+                    defaultRequest({
                         url: url + "/user/" + userIds[0],
                         method: "GET",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                        console.log("body: " + JSON.stringify(body));
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorisation");
+                        expect(body.status).to.equal(403);
                         done();
                     });
                 });
                 it("should get a user if auth is for another user", done => {
-                    request({
+                    defaultRequest({
                         headers: {
-                            "Authorisation": "Bearer " + userJwts[1],
+                            Authorisation: "Bearer " + userJwts[1],
                         },
                         url: url + "/user/" + userIds[0],
                         method: "GET",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
-                        if (typeof body === "string") {
-                            body = JSON.parse(body);
-                        }
                         expect(body.result.name).to.equal("Test User",
                             "Expected result name to be \"Test User\", but it got \"" + body.result.name +
                             "\". Full response body is: " + JSON.stringify(body));
@@ -245,60 +249,68 @@ describe("MatchMyRoute API", () => {
                     });
                 });
                 it("should not get a user if the id is invalid", done => {
-                    request({
+                    defaultRequest({
                         headers: {
-                            "Authorisation": "Bearer " + userJwts[0],
+                            Authorisation: "Bearer " + userJwts[0],
                         },
                         url: url + "/user/" + -1,
                         method: "GET",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                        expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("User doesn't exist");
+                        expect(body.status).to.equal(404);
                         done();
                     });
                 });
             });
             describe("Deletion", () => {
                 it("should not delete a user with an invalid id", done => {
-                    request({
+                    defaultRequest({
                         headers: {
-                            "Authorisation": "Bearer " + userJwts[0],
+                            Authorisation: "Bearer " + userJwts[0],
                         },
                         url: url + "/user?id=" + -1,
                         method: "DELETE",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorisation");
+                        expect(body.status).to.equal(403);
                         done();
                     });
                 });
                 it("should not delete a user with a no auth", done => {
-                    request({
+                    defaultRequest({
                         url: url + "/user?id=" + userIds[0],
                         method: "DELETE",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorisation");
+                        expect(body.status).to.equal(403);
                         done();
                     });
                 });
                 it("should not let a user delete other users", done => {
-                    request({
+                    defaultRequest({
                         headers: {
-                            "Authorisation": "Bearer " + userJwts[1],
+                            Authorisation: "Bearer " + userJwts[1],
                         },
                         url: url + "/user?id=" + userIds[0],
                         method: "DELETE",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorisation");
+                        expect(body.status).to.equal(403);
                         done();
                     });
                 });
                 it("should let a user delete themself", done => {
-                    request({
+                    defaultRequest({
                         headers: {
-                            "Authorisation": "Bearer " + userJwts[0],
+                            Authorisation: "Bearer " + userJwts[0],
                         },
                         url: url + "/user?id=" + userIds[0],
                         method: "DELETE",
@@ -313,16 +325,13 @@ describe("MatchMyRoute API", () => {
                 describe("Initial", () => {
                     it("should provide a JWT", done => {
                         const auth = { email: "test1@example.com", password: "test" };
-                        request({
+                        defaultRequest({
                             url: url + "/user/auth",
                             json: auth,
                             method: "POST",
                         }, (error, response, body) => {
                             expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                                 response.statusCode + ", error given is: " + error);
-                            if (typeof body === "string") {
-                                body = JSON.parse(body);
-                            }
                             expect(typeof body.result).to.equal("string", "JWT returned was not a string." +
                                 " Got response: " + JSON.stringify(body));
                             done();
@@ -330,68 +339,73 @@ describe("MatchMyRoute API", () => {
                     });
                     it("should not provide a JWT if the password is incorrect", done => {
                         const auth = { email: "test1@example.com", password: "iforgot" };
-                        request({
+                        defaultRequest({
                             url: url + "/user/auth",
                             json: auth,
                             method: "POST",
                         }, (error, response, body) => {
-                            expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                                 response.statusCode + ", body returned is: " + JSON.stringify(body));
+                            expect(body.error).to.equal("Incorrect Password");
+                            expect(body.status).to.equal(403);
                             done();
                         });
                     });
                     it("should not provide a JWT if the email doesn't exist", done => {
                         const auth = { email: "test@example.com", password: "test" };
-                        request({
+                        defaultRequest({
                             url: url + "/user/auth",
                             json: auth,
                             method: "POST",
                         }, (error, response, body) => {
-                            expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
                                 response.statusCode + ", body returned is: " + JSON.stringify(body));
+                            expect(body.error).to.equal("User doesn't exist");
+                            expect(body.status).to.equal(404);
                             done();
                         });
                     });
                 });
                 describe("Subsequent", () => {
                     it("should provide a JWT", done => {
-                        request({
+                        defaultRequest({
                             url: url + "/user/auth",
                             headers: {
-                                "Authorisation": "Bearer " + userJwts[1],
+                                Authorisation: "Bearer " + userJwts[1],
                             },
                             method: "GET",
                         }, (error, response, body) => {
                             expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                                 response.statusCode + ", error given is: " + error);
-                            if (typeof body === "string") {
-                                body = JSON.parse(body);
-                            }
                             expect(typeof body.result).to.equal("string", "JWT returned was not a string." +
                                 " Got response: " + JSON.stringify(body));
                             done();
                         });
                     });
                     it("should not provide a JWT if there is no auth", done => {
-                        request({
+                        defaultRequest({
                             url: url + "/user/auth",
                             method: "GET",
                         }, (error, response, body) => {
-                            expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                                 response.statusCode + ", body returned is: " + JSON.stringify(body));
+                            expect(body.error).to.equal("Invalid authorisation");
+                            expect(body.status).to.equal(403);
                             done();
                         });
                     });
                     it("should not provide a JWT if there is invalid auth", done => {
-                        request({
+                        defaultRequest({
                             url: url + "/user/auth",
                             headers: {
-                                "Authorisation": "Bearer " + userJwts[0],
+                                Authorisation: "Bearer " + userJwts[0],
                             },
                             method: "GET",
                         }, (error, response, body) => {
-                            expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                                 response.statusCode + ", body returned is: " + JSON.stringify(body));
+                            expect(body.error).to.equal("Invalid authorisation");
+                            expect(body.status).to.equal(403);
                             done();
                         });
                     });
@@ -402,7 +416,7 @@ describe("MatchMyRoute API", () => {
             beforeAll(done => {
                 // Create another test user (userIds[2])
                 const user = { "email": "test2@example.com", "name": "Test User3", "password": "test" };
-                request({
+                defaultRequest({
                     url: url + "/user",
                     json: user,
                     method: "POST",
@@ -421,9 +435,9 @@ describe("MatchMyRoute API", () => {
                         "route": [[0, 0], [1, 0], [1, 1]],
                         "days": ["monday"],
                     };
-                    request({
+                    defaultRequest({
                         headers: {
-                            "Authorisation": "Bearer " + userJwts[1],
+                            Authorisation: "Bearer " + userJwts[1],
                         },
                         url: url + "/route",
                         json: route,
@@ -446,16 +460,18 @@ describe("MatchMyRoute API", () => {
                         "owner": userIds[1],
                         "route": [[0, 0], [1, 0], [1, 1]],
                     };
-                    request({
+                    defaultRequest({
                         headers: {
-                            "Authorisation": "Bearer " + userJwts[0],
+                            Authorisation: "Bearer " + userJwts[0],
                         },
                         url: url + "/route",
                         json: route,
                         method: "PUT",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorisation");
+                        expect(body.status).to.equal(403);
                         done();
                     });
                 });
@@ -466,16 +482,18 @@ describe("MatchMyRoute API", () => {
                         "owner": userIds[1],
                         "route": [[0, 0], [1, 0], [1, 1]],
                     };
-                    request({
+                    defaultRequest({
                         headers: {
-                            "Authorisation": "Bearer " + userJwts[1],
+                            Authorisation: "Bearer " + userJwts[1],
                         },
                         url: url + "/route",
                         json: route,
                         method: "PUT",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Arrival time is before Departure time");
+                        expect(body.status).to.equal(400);
                         done();
                     });
                 });
@@ -486,16 +504,18 @@ describe("MatchMyRoute API", () => {
                         "owner": userIds[2],
                         "route": [[0, 0], [1, 0], [1, 1]],
                     };
-                    request({
+                    defaultRequest({
                         headers: {
-                            "Authorisation": "Bearer " + userJwts[1],
+                            Authorisation: "Bearer " + userJwts[1],
                         },
                         url: url + "/route",
                         json: route,
                         method: "PUT",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorisation");
+                        expect(body.status).to.equal(403);
                         done();
                     });
                 });
@@ -506,13 +526,15 @@ describe("MatchMyRoute API", () => {
                         "owner": userIds[1],
                         "route": [[0, 0], [1, 0], [1, 1]],
                     };
-                    request({
+                    defaultRequest({
                         url: url + "/route",
                         json: route,
                         method: "PUT",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorisation");
+                        expect(body.status).to.equal(403);
                         done();
                     });
                 });
@@ -520,15 +542,12 @@ describe("MatchMyRoute API", () => {
             describe("Getting", () => {
                 describe("By ID", () => {
                     it("should get a route by a valid id with no auth", done => {
-                        request({
+                        defaultRequest({
                             url: url + "/route?id=" + routeIds[0],
                             method: "GET",
                         }, (error, response, body) => {
                             expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                                 response.statusCode + ", error given is: " + error);
-                            if (typeof body === "string") {
-                                body = JSON.parse(body);
-                            }
                             expect(body.result.owner).to.equal(userIds[1], "Route belongs to another user." +
                                 "Expected owner to be " + userIds[1] + ", but it was " + body.result.owner +
                                 ". Full response body is: " + JSON.stringify(body));
@@ -536,12 +555,14 @@ describe("MatchMyRoute API", () => {
                         });
                     });
                     it("should not get a route by an invalid id", done => {
-                        request({
+                        defaultRequest({
                             url: url + "/route?id=" + -1,
                             method: "GET",
                         }, (error, response, body) => {
-                            expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                            expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
                                 response.statusCode + ", body returned is: " + JSON.stringify(body));
+                            expect(body.error).to.equal("Route doesn't exist");
+                            expect(body.status).to.equal(404);
                             done();
                         });
                     });
@@ -583,7 +604,7 @@ describe("MatchMyRoute API", () => {
                             time: 500,
                             days: ["thursday", "friday", "sunday"],
                         };
-                        request({
+                        defaultRequest({
                             headers: {
                                 "Authorisation": "Bearer " + userJwts[1],
                             },
@@ -632,7 +653,7 @@ describe("MatchMyRoute API", () => {
                             time: 500,
                             days: ["thursday", "friday", "sunday"],
                         };
-                        request({
+                        defaultRequest({
                             headers: {
                                 "Authorisation": "Bearer " + userJwts[1],
                             },
@@ -670,7 +691,7 @@ describe("MatchMyRoute API", () => {
                             time: 500,
                             days: ["thursday"],
                         };
-                        request({
+                        defaultRequest({
                             headers: {
                                 "Authorisation": "Bearer " + userJwts[1],
                             },
@@ -706,7 +727,7 @@ describe("MatchMyRoute API", () => {
                                 radius: 500,
                             },
                         };
-                        request({
+                        defaultRequest({
                             headers: {
                                 "Authorisation": "Bearer " + userJwts[1],
                             },
@@ -751,7 +772,7 @@ describe("MatchMyRoute API", () => {
                         departureTime: 900,
                         route: [[0, 0], [1, 0], [1, 1], [0, 1]],
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -786,7 +807,7 @@ describe("MatchMyRoute API", () => {
                         id: routeIds[0],
                         arrivalTime: 1200,
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -821,7 +842,7 @@ describe("MatchMyRoute API", () => {
                         id: routeIds[0],
                         departureTime: 600,
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -856,7 +877,7 @@ describe("MatchMyRoute API", () => {
                         id: routeIds[0],
                         days: ["monday", "sunday"],
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -891,7 +912,7 @@ describe("MatchMyRoute API", () => {
                         id: routeIds[0],
                         route: [[0, 0], [1, 0], [1, 1]],
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -926,7 +947,7 @@ describe("MatchMyRoute API", () => {
                         id: routeIds[0],
                         owner: userIds[0],
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -958,7 +979,7 @@ describe("MatchMyRoute API", () => {
                         id: routeIds[0],
                         departureTime: 1500,
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -966,8 +987,10 @@ describe("MatchMyRoute API", () => {
                         json: updates,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
-                            response.statusCode + ", response is: " + JSON.stringify(response));
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Arrival time is before Departure time");
+                        expect(body.status).to.equal(400);
                         console.log("Got " + error);
                         done();
                     });
@@ -977,7 +1000,7 @@ describe("MatchMyRoute API", () => {
                         id: routeIds[0],
                         arrivalTime: 500,
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -986,8 +1009,10 @@ describe("MatchMyRoute API", () => {
                         method: "POST",
                     }, (error, response, body) => {
                         console.log("Got " + error);
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
-                            response.statusCode + ", response is: " + JSON.stringify(response));
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Arrival time is before Departure time");
+                        expect(body.status).to.equal(400);
                         done();
                     });
                 });
@@ -997,7 +1022,7 @@ describe("MatchMyRoute API", () => {
                         departureTime: 1500,
                         arrivalTime: 1000
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -1005,8 +1030,10 @@ describe("MatchMyRoute API", () => {
                         json: updates,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
-                            response.statusCode + ", response is: " + JSON.stringify(response));
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Arrival time is before Departure time");
+                        expect(body.status).to.equal(400);
                         done();
                     });
                 });
@@ -1015,7 +1042,7 @@ describe("MatchMyRoute API", () => {
                         id: routeIds[0],
                         route: [[0, 0, 0], [1], [2, 2]],
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[1],
                         },
@@ -1023,8 +1050,11 @@ describe("MatchMyRoute API", () => {
                         json: updates,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
-                            response.statusCode + ", response is: " + JSON.stringify(response));
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Coordinates in a Route should only have 2 items in them," +
+                            " [latitude, longitude]");
+                        expect(body.status).to.equal(400);
                         done();
                     });
                 });
@@ -1033,7 +1063,7 @@ describe("MatchMyRoute API", () => {
                         id: routeIds[0],
                         days: ["friday"],
                     };
-                    request({
+                    defaultRequest({
                         headers: {
                             "Authorisation": "Bearer " + userJwts[2],
                         },
@@ -1041,8 +1071,10 @@ describe("MatchMyRoute API", () => {
                         json: updates,
                         method: "POST",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
-                            response.statusCode + ", response is: " + response);
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorisation");
+                        expect(body.status).to.equal(403);
                         done();
                     });
                 });
@@ -1056,9 +1088,9 @@ describe("MatchMyRoute API", () => {
                         "owner": userIds[2],
                         "route": [[0, 0], [1, 0], [1, 1]],
                     };
-                    request({
+                    defaultRequest({
                         headers: {
-                            "Authorisation": "Bearer " + userJwts[2],
+                            Authorisation: "Bearer " + userJwts[2],
                         },
                         url: url + "/route",
                         json: route,
@@ -1069,45 +1101,51 @@ describe("MatchMyRoute API", () => {
                     });
                 });
                 it("should not delete a route with an invalid id", done => {
-                    request({
+                    defaultRequest({
                         headers: {
-                            "Authorisation": "Bearer " + userJwts[1],
+                            Authorisation: "Bearer " + userJwts[1],
                         },
                         url: url + "/route?id=" + -1,
                         method: "DELETE",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                        expect(response.statusCode).to.equal(404, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Route doesn't exist");
+                        expect(body.status).to.equal(404);
                         done();
                     });
                 });
                 it("should not delete a route with no auth", done => {
-                    request({
+                    defaultRequest({
                         url: url + "/route?id=" + routeIds[0],
                         method: "DELETE",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorisation");
+                        expect(body.status).to.equal(403);
                         done();
                     });
                 });
                 it("should not be able to delete another user's route", done => {
-                    request({
+                    defaultRequest({
                         headers: {
-                            "Authorisation": "Bearer " + userJwts[2],
+                            Authorisation: "Bearer " + userJwts[2],
                         },
                         url: url + "/route?id=" + routeIds[0],
                         method: "DELETE",
                     }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Expected 500 response but got " +
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorisation");
+                        expect(body.status).to.equal(403);
                         done();
                     });
                 });
                 it("should delete a route", done => {
-                    request({
+                    defaultRequest({
                         headers: {
-                            "Authorisation": "Bearer " + userJwts[1],
+                            Authorisation: "Bearer " + userJwts[1],
                         },
                         url: url + "/route?id=" + routeIds[0],
                         method: "DELETE",
@@ -1125,9 +1163,9 @@ describe("MatchMyRoute API", () => {
                 });
                 it("should delete any routes belonging to a user, when a user is deleted", done => {
                     // Should delete routeIds[1], which we setup in beforeAll
-                    request({
+                    defaultRequest({
                         headers: {
-                            "Authorisation": "Bearer " + userJwts[2],
+                            Authorisation: "Bearer " + userJwts[2],
                         },
                         url: url + "/user?id=" + userIds[2],
                         method: "DELETE",
