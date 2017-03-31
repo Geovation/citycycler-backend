@@ -554,7 +554,7 @@ describe("MatchMyRoute API", () => {
                     it("Skipping this because it might soon be depreciated", () => { });
                 });
                 describe("By Matching", () => {
-                    beforeAll(done => {
+                    before(done => {
                         // Set up a long straight route that is easy to reason about
                         const route = new RouteDataModel({
                             "arrivalTime": 660,
