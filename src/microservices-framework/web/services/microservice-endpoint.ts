@@ -89,7 +89,18 @@ export class MicroserviceEndpoint extends APIEndpoint {
 
     public addService(service: Function): IEndpoint {
         const formatError = e => {
-            return _.has(e, "ok") ? e : { ok: false, result: { err: e, status: 500 } };
+            if (typeof e === "string" && e.indexOf(":") !== -1 &&
+                !isNaN(parseInt(e.split(":")[0], 10))) {
+                return {
+                    ok: false,
+                    result: {
+                        error: e.split(":")[1],
+                        status: parseInt(e.split(":")[0], 10),
+                    },
+                };
+            } else {
+                return { ok: false, result: { err: e, status: 500 } };
+            }
         };
         this.myService = options => (msg, respond) => {
             try {

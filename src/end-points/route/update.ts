@@ -108,13 +108,13 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
                 if (route.owner === userId) {
                     return Database.updateRoute(route, payload);
                 } else {
-                    throw { ok: false, result: { error: "Invalid authorisation", status: 403 } };
+                    throw "403:Invalid authorisation";
                 }
             }, err => {
                 throw err;
             });
         } else {
-            throw { ok: false, result: { error: "Invalid authorisation", status: 403 } };
+            throw "403:Invalid authorisation";
         }
     }, err => {
         throw err;

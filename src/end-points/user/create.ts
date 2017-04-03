@@ -112,13 +112,13 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     const jwtSecret = crypto.randomBytes(20).toString("base64");
     return new Promise((resolve, reject) => {
         if (email.trim().length === 0) {
-            reject({ ok: false, result: { error: "Email Required", status: 400 } });
+            reject("400:Email Required");
             return;
         } else if (password.trim().length === 0) {
-            reject({ ok: false, result: { error: "Password Required", status: 400 } });
+            reject("400:Password Required");
             return;
         } else if (name.trim().length === 0) {
-            reject({ ok: false, result: { error: "Name Required", status: 400 } });
+            reject("400:Name Required");
             return;
         }
         crypto.pbkdf2(password, salt, rounds, 512, "sha512", (err, key) => {

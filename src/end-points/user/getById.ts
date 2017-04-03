@@ -92,7 +92,7 @@ const service = (broadcast: Function, params: any): any => {
     const id = parseInt(params.id, 10);
     try {
         if (!params.authorisation) {
-            throw { ok: false, result: { error: "Invalid authorisation", status: 403 } };
+            throw "403:Invalid authorisation";
         }
         getIdFromJWT(params.authorisation);
         return Database.getUserById(id).then(user => {
