@@ -133,12 +133,12 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         }
         if (payload.password !== undefined && payload.password.trim().length !== 0) {
             // Generate the new password hash
-            promises.push(Database.getUserById(payload.id).then(user => {
+            promises.push(Database.getUserById(userId).then(user => {
                 let rounds = minimumHashingRounds;
-                return new Promise((innerResolve, innerReject) => {
+                return new Promise((resolve, reject) => {
                     crypto.pbkdf2(payload.password.trim(), user.salt, rounds, 512, "sha512", (err, key) => {
                         if (err) {
-                            innerReject("Error hashing: " + err);
+                            reject("Error hashing: " + err);
                         } else {
                             let kvs: any = [["pwh", key]];
                             if (user.rounds !== minimumHashingRounds) {
@@ -146,15 +146,13 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
                                     "rounds", minimumHashingRounds,
                                 ]);
                             }
-                            innerResolve(kvs);
+                            resolve(kvs);
                         }
                     });
                 });
-            }, err => {
-                throw "404:Error getting user: " + err;
             }));
         }
-        Promise.all(promises).then(kvss => {
+        return Promise.all(promises).then(kvss => {
             kvss.forEach((kvs) => {
                 kvs.forEach((kv) => {
                     updates[kv[0]] = kv[1];

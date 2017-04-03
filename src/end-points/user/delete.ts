@@ -1,4 +1,4 @@
-import { doIfUser } from "../../common/auth";
+import { getIdFromJWT } from "../../common/auth";
 import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 // import * as logger from "winston";
@@ -13,28 +13,20 @@ import { MicroserviceEndpoint } from "../../microservices-framework/web/services
 const operation = {
     delete: {
         consumes: ["application/json"],
-        parameters: [
-            {
-                description: "The user ID",
-                in: "query",
-                name: "id",
-                required: true,
-                type: "integer",
-            },
-        ],
+        parameters: [ ],
         produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
                 description: "The user was deleted",
             },
             403: {
-                description: "An invalid authorisation token was supplied",
+                description: "An invalid or non-existant authorisation token was supplied",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
             },
             404: {
-                description: "The user with that ID doesn't exist",
+                description: "The user who owns the given auth token doesn't exist",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
@@ -63,8 +55,7 @@ const operation = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    const id = parseInt(params.id, 10);
-    return doIfUser(params.authorisation, id, () => {
+    return getIdFromJWT(params.authorisation).then(id => {
         return Database.deleteUser(id);
     });
 };

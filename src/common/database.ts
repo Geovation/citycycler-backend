@@ -508,7 +508,7 @@ export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<User
  * @param id - The user id to be updated
  * @param updates - An object with the new values to be applied to the user
  *
- * @returns A User object
+ * @returns A promise that resolves when the user is updated
  */
 export function updateUser(id, updates): Promise<Boolean> {
     return new Promise((resolve, reject) => {
@@ -542,7 +542,7 @@ export function updateUser(id, updates): Promise<Boolean> {
                     reject("error running query: " + error);
                     return;
                 }
-                // return the new user
+                // resolve
                 resolve(true);
             });
         });

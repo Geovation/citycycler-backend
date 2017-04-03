@@ -355,9 +355,6 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         json: userUpdates,
-                        headers: {
-                            "Authorisation": "Bearer " + userJwts[1],
-                        },
                         method: "POST",
                         url: url + "/user",
                     }, (error, response, body) => {
@@ -385,25 +382,6 @@ describe("MatchMyRoute API", () => {
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
                         expect(body.error).to.equal("An account already exists using this email");
                         expect(body.status).to.equal(409);
-                        done();
-                    });
-                });
-                it("should not update a user with an invalid id", done => {
-                    const userUpdates = {
-                        id: -1,
-                        "email": "test@example.com",
-                        "name": "Updated2 Test User", "password": "updated2test",
-                    };
-                    request({
-                        url: url + "/users",
-                        json: userUpdates,
-                        headers: {
-                            "Authorisation": "Bearer " + userJwts[0],
-                        },
-                        method: "POST",
-                    }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(500, "Got non 500 response");
-                        // expect(response.statusCode).to.equal(404, "Got non 404 response");
                         done();
                     });
                 });
@@ -631,40 +609,10 @@ describe("MatchMyRoute API", () => {
                 });
             });
             describe("Deletion", () => {
-                it("should not delete a user with an invalid id", done => {
-                    defaultRequest({
-                        headers: {
-                            Authorisation: "Bearer " + userJwts[0],
-                        },
-                        method: "DELETE",
-                        url: url + "/user?id=" + -1,
-                    }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
-                            response.statusCode + ", body returned is: " + JSON.stringify(body));
-                        expect(body.error).to.equal("Invalid authorisation");
-                        expect(body.status).to.equal(403);
-                        done();
-                    });
-                });
                 it("should not delete a user with a no auth", done => {
                     defaultRequest({
                         method: "DELETE",
-                        url: url + "/user?id=" + userIds[0],
-                    }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
-                            response.statusCode + ", body returned is: " + JSON.stringify(body));
-                        expect(body.error).to.equal("Invalid authorisation");
-                        expect(body.status).to.equal(403);
-                        done();
-                    });
-                });
-                it("should not let a user delete other users", done => {
-                    defaultRequest({
-                        headers: {
-                            Authorisation: "Bearer " + userJwts[1],
-                        },
-                        method: "DELETE",
-                        url: url + "/user?id=" + userIds[0],
+                        url: url + "/user",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
@@ -679,7 +627,7 @@ describe("MatchMyRoute API", () => {
                             Authorisation: "Bearer " + userJwts[0],
                         },
                         method: "DELETE",
-                        url: url + "/user?id=" + userIds[0],
+                        url: url + "/user",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
@@ -818,7 +766,6 @@ describe("MatchMyRoute API", () => {
                         arrivalTime: 1200,
                         days: ["monday"],
                         departureTime: 600,
-                        owner: userIds[1],
                         route: [[0, 0], [1, 0], [1, 1]],
                     };
                     defaultRequest({
@@ -843,7 +790,6 @@ describe("MatchMyRoute API", () => {
                     const route = {
                         arrivalTime: 1200,
                         departureTime: 600,
-                        owner: userIds[1],
                         route: [[0, 0], [1, 0], [1, 1]],
                     };
                     defaultRequest({
@@ -865,7 +811,6 @@ describe("MatchMyRoute API", () => {
                     const route = {
                         arrivalTime: 100,
                         departureTime: 600,
-                        owner: userIds[1],
                         route: [[0, 0], [1, 0], [1, 1]],
                     };
                     defaultRequest({
@@ -883,33 +828,10 @@ describe("MatchMyRoute API", () => {
                         done();
                     });
                 });
-                it("should not create routes for an invalid owner", done => {
-                    const route = {
-                        arrivalTime: 1200,
-                        departureTime: 600,
-                        owner: userIds[2],
-                        route: [[0, 0], [1, 0], [1, 1]],
-                    };
-                    defaultRequest({
-                        headers: {
-                            Authorisation: "Bearer " + userJwts[1],
-                        },
-                        json: route,
-                        method: "PUT",
-                        url: url + "/route",
-                    }, (error, response, body) => {
-                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
-                            response.statusCode + ", body returned is: " + JSON.stringify(body));
-                        expect(body.error).to.equal("Invalid authorisation");
-                        expect(body.status).to.equal(403);
-                        done();
-                    });
-                });
                 it("should not create routes when the auth missing", done => {
                     const route = {
                         arrivalTime: 1200,
                         departureTime: 600,
-                        owner: userIds[1],
                         route: [[0, 0], [1, 0], [1, 1]],
                     };
                     defaultRequest({
