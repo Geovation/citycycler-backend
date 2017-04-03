@@ -11,7 +11,7 @@ import * as logger from "winston";
 
 // local modules
 import * as middleware from "../web/middleware";
-import { closeServices, servicesHelper } from "../web/services";
+import { closeServices, senecaReady, servicesHelper } from "../web/services";
 import { getSwaggerJsonGenerator } from "../web/swagger";
 
 export const app = new Koa();
@@ -50,8 +50,6 @@ export const setupServer = (eventEmitter) => {
         .use(servicesHelper.api, { fatal$: false, seneca });
 
     seneca.ready(() => {
-        logger.info("seneca ready");
-
         // we need this to stop Typescript borking!
         const senecaExport: any = seneca.export("web/context");
         app.use(senecaExport().routes());
@@ -86,7 +84,11 @@ export const setupServer = (eventEmitter) => {
         });
         /* tslint:enable only-arrow-functions */
 
-        eventEmitter.emit("ready");
+        // Wait until the seneca listener is active
+        senecaReady.then(() => {
+            logger.info("seneca ready");
+            eventEmitter.emit("ready");
+        });
     });
 };
 

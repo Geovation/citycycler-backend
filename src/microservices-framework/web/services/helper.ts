@@ -41,7 +41,7 @@ export const registerAPI = endpointCollection => {
     };
 };
 
-export const registerServices = endpointCollection => {
+export const registerServices = (endpointCollection): Promise<boolean> => {
     const seneca = Seneca({
         debug: {
             undead: true,
@@ -72,7 +72,11 @@ export const registerServices = endpointCollection => {
             pins: endpointCollection.endpointPins(),
             type: config.services.transport,
         });
-
-  };
+    return new Promise((resolve, reject) => {
+        seneca.ready(() => {
+            resolve(true);
+        });
+    });
+};
 
 export const closeSeneca = () => senecaInstances.map(sen => sen.close());

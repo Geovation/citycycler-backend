@@ -98,9 +98,6 @@ describe("MatchMyRoute API", () => {
                 },
                 url,
             }, (error, response, body) => {
-                console.log("Got response - error: " + JSON.stringify(error));
-                console.log("Got response - response: " + JSON.stringify(response));
-                console.log("Got response - body: " + JSON.stringify(body));
                 expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                     response.statusCode + ", error given is: " + error + " body returned is: " +
                     JSON.stringify(body), " response returned is: " + JSON.stringify(response));
