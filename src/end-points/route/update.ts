@@ -32,6 +32,18 @@ const operation = {
                     $ref: "#/definitions/UpdateRouteResponse",
                 },
             },
+            400: {
+                description: "Invalid update parameters, see error message",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
+            403: {
+                description: "An invalid authorisation token was supplied",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
             default: {
                 description: "unexpected error",
                 schema: {
@@ -108,13 +120,13 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
                 if (route.owner === userId) {
                     return Database.updateRoute(route, payload);
                 } else {
-                    throw "Invalid authorisation";
+                    throw "403:Invalid authorisation";
                 }
             }, err => {
                 throw err;
             });
         } else {
-            throw "Invalid authorisation";
+            throw "403:Invalid authorisation";
         }
     }, err => {
         throw err;

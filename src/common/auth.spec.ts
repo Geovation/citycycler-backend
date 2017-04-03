@@ -1,14 +1,13 @@
-/* tslint:disable */
 import * as Auth from "./auth";
 import * as Database from "./database";
-import * as crypto from "crypto";
 import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
+import * as crypto from "crypto";
 import * as jwt from "jsonwebtoken";
 import * as mocha from "mocha";
 
 const expect = chai.expect;
-const assert = chai.assert;
+// const assert = chai.assert;
 const before = mocha.before;
 const after = mocha.after;
 const describe = mocha.describe;
@@ -35,17 +34,17 @@ describe("MatchMyRoute Auth Functions", () => {
                     new Buffer("test"),
                     new Buffer("test"),
                     1,
-                    secret)
+                    secret);
             }
         ).then(
             (u) => {
                 console.log("user successfully created");
-                uid = u.id
+                uid = u.id;
                 done();
             }
             ).catch(
-            err => { return (err) }
-            )
+                err => { return (err); }
+        );
     });
     // Remove the test user
     after(done => {
@@ -59,18 +58,15 @@ describe("MatchMyRoute Auth Functions", () => {
     });
     // The tests
     describe("getIdFromJWT", () => {
-        it("should accept auth by a correctly signed token", done => {
-            const valid_token = jwt.sign({ id: uid }, secret, {
+        it("should accept auth by a correctly signed token", () => {
+            const validToken = jwt.sign({ id: uid }, secret, {
                 algorithm: "HS256",
                 expiresIn: 1209600,
                 issuer: "MatchMyRoute Backend",
             });
-            const promise = Auth.getIdFromJWT("Bearer " + valid_token).then(decodedUid => {
+            return Auth.getIdFromJWT("Bearer " + validToken).then(decodedUid => {
                 expect(decodedUid).to.equal(uid, "Incorrect uid decoded from token. Expected " + uid +
                     " but got " + decodedUid);
-                done();
-            }, err => {
-                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
         it("should not accept auth not in the Bearer <token> format", done => {
@@ -86,80 +82,77 @@ describe("MatchMyRoute Auth Functions", () => {
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not accept auth with another user's token", done => {
-            const invalid_token = jwt.sign({ id: uid - 1 }, secret, {
+            const invalidToken = jwt.sign({ id: uid - 1 }, secret, {
                 algorithm: "HS256",
                 expiresIn: 1209600,	// 2 weeks
                 issuer: "MatchMyRoute Backend",
             });
-            const promise = Auth.getIdFromJWT("Bearer " + invalid_token);
+            const promise = Auth.getIdFromJWT("Bearer " + invalidToken);
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not accept auth by a token with a different issuer", done => {
-            const invalid_token = jwt.sign({ id: uid }, secret, {
+            const invalidToken = jwt.sign({ id: uid }, secret, {
                 algorithm: "HS256",
                 expiresIn: 1209600,
                 issuer: "Another Issuer",
             });
-            const promise = Auth.getIdFromJWT("Bearer " + invalid_token);
+            const promise = Auth.getIdFromJWT("Bearer " + invalidToken);
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not accept auth by an expired token", done => {
-            const invalid_token = jwt.sign({ id: uid }, secret, {
+            const invalidToken = jwt.sign({ id: uid }, secret, {
                 algorithm: "HS256",
                 expiresIn: -1,
                 issuer: "MatchMyRoute Backend",
             });
-            const promise = Auth.getIdFromJWT("Bearer " + invalid_token);
+            const promise = Auth.getIdFromJWT("Bearer " + invalidToken);
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not accept auth by an unsigned token", done => {
-            const invalid_token = jwt.sign({ id: uid }, secret, {
+            const invalidToken = jwt.sign({ id: uid }, secret, {
                 algorithm: "none",
                 expiresIn: 1209600,
                 issuer: "MatchMyRoute Backend",
             });
-            const promise = Auth.getIdFromJWT("Bearer " + invalid_token);
+            const promise = Auth.getIdFromJWT("Bearer " + invalidToken);
             expect(promise).to.be.rejected.and.notify(done);
         });
     });
     describe("generateJWTFor", () => {
-        it("should create a reversible token", done => {
-            const promise = Database.getUserById(uid).then(user => {
+        it("should create a reversible token", () => {
+            return Database.getUserById(uid).then(user => {
                 const token = Auth.generateJWTFor(user);
                 const decodeFunction = () => {
                     return jwt.verify(token, secret, {
                         algorithms: ["HS256"],
                         issuer: "MatchMyRoute Backend",
-                    }).id
-                }
+                    }).id;
+                };
                 expect(decodeFunction).not.to.throw;
                 expect(decodeFunction()).to.equal(uid, "Decoding the token gave " + decodeFunction() +
                     ", but expected it to give " + uid);
-                done();
-            }, err => {
-                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
     });
     describe("isUser", () => {
         // Because this is a really simple wrapper function around getIdFrowJWT, we don't need to test JWT validity
         it("should resolve true for valid user token", done => {
-            const valid_token = jwt.sign({ id: uid }, secret, {
+            const validToken = jwt.sign({ id: uid }, secret, {
                 algorithm: "HS256",
                 expiresIn: 1209600,
                 issuer: "MatchMyRoute Backend",
             });
-            const promise = Auth.isUser("Bearer " + valid_token, uid);
+            const promise = Auth.isUser("Bearer " + validToken, uid);
             expect(promise).to.eventually.equal(true, ".isUser said that the valid token did not belong to the user")
                 .and.notify(done);
         });
         it("should resolve false for invalid user token", done => {
-            const invalid_token = jwt.sign({ id: uid + 1 }, secret, {
+            const invalidToken = jwt.sign({ id: uid + 1 }, secret, {
                 algorithm: "HS256",
                 expiresIn: 1209600,
                 issuer: "MatchMyRoute Backend",
             });
-            const promise = Auth.isUser("Bearer " + invalid_token, uid);
+            const promise = Auth.isUser("Bearer " + invalidToken, uid);
             expect(promise).to.eventually.equal(false, ".isUser said that the invalid token did belong to the user")
                 .and.notify(done);
         });
@@ -168,26 +161,26 @@ describe("MatchMyRoute Auth Functions", () => {
         // This is a thin wrapper around isUser, so the main thing to check is that the function
         // is called if the auth is valid, and not if it isn't
         it("should complete the function with valid auth", done => {
-            const valid_token = jwt.sign({ id: uid }, secret, {
+            const validToken = jwt.sign({ id: uid }, secret, {
                 algorithm: "HS256",
                 expiresIn: 1209600,
                 issuer: "MatchMyRoute Backend",
             });
-            const promise = Auth.doIfUser("Bearer " + valid_token, uid, () => {
+            const promise = Auth.doIfUser("Bearer " + validToken, uid, () => {
                 return "executed!";
             }).catch(err => {
-                return "rejected!"
+                return "rejected!";
             });
             expect(promise).to.eventually.equal("executed!", "doIfUser rejected the valid auth given")
                 .and.notify(done);
         });
         it("should not complete the function with invalid auth", done => {
-            const invalid_token = jwt.sign({ id: uid + 1 }, secret, {
+            const invalidToken = jwt.sign({ id: uid + 1 }, secret, {
                 algorithm: "HS256",
                 expiresIn: 1209600,
                 issuer: "MatchMyRoute Backend",
             });
-            const promise = Auth.doIfUser("Bearer " + invalid_token, uid, () => {
+            const promise = Auth.doIfUser("Bearer " + invalidToken, uid, () => {
                 return "executed!";
             }).catch(err => {
                 return "rejected!";

@@ -1,17 +1,15 @@
-/* tslint:disable */
 import * as Database from "./database";
 import { RouteDataModel } from "./RouteDataModel";
 import * as chai from "chai";
-import * as logger from "winston";
 import * as mocha from "mocha";
 
-const before = mocha.before;
-const after = mocha.after;
+// const before = mocha.before;
+// const after = mocha.after;
 const describe = mocha.describe;
 const it = mocha.it;
 const expect = chai.expect;
-const assert = chai.assert;
-const should = chai.should;
+// const assert = chai.assert;
+// const should = chai.should;
 
 describe("Various useful functions", () => {
     describe("lineStringToCoords", () => {
@@ -21,10 +19,10 @@ describe("Various useful functions", () => {
             expect(Database.lineStringToCoords(lineString)).to.eql(coords);
         });
         it("should not convert an invalid linestring into coords", () => {
-            const lineString = "POINT(0 2 5)";
+            let lineString = "POINT(0 2 5)";
             expect(() => {
                 Database.lineStringToCoords(lineString);
-            }).to.throw("Input is not a Linestring.");
+            }).to.throw("Input is not a Linestring");
         });
     });
     describe("pointStringToCoords", () => {
@@ -56,7 +54,7 @@ describe("Various useful functions", () => {
                 id: 321,
                 owner: 123,
                 route: [[0, 0], [1, 1], [2, 2]],
-            }
+            };
             const route = new RouteDataModel(obj);
             expect(route.arrivalTime).to.equal(1234, "Arrival time is wrong! expected 1234, got " + route.arrivalTime);
             expect(route.departureTime).to.equal(1000, "Departure time is wrong! expected 1000, got " +
@@ -73,10 +71,10 @@ describe("Various useful functions", () => {
                 id: 321,
                 owner: 123,
                 route: [[0, 0], [1, 1], [2, 2]],
-            }
+            };
             expect(() => {
-                const route = new RouteDataModel(obj);
-            }).to.throw("Route requires an arrival time");
+                return new RouteDataModel(obj);
+            }).to.throw("400:Route requires an arrival time");
         });
         it("should throw an error if there is no departure time", () => {
             const obj = {
@@ -85,10 +83,10 @@ describe("Various useful functions", () => {
                 id: 321,
                 owner: 123,
                 route: [[0, 0], [1, 1], [2, 2]],
-            }
+            };
             expect(() => {
-                const route = new RouteDataModel(obj);
-            }).to.throw("Route requires a departure time");
+                return new RouteDataModel(obj);
+            }).to.throw("400:Route requires a departure time");
         });
         it("should throw an error if the arrival is before departure", () => {
             const obj = {
@@ -98,10 +96,10 @@ describe("Various useful functions", () => {
                 id: 321,
                 owner: 123,
                 route: [[0, 0], [1, 1], [2, 2]],
-            }
+            };
             expect(() => {
-                const route = new RouteDataModel(obj);
-            }).to.throw("Arrival time is before Departure time");
+                return new RouteDataModel(obj);
+            }).to.throw("400:Arrival time is before Departure time");
         });
         it("should throw an error if there is only one coordinate passed", () => {
             const obj = {
@@ -111,10 +109,10 @@ describe("Various useful functions", () => {
                 id: 321,
                 owner: 123,
                 route: [[0, 0]],
-            }
+            };
             expect(() => {
-                const route = new RouteDataModel(obj);
-            }).to.throw("Route requires at least 2 points");
+                return new RouteDataModel(obj);
+            }).to.throw("400:Route requires at least 2 points");
         });
         it("should throw an error if there is a 3D coordinate present", () => {
             const obj = {
@@ -124,10 +122,10 @@ describe("Various useful functions", () => {
                 id: 321,
                 owner: 123,
                 route: [[0, 0], [1, 1, 1], [2, 2]],
-            }
+            };
             expect(() => {
-                const route = new RouteDataModel(obj);
-            }).to.throw("Coordinates in a Route should only have 2 items in them, [latitude, longitude]");
+                return new RouteDataModel(obj);
+            }).to.throw("400:Coordinates in a Route should only have 2 items in them, [latitude, longitude]");
         });
         it("should throw an error if there is a 1D coordinate present", () => {
             const obj = {
@@ -137,10 +135,10 @@ describe("Various useful functions", () => {
                 id: 321,
                 owner: 123,
                 route: [[0, 0], [1], [2, 2]],
-            }
+            };
             expect(() => {
-                const route = new RouteDataModel(obj);
-            }).to.throw("Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]");
+                return new RouteDataModel(obj);
+            }).to.throw("400:Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]");
         });
         it("should throw an error if there is no owner", () => {
             const obj = {
@@ -149,10 +147,10 @@ describe("Various useful functions", () => {
                 departureTime: 1000,
                 id: 321,
                 route: [[0, 0], [1, 1], [2, 2]],
-            }
+            };
             expect(() => {
-                const route = new RouteDataModel(obj);
-            }).to.throw("Route requires an owner");
+                return new RouteDataModel(obj);
+            }).to.throw("400:Route requires an owner");
         });
         it("should be constructed correctly from an SQL row", () => {
             const row = {
@@ -162,7 +160,7 @@ describe("Various useful functions", () => {
                 id: 321,
                 owner: 123,
                 route: "LINESTRING(0 0,1 1,2 2)",
-            }
+            };
             const route = RouteDataModel.fromSQLRow(row);
             expect(route.arrivalTime).to.equal(1234, "Arrival time is wrong! expected 1234, got " + route.arrivalTime);
             expect(route.departureTime).to.equal(1000, "Departure time is wrong! expected 1000, got " +

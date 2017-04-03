@@ -46,6 +46,12 @@ const operation = {
                     $ref: "#/definitions/GetNearbyResponse",
                 },
             },
+            400: {
+                description: "Invalid parameters. See error message.",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
             default: {
                 description: "unexpected error",
                 schema: {

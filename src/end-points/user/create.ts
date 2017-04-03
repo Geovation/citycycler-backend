@@ -1,5 +1,6 @@
 import { generateJWTFor } from "../../common/auth";
 import * as Database from "../../common/database";
+import { UserFullDataModel } from "../../common/UserFullDataModel";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 import * as crypto from "crypto";
 // import * as logger from "winston";
@@ -27,10 +28,16 @@ const operation = {
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
-            200: {
+            201: {
                 description: "New user was created",
                 schema: {
                     $ref: "#/definitions/CreateResponse",
+                },
+            },
+            409: {
+                description: "A user already exists with this email address",
+                schema: {
+                    $ref: "#/definitions/Error",
                 },
             },
             default: {
@@ -111,13 +118,13 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     const jwtSecret = crypto.randomBytes(20).toString("base64");
     return new Promise((resolve, reject) => {
         if (email.trim().length === 0) {
-            reject("Email required");
+            reject("400:Email Required");
             return;
         } else if (password.trim().length === 0) {
-            reject("Password required");
+            reject("400:Password Required");
             return;
         } else if (name.trim().length === 0) {
-            reject("Name required");
+            reject("400:Name Required");
             return;
         }
         crypto.pbkdf2(password, salt, rounds, 512, "sha512", (err, key) => {
@@ -128,14 +135,13 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
             }
         });
     }).then(pwh => {
-        return Database.putUser(name, email, pwh, salt, rounds, jwtSecret).then((user) => {
-            return {
-                id: user.id,
-                jwt: generateJWTFor(user),
-            };
-        });
-    }, err => {
-        throw "Couldn't create user: " + err;
+        return Database.putUser(name, email, pwh, salt, rounds, jwtSecret);
+    }).then((user: UserFullDataModel) => {
+        return {
+            id: user.id,
+            jwt: generateJWTFor(user),
+            status: 201,
+        };
     });
 };
 

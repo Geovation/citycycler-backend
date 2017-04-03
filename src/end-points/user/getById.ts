@@ -31,6 +31,18 @@ const operation = {
                     $ref: "#/definitions/GetUserResponse",
                 },
             },
+            403: {
+                description: "An invalid authorisation token was supplied",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
+            404: {
+                description: "No user exists with the given id",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
             default: {
                 description: "unexpected error",
                 schema: {
@@ -92,7 +104,7 @@ const service = (broadcast: Function, params: any): any => {
     const id = parseInt(params.id, 10);
     try {
         if (!params.authorisation) {
-            throw "Invalid Authentication";
+            throw "403:Invalid authorisation";
         }
         getIdFromJWT(params.authorisation);
         return Database.getUserById(id).then(user => {

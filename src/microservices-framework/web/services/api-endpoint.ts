@@ -62,7 +62,7 @@ export class APIEndpoint {
 
     public addSwaggerSecurityDefinitions(securityDefinitions): IEndpoint {
         this.mySecurityDefinitions = securityDefinitions;
-        console.log("This security definition can only be referenced by this endpoint. " +
+        logger.warn("This security definition can only be referenced by this endpoint. " +
             "To add a securityDefinition globally you need to add it to " +
             "/src/microservices-framework/web/swagger/index.ts");
         return this;

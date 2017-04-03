@@ -170,7 +170,7 @@ export function getRouteById(id: number): Promise<RouteDataModel> {
                     // return the route
                     resolve(RouteDataModel.fromSQLRow(result.rows[0]));
                 } else {
-                    reject("Route doesn't exist");
+                    reject("404:Route doesn't exist");
                 }
             });
         });
@@ -179,7 +179,7 @@ export function getRouteById(id: number): Promise<RouteDataModel> {
 
 export function lineStringToCoords(lineStr: string): number[][] {
     if (lineStr.slice(0, 11) !== "LINESTRING(") {
-        throw "Input is not a Linestring.";
+        throw "Input is not a Linestring";
     }
     let coords = [];
     const coordStr = lineStr.slice(11, lineStr.length - 1);
@@ -209,7 +209,7 @@ export function coordsToLineString(coords: number[][]): string {
 export function getRoutesNearby(radius: number, lat: number, lon: number): Promise<RouteDataModel[]> {
     return new Promise((resolve, reject) => {
         if (radius > 2000 || radius < 1) {
-            reject("Radius out of bounds");
+            reject("400:Radius out of bounds");
             return;
         }
         // Acquire a client from the pool,
@@ -270,10 +270,10 @@ export function matchRoutes(
 }[]> {
     return new Promise((resolve, reject) => {
         if (matchParams.start.radius > 2000 || matchParams.start.radius < 1) {
-            reject("Start radius out of bounds. Must be between 1m and 2km");
+            reject("400:Start radius out of bounds. Must be between 1m and 2km");
             return;
         } else if (matchParams.end.radius > 2000 || matchParams.end.radius < 1) {
-            reject("End radius out of bounds. Must be between 1m and 2km");
+            reject("400:End radius out of bounds. Must be between 1m and 2km");
             return;
         }
         // Acquire a client from the pool,
@@ -386,16 +386,16 @@ export function updateRoute(
         existingRoute.route = updates.route !== undefined ? updates.route : existingRoute.route;
 
         if (existingRoute.arrivalTime < existingRoute.departureTime) {
-            reject("Arrival time is before Departure time");
+            reject("400:Arrival time is before Departure time");
             return;
         } else if (existingRoute.route.length < 2) {
-            reject("Route requires at least 2 points");
+            reject("400:Route requires at least 2 points");
             return;
         } else if (Math.max(...existingRoute.route.map(pair => { return pair.length; })) > 2) {
-            reject("Coordinates in a Route should only have 2 items in them, [latitude, longitude]");
+            reject("400:Coordinates in a Route should only have 2 items in them, [latitude, longitude]");
             return;
         } else if (Math.min(...existingRoute.route.map(pair => { return pair.length; })) < 2) {
-            reject("Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]");
+            reject("400:Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]");
             return;
         }
 
@@ -453,7 +453,7 @@ export function deleteRoute(id: number): Promise<Boolean> {
                 if (result.rowCount) {
                     resolve(true);
                 } else {
-                    reject("Route doesn't exist");
+                    reject("404:Route doesn't exist");
                     return;
                 }
             });
@@ -488,6 +488,9 @@ export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<User
 
                 if (error) {
                     // logger.error("error running query", error);
+                    if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
+                        reject("409:An account already exists using this email");
+                    }
                     reject("error running query: " + error);
                     return;
                 }
@@ -522,7 +525,7 @@ export function getUserByEmail(email: string): Promise<UserFullDataModel> {
                 if (result.rowCount) {
                     resolve(new UserFullDataModel(result.rows[0]));
                 } else {
-                    reject("User doesn't exist");
+                    reject("404:User doesn't exist");
                     return;
                 }
             });
@@ -554,7 +557,7 @@ export function getUserById(id: number): Promise<UserFullDataModel> {
                 if (result.rowCount) {
                     resolve(new UserFullDataModel(result.rows[0]));
                 } else {
-                    reject("User doesn't exist");
+                    reject("404:User doesn't exist");
                     return;
                 }
             });
@@ -585,7 +588,7 @@ export function deleteUser(id: number): Promise<Boolean> {
                 if (result.rowCount) {
                     resolve(true);
                 } else {
-                    reject("User doesn't exist");
+                    reject("404:User doesn't exist");
                     return;
                 }
             });

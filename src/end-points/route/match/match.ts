@@ -31,6 +31,18 @@ const operation = {
                     $ref: "#/definitions/GetRoutesResponse",
                 },
             },
+            400: {
+                description: "Invalid search parameters, see error message",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
+            403: {
+                description: "An invalid authorisation token was supplied",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
             default: {
                 description: "unexpected error",
                 schema: {

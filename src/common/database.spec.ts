@@ -1,19 +1,17 @@
-/* tslint:disable */
 import * as Database from "./database";
 import { RouteDataModel } from "./RouteDataModel";
 import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
-import * as logger from "winston";
-import * as fs from "fs";
 import * as mocha from "mocha";
+import * as logger from "winston";
 
 const before = mocha.before;
 const after = mocha.after;
 const describe = mocha.describe;
 const it = mocha.it;
 const expect = chai.expect;
-const assert = chai.assert;
-const should = chai.should;
+// const assert = chai.assert;
+// const should = chai.should;
 chai.use(chaiAsPromised);
 
 // Test the database Functions
@@ -27,13 +25,12 @@ describe("MatchMyRoute Database Functions", () => {
                 // Start a new database pool
                 Database.startUpPool(true);
                 Database.resetDatabase().then(
-                    e => { done() }
+                    e => { done(); }
                 ).catch(
-                    err => { return (err) }
-                    )
-
+                    err => { return (err); }
+                    );
             } else {
-                console.error("Couldn't shut down old pool!");
+                logger.error("Couldn't shut down old pool!");
                 process.exit(1);
             }
         });
@@ -63,8 +60,8 @@ describe("MatchMyRoute Database Functions", () => {
             .and.notify(done);
     });
     describe("User related functions", () => {
-        it("should create new users", done => {
-            const promise = Database.putUser("Test User", "test@example.com", "pwhash", "salty", 5, "secret").then(
+        it("should create new users", () => {
+            return Database.putUser("Test User", "test@example.com", "pwhash", "salty", 5, "secret").then(
                 user => {
                     userIds.push(user.id);
                     expect(user.name).to.equal("Test User");
@@ -73,43 +70,30 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(Buffer.compare(new Buffer("salty"), user.salt)).to.equal(0);
                     expect(user.rounds).to.equal(5);
                     expect(user.jwtSecret).to.equal("secret");
-                    done();
-                }, err => {
-                    assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
-                })
-                .catch(error => { console.error('useradd failed because ' + error); }
-                );
+                });
         });
         it("should fail to create users with duplicate emails", done => {
             const promise = Database.putUser("Test User2", "test@example.com", "pwhash2", "salty2", 5, "secret2");
             expect(promise).to.be.rejected.and.notify(done);
         });
-        it("should escape SQL injections", done => {
-            const promise = Database.putUser("Test User');DROP TABLE users;", "test2@example.com", "pwhash2", "salty2", 5, "secret2").then(user => {
-                userIds.push(user.id);
-                done();
-            }, err => {
-                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
-            });
+        it("should escape SQL injections", () => {
+            return Database.putUser("Test User');DROP TABLE users;", "test2@example.com", "pwhash2",
+                "salty2", 5, "secret2").then(user => {
+                    userIds.push(user.id);
+                });
         });
-        it("should get a user by ID", done => {
-            const promise = Database.getUserById(userIds[0]).then(user => {
+        it("should get a user by ID", () => {
+            return Database.getUserById(userIds[0]).then(user => {
                 expect(user.name).to.equal("Test User");
-                done();
-            }, err => {
-                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
         it("should not get a user by an invalid ID", done => {
             const promise = Database.getUserById(-1);
             expect(promise).to.be.rejected.and.notify(done);
         });
-        it("should get a user by email", done => {
-            const promise = Database.getUserByEmail("test@example.com").then(user => {
+        it("should get a user by email", () => {
+            return Database.getUserByEmail("test@example.com").then(user => {
                 expect(user.name).to.equal("Test User");
-                done();
-            }, err => {
-                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
         it("should not get a user by an invalid email", done => {
@@ -120,99 +104,78 @@ describe("MatchMyRoute Database Functions", () => {
             const promise = Database.deleteUser(-1);
             expect(promise).to.be.rejected.and.notify(done);
         });
-        it("should delete a user", done => {
-            const promise = Database.deleteUser(userIds[0]).then(() => {
-                const userCount = Database.sql("SELECT * FROM users WHERE id=$1", [userIds[0]]).then(result => {
+        it("should delete a user", () => {
+            return Database.deleteUser(userIds[0]).then(() => {
+                return Database.sql("SELECT * FROM users WHERE id=$1", [userIds[0]]).then(result => {
                     expect(result.rowCount).to.equal(0);
-                    done();
-                }, err => {
-                    assert.fail(err, 0, "Inner Promise was rejected (Database.sql): " + err).and.notify(done);
                 });
-            }, err => {
-                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
     });
     describe("General Route Functions", () => {
-        it("should create a route", done => {
+        it("should create a route", () => {
             const route = new RouteDataModel({
-                "arrivalTime": 15000,
-                "departureTime": 14000,
-                "owner": userIds[1],
-                "route": [[0, 0], [1, 0], [1, 1]],
-                "days": ["tuesday", "sunday"],
+                arrivalTime: 15000,
+                days: ["tuesday", "sunday"],
+                departureTime: 14000,
+                owner: userIds[1],
+                route: [[0, 0], [1, 0], [1, 1]],
             });
-            const promise = Database.putRoute(route);
-            promise.then(routeId => {
+            return Database.putRoute(route).then(routeId => {
                 routeIds.push(routeId);
-                Database.sql("SELECT arrivalTime, departureTime, owner, days::integer FROM routes WHERE id=$1",
+                return Database.sql("SELECT arrivalTime, departureTime, owner, days::integer FROM routes WHERE id=$1",
                     ["" + routeId]).then(result => {
                         expect(result.rows[0].arrivaltime).to.equal(route.arrivalTime);
                         expect(result.rows[0].departuretime).to.equal(route.departureTime);
                         expect(result.rows[0].owner).to.equal(route.owner);
                         expect(result.rows[0].days).to.equal(66);
-                        done();
-                    }, err => {
-                        assert.fail(err, 0, "Inner Promise was rejected (Database.sql): " + err).and.notify(done);
                     });
-            }, err => {
-                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
         it("should not create a route for an invalid owner", done => {
             const route = new RouteDataModel({
-                "arrivalTime": 15000,
-                "departureTime": 14000,
-                "owner": -1,
-                "route": [[0, 0], [1, 0], [1, 1]],
-                "days": ["tuesday", "sunday"],
+                arrivalTime: 15000,
+                days: ["tuesday", "sunday"],
+                departureTime: 14000,
+                owner: -1,
+                route: [[0, 0], [1, 0], [1, 1]],
             });
             const promise = Database.putRoute(route);
             expect(promise).to.be.rejected.and.notify(done);
         });
-        it("should get a route by ID", done => {
+        it("should get a route by ID", () => {
             const route = new RouteDataModel({
-                "arrivalTime": 15000,
-                "departureTime": 14000,
-                "owner": userIds[1],
-                "route": [[0, 0], [1, 0], [1, 1]],
-                "days": ["tuesday", "sunday"],
+                arrivalTime: 15000,
+                days: ["tuesday", "sunday"],
+                departureTime: 14000,
+                owner: userIds[1],
+                route: [[0, 0], [1, 0], [1, 1]],
             });
-            const promise = Database.getRouteById(routeIds[0]);
-            promise.then(result => {
+            return Database.getRouteById(routeIds[0]).then(result => {
                 expect(result.arrivalTime).to.equal(route.arrivalTime);
                 expect(result.departureTime).to.equal(route.departureTime);
                 expect(result.owner).to.equal(route.owner);
                 expect(result.days).to.eql(route.days);
-                done();
-            }, err => {
-                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
         it("should not get a route by an invalid ID", done => {
             const promise = Database.getRouteById(-1);
             expect(promise).to.be.rejected.and.notify(done);
         });
-        it("should get a nearby route", done => {
-            const promise = Database.getRoutesNearby(500, 1, 1).then(routes => {
+        it("should get a nearby route", () => {
+            return Database.getRoutesNearby(500, 1, 1).then(routes => {
                 const rids = routes.map((r) => {
                     return r.id;
                 });
                 expect(rids).to.contain(routeIds[0]);
-                done();
-            }, err => {
-                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
-        it("should not get a far away route", done => {
-            const promise = Database.getRoutesNearby(1, 1.6, 2.4).then(routes => {
+        it("should not get a far away route", () => {
+            return Database.getRoutesNearby(1, 1.6, 2.4).then(routes => {
                 const rids = routes.map((r) => {
                     return r.id;
                 });
                 expect(rids).not.to.contain(routeIds[0]);
-                done();
-            }, err => {
-                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
         it("should not get a route in a tiny radius (<1m)", done => {
@@ -227,42 +190,36 @@ describe("MatchMyRoute Database Functions", () => {
             const promise = Database.deleteRoute(-1);
             expect(promise).to.be.rejected.and.notify(done);
         });
-        it("should delete a route", done => {
-            const promise = Database.deleteRoute(routeIds[0]);
-            promise.then(() => {
+        it("should delete a route", () => {
+            return Database.deleteRoute(routeIds[0]).then(() => {
                 Database.sql("SELECT * FROM routes WHERE id=$1;", [routeIds[0]]).then(result => {
                     expect(result.rowCount).to.equal(0);
-                    done();
                 });
-            }, err => {
-                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
-        it("should delete any routes associated with a user, when that user is deleted", done => {
+        it("should delete any routes associated with a user, when that user is deleted", () => {
             let routeId;
             let userId;
             // create new user so that no dependency on other tests exists
-            Database.putUser("Test User", "test@example.com", "pwhash", "salty", 5, "secret").then(user => {
+            return Database.putUser("Test User", "test@example.com", "pwhash", "salty", 5, "secret").then(user => {
                 userIds.push(user.id);
                 userId = user.id;
                 // prepare a new route
                 const route = new RouteDataModel({
-                    "arrivalTime": 15000,
-                    "departureTime": 14000,
-                    "owner": userId,
-                    "route": [[0, 0], [1, 0], [1, 1]],
+                    arrivalTime: 15000,
+                    days: ["monday"],
+                    departureTime: 14000,
+                    owner: userId,
+                    route: [[0, 0], [1, 0], [1, 1]],
                 });
-                return Database.putRoute(route)
+                return Database.putRoute(route);
             }).then(id => {
                 routeId = id;
-                return Database.deleteUser(userId)
+                return Database.deleteUser(userId);
             }).then(() => {
                 return Database.sql("SELECT * FROM routes WHERE id=$1;", ["" + routeId]);
             }).then((result: any) => {
                 expect(result.rowCount).to.equal(0);
-                done();
-            }).catch(err => {
-                assert.fail(err, 0, "Promise was rejected: " + err).and.notify(done);
             });
         });
     });
@@ -270,37 +227,33 @@ describe("MatchMyRoute Database Functions", () => {
         before(done => {
             // Put in a big straight route that is easy to reason about
             const route = new RouteDataModel({
-                "arrivalTime": 660,
-                "departureTime": 60,
-                "owner": userIds[1],
-                "route": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6]],
-                "days": ["tuesday", "friday", "sunday"],
+                arrivalTime: 660,
+                days: ["tuesday", "friday", "sunday"],
+                departureTime: 60,
+                owner: userIds[1],
+                route: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6]],
             });
-            const promise = Database.putRoute(route);
-            promise.then(routeId => {
+            Database.putRoute(route).then(routeId => {
                 routeIds.push(routeId); // Should be routeIds[1]
                 done();
-            }, err => {
-                console.log("route insert failed");
-                throw err;
             });
         });
-        it("should match a route", done => {
+        it("should match a route", () => {
             const matchParams = {
-                start: {
-                    latitude: 0,
-                    longitude: 1.4,
-                    radius: 500,
-                },
+                days: ["thursday", "friday", "sunday"],
                 end: {
                     latitude: 0,
                     longitude: 4.6,
                     radius: 500,
                 },
+                start: {
+                    latitude: 0,
+                    longitude: 1.4,
+                    radius: 500,
+                },
                 time: 500,
-                days: ["thursday", "friday", "sunday"],
             };
-            const promise = Database.matchRoutes(matchParams).then(routes => {
+            return Database.matchRoutes(matchParams).then(routes => {
                 const thisRoute = routes.filter((route) => {
                     return route.id === routeIds[1];
                 })[0];
@@ -315,123 +268,117 @@ describe("MatchMyRoute Database Functions", () => {
                     "time (660). Got " + thisRoute.meetingTime + ". Route is: " + JSON.stringify(thisRoute));
                 expect(thisRoute.meetingPoint).to.eql([0, 1.4]);
                 expect(thisRoute.divorcePoint).to.eql([0, 4.6]);
-                done();
-            }, err => {
-                assert.fail(err, 0, "matchRoutes failed with: " + err).and.notify(done);
             });
         });
         it("should not match a route if the end radius is too big", done => {
             const matchParams = {
-                start: {
-                    latitude: 0,
-                    longitude: 1.4,
-                    radius: 500,
-                },
+                days: ["thursday", "friday", "sunday"],
                 end: {
                     latitude: 0,
                     longitude: 4.6,
                     radius: 5000,
                 },
+                start: {
+                    latitude: 0,
+                    longitude: 1.4,
+                    radius: 500,
+                },
                 time: 500,
-                days: ["thursday", "friday", "sunday"],
             };
             const promise = Database.matchRoutes(matchParams);
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not match a route if the end radius is too small", done => {
             const matchParams = {
-                start: {
-                    latitude: 0,
-                    longitude: 1.4,
-                    radius: 500,
-                },
+                days: ["thursday", "friday", "sunday"],
                 end: {
                     latitude: 0,
                     longitude: 4.6,
                     radius: 0.5,
                 },
+                start: {
+                    latitude: 0,
+                    longitude: 1.4,
+                    radius: 500,
+                },
                 time: 500,
-                days: ["thursday", "friday", "sunday"],
             };
             const promise = Database.matchRoutes(matchParams);
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not match a route if the start radius is too big", done => {
             const matchParams = {
-                start: {
-                    latitude: 0,
-                    longitude: 1.4,
-                    radius: 5000,
-                },
+                days: ["thursday", "friday", "sunday"],
                 end: {
                     latitude: 0,
                     longitude: 4.6,
                     radius: 500,
                 },
+                start: {
+                    latitude: 0,
+                    longitude: 1.4,
+                    radius: 5000,
+                },
                 time: 500,
-                days: ["thursday", "friday", "sunday"],
             };
             const promise = Database.matchRoutes(matchParams);
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not match a route if the start radius is too small", done => {
             const matchParams = {
+                days: ["thursday", "friday", "sunday"],
+                end: {
+                    latitude: 0,
+                    longitude: 4.6,
+                    radius: 500,
+                },
                 start: {
                     latitude: 0,
                     longitude: 1.4,
                     radius: 0.5,
                 },
-                end: {
-                    latitude: 0,
-                    longitude: 4.6,
-                    radius: 500,
-                },
                 time: 500,
-                days: ["thursday", "friday", "sunday"],
             };
             const promise = Database.matchRoutes(matchParams);
             expect(promise).to.be.rejected.and.notify(done);
         });
-        it("should not match a route in the wrong direction", done => {
+        it("should not match a route in the wrong direction", () => {
             const matchParams = {
-                start: {
-                    latitude: 0,
-                    longitude: 4.6,
-                    radius: 500,
-                },
+                days: ["thursday", "friday", "sunday"],
                 end: {
                     latitude: 0,
                     longitude: 1.4,
                     radius: 500,
                 },
+                start: {
+                    latitude: 0,
+                    longitude: 4.6,
+                    radius: 500,
+                },
                 time: 500,
-                days: ["thursday", "friday", "sunday"],
             };
-            const promise = Database.matchRoutes(matchParams).then(routes => {
+            return Database.matchRoutes(matchParams).then(routes => {
                 const thisRoute = routes.filter((route) => {
                     return route.id === routeIds[1];
                 })[0];
                 expect(thisRoute).to.equal(undefined, "Got route when we shouldn't: " + JSON.stringify(thisRoute));
-                done();
-            }, err => {
-                assert.fail(err, 0, "matchRoutes failed with: " + err).and.notify(done);
             });
         });
-        it("should match a route if days are unset", done => {
+        it("should match a route if days are unset", () => {
             const matchParams = {
-                start: {
-                    latitude: 0,
-                    longitude: 1.4,
-                    radius: 500,
-                },
                 end: {
                     latitude: 0,
                     longitude: 4.6,
                     radius: 500,
                 },
+                start: {
+                    latitude: 0,
+                    longitude: 1.4,
+                    radius: 500,
+                },
                 time: 500,
             };
-            const promise = Database.matchRoutes(matchParams).then(routes => {
+            return Database.matchRoutes(matchParams).then(routes => {
                 const thisRoute = routes.filter((route) => {
                     return route.id === routeIds[1];
                 })[0];
@@ -446,51 +393,45 @@ describe("MatchMyRoute Database Functions", () => {
                     "time (660). Got " + thisRoute.meetingTime + ". Route is: " + JSON.stringify(thisRoute));
                 expect(thisRoute.meetingPoint).to.eql([0, 1.4]);
                 expect(thisRoute.divorcePoint).to.eql([0, 4.6]);
-                done();
-            }, err => {
-                assert.fail(err, 0, "matchRoutes failed with: " + err).and.notify(done);
             });
         });
-        it("should not match a route if days are set to exclude the route", done => {
+        it("should not match a route if days are set to exclude the route", () => {
             const matchParams = {
-                start: {
-                    latitude: 0,
-                    longitude: 1.4,
-                    radius: 500,
-                },
+                days: ["monday", "wednesday", "saturday"],
                 end: {
                     latitude: 0,
                     longitude: 4.6,
                     radius: 500,
                 },
+                start: {
+                    latitude: 0,
+                    longitude: 1.4,
+                    radius: 500,
+                },
                 time: 500,
-                days: ["monday", "wednesday", "saturday"],
             };
-            const promise = Database.matchRoutes(matchParams).then(routes => {
+            return Database.matchRoutes(matchParams).then(routes => {
                 const thisRoute = routes.filter((route) => {
                     return route.id === routeIds[1];
                 })[0];
                 expect(thisRoute).to.equal(undefined, "Got route when we shouldn't: " + JSON.stringify(thisRoute));
-                done();
-            }, err => {
-                assert.fail(err, 0, "matchRoutes failed with: " + err).and.notify(done);
             });
         });
-        it("should match a route if time is not set", done => {
+        it("should match a route if time is not set", () => {
             const matchParams = {
-                start: {
-                    latitude: 0,
-                    longitude: 1.4,
-                    radius: 500,
-                },
+                days: ["thursday", "friday", "sunday"],
                 end: {
                     latitude: 0,
                     longitude: 4.6,
                     radius: 500,
                 },
-                days: ["thursday", "friday", "sunday"],
+                start: {
+                    latitude: 0,
+                    longitude: 1.4,
+                    radius: 500,
+                },
             };
-            const promise = Database.matchRoutes(matchParams).then(routes => {
+            return Database.matchRoutes(matchParams).then(routes => {
                 const thisRoute = routes.filter((route) => {
                     return route.id === routeIds[1];
                 })[0];
@@ -505,9 +446,6 @@ describe("MatchMyRoute Database Functions", () => {
                     "time (660). Got " + thisRoute.meetingTime + ". Route is: " + JSON.stringify(thisRoute));
                 expect(thisRoute.meetingPoint).to.eql([0, 1.4]);
                 expect(thisRoute.divorcePoint).to.eql([0, 4.6]);
-                done();
-            }, err => {
-                assert.fail(err, 0, "matchRoutes failed with: " + err).and.notify(done);
             });
         });
     });
@@ -516,11 +454,11 @@ describe("MatchMyRoute Database Functions", () => {
         let updateRouteId;
         before(done => {
             const route = new RouteDataModel({
-                "arrivalTime": 15000,
-                "departureTime": 14000,
-                "owner": userIds[1],
-                "route": [[0, 0], [1, 0], [1, 1]],
-                "days": ["tuesday", "sunday"],
+                arrivalTime: 15000,
+                days: ["tuesday", "sunday"],
+                departureTime: 14000,
+                owner: userIds[1],
+                route: [[0, 0], [1, 0], [1, 1]],
             });
             Database.putRoute(route)
                 .then(routeId => {
@@ -531,15 +469,15 @@ describe("MatchMyRoute Database Functions", () => {
                 });
         });
 
-        it("should update all properties at once", done => {
+        it("should update all properties at once", () => {
             const updates = {
-                id: updateRouteId,
-                days: ["tuesday"],
                 arrivalTime: 1500,
+                days: ["tuesday"],
                 departureTime: 900,
+                id: updateRouteId,
                 route: [[0, 0], [1, 0], [1, 1], [0, 1]],
             };
-            const promise = Database.getRouteById(updateRouteId).then(originalRoute => {
+            return Database.getRouteById(updateRouteId).then(originalRoute => {
                 return Database.updateRoute(originalRoute, updates);
             }).then(() => {
                 return Database.getRouteById(updateRouteId);
@@ -548,15 +486,14 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(newRoute.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
                 expect(newRoute.arrivalTime).to.equal(1500);
                 expect(newRoute.departureTime).to.equal(900);
-                done();
             });
         });
-        it("should update one property at a time - arrivalTime", done => {
+        it("should update one property at a time - arrivalTime", () => {
             const updates = {
-                id: updateRouteId,
                 arrivalTime: 15000,
+                id: updateRouteId,
             };
-            const promise = Database.getRouteById(updateRouteId).then(originalRoute => {
+            return Database.getRouteById(updateRouteId).then(originalRoute => {
                 return Database.updateRoute(originalRoute, updates);
             }).then(() => {
                 return Database.getRouteById(updateRouteId);
@@ -565,15 +502,14 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(newRoute.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
                 expect(newRoute.arrivalTime).to.equal(15000);
                 expect(newRoute.departureTime).to.equal(900);
-                done();
             });
         });
-        it("should update one property at a time - departureTime", done => {
+        it("should update one property at a time - departureTime", () => {
             const updates = {
-                id: updateRouteId,
                 departureTime: 14000,
+                id: updateRouteId,
             };
-            const promise = Database.getRouteById(updateRouteId).then(originalRoute => {
+            return Database.getRouteById(updateRouteId).then(originalRoute => {
                 return Database.updateRoute(originalRoute, updates);
             }).then(() => {
                 return Database.getRouteById(updateRouteId);
@@ -582,15 +518,14 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(newRoute.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
                 expect(newRoute.arrivalTime).to.equal(15000);
                 expect(newRoute.departureTime).to.equal(14000);
-                done();
             });
         });
-        it("should update one property at a time - days", done => {
+        it("should update one property at a time - days", () => {
             const updates = {
-                id: updateRouteId,
                 days: ["thursday", "friday"],
+                id: updateRouteId,
             };
-            const promise = Database.getRouteById(updateRouteId).then(originalRoute => {
+            return Database.getRouteById(updateRouteId).then(originalRoute => {
                 return Database.updateRoute(originalRoute, updates);
             }).then(() => {
                 return Database.getRouteById(updateRouteId);
@@ -599,15 +534,14 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(newRoute.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
                 expect(newRoute.arrivalTime).to.equal(15000);
                 expect(newRoute.departureTime).to.equal(14000);
-                done();
             });
         });
-        it("should update one property at a time - route", done => {
+        it("should update one property at a time - route", () => {
             const updates = {
                 id: updateRouteId,
                 route: [[0, 0], [1, 0], [1, 1]],
             };
-            const promise = Database.getRouteById(updateRouteId).then(originalRoute => {
+            return Database.getRouteById(updateRouteId).then(originalRoute => {
                 return Database.updateRoute(originalRoute, updates);
             }).then(() => {
                 return Database.getRouteById(updateRouteId);
@@ -616,37 +550,35 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(newRoute.route).to.eql([[0, 0], [1, 0], [1, 1]]);
                 expect(newRoute.arrivalTime).to.equal(15000);
                 expect(newRoute.departureTime).to.equal(14000);
-                done();
             });
         });
-        it("should not be able to update ownership", done => {
+        it("should not be able to update ownership", () => {
             const updates = {
                 id: updateRouteId,
                 owner: userIds[0],
             };
-            const promise = Database.getRouteById(updateRouteId).then(originalRoute => {
+            return Database.getRouteById(updateRouteId).then(originalRoute => {
                 return Database.updateRoute(originalRoute, updates);
             }).then(() => {
                 return Database.getRouteById(updateRouteId);
             }).then(newRoute => {
                 expect(newRoute.owner).to.eql(userIds[1]);
-                done();
             });
         });
         it("should not be able to update to an invalid departureTime", done => {
             const updates = {
-                id: updateRouteId,
                 departureTime: 16000,
+                id: updateRouteId,
             };
             const promise = Database.getRouteById(updateRouteId).then(originalRoute => {
                 return Database.updateRoute(originalRoute, updates);
-            }, err => { });
+            });
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not be able to update to an invalid arrivalTime", done => {
             const updates = {
-                id: updateRouteId,
                 arrivalTime: 100,
+                id: updateRouteId,
             };
             const promise = Database.getRouteById(updateRouteId).then(originalRoute => {
                 return Database.updateRoute(originalRoute, updates);
@@ -655,9 +587,9 @@ describe("MatchMyRoute Database Functions", () => {
         });
         it("should not be able to update to an invalid departureTime + arrivalTime", done => {
             const updates = {
-                id: updateRouteId,
-                departureTime: 16000,
                 arrivalTime: 15999,
+                departureTime: 16000,
+                id: updateRouteId,
             };
             const promise = Database.getRouteById(updateRouteId).then(originalRoute => {
                 return Database.updateRoute(originalRoute, updates);
@@ -706,10 +638,11 @@ describe("MatchMyRoute Database Functions", () => {
             promises.push(Database.sql("SELECT now();"));
             // putRoute
             const route = new RouteDataModel({
-                "arrivalTime": 15000,
-                "departureTime": 14000,
-                "owner": userIds[1],
-                "route": [[0, 0], [1, 0], [1, 1]],
+                arrivalTime: 15000,
+                days: ["monday"],
+                departureTime: 14000,
+                owner: userIds[1],
+                route: [[0, 0], [1, 0], [1, 1]],
             });
             promises.push(Database.putRoute(route));
             // getRouteById

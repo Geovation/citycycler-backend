@@ -34,6 +34,12 @@ const operation = {
                     $ref: "#/definitions/JWTResponse",
                 },
             },
+            403: {
+                description: "An incorrect email/password combination was given",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
             default: {
                 description: "unexpected error",
                 schema: {
@@ -94,10 +100,16 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
                 } else if (Buffer.compare(key, user.pwh) === 0) {
                     resolve(generateJWTFor(user));
                 } else {
-                    reject("Invalid password");
+                    reject("403:Incorrect Password");
                 }
             });
         });
+    }).catch(err => {
+        if (err.message === "404:User doesn't exist") {
+            throw "403:Incorrect Password";
+        } else {
+            throw err;
+        }
     });
 };
 
