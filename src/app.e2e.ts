@@ -1,5 +1,6 @@
 /* tslint:disable */
 import { app, gracefulShutdown, setupServer } from "./microservices-framework/web/server";
+import { senecaReady } from "./microservices-framework/web/services";
 import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
 import * as EventEmitter from "events";
@@ -36,7 +37,9 @@ describe("MatchMyRoute API", () => {
                 });
             });
         } else {
-            done();
+            senecaReady.then(() => {
+                done();
+            })
         }
     });
 
