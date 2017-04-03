@@ -16,6 +16,7 @@ const describe = mocha.describe;
 const it = mocha.it;
 // jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;   // Some things take a while...
 
+/* tslint:disable only-arrow-functions */
 describe("MatchMyRoute API", () => {
     const startServer = !process.env.URL;
     const url = (process.env.URL || "http://localhost:8080") + "/api/v0";
@@ -23,7 +24,8 @@ describe("MatchMyRoute API", () => {
     let userIds = [];   // A list of users created that will be deleted at the end of this test run
     let userJwts = [];  // JWTs corresponding to the respective users in userIds
     let routeIds = [];  // A list of routes created that will be deleted at the end of this test run
-    before(done => {
+    before(function(done) { // Must not be an arrow function because we need access to `this`
+        this.timeout(60000);
         console.log("startServer is: " + startServer);
         if (startServer) {
             class AppEmitter extends EventEmitter { };
@@ -41,7 +43,8 @@ describe("MatchMyRoute API", () => {
                 done();
             })
         }
-    }).timeout(60000);  // Give the server (up to) 1 minute to start up
+    });
+    /* tslint:enable only-arrow-functions */
 
     after(done => {
         console.log("Cleaning up...")
