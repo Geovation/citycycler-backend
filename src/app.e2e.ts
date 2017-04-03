@@ -41,7 +41,7 @@ describe("MatchMyRoute API", () => {
                 done();
             })
         }
-    });
+    }).timeout(60000);  // Give the server (up to) 1 minute to start up
 
     after(done => {
         console.log("Cleaning up...")
