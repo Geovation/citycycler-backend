@@ -31,6 +31,18 @@ const operation = {
                     $ref: "#/definitions/GetUserResponse",
                 },
             },
+            403: {
+                description: "An invalid authorisation token was supplied",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
+            404: {
+                description: "No user exists with the given id",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
             default: {
                 description: "unexpected error",
                 schema: {

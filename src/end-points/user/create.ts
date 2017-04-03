@@ -34,6 +34,12 @@ const operation = {
                     $ref: "#/definitions/CreateResponse",
                 },
             },
+            409: {
+                description: "A user already exists with this email address",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
             default: {
                 description: "unexpected error",
                 schema: {

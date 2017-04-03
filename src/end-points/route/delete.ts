@@ -27,6 +27,18 @@ const operation = {
             200: {
                 description: "The route was deleted",
             },
+            403: {
+                description: "An invalid authorisation token was supplied",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
+            404: {
+                description: "The route doesn't exist",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
             default: {
                 description: "unexpected error",
                 schema: {

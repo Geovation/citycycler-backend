@@ -605,7 +605,7 @@ describe("MatchMyRoute API", () => {
                             method: "PUT",
                             url: url + "/route",
                         }, (error, response, body) => {
-                            if (response.statusCode !== 200) {
+                            if (response.statusCode !== 201) {
                                 logger.error("Error while setting up the route to test route matching");
                                 throw error;
                             } else {

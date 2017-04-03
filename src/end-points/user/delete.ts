@@ -27,6 +27,18 @@ const operation = {
             200: {
                 description: "The user was deleted",
             },
+            403: {
+                description: "An invalid authorisation token was supplied",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
+            404: {
+                description: "The user with that ID doesn't exist",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
             default: {
                 description: "unexpected error",
                 schema: {

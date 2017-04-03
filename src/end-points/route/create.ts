@@ -33,6 +33,18 @@ const operation = {
                     $ref: "#/definitions/CreateRouteResponse",
                 },
             },
+            400: {
+                description: "An invalid route object was supplied, see the error message for an explanation",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
+            403: {
+                description: "An invalid authorisation token was supplied",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
             default: {
                 description: "unexpected error",
                 schema: {

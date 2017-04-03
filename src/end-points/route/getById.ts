@@ -29,6 +29,12 @@ const operation = {
                     $ref: "#/definitions/GetResponse",
                 },
             },
+            404: {
+                description: "Route doesn't exist",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
             default: {
                 description: "unexpected error",
                 schema: {

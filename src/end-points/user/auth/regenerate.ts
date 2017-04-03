@@ -24,6 +24,12 @@ const operation = {
                     $ref: "#/definitions/JWTResponse",
                 },
             },
+            403: {
+                description: "An invalid authorisation token was supplied",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
             default: {
                 description: "unexpected error",
                 schema: {

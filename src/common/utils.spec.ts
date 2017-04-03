@@ -25,9 +25,7 @@ describe("Various useful functions", () => {
                 assert.fail(0, 1, "lineStringToCoords should have thrown an error. Instead got: " +
                     JSON.stringify(Database.lineStringToCoords(lineString)));
             } catch (err) {
-                expect(err.ok).not.to.be.ok;
-                expect(err.result.error).to.equal("Input is not a Linestring");
-                expect(err.result.status).to.equal(400);
+                expect(err).to.equal("Input is not a Linestring");
             }
         });
     });
@@ -83,9 +81,7 @@ describe("Various useful functions", () => {
                 assert.fail(0, 1, "RouteDataModel constructor should have thrown an error. Instead got: " +
                     JSON.stringify(route));
             } catch (err) {
-                expect(err.ok).not.to.be.ok;
-                expect(err.result.error).to.equal("Route requires an arrival time");
-                expect(err.result.status).to.equal(400);
+                expect(err).to.equal("400:Route requires an arrival time");
             }
         });
         it("should throw an error if there is no departure time", () => {
@@ -101,9 +97,7 @@ describe("Various useful functions", () => {
                 assert.fail(0, 1, "RouteDataModel constructor should have thrown an error. Instead got: " +
                     JSON.stringify(route));
             } catch (err) {
-                expect(err.ok).not.to.be.ok;
-                expect(err.result.error).to.equal("Route requires a departure time");
-                expect(err.result.status).to.equal(400);
+                expect(err).to.equal("400:Route requires a departure time");
             }
         });
         it("should throw an error if the arrival is before departure", () => {
@@ -120,9 +114,7 @@ describe("Various useful functions", () => {
                 assert.fail(0, 1, "RouteDataModel constructor should have thrown an error. Instead got: " +
                     JSON.stringify(route));
             } catch (err) {
-                expect(err.ok).not.to.be.ok;
-                expect(err.result.error).to.equal("Arrival time is before Departure time");
-                expect(err.result.status).to.equal(400);
+                expect(err).to.equal("400:Arrival time is before Departure time");
             }
         });
         it("should throw an error if there is only one coordinate passed", () => {
@@ -139,9 +131,7 @@ describe("Various useful functions", () => {
                 assert.fail(0, 1, "RouteDataModel constructor should have thrown an error. Instead got: " +
                     JSON.stringify(route));
             } catch (err) {
-                expect(err.ok).not.to.be.ok;
-                expect(err.result.error).to.equal("Route requires at least 2 points");
-                expect(err.result.status).to.equal(400);
+                expect(err).to.equal("400:Route requires at least 2 points");
             }
         });
         it("should throw an error if there is a 3D coordinate present", () => {
@@ -158,10 +148,8 @@ describe("Various useful functions", () => {
                 assert.fail(0, 1, "RouteDataModel constructor should have thrown an error. Instead got: " +
                     JSON.stringify(route));
             } catch (err) {
-                expect(err.ok).not.to.be.ok;
-                expect(err.result.error)
-                    .to.equal("Coordinates in a Route should only have 2 items in them, [latitude, longitude]");
-                expect(err.result.status).to.equal(400);
+                expect(err)
+                    .to.equal("400:Coordinates in a Route should only have 2 items in them, [latitude, longitude]");
             }
         });
         it("should throw an error if there is a 1D coordinate present", () => {
@@ -178,10 +166,8 @@ describe("Various useful functions", () => {
                 assert.fail(0, 1, "RouteDataModel constructor should have thrown an error. Instead got: " +
                     JSON.stringify(route));
             } catch (err) {
-                expect(err.ok).not.to.be.ok;
-                expect(err.result.error)
-                    .to.equal("Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]");
-                expect(err.result.status).to.equal(400);
+                expect(err)
+                    .to.equal("400:Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]");
             }
         });
         it("should throw an error if there is no owner", () => {
@@ -197,9 +183,7 @@ describe("Various useful functions", () => {
                 assert.fail(0, 1, "RouteDataModel constructor should have thrown an error. Instead got: " +
                     JSON.stringify(route));
             } catch (err) {
-                expect(err.ok).not.to.be.ok;
-                expect(err.result.error).to.equal("Route requires an owner");
-                expect(err.result.status).to.equal(400);
+                expect(err).to.equal("400:Route requires an owner");
             }
         });
         it("should be constructed correctly from an SQL row", () => {
