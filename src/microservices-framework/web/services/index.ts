@@ -14,6 +14,6 @@ const endpointCollection: EndpointCollection = new EndpointCollection();
 endpoints.forEach(endpoint => endpointCollection.addEndpointCollection(endpoint));
 
 export const servicesHelper = registerAPI(endpointCollection);
-registerServices(endpointCollection);
+export const senecaReady = registerServices(endpointCollection);
 
 export const closeServices = closeSeneca;
