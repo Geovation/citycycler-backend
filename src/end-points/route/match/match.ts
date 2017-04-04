@@ -103,6 +103,16 @@ const definitions = {
                 },
                 type: "array",
             },
+            distanceFromDivorcePoint: {
+                description: "How far in meters the user will have to cycle from the divorce point to their " +
+                "destination",
+                type: "integer",
+            },
+            distanceToMeetingPoint: {
+                description: "How far in meters the user will have to cycle from their starting point to the " +
+                "meeting point",
+                type: "integer",
+            },
             divorcePoint: {
                 description: "The closest point for the user to leave the owner's route to get to their endpoint",
                 items: {
@@ -110,6 +120,10 @@ const definitions = {
                     type: "integer",
                 },
                 type: "array",
+            },
+            divorceTime: {
+                description: "The time in seconds past midnight that the route owner will reach the divorcePoint",
+                type: "integer",
             },
             id: {
                 description: "This route's internal id",
@@ -129,6 +143,16 @@ const definitions = {
             },
             owner: {
                 description: "The userId of the user who owns this route",
+                type: "integer",
+            },
+            timeFromDivorcePoint : {
+                description: "How long in seconds it is estimated to take the user to cycle from the divorce point " +
+                "to their destination",
+                type: "integer",
+            },
+            timeToMeetingPoint : {
+                description: "How long in seconds it is estimated to take the user to cycle from their start point " +
+                "to the meeting point",
                 type: "integer",
             },
         },
@@ -160,7 +184,7 @@ const definitions = {
                 $ref: "#/definitions/PointWithRadius",
             },
             time: {
-                description: "What time (in seconds past midnight), the user wants to cycle",
+                description: "What time (in seconds past midnight), the user wants reach their destination",
                 type: "integer",
             },
         },
