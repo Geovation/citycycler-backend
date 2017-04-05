@@ -1,5 +1,6 @@
 import * as Database from "./database";
 import { RouteDataModel } from "./RouteDataModel";
+import RouteQuery from "./RouteQueryDataModel";
 import User from "./UserDataModels";
 import * as chai from "chai";
 import * as mocha from "mocha";
@@ -171,6 +172,102 @@ describe("Various useful functions", () => {
             expect(route.days).to.eql(["tuesday", "sunday"], "Days is wrong! expected ['tuesday', 'sunday'], " +
                 "got " + route.days);
             expect(route.route).to.eql([[0, 0], [1, 1], [2, 2]]);
+        });
+    });
+    describe("RouteQuery", () => {
+        it("should be constructed correctly", () => {
+            const obj = {
+                arrivalTime: 1234,
+                days: ["tuesday", "sunday"],
+                endPoint:[1, 1],
+                id: 321,
+                owner: 123,
+                radius: 200,
+                startPoint: [0, 0],
+            };
+            const routeQuery = new RouteQuery(obj);
+            expect(routeQuery.arrivalTime).to.equal(1234, "Arrival time is wrong! expected 1234, got " + routeQuery.arrivalTime);
+            expect(routeQuery.id).to.equal(321, "ID is wrong! expected 321, got " + routeQuery.id);
+            expect(routeQuery.owner).to.equal(123, "Owner is wrong! expected 123, got " + routeQuery.owner);
+            expect(routeQuery.radius).to.equal(200, "Radius is wrong! expected 200, got " + routeQuery.radius);
+            expect(routeQuery.days).to.eql(["tuesday", "sunday"], "Days is wrong!");
+            expect(routeQuery.startPoint).to.eql([0, 0]);
+            expect(routeQuery.endPoint).to.eql([1, 1]);
+        });
+        it("should throw an error if startPoint is 1D", () => {
+            const obj = {
+                arrivalTime: 1234,
+                days: ["tuesday", "sunday"],
+                endPoint:[1, 1],
+                id: 321,
+                owner: 123,
+                radius: 200,
+                startPoint: [0],
+            };
+            expect(() => {
+                return new RouteQuery(obj);
+            }).to.throw("400:RouteQuery requires a 2D start point");
+        });
+        it("should throw an error if startPoint is 3D", () => {
+            const obj = {
+                arrivalTime: 1234,
+                days: ["tuesday", "sunday"],
+                endPoint:[1, 1],
+                id: 321,
+                owner: 123,
+                radius: 200,
+                startPoint: [0, 0, 0],
+            };
+            expect(() => {
+                return new RouteQuery(obj);
+            }).to.throw("400:RouteQuery requires a 2D start point");
+        });
+        it("should throw an error if endPoint is 1D", () => {
+            const obj = {
+                arrivalTime: 1234,
+                days: ["tuesday", "sunday"],
+                endPoint:[1],
+                id: 321,
+                owner: 123,
+                radius: 200,
+                startPoint: [0, 0],
+            };
+            expect(() => {
+                return new RouteQuery(obj);
+            }).to.throw("400:RouteQuery requires a 2D end point");
+        });
+        it("should throw an error if endPoint is 3D", () => {
+            const obj = {
+                arrivalTime: 1234,
+                days: ["tuesday", "sunday"],
+                endPoint:[1, 1, 1],
+                id: 321,
+                owner: 123,
+                radius: 200,
+                startPoint: [0, 0],
+            };
+            expect(() => {
+                return new RouteQuery(obj);
+            }).to.throw("400:RouteQuery requires a 2D end point");
+        });
+        it("should be constructed correctly from an SQL row", () => {
+            const row = {
+                arrivalTime: 1234,
+                days: 21,
+                endPoint: "POINT(1 1)",
+                id: 321,
+                owner: 123,
+                radius: 200,
+                startPoint: "POINT(0 0)",
+            };
+            const routeQuery = RouteQuery.fromSQLRow(row);
+            expect(routeQuery.arrivalTime).to.equal(1234, "Arrival time is wrong! expected 1234, got " + routeQuery.arrivalTime);
+            expect(routeQuery.id).to.equal(321, "ID is wrong! expected 321, got " + routeQuery.id);
+            expect(routeQuery.owner).to.equal(123, "Owner is wrong! expected 123, got " + routeQuery.owner);
+            expect(routeQuery.days).to.eql(["monday", "wednesday", "friday"], "Days is wrong! expected " +
+            "['monday', 'wednesday', 'friday'], got " + routeQuery.days);
+            expect(routeQuery.startPoint).to.eql([0, 0]);
+            expect(routeQuery.endPoint).to.eql([1, 1]);
         });
     });
     describe("User", () => {

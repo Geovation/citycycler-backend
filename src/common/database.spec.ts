@@ -1,5 +1,6 @@
 import * as Database from "./database";
 import { RouteDataModel } from "./RouteDataModel";
+import RouteQuery from "./RouteQueryDataModel";
 import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
 import * as mocha from "mocha";
@@ -299,20 +300,13 @@ describe("MatchMyRoute Database Functions", () => {
             });
         });
         it("should match a route", () => {
-            const matchParams = {
+            const matchParams = new RouteQuery({
+                arrivalTime: 500,
                 days: ["thursday", "friday", "sunday"],
-                end: {
-                    latitude: 0,
-                    longitude: 4.6,
-                    radius: 500,
-                },
-                start: {
-                    latitude: 0,
-                    longitude: 1.4,
-                    radius: 500,
-                },
-                time: 500,
-            };
+                endPoint: [0, 4.6],
+                radius: 500,
+                startPoint: [0, 1.4],
+            });
             return Database.matchRoutes(matchParams).then(routes => {
                 const thisRoute = routes.filter((route) => {
                     return route.id === routeIds[1];
@@ -330,93 +324,36 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(thisRoute.divorcePoint).to.eql([0, 4.6]);
             });
         });
-        it("should not match a route if the end radius is too big", done => {
-            const matchParams = {
+        it("should not match a route if the radius is too big", done => {
+            const matchParams = new RouteQuery({
+                arrivalTime: 500,
                 days: ["thursday", "friday", "sunday"],
-                end: {
-                    latitude: 0,
-                    longitude: 4.6,
-                    radius: 5000,
-                },
-                start: {
-                    latitude: 0,
-                    longitude: 1.4,
-                    radius: 500,
-                },
-                time: 500,
-            };
+                endPoint: [0, 4.6],
+                radius: 5000,
+                startPoint: [0, 1.4],
+            });
             const promise = Database.matchRoutes(matchParams);
             expect(promise).to.be.rejected.and.notify(done);
         });
-        it("should not match a route if the end radius is too small", done => {
-            const matchParams = {
+        it("should not match a route if the radius is too small", done => {
+            const matchParams = new RouteQuery({
+                arrivalTime: 500,
                 days: ["thursday", "friday", "sunday"],
-                end: {
-                    latitude: 0,
-                    longitude: 4.6,
-                    radius: 0.5,
-                },
-                start: {
-                    latitude: 0,
-                    longitude: 1.4,
-                    radius: 500,
-                },
-                time: 500,
-            };
-            const promise = Database.matchRoutes(matchParams);
-            expect(promise).to.be.rejected.and.notify(done);
-        });
-        it("should not match a route if the start radius is too big", done => {
-            const matchParams = {
-                days: ["thursday", "friday", "sunday"],
-                end: {
-                    latitude: 0,
-                    longitude: 4.6,
-                    radius: 500,
-                },
-                start: {
-                    latitude: 0,
-                    longitude: 1.4,
-                    radius: 5000,
-                },
-                time: 500,
-            };
-            const promise = Database.matchRoutes(matchParams);
-            expect(promise).to.be.rejected.and.notify(done);
-        });
-        it("should not match a route if the start radius is too small", done => {
-            const matchParams = {
-                days: ["thursday", "friday", "sunday"],
-                end: {
-                    latitude: 0,
-                    longitude: 4.6,
-                    radius: 500,
-                },
-                start: {
-                    latitude: 0,
-                    longitude: 1.4,
-                    radius: 0.5,
-                },
-                time: 500,
-            };
+                endPoint: [0, 4.6],
+                radius: 0.5,
+                startPoint: [0, 1.4],
+            });
             const promise = Database.matchRoutes(matchParams);
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not match a route in the wrong direction", () => {
-            const matchParams = {
+            const matchParams = new RouteQuery({
+                arrivalTime: 500,
                 days: ["thursday", "friday", "sunday"],
-                end: {
-                    latitude: 0,
-                    longitude: 1.4,
-                    radius: 500,
-                },
-                start: {
-                    latitude: 0,
-                    longitude: 4.6,
-                    radius: 500,
-                },
-                time: 500,
-            };
+                endPoint: [0, 1.4],
+                radius: 500,
+                startPoint: [0, 4.6],
+            });
             return Database.matchRoutes(matchParams).then(routes => {
                 const thisRoute = routes.filter((route) => {
                     return route.id === routeIds[1];
@@ -425,19 +362,12 @@ describe("MatchMyRoute Database Functions", () => {
             });
         });
         it("should match a route if days are unset", () => {
-            const matchParams = {
-                end: {
-                    latitude: 0,
-                    longitude: 4.6,
-                    radius: 500,
-                },
-                start: {
-                    latitude: 0,
-                    longitude: 1.4,
-                    radius: 500,
-                },
-                time: 500,
-            };
+            const matchParams = new RouteQuery({
+                arrivalTime: 500,
+                endPoint: [0, 4.6],
+                radius: 500,
+                startPoint: [0, 1.4],
+            });
             return Database.matchRoutes(matchParams).then(routes => {
                 const thisRoute = routes.filter((route) => {
                     return route.id === routeIds[1];
@@ -456,20 +386,13 @@ describe("MatchMyRoute Database Functions", () => {
             });
         });
         it("should not match a route if days are set to exclude the route", () => {
-            const matchParams = {
+            const matchParams = new RouteQuery({
+                arrivalTime: 500,
                 days: ["monday", "wednesday", "saturday"],
-                end: {
-                    latitude: 0,
-                    longitude: 4.6,
-                    radius: 500,
-                },
-                start: {
-                    latitude: 0,
-                    longitude: 1.4,
-                    radius: 500,
-                },
-                time: 500,
-            };
+                endPoint: [0, 4.6],
+                radius: 500,
+                startPoint: [0, 1.4],
+            });
             return Database.matchRoutes(matchParams).then(routes => {
                 const thisRoute = routes.filter((route) => {
                     return route.id === routeIds[1];
@@ -478,19 +401,12 @@ describe("MatchMyRoute Database Functions", () => {
             });
         });
         it("should match a route if time is not set", () => {
-            const matchParams = {
+            const matchParams = new RouteQuery({
                 days: ["thursday", "friday", "sunday"],
-                end: {
-                    latitude: 0,
-                    longitude: 4.6,
-                    radius: 500,
-                },
-                start: {
-                    latitude: 0,
-                    longitude: 1.4,
-                    radius: 500,
-                },
-            };
+                endPoint: [0, 4.6],
+                radius: 500,
+                startPoint: [0, 1.4],
+            });
             return Database.matchRoutes(matchParams).then(routes => {
                 const thisRoute = routes.filter((route) => {
                     return route.id === routeIds[1];

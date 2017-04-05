@@ -1,5 +1,6 @@
 // import * as _ from "lodash";
 import { RouteDataModel } from "./RouteDataModel";
+import RouteQuery from "./RouteQueryDataModel";
 import User from "./UserDataModels";
 import * as fs from "fs";
 import * as pg from "pg";
@@ -206,6 +207,10 @@ export function coordsToLineString(coords: number[][]): string {
     }).join(",") + ")";
 }
 
+export function coordsToPointString(coord: [number, number]): string {
+    return "POINT(" + coord.join(" ") + ")";
+}
+
 export function getRoutesNearby(radius: number, lat: number, lon: number): Promise<RouteDataModel[]> {
     return new Promise((resolve, reject) => {
         if (radius > 2000 || radius < 1) {
@@ -245,22 +250,7 @@ export function getRoutesNearby(radius: number, lat: number, lon: number): Promi
  *
  * @returns routes - A list of RouteDataModels
  */
-export function matchRoutes(
-    matchParams: {
-        start: {
-            latitude: number,
-            longitude: number,
-            radius: number,
-        },
-        end: {
-            latitude: number,
-            longitude: number,
-            radius: number,
-        },
-        days?: string[],
-        time?: number,
-    }
-): Promise<{
+export function matchRoutes(matchParams: RouteQuery): Promise<{
     id: number,
     meetingTime: number,
     days: string[],
@@ -269,11 +259,8 @@ export function matchRoutes(
     divorcePoint: number[]
 }[]> {
     return new Promise((resolve, reject) => {
-        if (matchParams.start.radius > 2000 || matchParams.start.radius < 1) {
-            reject("400:Start radius out of bounds. Must be between 1m and 2km");
-            return;
-        } else if (matchParams.end.radius > 2000 || matchParams.end.radius < 1) {
-            reject("400:End radius out of bounds. Must be between 1m and 2km");
+        if (matchParams.radius > 2000 || matchParams.radius < 1) {
+            reject("400:Radius out of bounds. Must be between 1m and 2km");
             return;
         }
         // Acquire a client from the pool,
@@ -286,7 +273,7 @@ export function matchRoutes(
             let query = "" +
                 "SELECT id, " +
                 "       departureTime + distFromStart*(arrivalTime - departureTime) AS meetingTime, " +
-                "       (days & $5::integer::bit(7))::integer AS days, " +
+                "       (days & $4::integer::bit(7))::integer AS days, " +
                 "       ST_AsText(ST_LineInterpolatePoint(route::geometry, distFromStart)) AS meetingPoint, " +
                 "       ST_AsText(ST_LineInterpolatePoint(route::geometry, distFromEnd)) AS divorcePoint, " +
                 "       owner " +
@@ -304,13 +291,13 @@ export function matchRoutes(
                 "   FROM routes WHERE " +
                 "       ST_DWithin(ST_GeogFromText($1), route, $3) " +
                 "   AND" +
-                "       ST_DWithin(ST_GeogFromText($2), route, $4) " +
+                "       ST_DWithin(ST_GeogFromText($2), route, $3) " +
                 ") AS matchingRoutes " +
                 "WHERE " +
                 "   distFromStart < distFromEnd ";
-            const startPoint = "POINT(" + matchParams.start.latitude + " " + matchParams.start.longitude + ")";
-            const endPoint = "POINT(" + matchParams.end.latitude + " " + matchParams.end.longitude + ")";
-            let queryParams = [startPoint, endPoint, matchParams.start.radius, matchParams.end.radius];
+            const startPoint = "POINT(" + matchParams.startPoint[0] + " " + matchParams.startPoint[1] + ")";
+            const endPoint = "POINT(" + matchParams.endPoint[0] + " " + matchParams.endPoint[1] + ")";
+            let queryParams = [startPoint, endPoint, matchParams.radius];
 
             // Add a filter for days of the week
             if (matchParams.days !== undefined) {
@@ -322,16 +309,16 @@ export function matchRoutes(
                     return days | day;
                 }, 0);
                 /* tslint:enable no-bitwise */
-                query += "AND (days & $5::integer::bit(7) != b'0000000') ";
+                query += "AND (days & $4::integer::bit(7) != b'0000000') ";
                 queryParams.push(daysBitmask);
             } else {
                 queryParams.push(127);  // 127 = 1111111
             }
             // Add sorting by time
-            if (matchParams.time !== undefined) {
+            if (matchParams.arrivalTime !== undefined) {
                 query += "ORDER BY ABS(" +
-                    "departureTime + distFromStart*(departureTime - arrivalTime) - $6)";
-                queryParams.push(matchParams.time);
+                    "departureTime + distFromStart*(departureTime - arrivalTime) - $5)";
+                queryParams.push(matchParams.arrivalTime);
             } else {
                 query += "ORDER BY meetingTime";
             }
@@ -455,6 +442,43 @@ export function deleteRoute(id: number): Promise<Boolean> {
                 } else {
                     reject("404:Route doesn't exist");
                     return;
+                }
+            });
+        });
+    });
+}
+
+export function createRouteQuery(owner: number, routeQ: RouteQuery): Promise<Boolean> {
+    routeQ = new RouteQuery(routeQ);
+    return new Promise((resolve, reject) => {
+        // Acquire a client from the pool,
+        // run a query on the client, and then return the client to the pool
+        pool.connect((err, client, done) => {
+            if (err) {
+                reject(err);
+                return console.error("error fetching client from pool", err);
+            }
+            const query = "INSERT INTO route_queries (startPoint, endPoint, radius, days, arrivalTime, owner)" +
+                "VALUES (ST_GeogFromText($1), ST_GeogFromText($2), $3, $4::integer::bit(7), $5, $6)" +
+                "RETURNING id";
+            const queryParams = [
+                coordsToPointString(routeQ.startPoint),
+                coordsToPointString(routeQ.endPoint),
+                routeQ.radius,
+                routeQ.getDaysBitmask(),
+                routeQ.arrivalTime,
+                owner,
+            ];
+            client.query(query, queryParams, (error, result) => {
+                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
+                done(error);
+
+                if (error) {
+                    // logger.error("error running query", error);
+                    reject("error running query: " + error);
+                    return;
+                } else {
+                    resolve(result.rows[0].id);
                 }
             });
         });

@@ -18,7 +18,7 @@ chai.use(chaiAsPromised);
 describe("MatchMyRoute Auth Functions", () => {
     const secret = crypto.randomBytes(20).toString("base64");
     let uid;
-    before(done => {
+    before((done) => {
         // Shut down any running database pools
         Database.shutDownPool();
         // Start a new database pool
