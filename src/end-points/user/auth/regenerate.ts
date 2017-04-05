@@ -53,7 +53,7 @@ const operation = {
 // SWAGGER: END //
 // ///////////////
 
-export const service = (broadcast: Function, params: any): Promise<string> => {
+export const service = (broadcast: Function, params: any): Promise<{ token: string; expires: number; }> => {
     return getIdFromJWT(params.authorisation).then(userid => {
         return Database.getUserById(userid);
     }).then(user => {

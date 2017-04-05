@@ -1,6 +1,5 @@
 import { getIdFromJWT } from "../../common/auth";
 import * as Database from "../../common/database";
-import { UserLiteDataModel } from "../../common/UserLiteDataModel";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 
 // /////////////////////////////////////////////////////////////
@@ -108,7 +107,7 @@ const service = (broadcast: Function, params: any): any => {
         }
         getIdFromJWT(params.authorisation);
         return Database.getUserById(id).then(user => {
-            return new UserLiteDataModel(user);
+            return user.asUserProfile();
         });
     } catch (err) {
         throw err;

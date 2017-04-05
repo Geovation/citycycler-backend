@@ -1,6 +1,10 @@
 import * as Database from "./database";
-import { UserFullDataModel } from "./UserFullDataModel";
+import { IUserSettings } from "./UserDataModels";
 import * as jwt from "jsonwebtoken";
+
+// The minimum number of hashing rounds required for passwords to be considered secure
+// Updating this will cause any user who logs in or updates their password to have a new, more secure password generated
+export const minimumHashingRounds = 30000;
 
 /**
  * check if the header was authorsed by the given user
@@ -71,10 +75,13 @@ export function getIdFromJWT(authHeader: string): Promise<number> {
  * Generates a JWT for this user id, that expires in 2 weeks
  * @param user
  */
-export const generateJWTFor = (user: UserFullDataModel): string => {
-    return jwt.sign({ id: user.id }, user.jwtSecret, {
-        algorithm: "HS256",
-        expiresIn: 1209600,	// 2 weeks
-        issuer: "MatchMyRoute Backend",
-    });
+export const generateJWTFor = (user: IUserSettings): { token: string; expires: number } => {
+    return {
+        expires: Math.trunc((new Date()).getTime() / 1000) + 1209600,
+        token: jwt.sign({ id: user.id }, user.jwtSecret, {
+            algorithm: "HS256",
+            expiresIn: 1209600,	// 2 weeks
+            issuer: "MatchMyRoute Backend",
+        }),
+    };
 };

@@ -1,6 +1,5 @@
-import { generateJWTFor } from "../../common/auth";
+import { generateJWTFor, minimumHashingRounds } from "../../common/auth";
 import * as Database from "../../common/database";
-import { UserFullDataModel } from "../../common/UserFullDataModel";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 import * as crypto from "crypto";
 // import * as logger from "winston";
@@ -13,7 +12,7 @@ import * as crypto from "crypto";
 // TODO:
 // PATH
 const operation = {
-    post: {
+    put: {
         consumes: ["application/json"],
         parameters: [
             {
@@ -95,9 +94,16 @@ const definitions = {
                 type: "number",
             },
             jwt: {
-                description: "The authorised JWT",
-                example: "eyJhbGciOiJI...28ZZEY",
-                type: "string",
+                properties: {
+                    expires: {
+                        example: 123456789,
+                        type: "integer",
+                    },
+                    token: {
+                        example: "eyJhbGciOiJI...28ZZEY",
+                        type: "string",
+                    },
+                },
             },
         },
         required: ["id", "jwt"],
@@ -113,7 +119,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     const { email, password, name } = payload;
     // Work out the user's password hash and salt.
     // We are using PBKDF2 with 50000 iterations and sha512.
-    const rounds = 50000;
+    const rounds = minimumHashingRounds;
     const salt = crypto.randomBytes(128);
     const jwtSecret = crypto.randomBytes(20).toString("base64");
     return new Promise((resolve, reject) => {
@@ -135,13 +141,13 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
             }
         });
     }).then(pwh => {
-        return Database.putUser(name, email, pwh, salt, rounds, jwtSecret);
-    }).then((user: UserFullDataModel) => {
-        return {
-            id: user.id,
-            jwt: generateJWTFor(user),
-            status: 201,
-        };
+        return Database.putUser(name, email, pwh, salt, rounds, jwtSecret).then(user => {
+            return {
+                id: user.id,
+                jwt: generateJWTFor(user),
+                status: 201,
+            };
+        });
     });
 };
 

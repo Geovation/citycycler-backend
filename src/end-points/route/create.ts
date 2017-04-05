@@ -1,4 +1,4 @@
-import { doIfUser } from "../../common/auth";
+import { getIdFromJWT } from "../../common/auth";
 import * as Database from "../../common/database";
 import { RouteDataModel } from "../../common/RouteDataModel";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
@@ -122,10 +122,6 @@ const definitions = {
                 description: "The time in seconds past midnight that the owner will start their route",
                 type: "integer",
             },
-            owner: {
-                description: "The userId of the user who owns this route",
-                type: "integer",
-            },
             route: {
                 $ref: "#/definitions/CoordList",
             },
@@ -139,9 +135,9 @@ const definitions = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    const payload = new RouteDataModel(params.body);
-    return doIfUser(params.authorisation, payload.owner, () => {
-        return Database.putRoute(payload);
+    return getIdFromJWT(params.authorisation).then(owner => {
+        params.body.owner = owner;
+        return Database.putRoute(new RouteDataModel(params.body));
     }).then(routeId => {
         return { id: routeId, status: 201 };
     });

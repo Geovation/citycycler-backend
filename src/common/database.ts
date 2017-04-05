@@ -1,6 +1,6 @@
 // import * as _ from "lodash";
 import { RouteDataModel } from "./RouteDataModel";
-import { UserFullDataModel } from "./UserFullDataModel";
+import User from "./UserDataModels";
 import * as fs from "fs";
 import * as pg from "pg";
 
@@ -462,15 +462,17 @@ export function deleteRoute(id: number): Promise<Boolean> {
 }
 
 /**
- * Put a new user in the database, returning the new user ID
+ * Put a new user in the database, returning the new user
  * @param name - The new user's name.
  * @param email - Email address. Must be unique.
  * @param pwh - The password hash, as generated in src/end-points/users/create.ts
  * @param salt - The password salt
  * @param rounds - How many rounds of hashing PBKDF2 should do.
  * @param jwtSecret - A random secret used to sign JSON Web Tokens given to this user
+ *
+ * @returns A User object
  */
-export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<UserFullDataModel> {
+export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<User> {
     return new Promise((resolve, reject) => {
         // to run a query we can acquire a client from the pool,
         // run a query on the client, and then return the client to the pool
@@ -495,14 +497,65 @@ export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<User
                     return;
                 }
                 // return the new user
-                resolve(new UserFullDataModel(result.rows[0]));
+                resolve(User.fromSQLRow(result.rows[0]));
             });
         });
     });
 }
 
-// Get a user from the database by email
-export function getUserByEmail(email: string): Promise<UserFullDataModel> {
+/**
+ * Update a user in the database
+ * @param id - The user id to be updated
+ * @param updates - An object with the new values to be applied to the user
+ *
+ * @returns A promise that resolves when the user is updated
+ */
+export function updateUser(id, updates): Promise<Boolean> {
+    return new Promise((resolve, reject) => {
+        // to run a query we can acquire a client from the pool,
+        // run a query on the client, and then return the client to the pool
+        pool.connect((err, client, done) => {
+            if (err) {
+                reject(err);
+                return console.error("error fetching client from pool", err);
+            }
+            let queryParts = [];
+            let sqlParams = [id];
+            const keys = Object.keys(updates);
+            keys.forEach((key, i) => {
+                queryParts.push(key + " = $" + (i + 2) + " ");
+                sqlParams.push(updates[key]);
+            });
+            if (queryParts.length === 0) {
+                reject("400:No valid values to update");
+            }
+            const query = "UPDATE users SET " + queryParts.join(", ") + " WHERE id = $1;";
+            client.query(query, sqlParams, (error, result) => {
+                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
+                done(error);
+
+                if (error) {
+                    // logger.error("error running query", error);
+                    if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
+                        reject("409:An account already exists using this email");
+                    }
+                    reject("error running query: " + error);
+                    return;
+                }
+                // resolve
+                resolve(true);
+            });
+        });
+    });
+}
+
+/**
+ * Get a user from the database by email
+ * @param email - Email address to search for
+ *
+ * @returns A User object of the specified type
+ */
+export function getUserByEmail(email: string): Promise<User> {
     return new Promise((resolve, reject) => {
         // to run a query we can acquire a client from the pool,
         // run a query on the client, and then return the client to the pool
@@ -523,7 +576,7 @@ export function getUserByEmail(email: string): Promise<UserFullDataModel> {
                 }
                 // return the user
                 if (result.rowCount) {
-                    resolve(new UserFullDataModel(result.rows[0]));
+                    resolve(User.fromSQLRow(result.rows[0]));
                 } else {
                     reject("404:User doesn't exist");
                     return;
@@ -533,8 +586,13 @@ export function getUserByEmail(email: string): Promise<UserFullDataModel> {
     });
 }
 
-// Get a user from the database by ID
-export function getUserById(id: number): Promise<UserFullDataModel> {
+/**
+ * Get a user from the database by ID
+ * @param id - User id to get by
+ *
+ * @returns A User object of the specified type
+ */
+export function getUserById(id: number): Promise<User> {
     return new Promise((resolve, reject) => {
         // to run a query we can acquire a client from the pool,
         // run a query on the client, and then return the client to the pool
@@ -555,7 +613,7 @@ export function getUserById(id: number): Promise<UserFullDataModel> {
                 }
                 // return the user
                 if (result.rowCount) {
-                    resolve(new UserFullDataModel(result.rows[0]));
+                    resolve(User.fromSQLRow(result.rows[0]));
                 } else {
                     reject("404:User doesn't exist");
                     return;

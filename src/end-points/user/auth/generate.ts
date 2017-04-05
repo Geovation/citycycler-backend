@@ -1,4 +1,4 @@
-import { generateJWTFor } from "../../../common/auth";
+import { generateJWTFor, minimumHashingRounds } from "../../../common/auth";
 import * as Database from "../../../common/database";
 import { MicroserviceEndpoint } from "../../../microservices-framework/web/services/microservice-endpoint";
 import * as crypto from "crypto";
@@ -75,8 +75,17 @@ const definitions = {
         description: "The JWT generated",
         properties: {
             result: {
-                example: "eyJhbGciOiJI...28ZZEY",
-                type: "string",
+                description: "The JWT for this user and it's expiry date",
+                properties: {
+                    expires: {
+                        example: 123456789,
+                        type: "integer",
+                    },
+                    token: {
+                        example: "eyJhbGciOiJI...28ZZEY",
+                        type: "string",
+                    },
+                },
             },
         },
         required: ["result"],
@@ -91,13 +100,22 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
     const { email, password } = payload;
     // Check that the password has matches what we have stored.
-    // TODO: Check that the user's stored rounds is current. Re-hash if not.
-    return Database.getUserByEmail(email).then((user) => {
+    return Database.getUserByEmail(email).then(user => {
         return new Promise((resolve, reject) => {
             crypto.pbkdf2(password, user.salt, user.rounds, 512, "sha512", (err, key) => {
                 if (err) {
                     reject(err);
                 } else if (Buffer.compare(key, user.pwh) === 0) {
+                    if (user.rounds !== minimumHashingRounds) {
+                        // Update user's password
+                        crypto.pbkdf2(password, user.salt, minimumHashingRounds, 512, "sha512", (newErr, newKey) => {
+                            const updates = {
+                                password: newKey,
+                                rounds: minimumHashingRounds,
+                            };
+                            Database.updateUser(user.id, updates);
+                        });
+                    }
                     resolve(generateJWTFor(user));
                 } else {
                     reject("403:Incorrect Password");
