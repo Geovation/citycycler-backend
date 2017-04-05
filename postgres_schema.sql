@@ -35,7 +35,8 @@ endPoint geography NOT NULL,        -- Where the user wants to get to
 radius integer DEFAULT 1000,        -- How far from the start and end points to look for matching routes
 owner integer REFERENCES users ON DELETE CASCADE,    -- Who created this query
 arrivalTime integer DEFAULT 0,      -- When the user wants to arrive at their destination
-days bit(7) DEFAULT b'1111111'      -- A bitstring of the days of the week that this user wants to cycle the route
+days bit(7) DEFAULT b'1111111',      -- A bitstring of the days of the week that this user wants to cycle the route
+notifyOwner boolean DEFAULT FALSE   -- If the owner wants to be notified of any new matches
 );
 
 CREATE INDEX IF NOT EXISTS user_email_index ON users USING btree ( "email" );

@@ -181,6 +181,7 @@ describe("Various useful functions", () => {
                 days: ["tuesday", "sunday"],
                 endPoint:[1, 1],
                 id: 321,
+                notifyOwner: true,
                 owner: 123,
                 radius: 200,
                 startPoint: [0, 0],
@@ -193,6 +194,7 @@ describe("Various useful functions", () => {
             expect(routeQuery.days).to.eql(["tuesday", "sunday"], "Days is wrong!");
             expect(routeQuery.startPoint).to.eql([0, 0]);
             expect(routeQuery.endPoint).to.eql([1, 1]);
+            expect(routeQuery.notifyOwner).to.equal(true);
         });
         it("should throw an error if startPoint is 1D", () => {
             const obj = {
@@ -256,6 +258,7 @@ describe("Various useful functions", () => {
                 days: 21,
                 endPoint: "POINT(1 1)",
                 id: 321,
+                notifyOwner: true,
                 owner: 123,
                 radius: 200,
                 startPoint: "POINT(0 0)",
@@ -268,6 +271,7 @@ describe("Various useful functions", () => {
             "['monday', 'wednesday', 'friday'], got " + routeQuery.days);
             expect(routeQuery.startPoint).to.eql([0, 0]);
             expect(routeQuery.endPoint).to.eql([1, 1]);
+            expect(routeQuery.notifyOwner).to.equal(true);
         });
     });
     describe("User", () => {

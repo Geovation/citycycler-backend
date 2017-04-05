@@ -13,6 +13,7 @@ export default class RouteQuery {
             days: daysArray,
             endPoint: pointStringToCoords(row.endPoint),
             id: row.id,
+            notifyOwner: row.notifyOwner,
             owner: row.owner,
             radius: row.radius,
             startPoint: pointStringToCoords(row.startPoint),
@@ -26,6 +27,7 @@ export default class RouteQuery {
     public owner?: number;
     public radius: number;
     public startPoint: [number, number];
+    public notifyOwner: boolean;
 
     constructor(obj) {
         if (!obj.startPoint || obj.startPoint.length !== 2 ) {
@@ -43,6 +45,7 @@ export default class RouteQuery {
         this.id = obj.id;
         this.owner = obj.owner;
         this.radius = obj.radius;
+        this.notifyOwner = obj.notifyOwner;
     }
 
     // Convert an array of days into the bitmasked integer form
