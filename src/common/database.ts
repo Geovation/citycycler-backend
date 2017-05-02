@@ -38,6 +38,60 @@ pool.on("error", (err, client) => {
 ////////////////////////
 // Exported Functions
 
+// export function runTransaction(method: Function, parameters: Object) {
+//     let client;
+//     return pool.connect()
+//         .then(newClient => {
+//             client = newClient;
+//             return client.query("BEGIN");
+//         })
+//         .then(() => {
+//             const query = "INSERT INTO users (name, email, pwh, salt, rounds, jwt_secret) " +
+//                 "VALUES ($1,$2,$3,$4,$5,$6) RETURNING *";
+//             const sqlParams = ["Wonderful user", "test@example.com", "pwhash", "salty", 5, "secret"];
+//             return client.query(query, sqlParams);
+//         })
+//         .then(res => {
+//             console.log("success");
+//             return client.query("COMMIT");
+//         })
+//         .then(res => {
+//             console.log("rollback succesful");
+//             return client.release();
+//         })
+//         .catch(err => {
+//             client.query("ROLLBACK");
+//             console.log("error in transaction");
+//             throw new Error("transaction call has failed");
+//         });
+// }
+
+export function runTransaction(method: Function, parameters: Object, isTest: Boolean) {
+    let client;
+    let result;
+    return pool.connect()
+        .then(newClient => {
+            client = newClient;
+            return client.query("BEGIN");
+        })
+        .then(() => {
+            return method(client, parameters);
+        })
+        .then(res => {
+            result = res;
+            if (isTest) {
+                return { client, result };
+            } else {
+                return client.query("COMMIT").then(() => client.release());
+            }
+        })
+        .catch(err => {
+            client.query("ROLLBACK");
+            console.log("error in transaction");
+            throw new Error("transaction call has failed");
+        });
+}
+
 // Execute an arbritary SQL command.
 export function sql(query: string, params: Array<string> = []): Promise<any> {
     return new Promise((resolve, reject) => {
@@ -525,6 +579,56 @@ export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<User
             });
         });
     });
+}
+
+export function putUserTransactioned(client, params): Promise<User> {
+    const query = "INSERT INTO users (name, email, pwh, salt, rounds, jwt_secret) " +
+        "VALUES ($1,$2,$3,$4,$5,$6) RETURNING *";
+    const sqlParams = [
+        params.name,
+        params.email,
+        params.pwh,
+        params.salt,
+        params.rounds,
+        params.jwtSecret,
+    ];
+    return client.query(query, sqlParams)
+        .then((result) => {
+            return User.fromSQLRow(result.rows[0]);
+        })
+        .then((user) => {
+            console.log("id " + user.id + "returned");
+            return user;
+        });
+
+    // return new Promise((resolve, reject) => {
+    //     // to run a query we can acquire a client from the pool,
+    //     // run a query on the client, and then return the client to the pool
+    //     pool.connect((err, client, done) => {
+    //         if (err) {
+    //             reject(err);
+    //             return console.error("error fetching client from pool", err);
+    //         }
+    //         const query = "INSERT INTO users (name, email, pwh, salt, rounds, jwt_secret) " +
+    //             "VALUES ($1,$2,$3,$4,$5,$6) RETURNING *";
+    //         const sqlParams = [name, email, pwh, salt, rounds, jwtSecret];
+    //         client.query(query, sqlParams, (error, result) => {
+    //             // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
+    //             done(error);
+    //
+    //             if (error) {
+    //                 // logger.error("error running query", error);
+    //                 if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
+    //                     reject("409:An account already exists using this email");
+    //                 }
+    //                 reject("error running query: " + error);
+    //                 return;
+    //             }
+    //             // return the new user
+    //             resolve(User.fromSQLRow(result.rows[0]));
+    //         });
+    //     });
+    // });
 }
 
 /**

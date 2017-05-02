@@ -13,7 +13,7 @@ const operation = {
     put: {
         consumes: ["application/json"],
         description: "This endpoint stores an object that can be used to find matching routes - in effect a " +
-                    "query object.",
+        "query object.",
         parameters: [
             {
                 description: "The start and end points of the route that this query will match",
@@ -110,7 +110,7 @@ const definitions = {
             startPoint: {
                 $ref: "#/definitions/Coordinate",
                 description: "Where the user will start cycling from. Must be within <radius> of a route to be " +
-                            "considered a match",
+                "considered a match",
             },
         },
         required: ["startPoint", "endPoint", "days"],
@@ -125,7 +125,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
     return getIdFromJWT(params.authorisation).then(userId => {
         return createQuery(userId, payload).then(id => {
-            return { id: id, status: 201 };
+            return { id, status: 201 };
         });
     }, err => {
         throw err;

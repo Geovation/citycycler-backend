@@ -179,7 +179,7 @@ describe("Various useful functions", () => {
             const obj = {
                 arrivalTime: 1234,
                 days: ["tuesday", "sunday"],
-                endPoint:[1, 1],
+                endPoint: [1, 1],
                 id: 321,
                 notifyOwner: true,
                 owner: 123,
@@ -187,7 +187,10 @@ describe("Various useful functions", () => {
                 startPoint: [0, 0],
             };
             const routeQuery = new RouteQuery(obj);
-            expect(routeQuery.arrivalTime).to.equal(1234, "Arrival time is wrong! expected 1234, got " + routeQuery.arrivalTime);
+            expect(routeQuery.arrivalTime).to.equal(
+                1234,
+                "Arrival time is wrong! expected 1234, got " + routeQuery.arrivalTime
+            );
             expect(routeQuery.id).to.equal(321, "ID is wrong! expected 321, got " + routeQuery.id);
             expect(routeQuery.owner).to.equal(123, "Owner is wrong! expected 123, got " + routeQuery.owner);
             expect(routeQuery.radius).to.equal(200, "Radius is wrong! expected 200, got " + routeQuery.radius);
@@ -200,7 +203,7 @@ describe("Various useful functions", () => {
             const obj = {
                 arrivalTime: 1234,
                 days: ["tuesday", "sunday"],
-                endPoint:[1, 1],
+                endPoint: [1, 1],
                 id: 321,
                 owner: 123,
                 radius: 200,
@@ -214,7 +217,7 @@ describe("Various useful functions", () => {
             const obj = {
                 arrivalTime: 1234,
                 days: ["tuesday", "sunday"],
-                endPoint:[1, 1],
+                endPoint: [1, 1],
                 id: 321,
                 owner: 123,
                 radius: 200,
@@ -228,7 +231,7 @@ describe("Various useful functions", () => {
             const obj = {
                 arrivalTime: 1234,
                 days: ["tuesday", "sunday"],
-                endPoint:[1],
+                endPoint: [1],
                 id: 321,
                 owner: 123,
                 radius: 200,
@@ -242,7 +245,7 @@ describe("Various useful functions", () => {
             const obj = {
                 arrivalTime: 1234,
                 days: ["tuesday", "sunday"],
-                endPoint:[1, 1, 1],
+                endPoint: [1, 1, 1],
                 id: 321,
                 owner: 123,
                 radius: 200,
@@ -264,11 +267,14 @@ describe("Various useful functions", () => {
                 startPoint: "POINT(0 0)",
             };
             const routeQuery = RouteQuery.fromSQLRow(row);
-            expect(routeQuery.arrivalTime).to.equal(1234, "Arrival time is wrong! expected 1234, got " + routeQuery.arrivalTime);
+            expect(routeQuery.arrivalTime).to.equal(
+                1234,
+                "Arrival time is wrong! expected 1234, got " + routeQuery.arrivalTime
+            );
             expect(routeQuery.id).to.equal(321, "ID is wrong! expected 321, got " + routeQuery.id);
             expect(routeQuery.owner).to.equal(123, "Owner is wrong! expected 123, got " + routeQuery.owner);
             expect(routeQuery.days).to.eql(["monday", "wednesday", "friday"], "Days is wrong! expected " +
-            "['monday', 'wednesday', 'friday'], got " + routeQuery.days);
+                "['monday', 'wednesday', 'friday'], got " + routeQuery.days);
             expect(routeQuery.startPoint).to.eql([0, 0]);
             expect(routeQuery.endPoint).to.eql([1, 1]);
             expect(routeQuery.notifyOwner).to.equal(true);
