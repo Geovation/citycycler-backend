@@ -133,7 +133,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         }
         if (payload.password !== undefined && payload.password.trim().length !== 0) {
             // Generate the new password hash
-            promises.push(Database.getUserById(userId).then(user => {
+            promises.push(Database.runTransaction(Database.getUserById, userId, false).then(user => {
                 let rounds = minimumHashingRounds;
                 return new Promise((resolve, reject) => {
                     crypto.pbkdf2(payload.password.trim(), user.salt, rounds, 512, "sha512", (err, key) => {

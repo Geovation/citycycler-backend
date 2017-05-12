@@ -172,11 +172,14 @@ gulp.task("pre-test", ["typescript", "set-env-vars"], () => {
 });
 
 gulp.task("unittest", ["pre-test"], () => {
-  return gulp.src(["build/**/*[sS]pec.js"])
+  return gulp.src(["build/**/database.spec.js"])
     .pipe(mocha({
       verbose: true,
       includeStackTrace: true,
-      timeout: 5000
+      timeout: 5000,
+      // debugBrk: true,
+      // debug: true,
+      // inspect: true
     }))
     .on('error', (err) => {
       console.log("error: ", err);

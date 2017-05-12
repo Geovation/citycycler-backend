@@ -85,6 +85,7 @@
     "mocha": "^3.2.0",
     "remap-istanbul": "^0.8.2",
     "run-sequence": "^1.2.2",
+    "should": "^11.2.1",
     "swagger-ui": "^2.2.10",
     "tslint": "^3.15.1",
     "typescript": "^2.1.5"

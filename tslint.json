@@ -2,6 +2,7 @@
     "extends": "tslint:latest",
     "rules": {
         "no-console": [false],
-        "trailing-comma": [true, {"multiline": "always", "singleline": "never"}]
+        "trailing-comma": [true, {"multiline": "always", "singleline": "never"}],
+        "only-arrow-functions": false
 	}
 }

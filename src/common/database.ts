@@ -35,37 +35,6 @@ pool.on("error", (err, client) => {
     console.error("idle client error", err.message, err.stack);
 });
 
-////////////////////////
-// Exported Functions
-
-// export function runTransaction(method: Function, parameters: Object) {
-//     let client;
-//     return pool.connect()
-//         .then(newClient => {
-//             client = newClient;
-//             return client.query("BEGIN");
-//         })
-//         .then(() => {
-//             const query = "INSERT INTO users (name, email, pwh, salt, rounds, jwt_secret) " +
-//                 "VALUES ($1,$2,$3,$4,$5,$6) RETURNING *";
-//             const sqlParams = ["Wonderful user", "test@example.com", "pwhash", "salty", 5, "secret"];
-//             return client.query(query, sqlParams);
-//         })
-//         .then(res => {
-//             console.log("success");
-//             return client.query("COMMIT");
-//         })
-//         .then(res => {
-//             console.log("rollback succesful");
-//             return client.release();
-//         })
-//         .catch(err => {
-//             client.query("ROLLBACK");
-//             console.log("error in transaction");
-//             throw new Error("transaction call has failed");
-//         });
-// }
-
 export function runTransaction(method: Function, parameters: Object, isTest: Boolean) {
     let client;
     let result;
@@ -75,7 +44,7 @@ export function runTransaction(method: Function, parameters: Object, isTest: Boo
             return client.query("BEGIN");
         })
         .then(() => {
-            return method(client, parameters);
+            return method(parameters, client);
         })
         .then(res => {
             result = res;
@@ -87,9 +56,43 @@ export function runTransaction(method: Function, parameters: Object, isTest: Boo
         })
         .catch(err => {
             client.query("ROLLBACK");
-            console.log("error in transaction");
             throw new Error("transaction call has failed");
         });
+}
+
+export function createTransactionClient() {
+    let client;
+    return pool.connect().then(newClient => {
+        client = newClient;
+        return newClient.query("BEGIN");
+    }).then(() => {
+        return client;
+    });
+}
+
+function checkClient(client) {
+    if (client === null) {
+        console.log("recreating client");
+        return pool.connect();
+    } else {
+        console.log("using existing client");
+        return new Promise((resolve, reject) => {
+            resolve(client);
+        });
+    }
+}
+
+export function rollbackAndReleaseTransaction(client, source = "") {
+    // console.log("client: " + JSON.stringify(client));
+    return client.query("ROLLBACK").
+    then(() => {
+        if (typeof client.release !== "undefined") {
+            console.log("releasing client from " + source);
+            client.release();
+        } else {
+            console.error("release of client not possible from " + source);
+        }
+    });
 }
 
 // Execute an arbritary SQL command.
@@ -115,6 +118,30 @@ export function sql(query: string, params: Array<string> = []): Promise<any> {
                 resolve(result);
             });
         });
+    });
+}
+
+export function sqlTransaction(query: string, params: Array<any> = [], providedClient = null): Promise<any> {
+    let client;
+    return checkClient(providedClient).then(returnedClient => {
+        // console.log("returned client is same ");
+        client = returnedClient;
+        return client.query(query, params);
+    }).then(result => {
+        // if (providedClient !== null) {
+        //     providedClient.release();
+        // }
+        // console.log("received result");
+        return result;
+    }).catch(e => {
+        console.log("error in sql transaction");
+        console.log(e);
+        return e;
+    }).then(response => {
+        if (providedClient === null) {
+            providedClient.release();
+        }
+        return response;
     });
 }
 
@@ -581,7 +608,7 @@ export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<User
     });
 }
 
-export function putUserTransactioned(client, params): Promise<User> {
+export function putUserTransactioned(params, client, isTest = false): Promise<User> {
     const query = "INSERT INTO users (name, email, pwh, salt, rounds, jwt_secret) " +
         "VALUES ($1,$2,$3,$4,$5,$6) RETURNING *";
     const sqlParams = [
@@ -597,38 +624,16 @@ export function putUserTransactioned(client, params): Promise<User> {
             return User.fromSQLRow(result.rows[0]);
         })
         .then((user) => {
-            console.log("id " + user.id + "returned");
             return user;
+        })
+        .catch((error) => {
+            client.query("ROLLBACK").then(() => { client.release(); });
+            if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
+                throw new Error("409:An account already exists using this email");
+            } else {
+                throw new Error("error running query: " + error);
+            }
         });
-
-    // return new Promise((resolve, reject) => {
-    //     // to run a query we can acquire a client from the pool,
-    //     // run a query on the client, and then return the client to the pool
-    //     pool.connect((err, client, done) => {
-    //         if (err) {
-    //             reject(err);
-    //             return console.error("error fetching client from pool", err);
-    //         }
-    //         const query = "INSERT INTO users (name, email, pwh, salt, rounds, jwt_secret) " +
-    //             "VALUES ($1,$2,$3,$4,$5,$6) RETURNING *";
-    //         const sqlParams = [name, email, pwh, salt, rounds, jwtSecret];
-    //         client.query(query, sqlParams, (error, result) => {
-    //             // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-    //             done(error);
-    //
-    //             if (error) {
-    //                 // logger.error("error running query", error);
-    //                 if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
-    //                     reject("409:An account already exists using this email");
-    //                 }
-    //                 reject("error running query: " + error);
-    //                 return;
-    //             }
-    //             // return the new user
-    //             resolve(User.fromSQLRow(result.rows[0]));
-    //         });
-    //     });
-    // });
 }
 
 /**
@@ -716,42 +721,50 @@ export function getUserByEmail(email: string): Promise<User> {
 
 /**
  * Get a user from the database by ID
+ * @param providedClient - The postgresql client instance to run the query against
  * @param id - User id to get by
  *
  * @returns A User object of the specified type
  */
-export function getUserById(id: number): Promise<User> {
-    return new Promise((resolve, reject) => {
-        // to run a query we can acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                reject(err);
-                return console.error("error fetching client from pool", err);
-            }
-            const query = "SELECT * FROM users WHERE id=$1";
-            client.query(query, [id], (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    reject("error running query: " + error);
-                    return;
-                }
-                // return the user
-                if (result.rowCount) {
-                    resolve(User.fromSQLRow(result.rows[0]));
-                } else {
-                    reject("404:User doesn't exist");
-                    return;
-                }
-            });
-        });
+export function getUserById(id: number, providedClient = null): Promise<User> {
+    const query = "SELECT * FROM users WHERE id=$1";
+    // let client;
+    // return checkClient(providedClient).then(returnedClient => {
+    //     client = returnedClient;
+    //     return client.query(query, [id]);
+    // })
+    //     .then((result) => {
+    //         if (client === null) {
+    //             client.release();
+    //         }
+    //         if (result.rowCount > 0) {
+    //             return User.fromSQLRow(result.rows[0]);
+    //         } else {
+    //             throw new Error("404:User doesn't exist");
+    //         }
+    //     });
+    return sqlTransaction(query, [id], providedClient).then(result => {
+        if (result.rowCount > 0) {
+            return User.fromSQLRow(result.rows[0]);
+        } else {
+            throw new Error("404:User doesn't exist");
+        }
     });
 }
 
-export function deleteUser(id: number): Promise<Boolean> {
+export function deleteUser(id: number, providedClient = null): Promise<Boolean> {
+    const query = "DELETE FROM users WHERE id=$1";
+    return sqlTransaction(query, [id], providedClient)
+        .then((result) => {
+            if (result.rowCount) {
+                return true;
+            } else {
+                throw new Error("404:User doesn't exist");
+            }
+        });
+}
+
+export function deleteUserOld(id: number): Promise<Boolean> {
     return new Promise((resolve, reject) => {
         // Acquire a client from the pool,
         // run a query on the client, and then return the client to the pool

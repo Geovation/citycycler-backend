@@ -43,8 +43,8 @@ describe("MatchMyRoute Auth Functions", () => {
                 done();
             }
             ).catch(
-                err => { return (err); }
-        );
+            err => { return (err); }
+            );
     });
     // Remove the test user
     after(done => {
@@ -120,7 +120,7 @@ describe("MatchMyRoute Auth Functions", () => {
     });
     describe("generateJWTFor", () => {
         it("should create a reversible token", () => {
-            return Database.getUserById(uid).then(user => {
+            return Database.runTransaction(Database.getUserById, uid, false).then(user => {
                 const token = Auth.generateJWTFor(user).token;
                 const decodeFunction = () => {
                     return jwt.verify(token, secret, {
