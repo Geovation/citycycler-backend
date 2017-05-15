@@ -23,12 +23,12 @@ describe("MatchMyRoute Database Functions", () => {
     let userIds = [];	// These are to assist wiht cleanup afterwards
     let routeIds = [];
     before((done) => {
-        console.log("trying to shut down pool");
+        // console.log("trying to shut down pool");
         // Shut down any running database pools
         Database.shutDownPool().then(result => {
             if (result) {
                 // Start a new database pool
-                console.log("trying to start new database");
+                // console.log("trying to start new database");
                 Database.startUpPool(true);
                 Database.resetDatabase().then(
                     e => { done(); }
@@ -68,9 +68,11 @@ describe("MatchMyRoute Database Functions", () => {
 
     describe("User related functions", () => {
         let transactionClient;
-        beforeEach("Create transaction client", done => {
+        beforeEach("Create transaction client", function(done){
+            // console.log("Creating transaction client for " + this.currentTest.title);
             Database.createTransactionClient().then(newClient => {
                 transactionClient = newClient;
+                // console.log("Created transaction client");
                 done();
             });
         });
@@ -79,7 +81,6 @@ describe("MatchMyRoute Database Functions", () => {
                 transactionClient,
                 "generic user related function / " +
                 (typeof this.currentTest !== "undefined" ? this.currentTest.title : "no Title")
-                // JSON.stringify(this)
             );
         });
         it("should create new user", () => {
@@ -100,28 +101,6 @@ describe("MatchMyRoute Database Functions", () => {
                     return client.query("ROLLBACK");
                 });
         });
-        it("should fail to create users with duplicate emails", done => {
-            let client = transactionClient;
-            let promise = Database.putUserTransactioned({
-                email: "test@example.com",
-                jwtSecret: "secret",
-                name: "Test User",
-                pwh: "pwhash",
-                rounds: 5,
-                salt: "salty",
-            }, client)
-            .then(() => {
-                return Database.putUserTransactioned({
-                    email: "test@example.com",
-                    jwtSecret: "secret2",
-                    name: "Test User2",
-                    pwh: "pwhash2",
-                    rounds: 5,
-                    salt: "salty2",
-                }, client);
-            });
-            expect(promise).to.be.rejected.and.notify(done);
-        });
         it("should escape SQL injections", () => {
             return Database.putUserTransactioned({
                 email: "test2@example.com",
@@ -132,85 +111,12 @@ describe("MatchMyRoute Database Functions", () => {
                 salt: "salty2",
             }, transactionClient);
         });
-        it("should get a user by ID", () => {
-            let client;
-            return Database.createTransactionClient()
-                .then(newClient => {
-                    client = newClient;
-                    return Database.putUserTransactioned(
-                        {
-                            email: "test@example.com",
-                            jwtSecret: "secret",
-                            name: "Test User",
-                            pwh: "pwhash",
-                            rounds: 5,
-                            salt: "salty",
-                        },
-                        client
-                    );
-                })
-                .then(user => {
-                    return Database.getUserById(user.id, client);
-                })
-                .then(user => {
-                    expect(user.name).to.equal("Test User");
-                })
-                .then(() => {
-                    return Database.rollbackAndReleaseTransaction(client);
-                })
-                .catch(() => {
-                    return Database.rollbackAndReleaseTransaction(client);
-                });
-        });
-        it("should not get a user by an invalid ID", done => {
-            const promise = Database.getUserById(-1);
-            expect(promise).to.be.rejected.and.notify(done);
-        });
-        it.skip("should get a user by email", () => {
-            return Database.getUserByEmail("test@example.com").then(user => {
-                expect(user.name).to.equal("Test User");
-            });
-        });
-        it.skip("should not get a user by an invalid email", done => {
-            const promise = Database.getUserByEmail("idontexist@example.com");
-            expect(promise).to.be.rejected.and.notify(done);
-        });
-        it.skip("should not delete any users with an invalid id", done => {
-            const promise = Database.deleteUser(-1);
-            expect(promise).to.be.rejected.and.notify(done);
-        });
-        it("should delete a user", () => {
-            let client;
-            let userId;
-            return Database.createTransactionClient()
-                .then(newClient => {
-                    client = newClient;
-                    return Database.putUserTransactioned(
-                        {
-                            email: "test@example.com",
-                            jwtSecret: "secret",
-                            name: "Test User",
-                            pwh: "pwhash",
-                            rounds: 5,
-                            salt: "salty",
-                        },
-                        client
-                    );
-                }).then(user => {
-                    userId = user.id;
-                    return Database.deleteUser(user.id, client);
-                }).then(() => {
-                    return Database.sqlTransaction("SELECT * FROM users WHERE id=$1", [userId], client);
-                }).then(result => {
-                    Database.rollbackAndReleaseTransaction(client, "should delete a user");
-                    expect(result.rowCount).to.equal(0);
-                });
-        });
         describe("user reliant tests", () => {
             let userId;
             // let transactionClient;
-            beforeEach("Create transaction client and user to test against", done => {
-                Database.putUserTransactioned(
+            beforeEach("Create user to test against", () => {
+                // console.log("trying to create user");
+                return Database.putUserTransactioned(
                 {
                     email: "test@example.com",
                     jwtSecret: "secret",
@@ -221,35 +127,52 @@ describe("MatchMyRoute Database Functions", () => {
                 },
                 transactionClient)
                 .then(user => {
+                    // console.log("user created");
                     userId = user.id;
-                    done();
+                    return userId;
+                    // done();
                 });
             });
-            afterEach("Roll back transaction", done => {
-                Database.rollbackAndReleaseTransaction(
-                    transactionClient,
-                    (typeof this.test !== "undefined" ? this.test.title : "no Title")
-                )
-                    .then(() => {
-                        done();
-                    });
+            it("should fail to create users with duplicate emails", done => {
+                const promise = Database.putUserTransactioned({
+                    email: "test@example.com",
+                    jwtSecret: "secret2",
+                    name: "Test User2",
+                    pwh: "pwhash2",
+                    rounds: 5,
+                    salt: "salty2",
+                }, transactionClient);
+                expect(promise).to.be.rejected.and.notify(done);
             });
-            it("blub blub test", () => {
+            it("should delete a user", (done) => {
+                const promise = Database.deleteUser(userId, transactionClient)
+                .then(() => {
+                    return Database.getUserById(userId, transactionClient);
+                });
+                expect(promise).to.be.rejected.and.notify(done);
+            });
+            it("should not delete any users with an invalid id", done => {
+                const promise = Database.deleteUser(-1, transactionClient);
+                expect(promise).to.be.rejected.and.notify(done);
+            });
+            it("should get a user by id", () => {
                 return Database.getUserById(userId, transactionClient)
                 .then(user => {
+                    return expect(user.name).to.equal("Test User");
+                });
+            });
+            it("should not get a user by an invalid ID", done => {
+                const promise = Database.getUserById(-1, transactionClient);
+                expect(promise).to.be.rejected.and.notify(done);
+            });
+            it("should get a user by email", () => {
+                return Database.getUserByEmail("test@example.com", transactionClient).then(user => {
                     expect(user.name).to.equal("Test User");
                 });
             });
-            it("should delete a user", () => {
-                Database.deleteUser(userId, transactionClient)
-                .then(() => {
-                    let test = Database.sqlTransaction(
-            "SELECT * FROM users WHERE id=$1", [userId], transactionClient);
-                    return test;
-                });
-                // .then(result => {
-                //     expect(result.rowCount).to.equal(0);
-                // });
+            it("should not get a user by an invalid email", done => {
+                const promise = Database.getUserByEmail("idontexist@example.com", transactionClient);
+                expect(promise).to.be.rejected.and.notify(done);
             });
         });
         describe.skip("Updating", () => {

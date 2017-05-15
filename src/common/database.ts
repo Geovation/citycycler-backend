@@ -72,10 +72,10 @@ export function createTransactionClient() {
 
 function checkClient(client) {
     if (client === null) {
-        console.log("recreating client");
+        // console.log("recreating client");
         return pool.connect();
     } else {
-        console.log("using existing client");
+        // console.log("using existing client");
         return new Promise((resolve, reject) => {
             resolve(client);
         });
@@ -83,15 +83,10 @@ function checkClient(client) {
 }
 
 export function rollbackAndReleaseTransaction(client, source = "") {
-    // console.log("client: " + JSON.stringify(client));
+    // // console.log("client: " + JSON.stringify(client));
     return client.query("ROLLBACK").
     then(() => {
-        if (typeof client.release !== "undefined") {
-            console.log("releasing client from " + source);
-            client.release();
-        } else {
-            console.error("release of client not possible from " + source);
-        }
+        return client.release();
     });
 }
 
@@ -123,22 +118,17 @@ export function sql(query: string, params: Array<string> = []): Promise<any> {
 
 export function sqlTransaction(query: string, params: Array<any> = [], providedClient = null): Promise<any> {
     let client;
+    // console.log("in sqlTransaction");
     return checkClient(providedClient).then(returnedClient => {
-        // console.log("returned client is same ");
         client = returnedClient;
         return client.query(query, params);
-    }).then(result => {
-        // if (providedClient !== null) {
-        //     providedClient.release();
-        // }
-        // console.log("received result");
-        return result;
     }).catch(e => {
-        console.log("error in sql transaction");
-        console.log(e);
+        // console.log("error in sql transaction");
+        // // console.log(e);
         return e;
     }).then(response => {
         if (providedClient === null) {
+            // console.log("releasing new client");
             providedClient.release();
         }
         return response;
@@ -160,7 +150,7 @@ export function shutDownPool(): Promise<boolean> {
 // This starts up a pool. It should usually only be called once on app startup.
 // We need to call it multiple times to run our tests though
 export function startUpPool(testing: boolean): void {
-    console.log("starting up pool in env " + process.env.NODE_ENV);
+    // console.log("starting up pool in env " + process.env.NODE_ENV);
     if (testing) {
         config.database = testDatabase;
     }
@@ -608,7 +598,7 @@ export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<User
     });
 }
 
-export function putUserTransactioned(params, client, isTest = false): Promise<User> {
+export function putUserTransactioned(params, providedClient = null, isTest = false): Promise<User> {
     const query = "INSERT INTO users (name, email, pwh, salt, rounds, jwt_secret) " +
         "VALUES ($1,$2,$3,$4,$5,$6) RETURNING *";
     const sqlParams = [
@@ -619,15 +609,11 @@ export function putUserTransactioned(params, client, isTest = false): Promise<Us
         params.rounds,
         params.jwtSecret,
     ];
-    return client.query(query, sqlParams)
+    return sqlTransaction(query, sqlParams, providedClient)
         .then((result) => {
             return User.fromSQLRow(result.rows[0]);
         })
-        .then((user) => {
-            return user;
-        })
         .catch((error) => {
-            client.query("ROLLBACK").then(() => { client.release(); });
             if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
                 throw new Error("409:An account already exists using this email");
             } else {
@@ -688,34 +674,42 @@ export function updateUser(id, updates): Promise<Boolean> {
  *
  * @returns A User object of the specified type
  */
-export function getUserByEmail(email: string): Promise<User> {
-    return new Promise((resolve, reject) => {
-        // to run a query we can acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                reject(err);
-                return console.error("error fetching client from pool", err);
-            }
-            const query = "SELECT * FROM users WHERE email=$1";
-            client.query(query, [email], (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    reject("error running query: " + error);
-                    return;
-                }
-                // return the user
-                if (result.rowCount) {
-                    resolve(User.fromSQLRow(result.rows[0]));
-                } else {
-                    reject("404:User doesn't exist");
-                    return;
-                }
-            });
-        });
+export function getUserByEmail(email: string, providedClient = null): Promise<User> {
+    // return new Promise((resolve, reject) => {
+    //     // to run a query we can acquire a client from the pool,
+    //     // run a query on the client, and then return the client to the pool
+    //     pool.connect((err, client, done) => {
+    //         if (err) {
+    //             reject(err);
+    //             return console.error("error fetching client from pool", err);
+    //         }
+    //         const query = "SELECT * FROM users WHERE email=$1";
+    //         client.query(query, [email], (error, result) => {
+    //             // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
+    //             done(error);
+    //
+    //             if (error) {
+    //                 // logger.error("error running query", error);
+    //                 reject("error running query: " + error);
+    //                 return;
+    //             }
+    //             // return the user
+    //             if (result.rowCount) {
+    //                 resolve(User.fromSQLRow(result.rows[0]));
+    //             } else {
+    //                 reject("404:User doesn't exist");
+    //                 return;
+    //             }
+    //         });
+    //     });
+    // });
+    const query = "SELECT * FROM users WHERE email=$1";
+    return sqlTransaction(query, [email], providedClient).then(result => {
+        if (result.rowCount > 0) {
+            return User.fromSQLRow(result.rows[0]);
+        } else {
+            throw new Error("404:User doesn't exist");
+        }
     });
 }
 
@@ -728,21 +722,6 @@ export function getUserByEmail(email: string): Promise<User> {
  */
 export function getUserById(id: number, providedClient = null): Promise<User> {
     const query = "SELECT * FROM users WHERE id=$1";
-    // let client;
-    // return checkClient(providedClient).then(returnedClient => {
-    //     client = returnedClient;
-    //     return client.query(query, [id]);
-    // })
-    //     .then((result) => {
-    //         if (client === null) {
-    //             client.release();
-    //         }
-    //         if (result.rowCount > 0) {
-    //             return User.fromSQLRow(result.rows[0]);
-    //         } else {
-    //             throw new Error("404:User doesn't exist");
-    //         }
-    //     });
     return sqlTransaction(query, [id], providedClient).then(result => {
         if (result.rowCount > 0) {
             return User.fromSQLRow(result.rows[0]);
