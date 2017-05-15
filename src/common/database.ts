@@ -567,7 +567,7 @@ export function createRouteQuery(owner: number, routeQ: RouteQuery): Promise<Boo
  *
  * @returns A User object
  */
-export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<User> {
+export function putUserOld(name, email, pwh, salt, rounds, jwtSecret): Promise<User> {
     return new Promise((resolve, reject) => {
         // to run a query we can acquire a client from the pool,
         // run a query on the client, and then return the client to the pool
@@ -598,7 +598,7 @@ export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<User
     });
 }
 
-export function putUserTransactioned(params, providedClient = null, isTest = false): Promise<User> {
+export function putUser(params, providedClient = null): Promise<User> {
     const query = "INSERT INTO users (name, email, pwh, salt, rounds, jwt_secret) " +
         "VALUES ($1,$2,$3,$4,$5,$6) RETURNING *";
     const sqlParams = [
@@ -671,38 +671,11 @@ export function updateUser(id, updates): Promise<Boolean> {
 /**
  * Get a user from the database by email
  * @param email - Email address to search for
+ * * @param providedClient - preexisting sql transaction client to run this operation on
  *
  * @returns A User object of the specified type
  */
 export function getUserByEmail(email: string, providedClient = null): Promise<User> {
-    // return new Promise((resolve, reject) => {
-    //     // to run a query we can acquire a client from the pool,
-    //     // run a query on the client, and then return the client to the pool
-    //     pool.connect((err, client, done) => {
-    //         if (err) {
-    //             reject(err);
-    //             return console.error("error fetching client from pool", err);
-    //         }
-    //         const query = "SELECT * FROM users WHERE email=$1";
-    //         client.query(query, [email], (error, result) => {
-    //             // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-    //             done(error);
-    //
-    //             if (error) {
-    //                 // logger.error("error running query", error);
-    //                 reject("error running query: " + error);
-    //                 return;
-    //             }
-    //             // return the user
-    //             if (result.rowCount) {
-    //                 resolve(User.fromSQLRow(result.rows[0]));
-    //             } else {
-    //                 reject("404:User doesn't exist");
-    //                 return;
-    //             }
-    //         });
-    //     });
-    // });
     const query = "SELECT * FROM users WHERE email=$1";
     return sqlTransaction(query, [email], providedClient).then(result => {
         if (result.rowCount > 0) {
@@ -717,6 +690,7 @@ export function getUserByEmail(email: string, providedClient = null): Promise<Us
  * Get a user from the database by ID
  * @param providedClient - The postgresql client instance to run the query against
  * @param id - User id to get by
+ * @param providedClient - preexisting sql transaction client to run this operation on
  *
  * @returns A User object of the specified type
  */
@@ -741,35 +715,4 @@ export function deleteUser(id: number, providedClient = null): Promise<Boolean> 
                 throw new Error("404:User doesn't exist");
             }
         });
-}
-
-export function deleteUserOld(id: number): Promise<Boolean> {
-    return new Promise((resolve, reject) => {
-        // Acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                reject(err);
-                return console.error("error fetching client from pool", err);
-            }
-            const query = "DELETE FROM users WHERE id=$1";
-            client.query(query, [id], (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    reject("error running query: " + error);
-                    return;
-                }
-
-                if (result.rowCount) {
-                    resolve(true);
-                } else {
-                    reject("404:User doesn't exist");
-                    return;
-                }
-            });
-        });
-    });
 }

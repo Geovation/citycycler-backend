@@ -28,13 +28,14 @@ describe("MatchMyRoute Auth Functions", () => {
             // this should go into the respective tests to be atomic
             // Create a test user
             e => {
-                return Database.putUser(
-                    "Test User",
-                    "test@example.com",
-                    new Buffer("test"),
-                    new Buffer("test"),
-                    1,
-                    secret);
+                return Database.putUser({
+                    email: "test@example.com",
+                    jwtSecret: "secret",
+                    name: new Buffer("test"),
+                    pwh: new Buffer("test"),
+                    rounds: 1,
+                    salt: "salty",
+                });
             }
         ).then(
             (u) => {

@@ -84,25 +84,20 @@ describe("MatchMyRoute Database Functions", () => {
             );
         });
         it("should create new user", () => {
-            let client;
-            return Database.runTransaction(Database.putUserTransactioned, {
+            Database.putUser({
                 email: "test@example.com",
                 jwtSecret: "secret",
                 name: "Test User",
                 pwh: "pwhash",
                 rounds: 5,
                 salt: "salty",
-            }, true)
+            }, transactionClient)
                 .then(response => {
-                    client = response.client;
-                    expect(response.result.name).to.equal("Test User");
-                })
-                .then(() => {
-                    return client.query("ROLLBACK");
+                    expect(response.name).to.equal("Test User");
                 });
         });
         it("should escape SQL injections", () => {
-            return Database.putUserTransactioned({
+            return Database.putUser({
                 email: "test2@example.com",
                 jwtSecret: "secret2",
                 name: "Test User');DROP TABLE users;",
@@ -116,8 +111,7 @@ describe("MatchMyRoute Database Functions", () => {
             // let transactionClient;
             beforeEach("Create user to test against", () => {
                 // console.log("trying to create user");
-                return Database.putUserTransactioned(
-                {
+                return Database.putUser({
                     email: "test@example.com",
                     jwtSecret: "secret",
                     name: "Test User",
@@ -134,7 +128,7 @@ describe("MatchMyRoute Database Functions", () => {
                 });
             });
             it("should fail to create users with duplicate emails", done => {
-                const promise = Database.putUserTransactioned({
+                const promise = Database.putUser({
                     email: "test@example.com",
                     jwtSecret: "secret2",
                     name: "Test User2",
@@ -179,14 +173,14 @@ describe("MatchMyRoute Database Functions", () => {
             // NOTE: These tests are all atomic!
             let thisUserId; // The userId that the tests can use to get/update users
             beforeEach("Create the user to run tests against", done => {
-                Database.putUser(
-                    "Non-updated Test User",
-                    "non-updated@example.com",
-                    new Buffer("non-updated"),
-                    new Buffer("salt"),
-                    5,
-                    "secret"
-                ).then(user => {
+                Database.putUser({
+                    email: "non-updated@example.com",
+                    jwtSecret: "secret",
+                    name: "Non-updated Test User",
+                    pwh: new Buffer("non-updated"),
+                    rounds: 5,
+                    salt: new Buffer("salt"),
+                }, transactionClient).then(user => {
                     thisUserId = user.id;
                     done();
                 });
@@ -323,7 +317,14 @@ describe("MatchMyRoute Database Functions", () => {
             let routeId;
             let userId;
             // create new user so that no dependency on other tests exists
-            return Database.putUser("Test User", "test@example.com", "pwhash", "salty", 5, "secret").then(user => {
+            return Database.putUser({
+                email: "test@example.com",
+                jwtSecret: "secret",
+                name: "Test User",
+                pwh: "pwhash",
+                rounds: 5,
+                salt: "salty",
+            }).then(user => {
                 userIds.push(user.id);
                 userId = user.id;
                 // prepare a new route
@@ -690,7 +691,14 @@ describe("MatchMyRoute Database Functions", () => {
             promises.push(Database.deleteRoute(routeIds[0]));
             // putUser
             promises.push(
-                Database.putUser("Test User 3", "test3@example.com", "test", "test", 5, "secret")
+                Database.putUser({
+                    email: "test@example.com",
+                    jwtSecret: "secret",
+                    name: "Test User",
+                    pwh: "pwhash",
+                    rounds: 5,
+                    salt: "salty",
+                })
             );
             // getUserById
             promises.push(Database.runTransaction(Database.getUserById, userIds[0], true));
