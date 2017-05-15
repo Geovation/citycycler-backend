@@ -567,37 +567,6 @@ export function createRouteQuery(owner: number, routeQ: RouteQuery): Promise<Boo
  *
  * @returns A User object
  */
-export function putUserOld(name, email, pwh, salt, rounds, jwtSecret): Promise<User> {
-    return new Promise((resolve, reject) => {
-        // to run a query we can acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                reject(err);
-                return console.error("error fetching client from pool", err);
-            }
-            const query = "INSERT INTO users (name, email, pwh, salt, rounds, jwt_secret) " +
-                "VALUES ($1,$2,$3,$4,$5,$6) RETURNING *";
-            const sqlParams = [name, email, pwh, salt, rounds, jwtSecret];
-            client.query(query, sqlParams, (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
-                        reject("409:An account already exists using this email");
-                    }
-                    reject("error running query: " + error);
-                    return;
-                }
-                // return the new user
-                resolve(User.fromSQLRow(result.rows[0]));
-            });
-        });
-    });
-}
-
 export function putUser(params, providedClient = null): Promise<User> {
     const query = "INSERT INTO users (name, email, pwh, salt, rounds, jwt_secret) " +
         "VALUES ($1,$2,$3,$4,$5,$6) RETURNING *";
