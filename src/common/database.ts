@@ -595,46 +595,33 @@ export function putUser(params, providedClient = null): Promise<User> {
  * Update a user in the database
  * @param id - The user id to be updated
  * @param updates - An object with the new values to be applied to the user
+ * @param providedClient - existing client for running the query in a transaction
  *
  * @returns A promise that resolves when the user is updated
  */
-export function updateUser(id, updates): Promise<Boolean> {
-    return new Promise((resolve, reject) => {
-        // to run a query we can acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                reject(err);
-                return console.error("error fetching client from pool", err);
-            }
-            let queryParts = [];
-            let sqlParams = [id];
-            const keys = Object.keys(updates);
-            keys.forEach((key, i) => {
-                queryParts.push(key + " = $" + (i + 2) + " ");
-                sqlParams.push(updates[key]);
-            });
-            if (queryParts.length === 0) {
-                reject("400:No valid values to update");
-            }
-            const query = "UPDATE users SET " + queryParts.join(", ") + " WHERE id = $1;";
-            client.query(query, sqlParams, (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
-                        reject("409:An account already exists using this email");
-                    }
-                    reject("error running query: " + error);
-                    return;
-                }
-                // resolve
-                resolve(true);
-            });
-        });
+export function updateUser(id, updates, providedClient = null): Promise<Boolean> {
+    let queryParts = [];
+    let sqlParams = [id];
+    const keys = Object.keys(updates);
+    keys.forEach((key, i) => {
+        queryParts.push(key + " = $" + (i + 2) + " ");
+        sqlParams.push(updates[key]);
     });
+    if (queryParts.length === 0) {
+        throw new Error("400:No valid values to update");
+    }
+    const query = "UPDATE users SET " + queryParts.join(", ") + " WHERE id = $1;";
+    return sqlTransaction(query, sqlParams, providedClient)
+        .then((result) => {
+            return true;
+        })
+        .catch((error) => {
+            if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
+                throw new Error("409:An account already exists using this email");
+            } else {
+                throw new Error("error running query: " + error);
+            }
+        });
 }
 
 /**

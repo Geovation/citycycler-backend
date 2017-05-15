@@ -169,7 +169,7 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(promise).to.be.rejected.and.notify(done);
             });
         });
-        describe.skip("Updating", () => {
+        describe("Updating", () => {
             // NOTE: These tests are all atomic!
             let thisUserId; // The userId that the tests can use to get/update users
             beforeEach("Create the user to run tests against", done => {
@@ -184,9 +184,6 @@ describe("MatchMyRoute Database Functions", () => {
                     thisUserId = user.id;
                     done();
                 });
-            });
-            afterEach("Delete the user that this test used", () => {
-                return Database.deleteUser(thisUserId);
             });
             // Go through these objects and try to update the user with them
             let updateables = [
@@ -209,9 +206,9 @@ describe("MatchMyRoute Database Functions", () => {
                 let updates = updateables[i];
                 let keys = Object.keys(updates).join(", ");
                 it("should update " + keys, () => {
-                    return Database.updateUser(thisUserId, updates).then(() => {
-                        return Database.sql("SELECT name, email, pwh, rounds, profile_photo, profile_bio " +
-                            "FROM users WHERE id=$1;", [thisUserId]).then(result => {
+                    return Database.updateUser(thisUserId, updates, transactionClient).then(() => {
+                        return Database.sqlTransaction("SELECT name, email, pwh, rounds, profile_photo, profile_bio " +
+                            "FROM users WHERE id=$1;", [thisUserId], transactionClient).then(result => {
                                 return result.rows[0];
                             });
                     }).then(user => {
@@ -666,7 +663,7 @@ describe("MatchMyRoute Database Functions", () => {
         });
 
     });
-    describe.skip("Database shutdown", () => {
+    describe("Database shutdown", () => {
         it("should shut down the database", done => {
             expect(Database.shutDownPool()).to.eventually.equal(true).and.notify(done);
         });
@@ -679,7 +676,7 @@ describe("MatchMyRoute Database Functions", () => {
                 arrivalTime: 15000,
                 days: ["monday"],
                 departureTime: 14000,
-                owner: userIds[1],
+                owner: 123,
                 route: [[0, 0], [1, 0], [1, 1]],
             });
             promises.push(Database.putRoute(route));
@@ -701,7 +698,7 @@ describe("MatchMyRoute Database Functions", () => {
                 })
             );
             // getUserById
-            promises.push(Database.runTransaction(Database.getUserById, userIds[0], true));
+            promises.push(Database.getUserById(userIds[0]));
             // getUserByEmail
             promises.push(Database.getUserByEmail("test3@example.com"));
             // deleteUser
