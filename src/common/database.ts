@@ -189,41 +189,6 @@ export function resetDatabase(): Promise<boolean> {
 }
 
 // Put a route in the database, returning the new database ID for the route
-export function putRouteOld(routeData: RouteDataModel): Promise<number> {
-
-    const wkt = coordsToLineString(routeData.route);
-
-    return new Promise((resolve, reject) => {
-        // to run a query we can acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                console.error("error fetching client from pool", err);
-                reject(err);
-                return;
-            }
-            const query = "INSERT INTO routes (route, departureTime, arrivalTime, days, owner) " +
-                "VALUES (ST_GeogFromText($1),$2,$3,$4::integer::bit(7),$5) " +
-                "RETURNING id";
-            const sqlParams = [wkt, routeData.departureTime, routeData.arrivalTime,
-                routeData.getDaysBitmask(), routeData.owner];
-            client.query(query, sqlParams, (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    reject("error running query: " + error);
-                    return;
-                }
-
-                // return the id of the new route
-                resolve(result.rows[0].id);
-            });
-        });
-    });
-}
-
 export function putRoute(routeData: RouteDataModel, providedClient = null) {
     const wkt = coordsToLineString(routeData.route);
     const query = "INSERT INTO routes (route, departureTime, arrivalTime, days, owner) " +
@@ -285,7 +250,7 @@ export function coordsToPointString(coord: [number, number]): string {
     return "POINT(" + coord.join(" ") + ")";
 }
 
-export function getRoutesNearby(radius: number, lat: number, lon: number, providedClient = null) {
+export function getRoutesNearby(radius: number, lat: number, lon: number, providedClient = null): Promise<any> {
     if (radius > 2000 || radius < 1) {
         return new Promise((resolve, reject) => {
             reject("400:Radius out of bounds");
@@ -472,34 +437,14 @@ export function updateRoute(
     });
 }
 
-export function deleteRoute(id: number): Promise<Boolean> {
-    return new Promise((resolve, reject) => {
-        // Acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                reject(err);
-                return console.error("error fetching client from pool", err);
-            }
-            const query = "DELETE FROM routes WHERE id=$1";
-            client.query(query, [id], (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    reject("error running query: " + error);
-                    return;
-                }
-
-                if (result.rowCount) {
-                    resolve(true);
-                } else {
-                    reject("404:Route doesn't exist");
-                    return;
-                }
-            });
-        });
+export function deleteRoute(id: number, providedClient = null): Promise<Boolean> {
+    const query = "DELETE FROM routes WHERE id=$1";
+    return sqlTransaction(query, [id], providedClient).then(result => {
+        if (result.rowCount) {
+            return true;
+        } else {
+            throw new Error("404:Route doesn't exist");
+        }
     });
 }
 

@@ -324,48 +324,32 @@ describe("MatchMyRoute Database Functions", () => {
                 const promise = Database.getRoutesNearby(2001, 1.6, 2.4, transactionClient);
                 expect(promise).to.be.rejected.and.notify(done);
             });
-        });
-        it.skip("should not delete any routes with an invalid id", done => {
-            const promise = Database.deleteRoute(-1);
-            expect(promise).to.be.rejected.and.notify(done);
-        });
-        it.skip("should delete a route", () => {
-            return Database.deleteRoute(routeIds[0]).then(() => {
-                Database.sql("SELECT * FROM routes WHERE id=$1;", [routeIds[0]]).then(result => {
-                    expect(result.rowCount).to.equal(0);
+            it("should not delete any routes with an invalid id", done => {
+                const promise = Database.deleteRoute(-1, transactionClient);
+                expect(promise).to.be.rejected.and.notify(done);
+            });
+            it("should delete a route", () => {
+                return Database.deleteRoute(thisRouteId, transactionClient).then(() => {
+                    Database.sqlTransaction(
+                        "SELECT * FROM routes WHERE id=$1;",
+                        [thisRouteId],
+                        transactionClient
+                    ).then(result => {
+                        expect(result.rowCount).to.equal(0);
+                    });
                 });
             });
-        });
-        it.skip("should delete any routes associated with a user, when that user is deleted", () => {
-            let routeId;
-            let userId;
-            // create new user so that no dependency on other tests exists
-            return Database.putUser({
-                email: "test@example.com",
-                jwtSecret: "secret",
-                name: "Test User",
-                pwh: "pwhash",
-                rounds: 5,
-                salt: "salty",
-            }).then(user => {
-                userIds.push(user.id);
-                userId = user.id;
-                // prepare a new route
-                const route = new RouteDataModel({
-                    arrivalTime: 15000,
-                    days: ["monday"],
-                    departureTime: 14000,
-                    owner: userId,
-                    route: [[0, 0], [1, 0], [1, 1]],
+            it("should delete any routes associated with a user, when that user is deleted", () => {
+                return Database.deleteUser(thisUserId, transactionClient)
+                .then(() => {
+                    return Database.sqlTransaction(
+                        "SELECT * FROM routes WHERE id=$1;",
+                        ["" + thisRouteId],
+                        transactionClient
+                    );
+                }).then((result: any) => {
+                    expect(result.rowCount).to.equal(0);
                 });
-                return Database.putRoute(route);
-            }).then(id => {
-                routeId = id;
-                return Database.deleteUser(userId);
-            }).then(() => {
-                return Database.sql("SELECT * FROM routes WHERE id=$1;", ["" + routeId]);
-            }).then((result: any) => {
-                expect(result.rowCount).to.equal(0);
             });
         });
     });
