@@ -240,35 +240,15 @@ export function putRoute(routeData: RouteDataModel, providedClient = null) {
     });
 }
 
-export function getRouteById(id: number): Promise<RouteDataModel> {
-    return new Promise((resolve, reject) => {
-        // Acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                reject(err);
-                return console.error("error fetching client from pool", err);
-            }
-            const query = "SELECT id, owner, departuretime, arrivalTime, days::integer, ST_AsText(route) AS route " +
-                "FROM routes where id=$1";
-            client.query(query, [id], (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    reject("error running query: " + error);
-                    return;
-                }
-
-                if (result.rows[0]) {
-                    // return the route
-                    resolve(RouteDataModel.fromSQLRow(result.rows[0]));
-                } else {
-                    reject("404:Route doesn't exist");
-                }
-            });
-        });
+export function getRouteById(id: number, providedClient = null) {
+    const query = "SELECT id, owner, departuretime, arrivalTime, days::integer, ST_AsText(route) AS route " +
+        "FROM routes where id=$1";
+    return sqlTransaction(query, [id], providedClient).then(result => {
+        if (result.rows[0]) {
+            return RouteDataModel.fromSQLRow(result.rows[0]);
+        } else {
+            throw new Error("404:Route doesn't exist");
+        }
     });
 }
 

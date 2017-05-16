@@ -277,35 +277,29 @@ describe("MatchMyRoute Database Functions", () => {
                 });
             });
         });
-        describe.skip("Route reliant tests", () => {
-            beforeEach("Create route to test against", () => {
-                return Database.putRoute(routeData, transactionClient).then(routeId => {
-                    console.log("lblu");
-                });
-            });
-        });
         it("should not create a route for an invalid owner", done => {
             const promise = Database.putRoute(faultyRouteData, transactionClient);
             expect(promise).to.be.rejected.and.notify(done);
         });
-        it.skip("should get a route by ID", () => {
-            const route = new RouteDataModel({
-                arrivalTime: 15000,
-                days: ["tuesday", "sunday"],
-                departureTime: 14000,
-                owner: userIds[1],
-                route: [[0, 0], [1, 0], [1, 1]],
+        describe("Route reliant tests", () => {
+            let thisRouteId;
+            beforeEach("Create route to test against", () => {
+                return Database.putRoute(routeData, transactionClient).then(routeId => {
+                    thisRouteId = routeId;
+                });
             });
-            return Database.getRouteById(routeIds[0]).then(result => {
-                expect(result.arrivalTime).to.equal(route.arrivalTime);
-                expect(result.departureTime).to.equal(route.departureTime);
-                expect(result.owner).to.equal(route.owner);
-                expect(result.days).to.eql(route.days);
+            it("should get a route by ID", () => {
+                return Database.getRouteById(thisRouteId, transactionClient).then(result => {
+                    expect(result.arrivalTime).to.equal(routeData.arrivalTime);
+                    expect(result.departureTime).to.equal(routeData.departureTime);
+                    expect(result.owner).to.equal(routeData.owner);
+                    expect(result.days).to.eql(routeData.days);
+                });
             });
-        });
-        it.skip("should not get a route by an invalid ID", done => {
-            const promise = Database.getRouteById(-1);
-            expect(promise).to.be.rejected.and.notify(done);
+            it("should not get a route by an invalid ID", done => {
+                const promise = Database.getRouteById(-1, transactionClient);
+                expect(promise).to.be.rejected.and.notify(done);
+            });
         });
         it.skip("should get a nearby route", () => {
             return Database.getRoutesNearby(500, 1, 1).then(routes => {
