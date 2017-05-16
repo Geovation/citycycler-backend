@@ -189,7 +189,7 @@ export function resetDatabase(): Promise<boolean> {
 }
 
 // Put a route in the database, returning the new database ID for the route
-export function putRoute(routeData: RouteDataModel): Promise<number> {
+export function putRouteOld(routeData: RouteDataModel): Promise<number> {
 
     const wkt = coordsToLineString(routeData.route);
 
@@ -221,6 +221,22 @@ export function putRoute(routeData: RouteDataModel): Promise<number> {
                 resolve(result.rows[0].id);
             });
         });
+    });
+}
+
+export function putRoute(routeData: RouteDataModel, providedClient = null) {
+    const wkt = coordsToLineString(routeData.route);
+    const query = "INSERT INTO routes (route, departureTime, arrivalTime, days, owner) " +
+        "VALUES (ST_GeogFromText($1),$2,$3,$4::integer::bit(7),$5) " +
+        "RETURNING id";
+    const sqlParams = [wkt, routeData.departureTime, routeData.arrivalTime,
+        routeData.getDaysBitmask(), routeData.owner];
+    return sqlTransaction(query, sqlParams, providedClient).then(result => {
+        if (result.rowCount > 0) {
+            return result.rows[0].id;
+        } else {
+            throw new Error("500:Route could not be created");
+        }
     });
 }
 
