@@ -285,36 +285,17 @@ export function coordsToPointString(coord: [number, number]): string {
     return "POINT(" + coord.join(" ") + ")";
 }
 
-export function getRoutesNearby(radius: number, lat: number, lon: number): Promise<RouteDataModel[]> {
-    return new Promise((resolve, reject) => {
-        if (radius > 2000 || radius < 1) {
+export function getRoutesNearby(radius: number, lat: number, lon: number, providedClient = null) {
+    if (radius > 2000 || radius < 1) {
+        return new Promise((resolve, reject) => {
             reject("400:Radius out of bounds");
-            return;
-        }
-        // Acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                reject(err);
-                return console.error("error fetching client from pool", err);
-            }
-            const query = "select id, owner, departuretime, arrivalTime, ST_AsText(route) AS route from routes " +
-                "where ST_DISTANCE(route, ST_GeogFromText($2) ) < $1";
-            const geoJson = "POINT(" + lat + " " + lon + ")";
-            client.query(query, [radius, geoJson], (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    reject("error running query: " + error);
-                    return;
-                }
-
-                resolve(result.rows.map(RouteDataModel.fromSQLRow));
-            });
         });
-
+    }
+    const query = "select id, owner, departuretime, arrivalTime, ST_AsText(route) AS route from routes " +
+        "where ST_DISTANCE(route, ST_GeogFromText($2) ) < $1";
+    const geoJson = "POINT(" + lat + " " + lon + ")";
+    return sqlTransaction(query, [radius, geoJson], providedClient).then(result => {
+        return result.rows.map(RouteDataModel.fromSQLRow);
     });
 }
 

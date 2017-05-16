@@ -300,30 +300,30 @@ describe("MatchMyRoute Database Functions", () => {
                 const promise = Database.getRouteById(-1, transactionClient);
                 expect(promise).to.be.rejected.and.notify(done);
             });
-        });
-        it.skip("should get a nearby route", () => {
-            return Database.getRoutesNearby(500, 1, 1).then(routes => {
-                const rids = routes.map((r) => {
-                    return r.id;
+            it("should get a nearby route", () => {
+                return Database.getRoutesNearby(500, 1, 1, transactionClient).then(routes => {
+                    const rids = routes.map((r) => {
+                        return r.id;
+                    });
+                    expect(rids).to.contain(thisRouteId);
                 });
-                expect(rids).to.contain(routeIds[0]);
             });
-        });
-        it.skip("should not get a far away route", () => {
-            return Database.getRoutesNearby(1, 1.6, 2.4).then(routes => {
-                const rids = routes.map((r) => {
-                    return r.id;
+            it("should not get a far away route", () => {
+                return Database.getRoutesNearby(1, 1.6, 2.4, transactionClient).then(routes => {
+                    const rids = routes.map((r) => {
+                        return r.id;
+                    });
+                    expect(rids).not.to.contain(thisRouteId);
                 });
-                expect(rids).not.to.contain(routeIds[0]);
             });
-        });
-        it.skip("should not get a route in a tiny radius (<1m)", done => {
-            const promise = Database.getRoutesNearby(0.5, 1.6, 2.4);
-            expect(promise).to.be.rejected.and.notify(done);
-        });
-        it.skip("should not get a route in a huuuge radius (>2km)", done => {
-            const promise = Database.getRoutesNearby(2001, 1.6, 2.4);
-            expect(promise).to.be.rejected.and.notify(done);
+            it("should not get a route in a tiny radius (<1m)", done => {
+                const promise = Database.getRoutesNearby(0.5, 1.6, 2.4, transactionClient);
+                expect(promise).to.be.rejected.and.notify(done);
+            });
+            it("should not get a route in a huuuge radius (>2km)", done => {
+                const promise = Database.getRoutesNearby(2001, 1.6, 2.4, transactionClient);
+                expect(promise).to.be.rejected.and.notify(done);
+            });
         });
         it.skip("should not delete any routes with an invalid id", done => {
             const promise = Database.deleteRoute(-1);
