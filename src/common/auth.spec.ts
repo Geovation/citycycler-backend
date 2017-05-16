@@ -121,7 +121,7 @@ describe("MatchMyRoute Auth Functions", () => {
     });
     describe("generateJWTFor", () => {
         it("should create a reversible token", () => {
-            return Database.runTransaction(Database.getUserById, uid, false).then(user => {
+            return Database.getUserById(uid).then(user => {
                 const token = Auth.generateJWTFor(user).token;
                 const decodeFunction = () => {
                     return jwt.verify(token, secret, {

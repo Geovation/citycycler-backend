@@ -55,7 +55,7 @@ const operation = {
 
 export const service = (broadcast: Function, params: any): Promise<{ token: string; expires: number; }> => {
     return getIdFromJWT(params.authorisation).then(userid => {
-        return Database.runTransaction(Database.getUserById, userid, false);
+        Database.getUserById(userid);
     }).then(user => {
         return generateJWTFor(user);
     }).catch(err => {

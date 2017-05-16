@@ -57,9 +57,34 @@ describe("MatchMyRoute Database Functions", () => {
             done();
         });
     });
+    let transactionClient;
+    beforeEach("Create transaction client", function(done){
+        Database.createTransactionClient().then(newClient => {
+            transactionClient = newClient;
+            done();
+        }).catch(e => {
+            // console.error("cannot create transaction client");
+            done();
+        });
+    });
+    afterEach("Rolling back transaction", function(done) {
+        Database.rollbackAndReleaseTransaction(
+            transactionClient,
+            (typeof this.currentTest !== "undefined" ? this.currentTest.title : "no Title")
+        ).then(
+            () => done()
+        ).catch(e => {
+            // console.error("Cannot roll back");
+            done();
+        });
+    });
     // Test that the arbritary sql function works, because we'll be relying on this for the other tests.
-    it.skip("should be connected to the database", done => {
-        const rowCount = Database.sql("select count(*) from pg_stat_activity").then(result => {
+    it("should be connected to the database", done => {
+        const rowCount = Database.sqlTransaction(
+            "select count(*) from pg_stat_activity",
+            [],
+            transactionClient
+        ).then(result => {
             return result.rowCount;
         });
         expect(rowCount).to.eventually.be.above(0, "pg reports " + rowCount + " connections to the DB")
@@ -67,22 +92,6 @@ describe("MatchMyRoute Database Functions", () => {
     });
 
     describe("User related functions", () => {
-        let transactionClient;
-        beforeEach("Create transaction client", function(done){
-            // console.log("Creating transaction client for " + this.currentTest.title);
-            Database.createTransactionClient().then(newClient => {
-                transactionClient = newClient;
-                // console.log("Created transaction client");
-                done();
-            });
-        });
-        afterEach("Rolling back transaction", function() {
-            return Database.rollbackAndReleaseTransaction(
-                transactionClient,
-                "generic user related function / " +
-                (typeof this.currentTest !== "undefined" ? this.currentTest.title : "no Title")
-            );
-        });
         it("should create new user", () => {
             Database.putUser({
                 email: "test@example.com",
@@ -106,11 +115,9 @@ describe("MatchMyRoute Database Functions", () => {
                 salt: "salty2",
             }, transactionClient);
         });
-        describe("user reliant tests", () => {
+        describe("User reliant tests", () => {
             let userId;
-            // let transactionClient;
             beforeEach("Create user to test against", () => {
-                // console.log("trying to create user");
                 return Database.putUser({
                     email: "test@example.com",
                     jwtSecret: "secret",
@@ -121,10 +128,8 @@ describe("MatchMyRoute Database Functions", () => {
                 },
                 transactionClient)
                 .then(user => {
-                    // console.log("user created");
                     userId = user.id;
                     return userId;
-                    // done();
                 });
             });
             it("should fail to create users with duplicate emails", done => {
@@ -226,6 +231,22 @@ describe("MatchMyRoute Database Functions", () => {
         });
     });
     describe.skip("General Route Functions", () => {
+        let thisUserId;
+        beforeEach("Create user to test against", () => {
+            return Database.putUser({
+                email: "test@example.com",
+                jwtSecret: "secret",
+                name: "Test User",
+                pwh: "pwhash",
+                rounds: 5,
+                salt: "salty",
+            },
+            transactionClient)
+            .then(user => {
+                thisUserId = user.id;
+                return thisUserId;
+            });
+        });
         it("should create a route", () => {
             const route = new RouteDataModel({
                 arrivalTime: 15000,
@@ -664,8 +685,12 @@ describe("MatchMyRoute Database Functions", () => {
 
     });
     describe("Database shutdown", () => {
-        it("should shut down the database", done => {
-            expect(Database.shutDownPool()).to.eventually.equal(true).and.notify(done);
+        it("should shut down the database", () => {
+            // expect(Database.shutDownPool()).to.eventually.equal(true).and.notify(done);
+            Database.shutDownPool().then(response => {
+                console.log("shutdown resolved");
+                expect(response).to.equal(true);
+            });
         });
         it("should reject all database operations", done => {
             let promises = [];

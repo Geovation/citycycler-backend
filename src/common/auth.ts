@@ -55,7 +55,7 @@ export function getIdFromJWT(authHeader: string): Promise<number> {
             json: true,
         });
         // Get the user, so we can use their secret to verify the JWT
-        Database.runTransaction(Database.getUserById, payload.id, false).then(user => {
+        Database.getUserById(payload.id).then(user => {
             try {
                 jwt.verify(token, user.jwtSecret, {
                     algorithms: ["HS256"],

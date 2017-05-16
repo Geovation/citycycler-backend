@@ -35,30 +35,30 @@ pool.on("error", (err, client) => {
     console.error("idle client error", err.message, err.stack);
 });
 
-export function runTransaction(method: Function, parameters: Object, isTest: Boolean) {
-    let client;
-    let result;
-    return pool.connect()
-        .then(newClient => {
-            client = newClient;
-            return client.query("BEGIN");
-        })
-        .then(() => {
-            return method(parameters, client);
-        })
-        .then(res => {
-            result = res;
-            if (isTest) {
-                return { client, result };
-            } else {
-                return client.query("COMMIT").then(() => client.release());
-            }
-        })
-        .catch(err => {
-            client.query("ROLLBACK");
-            throw new Error("transaction call has failed");
-        });
-}
+// export function runTransaction(method: Function, parameters: Object, isTest: Boolean) {
+//     let client;
+//     let result;
+//     return pool.connect()
+//         .then(newClient => {
+//             client = newClient;
+//             return client.query("BEGIN");
+//         })
+//         .then(() => {
+//             return method(parameters, client);
+//         })
+//         .then(res => {
+//             result = res;
+//             if (isTest) {
+//                 return { client, result };
+//             } else {
+//                 return client.query("COMMIT").then(() => client.release());
+//             }
+//         })
+//         .catch(err => {
+//             client.query("ROLLBACK");
+//             throw new Error("transaction call has failed");
+//         });
+// }
 
 export function createTransactionClient() {
     let client;
@@ -83,9 +83,10 @@ function checkClient(client) {
 }
 
 export function rollbackAndReleaseTransaction(client, source = "") {
-    // // console.log("client: " + JSON.stringify(client));
+    // console.log("rolling back from source " + source);
     return client.query("ROLLBACK").
     then(() => {
+        // console.log("rolled back successfully");
         return client.release();
     });
 }
@@ -145,6 +146,12 @@ export function shutDownPool(): Promise<boolean> {
         console.error(err);
         return false;
     });
+    // return pool.end().then(() => {
+    //     return true;
+    // }).catch(err => {
+    //     console.error(err);
+    //     return false;
+    // });
 }
 
 // This starts up a pool. It should usually only be called once on app startup.
