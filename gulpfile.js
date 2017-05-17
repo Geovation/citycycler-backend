@@ -172,7 +172,7 @@ gulp.task("pre-test", ["typescript", "set-env-vars"], () => {
 });
 
 gulp.task("unittest", ["pre-test"], () => {
-  return gulp.src(["build/**/database.spec.js"])
+  return gulp.src(["build/**/*[sS]pec.js"])
     .pipe(mocha({
       verbose: true,
       includeStackTrace: true,
