@@ -376,10 +376,11 @@ describe("MatchMyRoute Database Functions", () => {
                     owner: thisUserId,
                     route: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6]],
                 });
-                return Database.putRoute(routeData, transactionClient).then(routeId => {
-                    thisRouteId = routeId;
-                    done();
-                });
+                return Database.putRoute(routeData, transactionClient);
+            })
+            .then(routeId => {
+                thisRouteId = routeId;
+                done();
             });
         });
         it("should match a route", () => {
@@ -508,24 +509,36 @@ describe("MatchMyRoute Database Functions", () => {
             });
         });
     });
-    describe.skip("Route Updating", () => {
+    describe("Route Updating", () => {
         // insert a route to update
         let updateRouteId;
-        before(done => {
-            const route = new RouteDataModel({
-                arrivalTime: 15000,
-                days: ["tuesday", "sunday"],
-                departureTime: 14000,
-                owner: userIds[1],
-                route: [[0, 0], [1, 0], [1, 1]],
-            });
-            Database.putRoute(route)
-                .then(routeId => {
-                    // temporary pushing to routeIds before making all tests atomic
-                    routeIds.push(routeId);
-                    updateRouteId = routeId;
-                    done();
+        let thisUserId;
+        let routeData;
+        beforeEach("Create user and route to update", done => {
+            Database.putUser({
+                email: "test@example.com",
+                jwtSecret: "secret",
+                name: "Test User",
+                pwh: "pwhash",
+                rounds: 5,
+                salt: "salty",
+            },
+            transactionClient)
+            .then(user => {
+                thisUserId = user.id;
+                routeData = new RouteDataModel({
+                    arrivalTime: 15000,
+                    days: ["tuesday", "sunday"],
+                    departureTime: 14000,
+                    owner: thisUserId,
+                    route: [[0, 0], [1, 0], [1, 1]],
                 });
+                return Database.putRoute(routeData, transactionClient);
+            })
+            .then(routeId => {
+                updateRouteId = routeId;
+                done();
+            });
         });
 
         it("should update all properties at once", () => {
@@ -536,15 +549,15 @@ describe("MatchMyRoute Database Functions", () => {
                 id: updateRouteId,
                 route: [[0, 0], [1, 0], [1, 1], [0, 1]],
             };
-            return Database.getRouteById(updateRouteId).then(originalRoute => {
-                return Database.updateRoute(originalRoute, updates);
+            return Database.getRouteById(updateRouteId, transactionClient).then(originalRoute => {
+                return Database.updateRoute(originalRoute, updates, transactionClient);
             }).then(() => {
-                return Database.getRouteById(updateRouteId);
+                return Database.getRouteById(updateRouteId, transactionClient);
             }).then(newRoute => {
-                expect(newRoute.days).to.eql(["tuesday"]);
-                expect(newRoute.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
-                expect(newRoute.arrivalTime).to.equal(1500);
-                expect(newRoute.departureTime).to.equal(900);
+                expect(newRoute.days).to.eql(updates.days);
+                expect(newRoute.route).to.eql(updates.route);
+                expect(newRoute.arrivalTime).to.equal(updates.arrivalTime);
+                expect(newRoute.departureTime).to.equal(updates.departureTime);
             });
         });
         it("should update one property at a time - arrivalTime", () => {
@@ -552,31 +565,31 @@ describe("MatchMyRoute Database Functions", () => {
                 arrivalTime: 15000,
                 id: updateRouteId,
             };
-            return Database.getRouteById(updateRouteId).then(originalRoute => {
-                return Database.updateRoute(originalRoute, updates);
+            return Database.getRouteById(updateRouteId, transactionClient).then(originalRoute => {
+                return Database.updateRoute(originalRoute, updates, transactionClient);
             }).then(() => {
-                return Database.getRouteById(updateRouteId);
+                return Database.getRouteById(updateRouteId, transactionClient);
             }).then(newRoute => {
-                expect(newRoute.days).to.eql(["tuesday"]);
-                expect(newRoute.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
-                expect(newRoute.arrivalTime).to.equal(15000);
-                expect(newRoute.departureTime).to.equal(900);
+                expect(newRoute.days).to.eql(routeData.days);
+                expect(newRoute.route).to.eql(routeData.route);
+                expect(newRoute.arrivalTime).to.equal(routeData.arrivalTime);
+                expect(newRoute.departureTime).to.equal(routeData.departureTime);
             });
         });
         it("should update one property at a time - departureTime", () => {
             const updates = {
-                departureTime: 14000,
+                departureTime: 12000,
                 id: updateRouteId,
             };
-            return Database.getRouteById(updateRouteId).then(originalRoute => {
-                return Database.updateRoute(originalRoute, updates);
+            return Database.getRouteById(updateRouteId, transactionClient).then(originalRoute => {
+                return Database.updateRoute(originalRoute, updates, transactionClient);
             }).then(() => {
-                return Database.getRouteById(updateRouteId);
+                return Database.getRouteById(updateRouteId, transactionClient);
             }).then(newRoute => {
-                expect(newRoute.days).to.eql(["tuesday"]);
-                expect(newRoute.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
-                expect(newRoute.arrivalTime).to.equal(15000);
-                expect(newRoute.departureTime).to.equal(14000);
+                expect(newRoute.days).to.eql(routeData.days);
+                expect(newRoute.route).to.eql(routeData.route);
+                expect(newRoute.arrivalTime).to.equal(routeData.arrivalTime);
+                expect(newRoute.departureTime).to.equal(updates.departureTime);
             });
         });
         it("should update one property at a time - days", () => {
@@ -584,15 +597,15 @@ describe("MatchMyRoute Database Functions", () => {
                 days: ["thursday", "friday"],
                 id: updateRouteId,
             };
-            return Database.getRouteById(updateRouteId).then(originalRoute => {
-                return Database.updateRoute(originalRoute, updates);
+            return Database.getRouteById(updateRouteId, transactionClient).then(originalRoute => {
+                return Database.updateRoute(originalRoute, updates, transactionClient);
             }).then(() => {
-                return Database.getRouteById(updateRouteId);
+                return Database.getRouteById(updateRouteId, transactionClient);
             }).then(newRoute => {
-                expect(newRoute.days).to.eql(["thursday", "friday"]);
-                expect(newRoute.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
-                expect(newRoute.arrivalTime).to.equal(15000);
-                expect(newRoute.departureTime).to.equal(14000);
+                expect(newRoute.days).to.eql(updates.days);
+                expect(newRoute.route).to.eql(routeData.route);
+                expect(newRoute.arrivalTime).to.equal(routeData.arrivalTime);
+                expect(newRoute.departureTime).to.equal(routeData.departureTime);
             });
         });
         it("should update one property at a time - route", () => {
@@ -600,15 +613,15 @@ describe("MatchMyRoute Database Functions", () => {
                 id: updateRouteId,
                 route: [[0, 0], [1, 0], [1, 1]],
             };
-            return Database.getRouteById(updateRouteId).then(originalRoute => {
-                return Database.updateRoute(originalRoute, updates);
+            return Database.getRouteById(updateRouteId, transactionClient).then(originalRoute => {
+                return Database.updateRoute(originalRoute, updates, transactionClient);
             }).then(() => {
-                return Database.getRouteById(updateRouteId);
+                return Database.getRouteById(updateRouteId, transactionClient);
             }).then(newRoute => {
-                expect(newRoute.days).to.eql(["thursday", "friday"]);
-                expect(newRoute.route).to.eql([[0, 0], [1, 0], [1, 1]]);
-                expect(newRoute.arrivalTime).to.equal(15000);
-                expect(newRoute.departureTime).to.equal(14000);
+                expect(newRoute.days).to.eql(routeData.days);
+                expect(newRoute.route).to.eql(updates.route);
+                expect(newRoute.arrivalTime).to.equal(routeData.arrivalTime);
+                expect(newRoute.departureTime).to.equal(routeData.departureTime);
             });
         });
         it("should not be able to update ownership", () => {
@@ -616,12 +629,12 @@ describe("MatchMyRoute Database Functions", () => {
                 id: updateRouteId,
                 owner: userIds[0],
             };
-            return Database.getRouteById(updateRouteId).then(originalRoute => {
-                return Database.updateRoute(originalRoute, updates);
+            return Database.getRouteById(updateRouteId, transactionClient).then(originalRoute => {
+                return Database.updateRoute(originalRoute, updates, transactionClient);
             }).then(() => {
-                return Database.getRouteById(updateRouteId);
+                return Database.getRouteById(updateRouteId, transactionClient);
             }).then(newRoute => {
-                expect(newRoute.owner).to.eql(userIds[1]);
+                expect(newRoute.owner).to.eql(thisUserId);
             });
         });
         it("should not be able to update to an invalid departureTime", done => {
@@ -629,8 +642,8 @@ describe("MatchMyRoute Database Functions", () => {
                 departureTime: 16000,
                 id: updateRouteId,
             };
-            const promise = Database.getRouteById(updateRouteId).then(originalRoute => {
-                return Database.updateRoute(originalRoute, updates);
+            const promise = Database.getRouteById(updateRouteId, transactionClient).then(originalRoute => {
+                return Database.updateRoute(originalRoute, updates, transactionClient);
             });
             expect(promise).to.be.rejected.and.notify(done);
         });
@@ -639,8 +652,8 @@ describe("MatchMyRoute Database Functions", () => {
                 arrivalTime: 100,
                 id: updateRouteId,
             };
-            const promise = Database.getRouteById(updateRouteId).then(originalRoute => {
-                return Database.updateRoute(originalRoute, updates);
+            const promise = Database.getRouteById(updateRouteId, transactionClient).then(originalRoute => {
+                return Database.updateRoute(originalRoute, updates, transactionClient);
             });
             expect(promise).to.be.rejected.and.notify(done);
         });
@@ -650,8 +663,8 @@ describe("MatchMyRoute Database Functions", () => {
                 departureTime: 16000,
                 id: updateRouteId,
             };
-            const promise = Database.getRouteById(updateRouteId).then(originalRoute => {
-                return Database.updateRoute(originalRoute, updates);
+            const promise = Database.getRouteById(updateRouteId, transactionClient).then(originalRoute => {
+                return Database.updateRoute(originalRoute, updates, transactionClient);
             });
             expect(promise).to.be.rejected.and.notify(done);
         });
@@ -660,8 +673,8 @@ describe("MatchMyRoute Database Functions", () => {
                 id: updateRouteId,
                 route: [[5, 6.2]],
             };
-            const promise = Database.getRouteById(updateRouteId).then(originalRoute => {
-                return Database.updateRoute(originalRoute, updates);
+            const promise = Database.getRouteById(updateRouteId, transactionClient).then(originalRoute => {
+                return Database.updateRoute(originalRoute, updates, transactionClient);
             });
             expect(promise).to.be.rejected.and.notify(done);
         });
@@ -670,8 +683,8 @@ describe("MatchMyRoute Database Functions", () => {
                 id: updateRouteId,
                 route: [[5, 6.2], [7.125], [8.5, 6.3]],
             };
-            const promise = Database.getRouteById(updateRouteId).then(originalRoute => {
-                return Database.updateRoute(originalRoute, updates);
+            const promise = Database.getRouteById(updateRouteId, transactionClient).then(originalRoute => {
+                return Database.updateRoute(originalRoute, updates, transactionClient);
             });
             expect(promise).to.be.rejected.and.notify(done);
         });
@@ -680,8 +693,8 @@ describe("MatchMyRoute Database Functions", () => {
                 id: updateRouteId,
                 route: [[5, 6.2], [7.125, 4.7, 0.12], [8.5, 6.3]],
             };
-            const promise = Database.getRouteById(updateRouteId).then(originalRoute => {
-                return Database.updateRoute(originalRoute, updates);
+            const promise = Database.getRouteById(updateRouteId, transactionClient).then(originalRoute => {
+                return Database.updateRoute(originalRoute, updates, transactionClient);
             });
             expect(promise).to.be.rejected.and.notify(done);
         });

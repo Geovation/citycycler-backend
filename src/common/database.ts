@@ -366,8 +366,9 @@ export function updateRoute(
         departureTime?: number,
         days?: string[],
         route?: number[][],
-    }): Promise<boolean> {
-    return new Promise((resolve, reject) => {
+    },
+    providedClient = null): Promise<boolean> {
+
         // Move the updated properties into the existing model, and validate the new route
         existingRoute.arrivalTime = updates.arrivalTime !== undefined ?
             updates.arrivalTime : existingRoute.arrivalTime;
@@ -376,49 +377,30 @@ export function updateRoute(
         existingRoute.days = updates.days !== undefined ? updates.days : existingRoute.days;
         existingRoute.route = updates.route !== undefined ? updates.route : existingRoute.route;
 
+        let error;
         if (existingRoute.arrivalTime < existingRoute.departureTime) {
-            reject("400:Arrival time is before Departure time");
-            return;
+            error = "400:Arrival time is before Departure time";
         } else if (existingRoute.route.length < 2) {
-            reject("400:Route requires at least 2 points");
-            return;
+            error = "400:Route requires at least 2 points";
         } else if (Math.max(...existingRoute.route.map(pair => { return pair.length; })) > 2) {
-            reject("400:Coordinates in a Route should only have 2 items in them, [latitude, longitude]");
-            return;
+            error = "400:Coordinates in a Route should only have 2 items in them, [latitude, longitude]";
         } else if (Math.min(...existingRoute.route.map(pair => { return pair.length; })) < 2) {
-            reject("400:Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]");
-            return;
+            error = "400:Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]";
+        }
+        if (typeof error !== "undefined") {
+            return new Promise((resolve, reject) => { reject(error); } );
         }
 
-        // to run a query we can acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                console.error("error fetching client from pool", err);
-                reject(err);
-                return;
-            }
-            const query = "UPDATE routes " +
-                "SET route = $1, arrivalTime = $2, departureTime = $3, days = $4::integer::bit(7) " +
-                "WHERE id = $5";
-            const sqlParams = [coordsToLineString(existingRoute.route),
+        const query = "UPDATE routes " +
+        "SET route = $1, arrivalTime = $2, departureTime = $3, days = $4::integer::bit(7) " +
+        "WHERE id = $5";
+        const sqlParams = [coordsToLineString(existingRoute.route),
             existingRoute.arrivalTime, existingRoute.departureTime,
             existingRoute.getDaysBitmask(), existingRoute.id];
-            client.query(query, sqlParams, (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
 
-                if (error) {
-                    // logger.error("error running query", error);
-                    reject("error running query: " + error);
-                    return;
-                }
-
-                // return true
-                resolve(true);
-            });
+        return sqlTransaction(query, sqlParams, providedClient).then(result => {
+            return true;
         });
-    });
 }
 
 export function deleteRoute(id: number, providedClient = null): Promise<Boolean> {
