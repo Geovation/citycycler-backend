@@ -31,7 +31,7 @@ describe("MatchMyRoute API", () => {
     let routeIds = [];  // A list of routes created that will be deleted at the end of this test run
     /* tslint:disable only-arrow-functions */
     before(function(done) { // Must not be an arrow function because we need access to `this`
-        this.timeout(60000);
+        this.timeout(0);    // Disable timeouts for the server startup
         logger.info("startServer is: " + startServer);
         if (startServer) {
             class AppEmitter extends EventEmitter { };
