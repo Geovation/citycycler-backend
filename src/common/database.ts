@@ -103,7 +103,11 @@ export function sqlTransaction(query: string, params: Array<any> = [], providedC
     }).then(response => {
         if (providedClient === null) {
             // console.log("releasing new client");
-            providedClient.release();
+            // TODO: This should not automatically COMMIT, but instead the endpoint
+            // should decide what to do and in case of failure roll back the transaction
+            client.query("COMMIT").then(e => {
+              client.release();
+          });
         }
         return response;
     });
