@@ -35,38 +35,13 @@ pool.on("error", (err, client) => {
     console.error("idle client error", err.message, err.stack);
 });
 
-// export function runTransaction(method: Function, parameters: Object, isTest: Boolean) {
-//     let client;
-//     let result;
-//     return pool.connect()
-//         .then(newClient => {
-//             client = newClient;
-//             return client.query("BEGIN");
-//         })
-//         .then(() => {
-//             return method(parameters, client);
-//         })
-//         .then(res => {
-//             result = res;
-//             if (isTest) {
-//                 return { client, result };
-//             } else {
-//                 return client.query("COMMIT").then(() => client.release());
-//             }
-//         })
-//         .catch(err => {
-//             client.query("ROLLBACK");
-//             throw new Error("transaction call has failed");
-//         });
-// }
-
 export function createTransactionClient() {
-    let client;
-    return pool.connect().then(newClient => {
-        client = newClient;
-        return newClient.query("BEGIN");
-    }).then(() => {
-        return client;
+    return pool.connect()
+    .then(client => {
+        return client.query("BEGIN")
+        .then((res) => {
+          return client;
+        });
     });
 }
 
@@ -76,9 +51,7 @@ function checkClient(client) {
         return pool.connect();
     } else {
         // console.log("using existing client");
-        return new Promise((resolve, reject) => {
-            resolve(client);
-        });
+        return Promise.resolve(client);
     }
 }
 

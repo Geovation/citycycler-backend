@@ -33,7 +33,7 @@ describe("MatchMyRoute Database Functions", () => {
                 Database.resetDatabase().then(
                     e => { done(); }
                 ).catch(
-                    err => { done(); return (err); }
+                    err => { done(err); }
                     );
             } else {
                 logger.error("Couldn't shut down old pool!");
@@ -73,9 +73,9 @@ describe("MatchMyRoute Database Functions", () => {
             (typeof this.currentTest !== "undefined" ? this.currentTest.title : "no Title")
         ).then(
             () => done()
-        ).catch(e => {
+        ).catch(err => {
             // console.error("Cannot roll back");
-            done();
+            done(err);
         });
     });
     // Test that the arbritary sql function works, because we'll be relying on this for the other tests.
@@ -700,70 +700,71 @@ describe("MatchMyRoute Database Functions", () => {
         });
 
     });
-    describe("Database shutdown", () => {
-        it("should shut down the database", () => {
-            // expect(Database.shutDownPool()).to.eventually.equal(true).and.notify(done);
-            Database.shutDownPool().then(response => {
-                console.log("shutdown resolved");
-                expect(response).to.equal(true);
-            });
+});
+describe("Database shutdown", () => {
+    let routeId = 1;
+    let userId = 1;
+    it("should shut down the database", () => {
+        // expect(Database.shutDownPool()).to.eventually.equal(true).and.notify(done);
+        Database.shutDownPool().then(response => {
+            expect(response).to.equal(true);
         });
-        it("should reject all database operations", done => {
-            let promises = [];
-            // sql
-            promises.push(Database.sql("SELECT now();"));
-            // putRoute
-            const route = new RouteDataModel({
-                arrivalTime: 15000,
-                days: ["monday"],
-                departureTime: 14000,
-                owner: 123,
-                route: [[0, 0], [1, 0], [1, 1]],
-            });
-            promises.push(Database.putRoute(route));
-            // getRouteById
-            promises.push(Database.getRouteById(routeIds[0]));
-            // getRoutesNearby
-            promises.push(Database.getRoutesNearby(5, 1, 1));
-            // deleteRoute
-            promises.push(Database.deleteRoute(routeIds[0]));
-            // putUser
-            promises.push(
-                Database.putUser({
-                    email: "test@example.com",
-                    jwtSecret: "secret",
-                    name: "Test User",
-                    pwh: "pwhash",
-                    rounds: 5,
-                    salt: "salty",
-                })
-            );
-            // getUserById
-            promises.push(Database.getUserById(userIds[0]));
-            // getUserByEmail
-            promises.push(Database.getUserByEmail("test3@example.com"));
-            // deleteUser
-            promises.push(Database.deleteUser(userIds[0]));
+    });
+    it("should reject all database operations", done => {
+        let promises = [];
+        // sql
+        promises.push(Database.sql("SELECT now();"));
+        // putRoute
+        const route = new RouteDataModel({
+            arrivalTime: 15000,
+            days: ["monday"],
+            departureTime: 14000,
+            owner: 123,
+            route: [[0, 0], [1, 0], [1, 1]],
+        });
+        promises.push(Database.putRoute(route));
+        // getRouteById
+        promises.push(Database.getRouteById(routeId));
+        // getRoutesNearby
+        promises.push(Database.getRoutesNearby(5, 1, 1));
+        // deleteRoute
+        promises.push(Database.deleteRoute(routeId));
+        // putUser
+        promises.push(
+            Database.putUser({
+                email: "test@example.com",
+                jwtSecret: "secret",
+                name: "Test User",
+                pwh: "pwhash",
+                rounds: 5,
+                salt: "salty",
+            })
+        );
+        // getUserById
+        promises.push(Database.getUserById(userId));
+        // getUserByEmail
+        promises.push(Database.getUserByEmail("test3@example.com"));
+        // deleteUser
+        promises.push(Database.deleteUser(userId));
 
-            let rejections = [];
-            let successes = [];
+        let rejections = [];
+        let successes = [];
 
-            // We can't use Promise.all because it rejects on the first rejection
-            promises.map((p, i) => {
-                p.then(() => {
-                    successes.push(i);
-                    return successes.length + rejections.length;
-                }, err => {
-                    rejections.push(i);
-                    return successes.length + rejections.length;
-                }).then(total => {
-                    if (total === promises.length) {
-                        expect(rejections.length).to.equal(promises.length,
-                            `The following resolved (bad): ${successes}, the following rejected (good): ${rejections}`);
-                        done();
+        // We can't use Promise.all because it rejects on the first rejection
+        promises.map((p, i) => {
+            p.then(() => {
+                successes.push(i);
+                return successes.length + rejections.length;
+            }, err => {
+                rejections.push(i);
+                return successes.length + rejections.length;
+            }).then(total => {
+                if (total === promises.length) {
+                    expect(rejections.length).to.equal(promises.length,
+                        `The following resolved (bad): ${successes}, the following rejected (good): ${rejections}`);
+                    done();
                     }
                 });
             });
         });
     });
-});
