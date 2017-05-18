@@ -1,5 +1,6 @@
 // import * as _ from "lodash";
 import { RouteDataModel } from "./RouteDataModel";
+import RouteQuery from "./RouteQueryDataModel";
 import User from "./UserDataModels";
 import * as fs from "fs";
 import * as pg from "pg";
@@ -34,8 +35,34 @@ pool.on("error", (err, client) => {
     console.error("idle client error", err.message, err.stack);
 });
 
-////////////////////////
-// Exported Functions
+export function createTransactionClient() {
+    return pool.connect()
+    .then(client => {
+        return client.query("BEGIN")
+        .then((res) => {
+          return client;
+        });
+    });
+}
+
+function checkClient(client) {
+    if (client === null) {
+        // console.log("recreating client");
+        return pool.connect();
+    } else {
+        // console.log("using existing client");
+        return Promise.resolve(client);
+    }
+}
+
+export function rollbackAndReleaseTransaction(client, source = "") {
+    // console.log("rolling back from source " + source);
+    return client.query("ROLLBACK").
+    then(() => {
+        // console.log("rolled back successfully");
+        return client.release();
+    });
+}
 
 // Execute an arbritary SQL command.
 export function sql(query: string, params: Array<string> = []): Promise<any> {
@@ -63,6 +90,25 @@ export function sql(query: string, params: Array<string> = []): Promise<any> {
     });
 }
 
+export function sqlTransaction(query: string, params: Array<any> = [], providedClient = null): Promise<any> {
+    let client;
+    // console.log("in sqlTransaction");
+    return checkClient(providedClient).then(returnedClient => {
+        client = returnedClient;
+        return client.query(query, params);
+    }).catch(e => {
+        // console.log("error in sql transaction");
+        // // console.log(e);
+        return e;
+    }).then(response => {
+        if (providedClient === null) {
+            // console.log("releasing new client");
+            providedClient.release();
+        }
+        return response;
+    });
+}
+
 // This shuts down the pool right away
 // Normally this shouldn't matter, but during tests the pool will
 // wait 30s before closing, which makes the tests take ages
@@ -73,12 +119,18 @@ export function shutDownPool(): Promise<boolean> {
         console.error(err);
         return false;
     });
+    // return pool.end().then(() => {
+    //     return true;
+    // }).catch(err => {
+    //     console.error(err);
+    //     return false;
+    // });
 }
 
 // This starts up a pool. It should usually only be called once on app startup.
 // We need to call it multiple times to run our tests though
 export function startUpPool(testing: boolean): void {
-    console.log("starting up pool in env " + process.env.NODE_ENV);
+    // console.log("starting up pool in env " + process.env.NODE_ENV);
     if (testing) {
         config.database = testDatabase;
     }
@@ -88,7 +140,7 @@ export function startUpPool(testing: boolean): void {
 /**
  * resetDatabase - resets the database schema in the given database to original state
  */
-export function resetDatabase(): Promise<boolean> {
+export function resetDatabase() {
     return sql("DROP SCHEMA IF EXISTS public CASCADE;", [])
         .then(result => {
             return sql("CREATE SCHEMA public AUTHORIZATION " + process.env.PGUSER + ";", []);
@@ -110,70 +162,31 @@ export function resetDatabase(): Promise<boolean> {
 }
 
 // Put a route in the database, returning the new database ID for the route
-export function putRoute(routeData: RouteDataModel): Promise<number> {
-
+export function putRoute(routeData: RouteDataModel, providedClient = null) {
     const wkt = coordsToLineString(routeData.route);
-
-    return new Promise((resolve, reject) => {
-        // to run a query we can acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                console.error("error fetching client from pool", err);
-                reject(err);
-                return;
-            }
-            const query = "INSERT INTO routes (route, departureTime, arrivalTime, days, owner) " +
-                "VALUES (ST_GeogFromText($1),$2,$3,$4::integer::bit(7),$5) " +
-                "RETURNING id";
-            const sqlParams = [wkt, routeData.departureTime, routeData.arrivalTime,
-                routeData.getDaysBitmask(), routeData.owner];
-            client.query(query, sqlParams, (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    reject("error running query: " + error);
-                    return;
-                }
-
-                // return the id of the new route
-                resolve(result.rows[0].id);
-            });
-        });
+    const query = "INSERT INTO routes (route, departureTime, arrivalTime, days, owner) " +
+        "VALUES (ST_GeogFromText($1),$2,$3,$4::integer::bit(7),$5) " +
+        "RETURNING id";
+    const sqlParams = [wkt, routeData.departureTime, routeData.arrivalTime,
+        routeData.getDaysBitmask(), routeData.owner];
+    return sqlTransaction(query, sqlParams, providedClient).then(result => {
+        if (result.rowCount > 0) {
+            return result.rows[0].id;
+        } else {
+            throw new Error("500:Route could not be created");
+        }
     });
 }
 
-export function getRouteById(id: number): Promise<RouteDataModel> {
-    return new Promise((resolve, reject) => {
-        // Acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                reject(err);
-                return console.error("error fetching client from pool", err);
-            }
-            const query = "SELECT id, owner, departuretime, arrivalTime, days::integer, ST_AsText(route) AS route " +
-                "FROM routes where id=$1";
-            client.query(query, [id], (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    reject("error running query: " + error);
-                    return;
-                }
-
-                if (result.rows[0]) {
-                    // return the route
-                    resolve(RouteDataModel.fromSQLRow(result.rows[0]));
-                } else {
-                    reject("404:Route doesn't exist");
-                }
-            });
-        });
+export function getRouteById(id: number, providedClient = null) {
+    const query = "SELECT id, owner, departuretime, arrivalTime, days::integer, ST_AsText(route) AS route " +
+        "FROM routes where id=$1";
+    return sqlTransaction(query, [id], providedClient).then(result => {
+        if (result.rows[0]) {
+            return RouteDataModel.fromSQLRow(result.rows[0]);
+        } else {
+            throw new Error("404:Route doesn't exist");
+        }
     });
 }
 
@@ -206,36 +219,21 @@ export function coordsToLineString(coords: number[][]): string {
     }).join(",") + ")";
 }
 
-export function getRoutesNearby(radius: number, lat: number, lon: number): Promise<RouteDataModel[]> {
-    return new Promise((resolve, reject) => {
-        if (radius > 2000 || radius < 1) {
+export function coordsToPointString(coord: [number, number]): string {
+    return "POINT(" + coord.join(" ") + ")";
+}
+
+export function getRoutesNearby(radius: number, lat: number, lon: number, providedClient = null): Promise<any> {
+    if (radius > 2000 || radius < 1) {
+        return new Promise((resolve, reject) => {
             reject("400:Radius out of bounds");
-            return;
-        }
-        // Acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                reject(err);
-                return console.error("error fetching client from pool", err);
-            }
-            const query = "select id, owner, departuretime, arrivalTime, ST_AsText(route) AS route from routes " +
-                "where ST_DISTANCE(route, ST_GeogFromText($2) ) < $1";
-            const geoJson = "POINT(" + lat + " " + lon + ")";
-            client.query(query, [radius, geoJson], (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    reject("error running query: " + error);
-                    return;
-                }
-
-                resolve(result.rows.map(RouteDataModel.fromSQLRow));
-            });
         });
-
+    }
+    const query = "select id, owner, departuretime, arrivalTime, ST_AsText(route) AS route from routes " +
+        "where ST_DISTANCE(route, ST_GeogFromText($2) ) < $1";
+    const geoJson = "POINT(" + lat + " " + lon + ")";
+    return sqlTransaction(query, [radius, geoJson], providedClient).then(result => {
+        return result.rows.map(RouteDataModel.fromSQLRow);
     });
 }
 
@@ -245,22 +243,7 @@ export function getRoutesNearby(radius: number, lat: number, lon: number): Promi
  *
  * @returns routes - A list of RouteDataModels
  */
-export function matchRoutes(
-    matchParams: {
-        start: {
-            latitude: number,
-            longitude: number,
-            radius: number,
-        },
-        end: {
-            latitude: number,
-            longitude: number,
-            radius: number,
-        },
-        days?: string[],
-        time?: number,
-    }
-): Promise<{
+export function matchRoutes(matchParams: RouteQuery, providedClient = null): Promise<{
     id: number,
     meetingTime: number,
     days: string[],
@@ -268,103 +251,84 @@ export function matchRoutes(
     meetingPoint: number[],
     divorcePoint: number[]
 }[]> {
-    return new Promise((resolve, reject) => {
-        if (matchParams.start.radius > 2000 || matchParams.start.radius < 1) {
-            reject("400:Start radius out of bounds. Must be between 1m and 2km");
-            return;
-        } else if (matchParams.end.radius > 2000 || matchParams.end.radius < 1) {
-            reject("400:End radius out of bounds. Must be between 1m and 2km");
-            return;
-        }
-        // Acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                reject(err);
-                return console.error("error fetching client from pool", err);
-            }
-            let query = "" +
-                "SELECT id, " +
-                "       departureTime + distFromStart*(arrivalTime - departureTime) AS meetingTime, " +
-                "       (days & $5::integer::bit(7))::integer AS days, " +
-                "       ST_AsText(ST_LineInterpolatePoint(route::geometry, distFromStart)) AS meetingPoint, " +
-                "       ST_AsText(ST_LineInterpolatePoint(route::geometry, distFromEnd)) AS divorcePoint, " +
-                "       owner " +
-                "FROM ( " +
-                "   SELECT  id, " +
-                "           (ST_LineLocatePoint(route::geometry, ST_GeogFromText($1)::geometry)) " +
-                "               AS distFromStart, " +
-                "           (ST_LineLocatePoint(route::geometry, ST_GeogFromText($2)::geometry)) " +
-                "               AS distFromEnd, " +
-                "           arrivalTime, " +
-                "           departureTime, " +
-                "           days, " +
-                "           owner, " +
-                "           route " +
-                "   FROM routes WHERE " +
-                "       ST_DWithin(ST_GeogFromText($1), route, $3) " +
-                "   AND" +
-                "       ST_DWithin(ST_GeogFromText($2), route, $4) " +
-                ") AS matchingRoutes " +
-                "WHERE " +
-                "   distFromStart < distFromEnd ";
-            const startPoint = "POINT(" + matchParams.start.latitude + " " + matchParams.start.longitude + ")";
-            const endPoint = "POINT(" + matchParams.end.latitude + " " + matchParams.end.longitude + ")";
-            let queryParams = [startPoint, endPoint, matchParams.start.radius, matchParams.end.radius];
-
-            // Add a filter for days of the week
-            if (matchParams.days !== undefined) {
-                /* tslint:disable no-bitwise */
-                const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-                const daysBitmask = matchParams.days.map((day) => {
-                    return 1 << daysOfWeek.indexOf(day);
-                }).reduce((days, day) => {
-                    return days | day;
-                }, 0);
-                /* tslint:enable no-bitwise */
-                query += "AND (days & $5::integer::bit(7) != b'0000000') ";
-                queryParams.push(daysBitmask);
-            } else {
-                queryParams.push(127);  // 127 = 1111111
-            }
-            // Add sorting by time
-            if (matchParams.time !== undefined) {
-                query += "ORDER BY ABS(" +
-                    "departureTime + distFromStart*(departureTime - arrivalTime) - $6)";
-                queryParams.push(matchParams.time);
-            } else {
-                query += "ORDER BY meetingTime";
-            }
-            client.query(query + ";", queryParams, (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    reject("error running query: " + error);
-                    return;
-                }
-
-                resolve(result.rows.map((row) => {
-                    const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-                    /* tslint:disable no-bitwise */
-                    const days = daysOfWeek.filter((day, i) => {
-                        return row.days & 1 << i;
-                    });
-                    /* tslint:enable no-bitwise */
-                    return {
-                        days,
-                        divorcePoint: pointStringToCoords(row.divorcepoint),
-                        id: row.id,
-                        meetingPoint: pointStringToCoords(row.meetingpoint),
-                        meetingTime: row.meetingtime,
-                        owner: row.owner,
-                    };
-                }));
-            });
+    if (matchParams.radius > 2000 || matchParams.radius < 1) {
+        return new Promise((resolve, reject) => {
+            reject("400:Radius out of bounds. Must be between 1m and 2km");
         });
+    }
 
+    let query = "" +
+        "SELECT id, " +
+        "       departureTime + distFromStart*(arrivalTime - departureTime) AS meetingTime, " +
+        "       (days & $4::integer::bit(7))::integer AS days, " +
+        "       ST_AsText(ST_LineInterpolatePoint(route::geometry, distFromStart)) AS meetingPoint, " +
+        "       ST_AsText(ST_LineInterpolatePoint(route::geometry, distFromEnd)) AS divorcePoint, " +
+        "       owner " +
+        "FROM ( " +
+        "   SELECT  id, " +
+        "           (ST_LineLocatePoint(route::geometry, ST_GeogFromText($1)::geometry)) " +
+        "               AS distFromStart, " +
+        "           (ST_LineLocatePoint(route::geometry, ST_GeogFromText($2)::geometry)) " +
+        "               AS distFromEnd, " +
+        "           arrivalTime, " +
+        "           departureTime, " +
+        "           days, " +
+        "           owner, " +
+        "           route " +
+        "   FROM routes WHERE " +
+        "       ST_DWithin(ST_GeogFromText($1), route, $3) " +
+        "   AND" +
+        "       ST_DWithin(ST_GeogFromText($2), route, $3) " +
+        ") AS matchingRoutes " +
+        "WHERE " +
+        "   distFromStart < distFromEnd ";
+    const startPoint = "POINT(" + matchParams.startPoint[0] + " " + matchParams.startPoint[1] + ")";
+    const endPoint = "POINT(" + matchParams.endPoint[0] + " " + matchParams.endPoint[1] + ")";
+    let queryParams = [startPoint, endPoint, matchParams.radius];
+
+    // Add a filter for days of the week
+    if (matchParams.days !== undefined) {
+        /* tslint:disable no-bitwise */
+        const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+        const daysBitmask = matchParams.days.map((day) => {
+            return 1 << daysOfWeek.indexOf(day);
+        }).reduce((days, day) => {
+            return days | day;
+        }, 0);
+        /* tslint:enable no-bitwise */
+        query += "AND (days & $4::integer::bit(7) != b'0000000') ";
+        queryParams.push(daysBitmask);
+    } else {
+        queryParams.push(127);  // 127 = 1111111
+    }
+    // Add sorting by time
+    if (matchParams.arrivalTime !== undefined) {
+        query += "ORDER BY ABS(" +
+            "departureTime + distFromStart*(departureTime - arrivalTime) - $5)";
+        queryParams.push(matchParams.arrivalTime);
+    } else {
+        query += "ORDER BY meetingTime";
+    }
+
+    return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
+        return result.rows.map((row) => {
+            const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+            /* tslint:disable no-bitwise */
+            const days = daysOfWeek.filter((day, i) => {
+                return row.days & 1 << i;
+            });
+            /* tslint:enable no-bitwise */
+            return {
+                days,
+                divorcePoint: pointStringToCoords(row.divorcepoint),
+                id: row.id,
+                meetingPoint: pointStringToCoords(row.meetingpoint),
+                meetingTime: row.meetingtime,
+                owner: row.owner,
+            };
+        });
     });
+
 }
 
 // Updates a route from the given update object
@@ -375,8 +339,9 @@ export function updateRoute(
         departureTime?: number,
         days?: string[],
         route?: number[][],
-    }): Promise<boolean> {
-    return new Promise((resolve, reject) => {
+    },
+    providedClient = null): Promise<boolean> {
+
         // Move the updated properties into the existing model, and validate the new route
         existingRoute.arrivalTime = updates.arrivalTime !== undefined ?
             updates.arrivalTime : existingRoute.arrivalTime;
@@ -385,52 +350,45 @@ export function updateRoute(
         existingRoute.days = updates.days !== undefined ? updates.days : existingRoute.days;
         existingRoute.route = updates.route !== undefined ? updates.route : existingRoute.route;
 
+        let error;
         if (existingRoute.arrivalTime < existingRoute.departureTime) {
-            reject("400:Arrival time is before Departure time");
-            return;
+            error = "400:Arrival time is before Departure time";
         } else if (existingRoute.route.length < 2) {
-            reject("400:Route requires at least 2 points");
-            return;
+            error = "400:Route requires at least 2 points";
         } else if (Math.max(...existingRoute.route.map(pair => { return pair.length; })) > 2) {
-            reject("400:Coordinates in a Route should only have 2 items in them, [latitude, longitude]");
-            return;
+            error = "400:Coordinates in a Route should only have 2 items in them, [latitude, longitude]";
         } else if (Math.min(...existingRoute.route.map(pair => { return pair.length; })) < 2) {
-            reject("400:Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]");
-            return;
+            error = "400:Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]";
+        }
+        if (typeof error !== "undefined") {
+            return new Promise((resolve, reject) => { reject(error); } );
         }
 
-        // to run a query we can acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                console.error("error fetching client from pool", err);
-                reject(err);
-                return;
-            }
-            const query = "UPDATE routes " +
-                "SET route = $1, arrivalTime = $2, departureTime = $3, days = $4::integer::bit(7) " +
-                "WHERE id = $5";
-            const sqlParams = [coordsToLineString(existingRoute.route),
+        const query = "UPDATE routes " +
+        "SET route = $1, arrivalTime = $2, departureTime = $3, days = $4::integer::bit(7) " +
+        "WHERE id = $5";
+        const sqlParams = [coordsToLineString(existingRoute.route),
             existingRoute.arrivalTime, existingRoute.departureTime,
             existingRoute.getDaysBitmask(), existingRoute.id];
-            client.query(query, sqlParams, (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
 
-                if (error) {
-                    // logger.error("error running query", error);
-                    reject("error running query: " + error);
-                    return;
-                }
-
-                // return true
-                resolve(true);
-            });
+        return sqlTransaction(query, sqlParams, providedClient).then(result => {
+            return true;
         });
+}
+
+export function deleteRoute(id: number, providedClient = null): Promise<Boolean> {
+    const query = "DELETE FROM routes WHERE id=$1";
+    return sqlTransaction(query, [id], providedClient).then(result => {
+        if (result.rowCount) {
+            return true;
+        } else {
+            throw new Error("404:Route doesn't exist");
+        }
     });
 }
 
-export function deleteRoute(id: number): Promise<Boolean> {
+export function createRouteQuery(owner: number, routeQ: RouteQuery): Promise<Boolean> {
+    routeQ = new RouteQuery(routeQ);
     return new Promise((resolve, reject) => {
         // Acquire a client from the pool,
         // run a query on the client, and then return the client to the pool
@@ -439,8 +397,18 @@ export function deleteRoute(id: number): Promise<Boolean> {
                 reject(err);
                 return console.error("error fetching client from pool", err);
             }
-            const query = "DELETE FROM routes WHERE id=$1";
-            client.query(query, [id], (error, result) => {
+            const query = "INSERT INTO route_queries (startPoint, endPoint, radius, days, arrivalTime, owner)" +
+                "VALUES (ST_GeogFromText($1), ST_GeogFromText($2), $3, $4::integer::bit(7), $5, $6)" +
+                "RETURNING id";
+            const queryParams = [
+                coordsToPointString(routeQ.startPoint),
+                coordsToPointString(routeQ.endPoint),
+                routeQ.radius,
+                routeQ.getDaysBitmask(),
+                routeQ.arrivalTime,
+                owner,
+            ];
+            client.query(query, queryParams, (error, result) => {
                 // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
                 done(error);
 
@@ -448,13 +416,8 @@ export function deleteRoute(id: number): Promise<Boolean> {
                     // logger.error("error running query", error);
                     reject("error running query: " + error);
                     return;
-                }
-
-                if (result.rowCount) {
-                    resolve(true);
                 } else {
-                    reject("404:Route doesn't exist");
-                    return;
+                    resolve(result.rows[0].id);
                 }
             });
         });
@@ -472,184 +435,108 @@ export function deleteRoute(id: number): Promise<Boolean> {
  *
  * @returns A User object
  */
-export function putUser(name, email, pwh, salt, rounds, jwtSecret): Promise<User> {
-    return new Promise((resolve, reject) => {
-        // to run a query we can acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                reject(err);
-                return console.error("error fetching client from pool", err);
+export function putUser(params, providedClient = null): Promise<User> {
+    const query = "INSERT INTO users (name, email, pwh, salt, rounds, jwt_secret) " +
+        "VALUES ($1,$2,$3,$4,$5,$6) RETURNING *";
+    const sqlParams = [
+        params.name,
+        params.email,
+        params.pwh,
+        params.salt,
+        params.rounds,
+        params.jwtSecret,
+    ];
+    return sqlTransaction(query, sqlParams, providedClient)
+        .then((result) => {
+            return User.fromSQLRow(result.rows[0]);
+        })
+        .catch((error) => {
+            if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
+                throw new Error("409:An account already exists using this email");
+            } else {
+                throw new Error("error running query: " + error);
             }
-            const query = "INSERT INTO users (name, email, pwh, salt, rounds, jwt_secret) " +
-                "VALUES ($1,$2,$3,$4,$5,$6) RETURNING *";
-            const sqlParams = [name, email, pwh, salt, rounds, jwtSecret];
-            client.query(query, sqlParams, (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
-                        reject("409:An account already exists using this email");
-                    }
-                    reject("error running query: " + error);
-                    return;
-                }
-                // return the new user
-                resolve(User.fromSQLRow(result.rows[0]));
-            });
         });
-    });
 }
 
 /**
  * Update a user in the database
  * @param id - The user id to be updated
  * @param updates - An object with the new values to be applied to the user
+ * @param providedClient - existing client for running the query in a transaction
  *
  * @returns A promise that resolves when the user is updated
  */
-export function updateUser(id, updates): Promise<Boolean> {
-    return new Promise((resolve, reject) => {
-        // to run a query we can acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                reject(err);
-                return console.error("error fetching client from pool", err);
-            }
-            let queryParts = [];
-            let sqlParams = [id];
-            const keys = Object.keys(updates);
-            keys.forEach((key, i) => {
-                queryParts.push(key + " = $" + (i + 2) + " ");
-                sqlParams.push(updates[key]);
-            });
-            if (queryParts.length === 0) {
-                reject("400:No valid values to update");
-            }
-            const query = "UPDATE users SET " + queryParts.join(", ") + " WHERE id = $1;";
-            client.query(query, sqlParams, (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
-                        reject("409:An account already exists using this email");
-                    }
-                    reject("error running query: " + error);
-                    return;
-                }
-                // resolve
-                resolve(true);
-            });
-        });
+export function updateUser(id, updates, providedClient = null): Promise<Boolean> {
+    let queryParts = [];
+    let sqlParams = [id];
+    const keys = Object.keys(updates);
+    keys.forEach((key, i) => {
+        queryParts.push(key + " = $" + (i + 2) + " ");
+        sqlParams.push(updates[key]);
     });
+    if (queryParts.length === 0) {
+        throw new Error("400:No valid values to update");
+    }
+    const query = "UPDATE users SET " + queryParts.join(", ") + " WHERE id = $1;";
+    return sqlTransaction(query, sqlParams, providedClient)
+        .then((result) => {
+            return true;
+        })
+        .catch((error) => {
+            if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
+                throw new Error("409:An account already exists using this email");
+            } else {
+                throw new Error("error running query: " + error);
+            }
+        });
 }
 
 /**
  * Get a user from the database by email
  * @param email - Email address to search for
+ * * @param providedClient - preexisting sql transaction client to run this operation on
  *
  * @returns A User object of the specified type
  */
-export function getUserByEmail(email: string): Promise<User> {
-    return new Promise((resolve, reject) => {
-        // to run a query we can acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                reject(err);
-                return console.error("error fetching client from pool", err);
-            }
-            const query = "SELECT * FROM users WHERE email=$1";
-            client.query(query, [email], (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    reject("error running query: " + error);
-                    return;
-                }
-                // return the user
-                if (result.rowCount) {
-                    resolve(User.fromSQLRow(result.rows[0]));
-                } else {
-                    reject("404:User doesn't exist");
-                    return;
-                }
-            });
-        });
+export function getUserByEmail(email: string, providedClient = null): Promise<User> {
+    const query = "SELECT * FROM users WHERE email=$1";
+    return sqlTransaction(query, [email], providedClient).then(result => {
+        if (result.rowCount > 0) {
+            return User.fromSQLRow(result.rows[0]);
+        } else {
+            throw new Error("404:User doesn't exist");
+        }
     });
 }
 
 /**
  * Get a user from the database by ID
+ * @param providedClient - The postgresql client instance to run the query against
  * @param id - User id to get by
+ * @param providedClient - preexisting sql transaction client to run this operation on
  *
  * @returns A User object of the specified type
  */
-export function getUserById(id: number): Promise<User> {
-    return new Promise((resolve, reject) => {
-        // to run a query we can acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                reject(err);
-                return console.error("error fetching client from pool", err);
-            }
-            const query = "SELECT * FROM users WHERE id=$1";
-            client.query(query, [id], (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    reject("error running query: " + error);
-                    return;
-                }
-                // return the user
-                if (result.rowCount) {
-                    resolve(User.fromSQLRow(result.rows[0]));
-                } else {
-                    reject("404:User doesn't exist");
-                    return;
-                }
-            });
-        });
+export function getUserById(id: number, providedClient = null): Promise<User> {
+    const query = "SELECT * FROM users WHERE id=$1";
+    return sqlTransaction(query, [id], providedClient).then(result => {
+        if (result.rowCount > 0) {
+            return User.fromSQLRow(result.rows[0]);
+        } else {
+            throw new Error("404:User doesn't exist");
+        }
     });
 }
 
-export function deleteUser(id: number): Promise<Boolean> {
-    return new Promise((resolve, reject) => {
-        // Acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                reject(err);
-                return console.error("error fetching client from pool", err);
+export function deleteUser(id: number, providedClient = null): Promise<Boolean> {
+    const query = "DELETE FROM users WHERE id=$1";
+    return sqlTransaction(query, [id], providedClient)
+        .then((result) => {
+            if (result.rowCount) {
+                return true;
+            } else {
+                throw new Error("404:User doesn't exist");
             }
-            const query = "DELETE FROM users WHERE id=$1";
-            client.query(query, [id], (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    reject("error running query: " + error);
-                    return;
-                }
-
-                if (result.rowCount) {
-                    resolve(true);
-                } else {
-                    reject("404:User doesn't exist");
-                    return;
-                }
-            });
         });
-    });
 }

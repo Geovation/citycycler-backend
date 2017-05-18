@@ -176,7 +176,10 @@ gulp.task("unittest", ["pre-test"], () => {
     .pipe(mocha({
       verbose: true,
       includeStackTrace: true,
-      timeout: 5000
+      timeout: 5000,
+      // debugBrk: true,
+      // debug: true,
+      // inspect: true
     }))
     .on('error', (err) => {
       console.log("error: ", err);

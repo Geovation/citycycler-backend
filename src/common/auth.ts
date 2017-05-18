@@ -11,8 +11,8 @@ export const minimumHashingRounds = 30000;
  * @param authHeader
  * @param uid
  */
-export function isUser(authHeader: string, uid: number): Promise<boolean> {
-    return getIdFromJWT(authHeader)
+export function isUser(authHeader: string, uid: number, providedClient = null): Promise<boolean> {
+    return getIdFromJWT(authHeader, providedClient)
         .then(id => {
             return id === uid;
         }, err => {
@@ -26,9 +26,9 @@ export function isUser(authHeader: string, uid: number): Promise<boolean> {
  * @param uid
  * @param onAuth
  */
-export function doIfUser(authHeader: string, uid: number, onAuth: Function): Promise<any> {
+export function doIfUser(authHeader: string, uid: number, onAuth: Function, providedClient = null): Promise<any> {
     return new Promise((resolve, reject) => {
-        isUser(authHeader, uid).then(valid => {
+        isUser(authHeader, uid, providedClient).then(valid => {
             if (valid) {
                 resolve(onAuth());
             } else {
@@ -42,7 +42,7 @@ export function doIfUser(authHeader: string, uid: number, onAuth: Function): Pro
  * Return the user ID from a given token, after verifying that this is the correct user
  * @param authHeader
  */
-export function getIdFromJWT(authHeader: string): Promise<number> {
+export function getIdFromJWT(authHeader: string, providedClient = null): Promise<number> {
     return new Promise((resolve, reject) => {
         if (authHeader === undefined) {
             reject("403:Invalid authorisation");
@@ -55,7 +55,7 @@ export function getIdFromJWT(authHeader: string): Promise<number> {
             json: true,
         });
         // Get the user, so we can use their secret to verify the JWT
-        Database.getUserById(payload.id).then(user => {
+        Database.getUserById(payload.id, providedClient).then(user => {
             try {
                 jwt.verify(token, user.jwtSecret, {
                     algorithms: ["HS256"],

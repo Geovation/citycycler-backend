@@ -106,7 +106,7 @@ const service = (broadcast: Function, params: any): any => {
             throw "403:Invalid authorisation";
         }
         getIdFromJWT(params.authorisation);
-        return Database.getUserById(id).then(user => {
+        Database.getUserById(id).then(user => {
             return user.asUserProfile();
         });
     } catch (err) {

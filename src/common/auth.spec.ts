@@ -18,43 +18,40 @@ chai.use(chaiAsPromised);
 describe("MatchMyRoute Auth Functions", () => {
     const secret = crypto.randomBytes(20).toString("base64");
     let uid;
-    before(done => {
+    let transactionClient;
+    before(() => {
         // Shut down any running database pools
         Database.shutDownPool();
         // Start a new database pool
         Database.startUpPool(true);
 
-        Database.resetDatabase().then(
+        return Database.resetDatabase().then(
             // this should go into the respective tests to be atomic
             // Create a test user
             e => {
-                return Database.putUser(
-                    "Test User",
-                    "test@example.com",
-                    new Buffer("test"),
-                    new Buffer("test"),
-                    1,
-                    secret);
-            }
-        ).then(
-            (u) => {
-                console.log("user successfully created");
-                uid = u.id;
-                done();
-            }
-            ).catch(
-                err => { return (err); }
-        );
+                return Database.createTransactionClient();
+            }).then(newClient => {
+                transactionClient = newClient;
+                return transactionClient;
+            }).then(client => {
+                return Database.putUser({
+                    email: "test@example.com",
+                    jwtSecret: secret,
+                    name: new Buffer("test"),
+                    pwh: new Buffer("test"),
+                    rounds: 1,
+                    salt: "salty",
+                }, transactionClient);
+            }).then(createdUser => {
+                uid = createdUser.id;
+                return true;
+            });
     });
     // Remove the test user
-    after(done => {
-        Database.deleteUser(uid).then(() => {
-            Database.shutDownPool();
-            done();
-        }, err => {
-            Database.shutDownPool();
-            done();
-        });
+    after(() => {
+        return Database.rollbackAndReleaseTransaction(transactionClient).then(
+            () => Database.shutDownPool()
+        );
     });
     // The tests
     describe("getIdFromJWT", () => {
@@ -64,21 +61,21 @@ describe("MatchMyRoute Auth Functions", () => {
                 expiresIn: 1209600,
                 issuer: "MatchMyRoute Backend",
             });
-            return Auth.getIdFromJWT("Bearer " + validToken).then(decodedUid => {
+            return Auth.getIdFromJWT("Bearer " + validToken, transactionClient).then(decodedUid => {
                 expect(decodedUid).to.equal(uid, "Incorrect uid decoded from token. Expected " + uid +
                     " but got " + decodedUid);
             });
         });
         it("should not accept auth not in the Bearer <token> format", done => {
-            const promise = Auth.getIdFromJWT("FooBar sadf89q23nnqmw.o8sdo2342");
+            const promise = Auth.getIdFromJWT("FooBar sadf89q23nnqmw.o8sdo2342", transactionClient);
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not accept auth with a missing JWT token", done => {
-            const promise = Auth.getIdFromJWT("Bearer");
+            const promise = Auth.getIdFromJWT("Bearer", transactionClient);
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not accept auth with an invaid JWT token", done => {
-            const promise = Auth.getIdFromJWT("Bearer AHoq3bAJ#93ns98fq3lJKALjsa");
+            const promise = Auth.getIdFromJWT("Bearer AHoq3bAJ#93ns98fq3lJKALjsa", transactionClient);
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not accept auth with another user's token", done => {
@@ -87,7 +84,7 @@ describe("MatchMyRoute Auth Functions", () => {
                 expiresIn: 1209600,	// 2 weeks
                 issuer: "MatchMyRoute Backend",
             });
-            const promise = Auth.getIdFromJWT("Bearer " + invalidToken);
+            const promise = Auth.getIdFromJWT("Bearer " + invalidToken, transactionClient);
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not accept auth by a token with a different issuer", done => {
@@ -96,7 +93,7 @@ describe("MatchMyRoute Auth Functions", () => {
                 expiresIn: 1209600,
                 issuer: "Another Issuer",
             });
-            const promise = Auth.getIdFromJWT("Bearer " + invalidToken);
+            const promise = Auth.getIdFromJWT("Bearer " + invalidToken, transactionClient);
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not accept auth by an expired token", done => {
@@ -105,7 +102,7 @@ describe("MatchMyRoute Auth Functions", () => {
                 expiresIn: -1,
                 issuer: "MatchMyRoute Backend",
             });
-            const promise = Auth.getIdFromJWT("Bearer " + invalidToken);
+            const promise = Auth.getIdFromJWT("Bearer " + invalidToken, transactionClient);
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not accept auth by an unsigned token", done => {
@@ -114,13 +111,13 @@ describe("MatchMyRoute Auth Functions", () => {
                 expiresIn: 1209600,
                 issuer: "MatchMyRoute Backend",
             });
-            const promise = Auth.getIdFromJWT("Bearer " + invalidToken);
+            const promise = Auth.getIdFromJWT("Bearer " + invalidToken, transactionClient);
             expect(promise).to.be.rejected.and.notify(done);
         });
     });
     describe("generateJWTFor", () => {
         it("should create a reversible token", () => {
-            return Database.getUserById(uid).then(user => {
+            return Database.getUserById(uid, transactionClient).then(user => {
                 const token = Auth.generateJWTFor(user).token;
                 const decodeFunction = () => {
                     return jwt.verify(token, secret, {
@@ -142,7 +139,7 @@ describe("MatchMyRoute Auth Functions", () => {
                 expiresIn: 1209600,
                 issuer: "MatchMyRoute Backend",
             });
-            const promise = Auth.isUser("Bearer " + validToken, uid);
+            const promise = Auth.isUser("Bearer " + validToken, uid, transactionClient);
             expect(promise).to.eventually.equal(true, ".isUser said that the valid token did not belong to the user")
                 .and.notify(done);
         });
@@ -152,7 +149,7 @@ describe("MatchMyRoute Auth Functions", () => {
                 expiresIn: 1209600,
                 issuer: "MatchMyRoute Backend",
             });
-            const promise = Auth.isUser("Bearer " + invalidToken, uid);
+            const promise = Auth.isUser("Bearer " + invalidToken, uid, transactionClient);
             expect(promise).to.eventually.equal(false, ".isUser said that the invalid token did belong to the user")
                 .and.notify(done);
         });
@@ -168,7 +165,7 @@ describe("MatchMyRoute Auth Functions", () => {
             });
             const promise = Auth.doIfUser("Bearer " + validToken, uid, () => {
                 return "executed!";
-            }).catch(err => {
+            }, transactionClient).catch(err => {
                 return "rejected!";
             });
             expect(promise).to.eventually.equal("executed!", "doIfUser rejected the valid auth given")
@@ -182,7 +179,7 @@ describe("MatchMyRoute Auth Functions", () => {
             });
             const promise = Auth.doIfUser("Bearer " + invalidToken, uid, () => {
                 return "executed!";
-            }).catch(err => {
+            }, transactionClient).catch(err => {
                 return "rejected!";
             });
             expect(promise).to.eventually.equal("rejected!", "doIfUser accepted the invalid auth given")

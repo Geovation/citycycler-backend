@@ -141,7 +141,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
             }
         });
     }).then(pwh => {
-        return Database.putUser(name, email, pwh, salt, rounds, jwtSecret).then(user => {
+        return Database.putUser({name, email, pwh, salt, rounds, jwtSecret}).then(user => {
             return {
                 id: user.id,
                 jwt: generateJWTFor(user),
