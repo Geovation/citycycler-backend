@@ -167,7 +167,7 @@ export function startUpPool(testing: boolean): void {
 /**
  * resetDatabase - resets the database schema in the given database to original state
  */
-export function resetDatabase(): Promise<boolean> {
+export function resetDatabase() {
     return sql("DROP SCHEMA IF EXISTS public CASCADE;", [])
         .then(result => {
             return sql("CREATE SCHEMA public AUTHORIZATION " + process.env.PGUSER + ";", []);
