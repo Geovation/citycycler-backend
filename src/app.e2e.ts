@@ -682,10 +682,10 @@ describe("MatchMyRoute API", () => {
                             method: "POST",
                             url: url + "/user/auth",
                         }, (error, response, body) => {
-                            expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
+                            expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                                 response.statusCode + ", body returned is: " + JSON.stringify(body));
-                            expect(body.error).to.equal("User doesn't exist");
-                            expect(body.status).to.equal(404);
+                            expect(body.error).to.equal("Incorrect Password");
+                            expect(body.status).to.equal(403);
                             done();
                         });
                     });
