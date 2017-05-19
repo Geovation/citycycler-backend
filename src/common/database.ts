@@ -448,13 +448,17 @@ export function putUser(params, providedClient = null): Promise<User> {
     ];
     return sqlTransaction(query, sqlParams, providedClient)
         .then((result) => {
-            return User.fromSQLRow(result.rows[0]);
+            if (result.rowCount > 0) {
+                return User.fromSQLRow(result.rows[0]);
+            } else {
+                throw new Error("409:Could not create user (duplicate?)");
+            }
         })
         .catch((error) => {
             if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
                 throw new Error("409:An account already exists using this email");
             } else {
-                throw new Error("error running query: " + error);
+                throw new Error("409:An account already exists using this email");
             }
         });
 }
