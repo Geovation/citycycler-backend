@@ -356,14 +356,6 @@ export function matchRoutes(
                 return row.days & 1 << i;
             });
             /* tslint:enable no-bitwise */
-            // return {
-            //     days,
-            //     divorcePoint: pointStringToCoords(row.divorcepoint),
-            //     id: row.id,
-            //     meetingPoint: pointStringToCoords(row.meetingpoint),
-            //     meetingTime: row.meetingtime,
-            //     owner: row.owner,
-            // };
             return {
                 days,
                 distanceFromDivorcePoint: row.distanceFromDivorcePoint,
