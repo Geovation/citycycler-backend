@@ -99,19 +99,13 @@ const definitions = {
 // SWAGGER: end //
 // ///////////////
 
-const service = (broadcast: Function, params: any): any => {
+const service = (broadcast: Function, params: any): Promise<any> => {
     const id = parseInt(params.id, 10);
-    try {
-        if (!params.authorisation) {
-            throw "403:Invalid authorisation";
-        }
-        getIdFromJWT(params.authorisation);
-        Database.getUserById(id).then(user => {
+    return getIdFromJWT(params.authorisation).then(() => {
+        return Database.getUserById(id).then(user => {
             return user.asUserProfile();
         });
-    } catch (err) {
-        throw err;
-    }
+    });
 };
 
 export const getById = new MicroserviceEndpoint("getUser")
