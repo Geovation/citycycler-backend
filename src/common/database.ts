@@ -96,10 +96,6 @@ export function sqlTransaction(query: string, params: Array<any> = [], providedC
     return checkClient(providedClient).then(returnedClient => {
         client = returnedClient;
         return client.query(query, params);
-    }).catch(e => {
-        // console.log("error in sql transaction");
-        // // console.log(e);
-        return e;
     }).then(response => {
         if (providedClient === null) {
             // console.log("releasing new client");
