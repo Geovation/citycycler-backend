@@ -89,13 +89,14 @@ export class MicroserviceEndpoint extends APIEndpoint {
 
     public addService(service: Function): IEndpoint {
         const formatError = e => {
-            if (typeof e === "string" && e.indexOf(":") !== -1 &&
-                !isNaN(parseInt(e.split(":")[0], 10))) {
+            const message = typeof e.message === "string" ? e.message : e;
+            if (typeof message === "string" && message.indexOf(":") !== -1 &&
+                !isNaN(parseInt(message.split(":")[0], 10))) {
                 return {
                     ok: false,
                     result: {
-                        error: e.split(":")[1],
-                        status: parseInt(e.split(":")[0], 10),
+                        error: message.split(":")[1],
+                        status: parseInt(message.split(":")[0], 10),
                     },
                 };
             } else {
