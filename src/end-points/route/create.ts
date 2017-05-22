@@ -40,7 +40,7 @@ const operation = {
                 },
             },
             403: {
-                description: "An invalid authorisation token was supplied",
+                description: "An invalid authorization token was supplied",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
@@ -135,7 +135,7 @@ const definitions = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    return getIdFromJWT(params.authorisation).then(owner => {
+    return getIdFromJWT(params.authorization).then(owner => {
         params.body.owner = owner;
         return Database.putRoute(new RouteDataModel(params.body));
     }).then(routeId => {

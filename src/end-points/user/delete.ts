@@ -20,7 +20,7 @@ const operation = {
                 description: "The user was deleted",
             },
             403: {
-                description: "An invalid or non-existant authorisation token was supplied",
+                description: "An invalid or non-existant authorization token was supplied",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
@@ -55,7 +55,7 @@ const operation = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    return getIdFromJWT(params.authorisation).then(id => {
+    return getIdFromJWT(params.authorization).then(id => {
         return Database.deleteUser(id);
     });
 };

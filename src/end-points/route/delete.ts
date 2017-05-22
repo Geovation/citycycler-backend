@@ -28,7 +28,7 @@ const operation = {
                 description: "The route was deleted",
             },
             403: {
-                description: "An invalid authorisation token was supplied",
+                description: "An invalid authorization token was supplied",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
@@ -65,7 +65,7 @@ const operation = {
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const id = parseInt(params.id, 10);
     return Database.getRouteById(id).then(route => {
-        return doIfUser(params.authorisation, route.owner, () => {
+        return doIfUser(params.authorization, route.owner, () => {
             return Database.deleteRoute(id);
         });
     });

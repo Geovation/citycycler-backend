@@ -42,7 +42,7 @@ const operation = {
                 },
             },
             403: {
-                description: "An invalid authorisation token was supplied",
+                description: "An invalid authorization token was supplied",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
@@ -116,7 +116,7 @@ const definitions = {
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
-    return getIdFromJWT(params.authorisation).then(userId => {
+    return getIdFromJWT(params.authorization).then(userId => {
         let updates: any = {};
         let promises = [];
         if (payload.bio !== undefined && payload.bio.trim().length !== 0) {

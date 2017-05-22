@@ -61,7 +61,7 @@ describe("MatchMyRoute API", () => {
             promises.push(new Promise((resolve, reject) => {
                 defaultRequest({
                     headers: {
-                        Authorisation: "Bearer " + jwt,
+                        Authorization: "Bearer " + jwt,
                     },
                     method: "DELETE",
                     url: url + "/user?id=" + id,
@@ -241,7 +241,7 @@ describe("MatchMyRoute API", () => {
                 it("should get a user by a valid id", done => {
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[0],
+                            Authorization: "Bearer " + userJwts[0],
                         },
                         method: "GET",
                         url: url + "/user/" + userIds[0],
@@ -261,7 +261,7 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
-                        expect(body.error).to.equal("Invalid authorisation");
+                        expect(body.error).to.equal("Invalid authorization");
                         expect(body.status).to.equal(403);
                         done();
                     });
@@ -269,7 +269,7 @@ describe("MatchMyRoute API", () => {
                 it("should get a user if auth is for another user", done => {
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[1],
+                            Authorization: "Bearer " + userJwts[1],
                         },
                         method: "GET",
                         url: url + "/user/" + userIds[0],
@@ -285,7 +285,7 @@ describe("MatchMyRoute API", () => {
                 it("should not get a user if the id is invalid", done => {
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[0],
+                            Authorization: "Bearer " + userJwts[0],
                         },
                         method: "GET",
                         url: url + "/user/" + -1,
@@ -309,7 +309,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[0],
+                            Authorization: "Bearer " + userJwts[0],
                         },
                         json: userUpdates,
                         method: "POST",
@@ -319,7 +319,7 @@ describe("MatchMyRoute API", () => {
                              JSON.stringify(response));
                         defaultRequest({
                             headers: {
-                                Authorisation: "Bearer " + userJwts[0],
+                                Authorization: "Bearer " + userJwts[0],
                             },
                             method: "GET",
                             url: url + "/user/" + userIds[0],
@@ -332,7 +332,7 @@ describe("MatchMyRoute API", () => {
                             // Test password change by logging in with the new password
                             defaultRequest({
                                 headers: {
-                                    Authorisation: "Bearer " + userJwts[0],
+                                    Authorization: "Bearer " + userJwts[0],
                                 },
                                 json: {
                                     email: "updatedtest@example.com",
@@ -360,7 +360,7 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
-                        expect(body.error).to.equal("Invalid authorisation");
+                        expect(body.error).to.equal("Invalid authorization");
                         expect(body.status).to.equal(403);
                         done();
                     });
@@ -372,7 +372,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[0],
+                            Authorization: "Bearer " + userJwts[0],
                         },
                         json: userUpdates,
                         method: "POST",
@@ -391,7 +391,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[0],
+                            Authorization: "Bearer " + userJwts[0],
                         },
                         json: userUpdates,
                         method: "POST",
@@ -401,7 +401,7 @@ describe("MatchMyRoute API", () => {
                              JSON.stringify(response));
                         defaultRequest({
                             headers: {
-                                Authorisation: "Bearer " + userJwts[0],
+                                Authorization: "Bearer " + userJwts[0],
                             },
                             method: "GET",
                             url: url + "/user/" + userIds[0],
@@ -418,7 +418,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[0],
+                            Authorization: "Bearer " + userJwts[0],
                         },
                         json: userUpdates,
                         method: "POST",
@@ -428,7 +428,7 @@ describe("MatchMyRoute API", () => {
                              JSON.stringify(response));
                         defaultRequest({
                             headers: {
-                                Authorisation: "Bearer " + userJwts[0],
+                                Authorization: "Bearer " + userJwts[0],
                             },
                             method: "GET",
                             url: url + "/user/" + userIds[0],
@@ -445,7 +445,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[0],
+                            Authorization: "Bearer " + userJwts[0],
                         },
                         json: userUpdates,
                         method: "POST",
@@ -456,7 +456,7 @@ describe("MatchMyRoute API", () => {
                         // Test by logging in with the new password
                         defaultRequest({
                             headers: {
-                                Authorisation: "Bearer " + userJwts[0],
+                                Authorization: "Bearer " + userJwts[0],
                             },
                             json: {
                                 email: "test@example.com",
@@ -477,7 +477,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[0],
+                            Authorization: "Bearer " + userJwts[0],
                         },
                         json: userUpdates,
                         method: "POST",
@@ -487,7 +487,7 @@ describe("MatchMyRoute API", () => {
                              JSON.stringify(response));
                         defaultRequest({
                             headers: {
-                                Authorisation: "Bearer " + userJwts[0],
+                                Authorization: "Bearer " + userJwts[0],
                             },
                             method: "GET",
                             url: url + "/user/" + userIds[0],
@@ -504,7 +504,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[0],
+                            Authorization: "Bearer " + userJwts[0],
                         },
                         json: userUpdates,
                         method: "POST",
@@ -514,7 +514,7 @@ describe("MatchMyRoute API", () => {
                              JSON.stringify(response));
                         defaultRequest({
                             headers: {
-                                Authorisation: "Bearer " + userJwts[0],
+                                Authorization: "Bearer " + userJwts[0],
                             },
                             method: "GET",
                             url: url + "/user/" + userIds[0],
@@ -532,7 +532,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[0],
+                            Authorization: "Bearer " + userJwts[0],
                         },
                         json: userUpdates,
                         method: "POST",
@@ -549,7 +549,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[0],
+                            Authorization: "Bearer " + userJwts[0],
                         },
                         json: userUpdates,
                         method: "POST",
@@ -565,7 +565,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[0],
+                            Authorization: "Bearer " + userJwts[0],
                         },
                         json: userUpdates,
                         method: "POST",
@@ -581,7 +581,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[0],
+                            Authorization: "Bearer " + userJwts[0],
                         },
                         json: userUpdates,
                         method: "POST",
@@ -597,7 +597,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[0],
+                            Authorization: "Bearer " + userJwts[0],
                         },
                         json: userUpdates,
                         method: "POST",
@@ -616,7 +616,7 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
-                        expect(body.error).to.equal("Invalid authorisation");
+                        expect(body.error).to.equal("Invalid authorization");
                         expect(body.status).to.equal(403);
                         done();
                     });
@@ -624,7 +624,7 @@ describe("MatchMyRoute API", () => {
                 it("should let a user delete themself", done => {
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[0],
+                            Authorization: "Bearer " + userJwts[0],
                         },
                         method: "DELETE",
                         url: url + "/user",
@@ -694,7 +694,7 @@ describe("MatchMyRoute API", () => {
                     it("should provide a JWT", done => {
                         defaultRequest({
                             headers: {
-                                Authorisation: "Bearer " + userJwts[1],
+                                Authorization: "Bearer " + userJwts[1],
                             },
                             method: "GET",
                             url: url + "/user/auth",
@@ -723,7 +723,7 @@ describe("MatchMyRoute API", () => {
                         }, (error, response, body) => {
                             expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                                 response.statusCode + ", body returned is: " + JSON.stringify(body));
-                            expect(body.error).to.equal("Invalid authorisation");
+                            expect(body.error).to.equal("Invalid authorization");
                             expect(body.status).to.equal(403);
                             done();
                         });
@@ -731,14 +731,14 @@ describe("MatchMyRoute API", () => {
                     it("should not provide a JWT if there is invalid auth", done => {
                         defaultRequest({
                             headers: {
-                                Authorisation: "Bearer " + userJwts[0],
+                                Authorization: "Bearer " + userJwts[0],
                             },
                             method: "GET",
                             url: url + "/user/auth",
                         }, (error, response, body) => {
                             expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                                 response.statusCode + ", body returned is: " + JSON.stringify(body));
-                            expect(body.error).to.equal("Invalid authorisation");
+                            expect(body.error).to.equal("Invalid authorization");
                             expect(body.status).to.equal(403);
                             done();
                         });
@@ -770,7 +770,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[1],
+                            Authorization: "Bearer " + userJwts[1],
                         },
                         json: route,
                         method: "PUT",
@@ -794,7 +794,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[0],
+                            Authorization: "Bearer " + userJwts[0],
                         },
                         json: route,
                         method: "PUT",
@@ -802,7 +802,7 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
-                        expect(body.error).to.equal("Invalid authorisation");
+                        expect(body.error).to.equal("Invalid authorization");
                         expect(body.status).to.equal(403);
                         done();
                     });
@@ -815,7 +815,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[1],
+                            Authorization: "Bearer " + userJwts[1],
                         },
                         json: route,
                         method: "PUT",
@@ -841,7 +841,7 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
-                        expect(body.error).to.equal("Invalid authorisation");
+                        expect(body.error).to.equal("Invalid authorization");
                         expect(body.status).to.equal(403);
                         done();
                     });
@@ -892,7 +892,7 @@ describe("MatchMyRoute API", () => {
                         });
                         defaultRequest({
                             headers: {
-                                Authorisation: "Bearer " + userJwts[1],
+                                Authorization: "Bearer " + userJwts[1],
                             },
                             json: route,
                             method: "PUT",
@@ -924,7 +924,7 @@ describe("MatchMyRoute API", () => {
                         };
                         defaultRequest({
                             headers: {
-                                Authorisation: "Bearer " + userJwts[1],
+                                Authorization: "Bearer " + userJwts[1],
                             },
                             json: matchParams,
                             method: "POST",
@@ -973,7 +973,7 @@ describe("MatchMyRoute API", () => {
                         };
                         defaultRequest({
                             headers: {
-                                Authorisation: "Bearer " + userJwts[1],
+                                Authorization: "Bearer " + userJwts[1],
                             },
                             json: matchParams,
                             method: "POST",
@@ -1011,7 +1011,7 @@ describe("MatchMyRoute API", () => {
                         };
                         defaultRequest({
                             headers: {
-                                Authorisation: "Bearer " + userJwts[1],
+                                Authorization: "Bearer " + userJwts[1],
                             },
                             json: matchParams,
                             method: "POST",
@@ -1047,7 +1047,7 @@ describe("MatchMyRoute API", () => {
                         };
                         defaultRequest({
                             headers: {
-                                Authorisation: "Bearer " + userJwts[1],
+                                Authorization: "Bearer " + userJwts[1],
                             },
                             json: matchParams,
                             method: "POST",
@@ -1092,7 +1092,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[1],
+                            Authorization: "Bearer " + userJwts[1],
                         },
                         json: updates,
                         method: "POST",
@@ -1126,7 +1126,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[1],
+                            Authorization: "Bearer " + userJwts[1],
                         },
                         json: updates,
                         method: "POST",
@@ -1160,7 +1160,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[1],
+                            Authorization: "Bearer " + userJwts[1],
                         },
                         json: updates,
                         method: "POST",
@@ -1194,7 +1194,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[1],
+                            Authorization: "Bearer " + userJwts[1],
                         },
                         json: updates,
                         method: "POST",
@@ -1228,7 +1228,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[1],
+                            Authorization: "Bearer " + userJwts[1],
                         },
                         json: updates,
                         method: "POST",
@@ -1262,7 +1262,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[1],
+                            Authorization: "Bearer " + userJwts[1],
                         },
                         json: updates,
                         method: "POST",
@@ -1293,7 +1293,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[1],
+                            Authorization: "Bearer " + userJwts[1],
                         },
                         json: updates,
                         method: "POST",
@@ -1313,7 +1313,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[1],
+                            Authorization: "Bearer " + userJwts[1],
                         },
                         json: updates,
                         method: "POST",
@@ -1334,7 +1334,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[1],
+                            Authorization: "Bearer " + userJwts[1],
                         },
                         json: updates,
                         method: "POST",
@@ -1354,7 +1354,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[1],
+                            Authorization: "Bearer " + userJwts[1],
                         },
                         json: updates,
                         method: "POST",
@@ -1375,7 +1375,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[2],
+                            Authorization: "Bearer " + userJwts[2],
                         },
                         json: updates,
                         method: "POST",
@@ -1383,7 +1383,7 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
-                        expect(body.error).to.equal("Invalid authorisation");
+                        expect(body.error).to.equal("Invalid authorization");
                         expect(body.status).to.equal(403);
                         done();
                     });
@@ -1400,7 +1400,7 @@ describe("MatchMyRoute API", () => {
                     };
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[2],
+                            Authorization: "Bearer " + userJwts[2],
                         },
                         json: route,
                         method: "PUT",
@@ -1413,7 +1413,7 @@ describe("MatchMyRoute API", () => {
                 it("should not delete a route with an invalid id", done => {
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[1],
+                            Authorization: "Bearer " + userJwts[1],
                         },
                         method: "DELETE",
                         url: url + "/route?id=" + -1,
@@ -1432,7 +1432,7 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
-                        expect(body.error).to.equal("Invalid authorisation");
+                        expect(body.error).to.equal("Invalid authorization");
                         expect(body.status).to.equal(403);
                         done();
                     });
@@ -1440,14 +1440,14 @@ describe("MatchMyRoute API", () => {
                 it("should not be able to delete another user's route", done => {
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[2],
+                            Authorization: "Bearer " + userJwts[2],
                         },
                         method: "DELETE",
                         url: url + "/route?id=" + routeIds[0],
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
-                        expect(body.error).to.equal("Invalid authorisation");
+                        expect(body.error).to.equal("Invalid authorization");
                         expect(body.status).to.equal(403);
                         done();
                     });
@@ -1455,7 +1455,7 @@ describe("MatchMyRoute API", () => {
                 it("should delete a route", done => {
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[1],
+                            Authorization: "Bearer " + userJwts[1],
                         },
                         method: "DELETE",
                         url: url + "/route?id=" + routeIds[0],
@@ -1477,7 +1477,7 @@ describe("MatchMyRoute API", () => {
                     // Should delete routeIds[2], which we setup in beforeAll
                     defaultRequest({
                         headers: {
-                            Authorisation: "Bearer " + userJwts[2],
+                            Authorization: "Bearer " + userJwts[2],
                         },
                         method: "DELETE",
                         url: url + "/user?id=" + userIds[2],

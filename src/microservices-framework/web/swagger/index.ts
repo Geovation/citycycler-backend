@@ -140,7 +140,7 @@ const meta = {
         userAuth: {
             description: "JWT based user authetication system. Expects a value of 'Bearer JWT'",
             in: "header",
-            name: "Authorisation",
+            name: "Authorization",
             type: "apiKey",
         },
     },
