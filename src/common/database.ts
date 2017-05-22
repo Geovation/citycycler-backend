@@ -96,10 +96,6 @@ export function sqlTransaction(query: string, params: Array<any> = [], providedC
     return checkClient(providedClient).then(returnedClient => {
         client = returnedClient;
         return client.query(query, params);
-    }).catch(e => {
-        // console.log("error in sql transaction");
-        // // console.log(e);
-        return e;
     }).then(response => {
         if (providedClient === null) {
             // console.log("releasing new client");
@@ -247,48 +243,88 @@ export function getRoutesNearby(radius: number, lat: number, lon: number, provid
  *
  * @returns routes - A list of RouteDataModels
  */
-export function matchRoutes(matchParams: RouteQuery, providedClient = null): Promise<{
+export function matchRoutes(
+    matchParams: {
+        start: {
+            latitude: number,
+            longitude: number,
+            radius: number,
+        },
+        end: {
+            latitude: number,
+            longitude: number,
+            radius: number,
+        },
+        days?: string[],
+        time?: number,
+    },
+    providedClient = null
+): Promise<{
     id: number,
     meetingTime: number,
+    divorceTime: number,
     days: string[],
     owner: number,
-    meetingPoint: number[],
-    divorcePoint: number[]
+    meetingPoint: [number, number],
+    divorcePoint: [number, number],
+    timeToMeetingPoint: number,
+    timeFromDivorcePoint: number,
+    distanceToMeetingPoint: number,
+    distanceFromDivorcePoint: number
 }[]> {
-    if (matchParams.radius > 2000 || matchParams.radius < 1) {
-        return new Promise((resolve, reject) => {
-            reject("400:Radius out of bounds. Must be between 1m and 2km");
-        });
+    if (matchParams.start.radius > 2000 || matchParams.start.radius < 1) {
+        return Promise.reject("400:Radius out of bounds. Must be between 1m and 2km");
+    } else if (matchParams.end.radius > 2000 || matchParams.end.radius < 1) {
+        return Promise.reject("400:End radius out of bounds. Must be between 1m and 2km");
     }
-
     let query = "" +
-        "SELECT id, " +
-        "       departureTime + distFromStart*(arrivalTime - departureTime) AS meetingTime, " +
-        "       (days & $4::integer::bit(7))::integer AS days, " +
-        "       ST_AsText(ST_LineInterpolatePoint(route::geometry, distFromStart)) AS meetingPoint, " +
-        "       ST_AsText(ST_LineInterpolatePoint(route::geometry, distFromEnd)) AS divorcePoint, " +
-        "       owner " +
-        "FROM ( " +
-        "   SELECT  id, " +
-        "           (ST_LineLocatePoint(route::geometry, ST_GeogFromText($1)::geometry)) " +
-        "               AS distFromStart, " +
-        "           (ST_LineLocatePoint(route::geometry, ST_GeogFromText($2)::geometry)) " +
-        "               AS distFromEnd, " +
-        "           arrivalTime, " +
-        "           departureTime, " +
-        "           days, " +
-        "           owner, " +
-        "           route " +
-        "   FROM routes WHERE " +
-        "       ST_DWithin(ST_GeogFromText($1), route, $3) " +
-        "   AND" +
-        "       ST_DWithin(ST_GeogFromText($2), route, $3) " +
-        ") AS matchingRoutes " +
-        "WHERE " +
-        "   distFromStart < distFromEnd ";
-    const startPoint = "POINT(" + matchParams.startPoint[0] + " " + matchParams.startPoint[1] + ")";
-    const endPoint = "POINT(" + matchParams.endPoint[0] + " " + matchParams.endPoint[1] + ")";
-    let queryParams = [startPoint, endPoint, matchParams.radius];
+    "SELECT id,  " +
+    "    match1.days, " +
+    "    match2.meetingTime, " +
+    "    match2.divorceTime, " +
+    "    ST_AsText(match2.meetingPoint) AS meetingPoint, " +
+    "    ST_AsText(match2.divorcePoint) AS divorcePoint, " +
+    "    match3.*, " +
+    "    match4.*, " +
+    "    owner  " +
+    "FROM routes,  " +
+    "    LATERAL (  " +
+    "        SELECT   " +
+    "            (ST_LineLocatePoint(route::geometry, ST_GeogFromText($1)::geometry))  " +
+    "                AS distFromStart,  " +
+    "            (ST_LineLocatePoint(route::geometry, ST_GeogFromText($2)::geometry))  " +
+    "                AS distFromEnd,  " +
+    "            (days & $5::integer::bit(7))::integer AS days, " +
+    "	    ST_Length(route) / (arrivalTime - departureTime) AS averageSpeed " +
+    "    ) AS match1, " +
+    "    LATERAL ( " +
+    "        SELECT " +
+    "            departureTime + distFromStart*(arrivalTime - departureTime) AS meetingTime,  " +
+    "            departureTime + distFromEnd*(arrivalTime - departureTime) AS divorceTime, " +
+    "            ST_LineInterpolatePoint(route::geometry, distFromStart) AS meetingPoint,  " +
+    "            ST_LineInterpolatePoint(route::geometry, distFromEnd) AS divorcePoint " +
+    "    ) AS match2,  " +
+    "    LATERAL ( " +
+    "	SELECT " +
+    "	    ST_Distance(ST_GeogFromText($1), meetingPoint) AS distanceToMeetingPoint, " +
+    "	    ST_Distance(ST_GeogFromText($2), divorcePoint) AS distanceToDivorcePoint " +
+    "    ) AS match3,  " +
+    "    LATERAL ( " +
+    "	SELECT " +
+    "	    distanceToMeetingPoint / averageSpeed AS timeToMeetingPoint, " +
+    "	    distanceToDivorcePoint / averageSpeed AS timeFromDivorcePoint " +
+    "    ) AS match4 " +
+    "WHERE  " +
+    "    distFromStart <  distFromEnd  " +
+    "AND " +
+    "    ST_DWithin(ST_GeogFromText($1), route, $3)  " +
+    "AND " +
+    "    ST_DWithin(ST_GeogFromText($2), route, $4) " +
+    "AND " +
+    "    match1.days > 0 ";
+    const startPoint = "POINT(" + matchParams.start.latitude + " " + matchParams.start.longitude + ")";
+    const endPoint = "POINT(" + matchParams.end.latitude + " " + matchParams.end.longitude + ")";
+    let queryParams = [startPoint, endPoint, matchParams.start.radius, matchParams.end.radius];
 
     // Add a filter for days of the week
     if (matchParams.days !== undefined) {
@@ -300,20 +336,18 @@ export function matchRoutes(matchParams: RouteQuery, providedClient = null): Pro
             return days | day;
         }, 0);
         /* tslint:enable no-bitwise */
-        query += "AND (days & $4::integer::bit(7) != b'0000000') ";
         queryParams.push(daysBitmask);
     } else {
         queryParams.push(127);  // 127 = 1111111
     }
     // Add sorting by time
-    if (matchParams.arrivalTime !== undefined) {
+    if (matchParams.time !== undefined) {
         query += "ORDER BY ABS(" +
-            "departureTime + distFromStart*(departureTime - arrivalTime) - $5)";
-        queryParams.push(matchParams.arrivalTime);
+            "divorceTime + timeFromDivorcePoint - $6)";
+        queryParams.push(matchParams.time);
     } else {
-        query += "ORDER BY meetingTime";
+        query += "ORDER BY divorceTime + timeFromDivorcePoint";
     }
-
     return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
         return result.rows.map((row) => {
             const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
@@ -324,11 +358,16 @@ export function matchRoutes(matchParams: RouteQuery, providedClient = null): Pro
             /* tslint:enable no-bitwise */
             return {
                 days,
+                distanceFromDivorcePoint: row.distanceFromDivorcePoint,
+                distanceToMeetingPoint: row.distanceToMeetingPoint,
                 divorcePoint: pointStringToCoords(row.divorcepoint),
+                divorceTime: row.divorcetime,
                 id: row.id,
                 meetingPoint: pointStringToCoords(row.meetingpoint),
                 meetingTime: row.meetingtime,
                 owner: row.owner,
+                timeFromDivorcePoint: row.timeFromdivorcePoint,
+                timeToMeetingPoint: row.timeToMeetingPoint,
             };
         });
     });
@@ -452,13 +491,17 @@ export function putUser(params, providedClient = null): Promise<User> {
     ];
     return sqlTransaction(query, sqlParams, providedClient)
         .then((result) => {
-            return User.fromSQLRow(result.rows[0]);
+            if (result.rowCount > 0) {
+                return User.fromSQLRow(result.rows[0]);
+            } else {
+                throw new Error("409:Could not create user (duplicate?)");
+            }
         })
         .catch((error) => {
             if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
                 throw new Error("409:An account already exists using this email");
             } else {
-                throw new Error("error running query: " + error);
+                throw new Error("409:An account already exists using this email");
             }
         });
 }
