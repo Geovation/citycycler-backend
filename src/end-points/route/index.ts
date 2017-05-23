@@ -3,13 +3,13 @@ import { EndpointCollection } from "../../microservices-framework/web/services/e
 // Import Endpoints
 import { createRoute } from "./create";
 import { deleteRoute } from "./delete";
-import { getRouteById } from "./getById";
+import { getRoutes } from "./get";
 import { updateRoute } from "./update";
 
 export const route: EndpointCollection = new EndpointCollection("route");
 
 // export Endpoints
 route.addEndpoint(createRoute);
-route.addEndpoint(getRouteById);
+route.addEndpoint(getRoutes);
 route.addEndpoint(deleteRoute);
 route.addEndpoint(updateRoute);

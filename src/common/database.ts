@@ -190,6 +190,32 @@ export function getRouteById(id: number, providedClient = null) {
     });
 }
 
+/**
+ * getRoutes - description
+ *
+ * @param  {object} params The query parameters, including the id of the route to query and the user id
+ * @param  {client} providedClient Database client to use for this interaction
+ * @return {Object[]} Array of routes
+ */
+export function getRoutes(params: {userId: number, id?: number}, providedClient = null) {
+    let query = "SELECT id, owner, departuretime, arrivalTime, days::integer, ST_AsText(route) AS route " +
+    "FROM routes where owner=$1";
+    let queryParams = [params.userId];
+    if (params.id !== null && typeof params.id !== "undefined") {
+        query +=  " AND id=$2";
+        queryParams.push(params.id);
+    }
+    return sqlTransaction(query, queryParams, providedClient).then(result => {
+        if (result.rowCount > 0) {
+            return result.rows.map((route) => {
+                return RouteDataModel.fromSQLRow(route);
+            });
+        } else {
+            throw new Error("404:Route doesn't exist");
+        }
+    });
+}
+
 export function lineStringToCoords(lineStr: string): number[][] {
     if (lineStr.slice(0, 11) !== "LINESTRING(") {
         throw "Input is not a Linestring";
