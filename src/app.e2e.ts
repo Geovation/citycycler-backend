@@ -851,12 +851,16 @@ describe("MatchMyRoute API", () => {
                 describe("By ID", () => {
                     it("should get a route by a valid id with no auth", done => {
                         defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[1],
+                            },
                             method: "GET",
                             url: url + "/route?id=" + routeIds[0],
                         }, (error, response, body) => {
                             expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                                 response.statusCode + ", error given is: " + error);
-                            expect(body.result.owner).to.equal(userIds[1], "Route belongs to another user." +
+                            expect(body.result.length).to.equal(1);
+                            expect(body.result[0].owner).to.equal(userIds[1], "Route belongs to another user." +
                                 "Expected owner to be " + userIds[1] + ", but it was " + body.result.owner +
                                 ". Full response body is: " + JSON.stringify(body));
                             done();
@@ -864,6 +868,9 @@ describe("MatchMyRoute API", () => {
                     });
                     it("should not get a route by an invalid id", done => {
                         defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[1],
+                            },
                             method: "GET",
                             url: url + "/route?id=" + -1,
                         }, (error, response, body) => {
@@ -1101,12 +1108,16 @@ describe("MatchMyRoute API", () => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
                         defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[1],
+                            },
                             method: "GET",
                             url: url + "/route?id=" + routeIds[0],
                         }, (error2, response2, body2) => {
                             let route;
+                            expect(body2.result.length).to.equal(1);
                             try {
-                                route = new RouteDataModel(body2.result);
+                                route = new RouteDataModel(body2.result[0]);
                             } catch (err) {
                                 assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
                                     err).and.notify(done);
@@ -1135,12 +1146,15 @@ describe("MatchMyRoute API", () => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
                         defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[1],
+                            },
                             method: "GET",
                             url: url + "/route?id=" + routeIds[0],
                         }, (error2, response2, body2) => {
                             let route;
                             try {
-                                route = new RouteDataModel(body2.result);
+                                route = new RouteDataModel(body2.result[0]);
                             } catch (err) {
                                 assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
                                     err).and.notify(done);
@@ -1169,12 +1183,15 @@ describe("MatchMyRoute API", () => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
                         defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[1],
+                            },
                             method: "GET",
                             url: url + "/route?id=" + routeIds[0],
                         }, (error2, response2, body2) => {
                             let route;
                             try {
-                                route = new RouteDataModel(body2.result);
+                                route = new RouteDataModel(body2.result[0]);
                             } catch (err) {
                                 assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
                                     err).and.notify(done);
@@ -1203,12 +1220,15 @@ describe("MatchMyRoute API", () => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
                         defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[1],
+                            },
                             method: "GET",
                             url: url + "/route?id=" + routeIds[0],
                         }, (error2, response2, body2) => {
                             let route;
                             try {
-                                route = new RouteDataModel(body2.result);
+                                route = new RouteDataModel(body2.result[0]);
                             } catch (err) {
                                 assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
                                     err).and.notify(done);
@@ -1237,12 +1257,15 @@ describe("MatchMyRoute API", () => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
                         defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[1],
+                            },
                             method: "GET",
                             url: url + "/route?id=" + routeIds[0],
                         }, (error2, response2, body2) => {
                             let route;
                             try {
-                                route = new RouteDataModel(body2.result);
+                                route = new RouteDataModel(body2.result[0]);
                             } catch (err) {
                                 assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
                                     err).and.notify(done);
@@ -1271,12 +1294,15 @@ describe("MatchMyRoute API", () => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
                         defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[1],
+                            },
                             method: "GET",
                             url: url + "/route?id=" + routeIds[0],
                         }, (error2, response2, body2) => {
                             let route;
                             try {
-                                route = new RouteDataModel(body2.result);
+                                route = new RouteDataModel(body2.result[0]);
                             } catch (err) {
                                 assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
                                     err).and.notify(done);
@@ -1463,6 +1489,9 @@ describe("MatchMyRoute API", () => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
                         defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[1],
+                            },
                             method: "GET",
                             url: url + "/route?id=" + routeIds[0],
                         }, (error2, response2, body2) => {
@@ -1485,12 +1514,15 @@ describe("MatchMyRoute API", () => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
                         defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[2],
+                            },
                             method: "GET",
                             url: url + "/route?id=" + routeIds[2],
                         }, (error2, response2, body2) => {
-                            expect(response2.statusCode).to.equal(404, "Expected 404 response but got " +
+                            expect(response2.statusCode).to.equal(403, "Expected 403 response but got " +
                                 response2.statusCode + ", body returned is: " + JSON.stringify(body2) +
-                                ". This means the route was not deleted");
+                                ". This means the user was not deleted");
                             done();
                         });
                     });
