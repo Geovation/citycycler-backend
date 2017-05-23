@@ -1,3 +1,4 @@
+import { getIdFromJWT } from "../../common/auth";
 import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 // import * as logger from "winston";
@@ -14,10 +15,10 @@ const operation = {
         consumes: ["application/json"],
         parameters: [
             {
-                description: "The route ID",
+                description: "The route ID (if empty, all routes of the user will be returned)",
                 in: "query",
                 name: "id",
-                required: true,
+                required: false,
                 type: "integer",
             },
         ],
@@ -27,6 +28,12 @@ const operation = {
                 description: "Route was retrieved",
                 schema: {
                     $ref: "#/definitions/GetResponse",
+                },
+            },
+            403: {
+                description: "An invalid authorisation token was supplied",
+                schema: {
+                    $ref: "#/definitions/Error",
                 },
             },
             404: {
@@ -42,7 +49,13 @@ const operation = {
                 },
             },
         },
-        summary: "Retreive a route by it's ID",
+        security: [
+            {
+                userAuth: [],
+            },
+        ],
+        summary: "Retrieve a route by it's ID. If no ID is provided, all routes " +
+        "of the user are returned",
         tags: [
             "Routes",
         ],
@@ -92,6 +105,13 @@ const definitions = {
         },
         required: ["arrivalTime", "departureTime", "owner", "route", "id"],
     },
+    RouteGetResult: {
+        description: "An array of routes belonging to this user",
+        items: {
+            $ref: "#/definitions/RouteData",
+        },
+        type: "array",
+    },
 };
 
 // ///////////////
@@ -99,12 +119,17 @@ const definitions = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    const id = parseInt(params.id, 10);
-    return Database.getRouteById(id);
+    let id = parseInt(params.id, 10);
+    if (!id) {
+        id = null;
+    }
+    return getIdFromJWT(params.authorization).then((userId) => {
+        return Database.getRoutes(userId, id);
+    });
 };
 
 // end point definition
-export const getRouteById = new MicroserviceEndpoint("getRouteById")
+export const getRoutes = new MicroserviceEndpoint("getRouteById")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);
