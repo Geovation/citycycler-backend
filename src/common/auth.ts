@@ -32,7 +32,7 @@ export function doIfUser(authHeader: string, uid: number, onAuth: Function, prov
             if (valid) {
                 resolve(onAuth());
             } else {
-                reject("403:Invalid authorisation");
+                reject("403:Invalid authorization");
             }
         });
     });
@@ -45,11 +45,11 @@ export function doIfUser(authHeader: string, uid: number, onAuth: Function, prov
 export function getIdFromJWT(authHeader: string, providedClient = null): Promise<number> {
     return new Promise((resolve, reject) => {
         if (authHeader === undefined) {
-            reject("403:Invalid authorisation");
+            reject("403:Invalid authorization");
         }
         const [scheme, token] = authHeader.split(" ");
         if (scheme !== "Bearer") {
-            reject("400:Invalid authorisation scheme. This API requires 'Bearer <JWT>'");
+            reject("400:Invalid authorization scheme. This API requires 'Bearer <JWT>'");
         }
         const payload = jwt.decode(token, {
             json: true,
@@ -63,10 +63,10 @@ export function getIdFromJWT(authHeader: string, providedClient = null): Promise
                 });
                 resolve(user.id);
             } catch (err) {
-                reject("403:Invalid authorisation");
+                reject("403:Invalid authorization");
             }
         }, err => {
-            reject("403:Invalid authorisation");
+            reject("403:Invalid authorization");
         });
     });
 }

@@ -25,7 +25,7 @@ const operation = {
                 },
             },
             403: {
-                description: "An invalid authorisation token was supplied",
+                description: "An invalid authorization token was supplied",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
@@ -54,7 +54,7 @@ const operation = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<{ token: string; expires: number; }> => {
-    return getIdFromJWT(params.authorisation).then(userid => {
+    return getIdFromJWT(params.authorization).then(userid => {
         return Database.getUserById(userid);
     }).then(user => {
         return generateJWTFor(user);
