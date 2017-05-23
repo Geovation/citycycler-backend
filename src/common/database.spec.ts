@@ -232,6 +232,7 @@ describe("MatchMyRoute Database Functions", () => {
     });
     describe("General Route Functions", () => {
         let thisUserId;
+        let thisUserId2;
         let routeData;
         const faultyRouteData = new RouteDataModel({
             arrivalTime: 15000,
@@ -260,6 +261,22 @@ describe("MatchMyRoute Database Functions", () => {
                     route: [[0, 0], [1, 0], [1, 1]],
                 });
                 return thisUserId;
+            })
+            // create second valid user
+            .then(() => {
+                return Database.putUser({
+                    email: "test2@example.com",
+                    jwtSecret: "secret",
+                    name: "Test User2",
+                    pwh: "pwhash",
+                    rounds: 5,
+                    salt: "salty",
+                },
+                transactionClient);
+            })
+            .then(user => {
+                thisUserId2 = user.id;
+                return thisUserId2;
             });
         });
         it("should create a route", () => {
@@ -283,21 +300,47 @@ describe("MatchMyRoute Database Functions", () => {
         });
         describe("Route reliant tests", () => {
             let thisRouteId;
+            let thisRouteId2;
             beforeEach("Create route to test against", () => {
                 return Database.putRoute(routeData, transactionClient).then(routeId => {
                     thisRouteId = routeId;
+                    return Database.putRoute(routeData, transactionClient);
+                }).then(routeId => {
+                    thisRouteId2 = routeId;
                 });
             });
-            it("should get a route by ID", () => {
-                return Database.getRouteById(thisRouteId, transactionClient).then(result => {
-                    expect(result.arrivalTime).to.equal(routeData.arrivalTime);
-                    expect(result.departureTime).to.equal(routeData.departureTime);
-                    expect(result.owner).to.equal(routeData.owner);
-                    expect(result.days).to.eql(routeData.days);
+            it("should get a route by ID if user is the owner", () => {
+                return Database.getRoutes({id: thisRouteId, userId: thisUserId}, transactionClient).then(result => {
+                    expect(result.length).to.equal(1);
+                    expect(result[0].arrivalTime).to.equal(routeData.arrivalTime);
+                    expect(result[0].departureTime).to.equal(routeData.departureTime);
+                    expect(result[0].owner).to.equal(routeData.owner);
+                    expect(result[0].days).to.eql(routeData.days);
                 });
             });
             it("should not get a route by an invalid ID", done => {
-                const promise = Database.getRouteById(-1, transactionClient);
+                const promise = Database.getRoutes({id: -1, userId: thisUserId}, transactionClient);
+                expect(promise).to.be.rejected.and.notify(done);
+            });
+            it("should not get a route if user is not the owner", done => {
+                const promise = Database.getRoutes({id: thisRouteId, userId: thisUserId2}, transactionClient);
+                expect(promise).to.be.rejected.and.notify(done);
+            });
+            it("should get all routes of a user", () => {
+                return Database.getRoutes({userId: thisUserId}, transactionClient).then(result => {
+                    expect(result.length).to.equal(2);
+                    expect(result[0].arrivalTime).to.equal(routeData.arrivalTime);
+                    expect(result[0].departureTime).to.equal(routeData.departureTime);
+                    expect(result[0].owner).to.equal(routeData.owner);
+                    expect(result[0].days).to.eql(routeData.days);
+                    expect(result[1].arrivalTime).to.equal(routeData.arrivalTime);
+                    expect(result[1].departureTime).to.equal(routeData.departureTime);
+                    expect(result[1].owner).to.equal(routeData.owner);
+                    expect(result[1].days).to.eql(routeData.days);
+                });
+            });
+            it("should not get routes of a user if he didn't create any yet", done => {
+                const promise = Database.getRoutes({userId: thisUserId2}, transactionClient);
                 expect(promise).to.be.rejected.and.notify(done);
             });
             it("should get a nearby route", () => {

@@ -124,7 +124,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         id = null;
     }
     return getIdFromJWT(params.authorization).then((userId) => {
-        return Database.getRoutes(userId, id);
+        return Database.getRoutes({userId, id});
     });
 };
 

@@ -193,18 +193,17 @@ export function getRouteById(id: number, providedClient = null) {
 /**
  * getRoutes - description
  *
- * @param  {number} owner: number         The user querying the routes
- * @param  {number | optional} id         The id of the route to query
+ * @param  {object} params The query parameters, including the id of the route to query and the user id
  * @param  {client} providedClient Database client to use for this interaction
  * @return {Object[]} Array of routes
  */
-export function getRoutes(owner: number, id: number = null, providedClient = null) {
+export function getRoutes(params: {userId: number, id?: number}, providedClient = null) {
     let query = "SELECT id, owner, departuretime, arrivalTime, days::integer, ST_AsText(route) AS route " +
     "FROM routes where owner=$1";
-    let queryParams = [owner];
-    if (id !== null) {
+    let queryParams = [params.userId];
+    if (params.id !== null && typeof params.id !== "undefined") {
         query +=  " AND id=$2";
-        queryParams.push(id);
+        queryParams.push(params.id);
     }
     return sqlTransaction(query, queryParams, providedClient).then(result => {
         if (result.rowCount > 0) {
