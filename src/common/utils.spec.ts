@@ -50,16 +50,17 @@ describe("Various useful functions", () => {
     describe("RouteDataModel", () => {
         it("should be constructed correctly", () => {
             const obj = {
-                arrivalTime: 1234,
+                arrivalTime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
-                departureTime: 1000,
+                departureTime: "12:00:00+00",
                 id: 321,
                 owner: 123,
                 route: [[0, 0], [1, 1], [2, 2]],
             };
             const route = new RouteDataModel(obj);
-            expect(route.arrivalTime).to.equal(1234, "Arrival time is wrong! expected 1234, got " + route.arrivalTime);
-            expect(route.departureTime).to.equal(1000, "Departure time is wrong! expected 1000, got " +
+            expect(route.arrivalTime).to.equal("13:00:00+00", "Arrival time is wrong! expected 13:00:00+00, got " +
+                route.arrivalTime);
+            expect(route.departureTime).to.equal("12:00:00+00", "Departure time is wrong! expected 12:00:00+00, got " +
                 route.departureTime);
             expect(route.id).to.equal(321, "ID is wrong! expected 321, got " + route.id);
             expect(route.owner).to.equal(123, "Owner is wrong! expected 123, got " + route.owner);
@@ -69,7 +70,7 @@ describe("Various useful functions", () => {
         it("should throw an error if there is no arrival time", () => {
             const obj = {
                 days: ["tuesday", "sunday"],
-                departureTime: 1000,
+                departureTime: "12:00:00+00",
                 id: 321,
                 owner: 123,
                 route: [[0, 0], [1, 1], [2, 2]],
@@ -80,7 +81,7 @@ describe("Various useful functions", () => {
         });
         it("should throw an error if there is no departure time", () => {
             const obj = {
-                arrivalTime: 999,
+                arrivalTime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
                 id: 321,
                 owner: 123,
@@ -92,9 +93,9 @@ describe("Various useful functions", () => {
         });
         it("should throw an error if the arrival is before departure", () => {
             const obj = {
-                arrivalTime: 999,
+                arrivalTime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
-                departureTime: 1000,
+                departureTime: "14:00:00+00",
                 id: 321,
                 owner: 123,
                 route: [[0, 0], [1, 1], [2, 2]],
@@ -105,9 +106,9 @@ describe("Various useful functions", () => {
         });
         it("should throw an error if there is only one coordinate passed", () => {
             const obj = {
-                arrivalTime: 1999,
+                arrivalTime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
-                departureTime: 1000,
+                departureTime: "12:00:00+00",
                 id: 321,
                 owner: 123,
                 route: [[0, 0]],
@@ -118,9 +119,9 @@ describe("Various useful functions", () => {
         });
         it("should throw an error if there is a 3D coordinate present", () => {
             const obj = {
-                arrivalTime: 1999,
+                arrivalTime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
-                departureTime: 1000,
+                departureTime: "12:00:00+00",
                 id: 321,
                 owner: 123,
                 route: [[0, 0], [1, 1, 1], [2, 2]],
@@ -131,9 +132,9 @@ describe("Various useful functions", () => {
         });
         it("should throw an error if there is a 1D coordinate present", () => {
             const obj = {
-                arrivalTime: 1999,
+                arrivalTime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
-                departureTime: 1000,
+                departureTime: "12:00:00+00",
                 id: 321,
                 owner: 123,
                 route: [[0, 0], [1], [2, 2]],
@@ -144,9 +145,9 @@ describe("Various useful functions", () => {
         });
         it("should throw an error if there is no owner", () => {
             const obj = {
-                arrivalTime: 1999,
+                arrivalTime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
-                departureTime: 1000,
+                departureTime: "12:00:00+00",
                 id: 321,
                 route: [[0, 0], [1, 1], [2, 2]],
             };
@@ -156,16 +157,17 @@ describe("Various useful functions", () => {
         });
         it("should be constructed correctly from an SQL row", () => {
             const row = {
-                arrivaltime: 1234,
+                arrivaltime: "13:00:00+00",
                 days: 66,
-                departuretime: 1000,
+                departuretime: "12:00:00+00",
                 id: 321,
                 owner: 123,
                 route: "LINESTRING(0 0,1 1,2 2)",
             };
             const route = RouteDataModel.fromSQLRow(row);
-            expect(route.arrivalTime).to.equal(1234, "Arrival time is wrong! expected 1234, got " + route.arrivalTime);
-            expect(route.departureTime).to.equal(1000, "Departure time is wrong! expected 1000, got " +
+            expect(route.arrivalTime).to.equal("13:00:00+00", "Arrival time is wrong! expected 13:00:00+00, got " +
+                route.arrivalTime);
+            expect(route.departureTime).to.equal("12:00:00+00", "Departure time is wrong! expected 12:00:00+00, got " +
                 route.departureTime);
             expect(route.id).to.equal(321, "ID is wrong! expected 321, got " + route.id);
             expect(route.owner).to.equal(123, "Owner is wrong! expected 123, got " + route.owner);
@@ -177,7 +179,7 @@ describe("Various useful functions", () => {
     describe("RouteQuery", () => {
         it("should be constructed correctly", () => {
             const obj = {
-                arrivalTime: 1234,
+                arrivalTime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
                 endPoint: [1, 1],
                 id: 321,
@@ -188,8 +190,8 @@ describe("Various useful functions", () => {
             };
             const routeQuery = new RouteQuery(obj);
             expect(routeQuery.arrivalTime).to.equal(
-                1234,
-                "Arrival time is wrong! expected 1234, got " + routeQuery.arrivalTime
+                "13:00:00+00",
+                "Arrival time is wrong! expected 13:00:00+00, got " + routeQuery.arrivalTime
             );
             expect(routeQuery.id).to.equal(321, "ID is wrong! expected 321, got " + routeQuery.id);
             expect(routeQuery.owner).to.equal(123, "Owner is wrong! expected 123, got " + routeQuery.owner);
@@ -201,7 +203,7 @@ describe("Various useful functions", () => {
         });
         it("should throw an error if startPoint is 1D", () => {
             const obj = {
-                arrivalTime: 1234,
+                arrivalTime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
                 endPoint: [1, 1],
                 id: 321,
@@ -215,7 +217,7 @@ describe("Various useful functions", () => {
         });
         it("should throw an error if startPoint is 3D", () => {
             const obj = {
-                arrivalTime: 1234,
+                arrivalTime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
                 endPoint: [1, 1],
                 id: 321,
@@ -229,7 +231,7 @@ describe("Various useful functions", () => {
         });
         it("should throw an error if endPoint is 1D", () => {
             const obj = {
-                arrivalTime: 1234,
+                arrivalTime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
                 endPoint: [1],
                 id: 321,
@@ -243,7 +245,7 @@ describe("Various useful functions", () => {
         });
         it("should throw an error if endPoint is 3D", () => {
             const obj = {
-                arrivalTime: 1234,
+                arrivalTime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
                 endPoint: [1, 1, 1],
                 id: 321,
@@ -257,7 +259,7 @@ describe("Various useful functions", () => {
         });
         it("should be constructed correctly from an SQL row", () => {
             const row = {
-                arrivalTime: 1234,
+                arrivalTime: "13:00:00+00",
                 days: 21,
                 endPoint: "POINT(1 1)",
                 id: 321,
@@ -268,8 +270,8 @@ describe("Various useful functions", () => {
             };
             const routeQuery = RouteQuery.fromSQLRow(row);
             expect(routeQuery.arrivalTime).to.equal(
-                1234,
-                "Arrival time is wrong! expected 1234, got " + routeQuery.arrivalTime
+                "13:00:00+00",
+                "Arrival time is wrong! expected 13:00:00+00, got " + routeQuery.arrivalTime
             );
             expect(routeQuery.id).to.equal(321, "ID is wrong! expected 321, got " + routeQuery.id);
             expect(routeQuery.owner).to.equal(123, "Owner is wrong! expected 123, got " + routeQuery.owner);

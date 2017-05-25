@@ -1,4 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS postgis;
+SET time zone 'UTC';    -- Keep the backend working in UTC
+SET intervalstyle = 'iso_8601';   -- Output time intervals in the iso 8601 format
 
 CREATE TABLE users (
 -- Core User attributes. Can't be null
@@ -12,7 +14,7 @@ jwt_secret varchar(32) NOT NULL,
 -- User profile info. Should be optional
 profile_bio text,
 profile_photo varchar(200),
-profile_joined integer DEFAULT extract(epoch from now())::Integer,
+profile_joined timestamp DEFAULT 'now'::timestamp,
 profile_help_count integer DEFAULT 0,
 profile_rating_sum integer DEFAULT 0    -- Average rating = rating_sum/help_count
 );
@@ -21,8 +23,8 @@ profile_rating_sum integer DEFAULT 0    -- Average rating = rating_sum/help_coun
 CREATE TABLE routes (
 id serial PRIMARY KEY,
 route geography NOT NULL,		-- The route itself
-departureTime integer NOT NULL,	-- Seconds past midnight that the owner cycles this route
-arrivalTime integer NOT NULL,	-- The time that a user arrives in seconds past midnight
+departureTime time with time zone NOT NULL,	-- When the owner cycles this route
+arrivalTime time with time zone NOT NULL,	-- When the  user arrives at the destination
 days bit(7) DEFAULT b'1111111',	-- A bitstring of the days of the week a user cycles this route
 owner integer REFERENCES users ON DELETE CASCADE	-- User who created this route
 );
@@ -34,7 +36,7 @@ startPoint geography NOT NULL,      -- Where the user wants to leave from
 endPoint geography NOT NULL,        -- Where the user wants to get to
 radius integer DEFAULT 1000,        -- How far from the start and end points to look for matching routes
 owner integer REFERENCES users ON DELETE CASCADE,    -- Who created this query
-arrivalTime integer DEFAULT 0,      -- When the user wants to arrive at their destination
+arrivalTime time with time zone DEFAULT 'now',      -- When the user wants to arrive at their destination
 days bit(7) DEFAULT b'1111111',      -- A bitstring of the days of the week that this user wants to cycle the route
 notifyOwner boolean DEFAULT FALSE   -- If the owner wants to be notified of any new matches
 );

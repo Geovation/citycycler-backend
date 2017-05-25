@@ -282,19 +282,19 @@ export function matchRoutes(
             radius: number,
         },
         days?: string[],
-        time?: number,
+        time?: string,
     },
     providedClient = null
 ): Promise<{
     id: number,
-    meetingTime: number,
-    divorceTime: number,
+    meetingTime: string,
+    divorceTime: string,
     days: string[],
     owner: number,
     meetingPoint: [number, number],
     divorcePoint: [number, number],
-    timeToMeetingPoint: number,
-    timeFromDivorcePoint: number,
+    timeToMeetingPoint: string,
+    timeFromDivorcePoint: string,
     distanceToMeetingPoint: number,
     distanceFromDivorcePoint: number
 }[]> {
@@ -321,12 +321,13 @@ export function matchRoutes(
     "            (ST_LineLocatePoint(route::geometry, ST_GeogFromText($2)::geometry))  " +
     "                AS distFromEnd,  " +
     "            (days & $5::integer::bit(7))::integer AS days, " +
-    "	    ST_Length(route) / (arrivalTime - departureTime) AS averageSpeed " +
+    //      Work out average speed in m/s
+    "	    ST_Length(route) / EXTRACT(EPOCH FROM (arrivalTime::time - departureTime::time)) AS averageSpeed " +
     "    ) AS match1, " +
     "    LATERAL ( " +
     "        SELECT " +
-    "            departureTime + distFromStart*(arrivalTime - departureTime) AS meetingTime,  " +
-    "            departureTime + distFromEnd*(arrivalTime - departureTime) AS divorceTime, " +
+    "            departureTime::time + distFromStart*(arrivalTime::time - departureTime::time) AS meetingTime,  " +
+    "            departureTime::time + distFromEnd*(arrivalTime::time - departureTime::time) AS divorceTime, " +
     "            ST_LineInterpolatePoint(route::geometry, distFromStart) AS meetingPoint,  " +
     "            ST_LineInterpolatePoint(route::geometry, distFromEnd) AS divorcePoint " +
     "    ) AS match2,  " +
@@ -337,8 +338,9 @@ export function matchRoutes(
     "    ) AS match3,  " +
     "    LATERAL ( " +
     "	SELECT " +
-    "	    distanceToMeetingPoint / averageSpeed AS timeToMeetingPoint, " +
-    "	    distanceToDivorcePoint / averageSpeed AS timeFromDivorcePoint " +
+    //      This is (I hope) the cleanest way to convert a number of seconds (distance/speed) to a time interval
+    "	    interval '1 second' * (distanceToMeetingPoint / averageSpeed) AS timeToMeetingPoint, " +
+    "	    interval '1 second' * (distanceToDivorcePoint / averageSpeed) AS timeFromDivorcePoint " +
     "    ) AS match4 " +
     "WHERE  " +
     "    distFromStart <  distFromEnd  " +
@@ -368,11 +370,11 @@ export function matchRoutes(
     }
     // Add sorting by time
     if (matchParams.time !== undefined) {
-        query += "ORDER BY ABS(" +
-            "divorceTime + timeFromDivorcePoint - $6)";
+        query += "ORDER BY " +
+            "divorceTime::time + timeFromDivorcePoint - $6::time";
         queryParams.push(matchParams.time);
     } else {
-        query += "ORDER BY divorceTime + timeFromDivorcePoint";
+        query += "ORDER BY divorceTime::time + timeFromDivorcePoint";
     }
     return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
         return result.rows.map((row) => {
@@ -404,8 +406,8 @@ export function matchRoutes(
 export function updateRoute(
     existingRoute: RouteDataModel,
     updates: {
-        arrivalTime?: number,
-        departureTime?: number,
+        arrivalTime?: string,
+        departureTime?: string,
         days?: string[],
         route?: number[][],
     },

@@ -18,9 +18,9 @@ export class RouteDataModel {
         });
     }
 
-    public arrivalTime: number;
+    public arrivalTime: string;
     public days: string[];
-    public departureTime: number;
+    public departureTime: string;
     public id: number;
     public owner: number;
     public route: number[][];
@@ -29,8 +29,24 @@ export class RouteDataModel {
         if (obj.arrivalTime === undefined || obj.arrivalTime === null) {
             throw "400:Route requires an arrival time";
         } else if (obj.departureTime === undefined || obj.departureTime === null) {
-            throw "400:Route requires a departure time";
-        } else if (obj.arrivalTime < obj.departureTime) {
+           throw "400:Route requires a departure time";
+        }
+        // Convert arrival and departuretimes into something that can be compared
+        let arrivalTimeEpoch = Date.parse("2000-01-01T" + obj.arrivalTime);
+        let departureTimeEpoch = Date.parse("2000-01-01T" + obj.departureTime);
+        if (isNaN(arrivalTimeEpoch)) {
+            // Date.parse thinks that timezones must have 4 characters... Unlike ISO 8106
+            arrivalTimeEpoch = Date.parse("2000-01-01T" + obj.arrivalTime + "00");
+        }
+        if (isNaN(departureTimeEpoch)) {
+            // Date.parse thinks that timezones must have 4 characters... Unlike ISO 8106
+            departureTimeEpoch = Date.parse("2000-01-01T" + obj.departureTime + "00");
+        }
+        if (isNaN(arrivalTimeEpoch)) {
+            throw "400:Route requires an arrival time";
+        } else if (isNaN(departureTimeEpoch)) {
+           throw "400:Route requires a departure time";
+       } else if (arrivalTimeEpoch <= departureTimeEpoch) {
             throw "400:Arrival time is before Departure time";
         } else if (obj.route.length < 2) {
             throw "400:Route requires at least 2 points";

@@ -84,7 +84,7 @@ const definitions = {
         description: "Information needed to search for a matching route",
         properties: {
             arrivalTime: {
-                description: "The time in seconds past midnight that the route owner wants to arrive at <endPoint>",
+                description: "The time in ISO 8601 extended format that the route owner wants to arrive at <endPoint>",
                 type: "integer",
             },
             days: {

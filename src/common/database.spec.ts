@@ -235,9 +235,9 @@ describe("MatchMyRoute Database Functions", () => {
         let thisUserId2;
         let routeData;
         const faultyRouteData = new RouteDataModel({
-            arrivalTime: 15000,
+            arrivalTime: "14:00:00+00",
             days: ["tuesday", "sunday"],
-            departureTime: 14000,
+            departureTime: "13:00:00+00",
             owner: -1,
             route: [[0, 0], [1, 0], [1, 1]],
         });
@@ -254,9 +254,9 @@ describe("MatchMyRoute Database Functions", () => {
             .then(user => {
                 thisUserId = user.id;
                 routeData = new RouteDataModel({
-                    arrivalTime: 15000,
+                    arrivalTime: "14:00:00+00",
                     days: ["tuesday", "sunday"],
-                    departureTime: 14000,
+                    departureTime: "13:00:00+00",
                     owner: thisUserId,
                     route: [[0, 0], [1, 0], [1, 1]],
                 });
@@ -413,9 +413,9 @@ describe("MatchMyRoute Database Functions", () => {
             .then(user => {
                 thisUserId = user.id;
                 routeData = new RouteDataModel({
-                    arrivalTime: 660,
+                    arrivalTime: "13:30:00+00",
                     days: ["tuesday", "friday", "sunday"],
-                    departureTime: 60,
+                    departureTime: "12:45:00+00",
                     owner: thisUserId,
                     route: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6]],
                 });
@@ -439,7 +439,7 @@ describe("MatchMyRoute Database Functions", () => {
                     longitude: 1.4,
                     radius: 500,
                 },
-                time: 500,
+                time: "13:00:00+00",
             };
             return Database.matchRoutes(matchParams, transactionClient).then(routes => {
                 const thisRoute = routes.filter((route) => {
@@ -450,10 +450,10 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(thisRoute.owner).to.equal(thisUserId);
                 // Should be the intersection between the route days and the search days
                 expect(thisRoute.days).to.eql(["friday", "sunday"]);
-                expect(thisRoute.meetingTime).to.be.at.least(60, "meetingTime is smaller than the route's start " +
-                    "time (60). Got " + thisRoute.meetingTime + ". Route is: " + JSON.stringify(thisRoute));
-                expect(thisRoute.meetingTime).to.be.at.most(660, "meetingTime is larger than the route's end " +
-                    "time (660). Got " + thisRoute.meetingTime + ". Route is: " + JSON.stringify(thisRoute));
+                // expect(thisRoute.meetingTime).to.be.at.least(60, "meetingTime is smaller than the route's start " +
+                //     "time (60). Got " + thisRoute.meetingTime + ". Route is: " + JSON.stringify(thisRoute));
+                // expect(thisRoute.meetingTime).to.be.at.most(660, "meetingTime is larger than the route's end " +
+                //     "time (660). Got " + thisRoute.meetingTime + ". Route is: " + JSON.stringify(thisRoute));
                 expect(thisRoute.meetingPoint).to.eql([0, 1.4]);
                 expect(thisRoute.divorcePoint).to.eql([0, 4.6]);
             });
@@ -471,7 +471,7 @@ describe("MatchMyRoute Database Functions", () => {
                     longitude: 1.4,
                     radius: 500,
                 },
-                time: 500,
+                time: "13:00:00+00",
             };
             const promise = Database.matchRoutes(matchParams, transactionClient);
             expect(promise).to.be.rejected.and.notify(done);
@@ -489,7 +489,7 @@ describe("MatchMyRoute Database Functions", () => {
                     longitude: 1.4,
                     radius: 500,
                 },
-                time: 500,
+                time: "13:00:00+00",
             };
             const promise = Database.matchRoutes(matchParams, transactionClient);
             expect(promise).to.be.rejected.and.notify(done);
@@ -507,7 +507,7 @@ describe("MatchMyRoute Database Functions", () => {
                     longitude: 1.4,
                     radius: 5000,
                 },
-                time: 500,
+                time: "13:00:00+00",
             };
             const promise = Database.matchRoutes(matchParams, transactionClient);
             expect(promise).to.be.rejected.and.notify(done);
@@ -525,7 +525,7 @@ describe("MatchMyRoute Database Functions", () => {
                     longitude: 1.4,
                     radius: 0.5,
                 },
-                time: 500,
+                time: "13:00:00+00",
             };
             const promise = Database.matchRoutes(matchParams, transactionClient);
             expect(promise).to.be.rejected.and.notify(done);
@@ -543,7 +543,7 @@ describe("MatchMyRoute Database Functions", () => {
                     longitude: 4.6,
                     radius: 500,
                 },
-                time: 500,
+                time: "13:00:00+00",
             };
             return Database.matchRoutes(matchParams, transactionClient).then(routes => {
                 const thisRoute = routes.filter((route) => {
@@ -564,7 +564,7 @@ describe("MatchMyRoute Database Functions", () => {
                     longitude: 1.4,
                     radius: 500,
                 },
-                time: 500,
+                time: "13:00:00+00",
             };
             return Database.matchRoutes(matchParams, transactionClient).then(routes => {
                 const thisRoute = routes.filter((route) => {
@@ -575,10 +575,10 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(thisRoute.owner).to.equal(thisUserId);
                 // Should be all of the days the route is available on
                 expect(thisRoute.days).to.eql(["tuesday", "friday", "sunday"]);
-                expect(thisRoute.meetingTime).to.be.at.least(60, "meetingTime is smaller than the route's start " +
-                    "time (60). Got " + thisRoute.meetingTime + ". Route is: " + JSON.stringify(thisRoute));
-                expect(thisRoute.meetingTime).to.be.at.most(660, "meetingTime is larger than the route's end " +
-                    "time (660). Got " + thisRoute.meetingTime + ". Route is: " + JSON.stringify(thisRoute));
+                // expect(thisRoute.meetingTime).to.be.at.least(60, "meetingTime is smaller than the route's start " +
+                //     "time (60). Got " + thisRoute.meetingTime + ". Route is: " + JSON.stringify(thisRoute));
+                // expect(thisRoute.meetingTime).to.be.at.most(660, "meetingTime is larger than the route's end " +
+                //     "time (660). Got " + thisRoute.meetingTime + ". Route is: " + JSON.stringify(thisRoute));
                 expect(thisRoute.meetingPoint).to.eql([0, 1.4]);
                 expect(thisRoute.divorcePoint).to.eql([0, 4.6]);
             });
@@ -596,7 +596,7 @@ describe("MatchMyRoute Database Functions", () => {
                     longitude: 1.4,
                     radius: 500,
                 },
-                time: 500,
+                time: "13:00:00+00",
             };
             return Database.matchRoutes(matchParams, transactionClient).then(routes => {
                 const thisRoute = routes.filter((route) => {
@@ -628,10 +628,10 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(thisRoute.owner).to.equal(thisUserId);
                 // Should be the intersection between the route days and the search days
                 expect(thisRoute.days).to.eql(["friday", "sunday"]);
-                expect(thisRoute.meetingTime).to.be.at.least(60, "meetingTime is smaller than the route's start " +
-                    "time (60). Got " + thisRoute.meetingTime + ". Route is: " + JSON.stringify(thisRoute));
-                expect(thisRoute.meetingTime).to.be.at.most(660, "meetingTime is larger than the route's end " +
-                    "time (660). Got " + thisRoute.meetingTime + ". Route is: " + JSON.stringify(thisRoute));
+                // expect(thisRoute.meetingTime).to.be.at.least(60, "meetingTime is smaller than the route's start " +
+                //     "time (60). Got " + thisRoute.meetingTime + ". Route is: " + JSON.stringify(thisRoute));
+                // expect(thisRoute.meetingTime).to.be.at.most(660, "meetingTime is larger than the route's end " +
+                //     "time (660). Got " + thisRoute.meetingTime + ". Route is: " + JSON.stringify(thisRoute));
                 expect(thisRoute.meetingPoint).to.eql([0, 1.4]);
                 expect(thisRoute.divorcePoint).to.eql([0, 4.6]);
             });
@@ -655,9 +655,9 @@ describe("MatchMyRoute Database Functions", () => {
             .then(user => {
                 thisUserId = user.id;
                 routeData = new RouteDataModel({
-                    arrivalTime: 15000,
+                    arrivalTime: "13:30:00+00",
                     days: ["tuesday", "sunday"],
-                    departureTime: 14000,
+                    departureTime: "12:45:00+00",
                     owner: thisUserId,
                     route: [[0, 0], [1, 0], [1, 1]],
                 });
@@ -671,9 +671,9 @@ describe("MatchMyRoute Database Functions", () => {
 
         it("should update all properties at once", () => {
             const updates = {
-                arrivalTime: 1500,
+                arrivalTime: "13:00:00+00",
                 days: ["tuesday"],
-                departureTime: 900,
+                departureTime: "12:00:00+00",
                 id: updateRouteId,
                 route: [[0, 0], [1, 0], [1, 1], [0, 1]],
             };
@@ -684,13 +684,13 @@ describe("MatchMyRoute Database Functions", () => {
             }).then(newRoute => {
                 expect(newRoute.days).to.eql(updates.days);
                 expect(newRoute.route).to.eql(updates.route);
-                expect(newRoute.arrivalTime).to.equal(updates.arrivalTime);
-                expect(newRoute.departureTime).to.equal(updates.departureTime);
+                expect(newRoute.arrivalTime).to.equal("13:00:00+00");
+                expect(newRoute.departureTime).to.equal("12:00:00+00");
             });
         });
         it("should update one property at a time - arrivalTime", () => {
             const updates = {
-                arrivalTime: 15000,
+                arrivalTime: "13:30:00+00",
                 id: updateRouteId,
             };
             return Database.getRouteById(updateRouteId, transactionClient).then(originalRoute => {
@@ -706,7 +706,7 @@ describe("MatchMyRoute Database Functions", () => {
         });
         it("should update one property at a time - departureTime", () => {
             const updates = {
-                departureTime: 12000,
+                departureTime: "12:45:00+00",
                 id: updateRouteId,
             };
             return Database.getRouteById(updateRouteId, transactionClient).then(originalRoute => {
@@ -767,7 +767,7 @@ describe("MatchMyRoute Database Functions", () => {
         });
         it("should not be able to update to an invalid departureTime", done => {
             const updates = {
-                departureTime: 16000,
+                departureTime: "14:00:00+00",
                 id: updateRouteId,
             };
             const promise = Database.getRouteById(updateRouteId, transactionClient).then(originalRoute => {
@@ -777,7 +777,7 @@ describe("MatchMyRoute Database Functions", () => {
         });
         it("should not be able to update to an invalid arrivalTime", done => {
             const updates = {
-                arrivalTime: 100,
+                arrivalTime: "12:00:00+00",
                 id: updateRouteId,
             };
             const promise = Database.getRouteById(updateRouteId, transactionClient).then(originalRoute => {
@@ -787,8 +787,8 @@ describe("MatchMyRoute Database Functions", () => {
         });
         it("should not be able to update to an invalid departureTime + arrivalTime", done => {
             const updates = {
-                arrivalTime: 15999,
-                departureTime: 16000,
+                arrivalTime: "12:00:00+00",
+                departureTime: "13:00:00+00",
                 id: updateRouteId,
             };
             const promise = Database.getRouteById(updateRouteId, transactionClient).then(originalRoute => {
@@ -844,9 +844,9 @@ describe("Database shutdown", () => {
         promises.push(Database.sql("SELECT now();"));
         // putRoute
         const route = new RouteDataModel({
-            arrivalTime: 15000,
+            arrivalTime: "13:00:00+00",
             days: ["monday"],
-            departureTime: 14000,
+            departureTime: "12:00:00+00",
             owner: 123,
             route: [[0, 0], [1, 0], [1, 1]],
         });
