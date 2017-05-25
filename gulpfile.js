@@ -89,6 +89,7 @@ function getDevelopmentEnvVars() {
         DOCURL: "http://localhost:8080",
         STATIC_DIR: "build/static",
         NODE_ENV: "development",
+        GOOGLE_APPLICATION_CREDENTIALS: "conf/storage-keyfile.json"
     });
 };
 
@@ -102,6 +103,7 @@ function getProductionEnvVars() {
         NODE_ENV: "production",
         PGUSER: "postgres",
         PGPASSWORD: "aUZw[:Gw38H&>Jf2hUwd",
+        GOOGLE_APPLICATION_CREDENTIALS: "conf/storage-keyfile.json"
     });
 };
 
@@ -113,6 +115,7 @@ function getStagingEnvVars() {
         NODE_ENV: "staging",
         PGUSER: "testuser",
         PGPASSWORD: "test",
+        GOOGLE_APPLICATION_CREDENTIALS: "conf/storage-keyfile.json"
     });
 };
 

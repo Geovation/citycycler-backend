@@ -33,6 +33,7 @@
     "postinstall": "npm prune"
   },
   "dependencies": {
+    "@google-cloud/storage": "^1.1.1",
     "babel-core": "6.24.0",
     "cache-manager": "2.2.0",
     "cache-manager-memcached-store": "2.1.0",

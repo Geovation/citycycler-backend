@@ -1,4 +1,5 @@
 import { generateJWTFor, minimumHashingRounds } from "../../common/auth";
+import * as CloudStorage from "../../common/cloudstorage";
 import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 import * as crypto from "crypto";
@@ -83,6 +84,10 @@ const definitions = {
                 description: "The user's password",
                 type: "string",
             },
+            photo: {
+                description: "A profile photo for the user",
+                type: "string",
+            },
         },
         required: ["email", "name", "password"],
     },
@@ -122,6 +127,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     const rounds = minimumHashingRounds;
     const salt = crypto.randomBytes(128);
     const jwtSecret = crypto.randomBytes(20).toString("base64");
+    CloudStorage.storeProfileImage("abc", 2);
     return new Promise((resolve, reject) => {
         if (email.trim().length === 0) {
             reject("400:Email Required");
