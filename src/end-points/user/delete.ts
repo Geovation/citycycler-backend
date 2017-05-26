@@ -1,4 +1,5 @@
 import { getIdFromJWT } from "../../common/auth";
+import * as CloudStorage from "../../common/cloudstorage";
 import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 // import * as logger from "winston";
@@ -55,8 +56,12 @@ const operation = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
+    let userId;
     return getIdFromJWT(params.authorization).then(id => {
+        userId = id;
         return Database.deleteUser(id);
+    }).then(() => {
+        return CloudStorage.deleteProfileImage(userId);
     });
 };
 
