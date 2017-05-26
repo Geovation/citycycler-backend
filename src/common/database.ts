@@ -507,16 +507,15 @@ export function createRouteQuery(owner: number, routeQ: RouteQuery): Promise<Boo
  * @returns A User object
  */
 export function putUser(params, providedClient = null): Promise<User> {
-    const query = "INSERT INTO users (name, email, pwh, salt, rounds, jwt_secret) " +
-        "VALUES ($1,$2,$3,$4,$5,$6) RETURNING *";
-    const sqlParams = [
-        params.name,
-        params.email,
-        params.pwh,
-        params.salt,
-        params.rounds,
-        params.jwtSecret,
-    ];
+    let queryParts = [];
+    let sqlParams = [];
+    const keys = Object.keys(params);
+    keys.forEach((key, i) => {
+        queryParts.push("$" + (i + 1));
+        sqlParams.push(params[key]);
+    });
+    const query = "INSERT INTO users (" + keys.join(", ") + ") VALUES (" + queryParts.join(",") + ") RETURNING *;";
+    // console.log("new query: " + query);
     return sqlTransaction(query, sqlParams, providedClient)
         .then((result) => {
             if (result.rowCount > 0) {

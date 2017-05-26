@@ -70,6 +70,11 @@ const definitions = {
         description: "A User object",
         // example: [[0, 0], [1, 1]],
         properties: {
+            bio: {
+                description: "The user's short biography",
+                example: "Hi, I'm Joe Blogs and I've been cycling London since I was 12.",
+                type: "string",
+            },
             email: {
                 description: "The user's email address",
                 example: "joe@blogs.com",
@@ -121,13 +126,13 @@ const definitions = {
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
-    const { email, password, name } = payload;
+    const { email, password, name, bio, photo } = payload;
     // Work out the user's password hash and salt.
     // We are using PBKDF2 with 50000 iterations and sha512.
     const rounds = minimumHashingRounds;
     const salt = crypto.randomBytes(128);
     const jwtSecret = crypto.randomBytes(20).toString("base64");
-    CloudStorage.storeProfileImage("abc", 2);
+    let createdUser;
     return new Promise((resolve, reject) => {
         if (email.trim().length === 0) {
             reject("400:Email Required");
@@ -147,13 +152,31 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
             }
         });
     }).then(pwh => {
-        return Database.putUser({name, email, pwh, salt, rounds, jwtSecret}).then(user => {
+        let sqlParams = {name, email, pwh, salt, rounds, jwt_secret: jwtSecret};
+        if (typeof bio !== "undefined") {
+            sqlParams.profile_bio = bio;
+        }
+        return Database.putUser(sqlParams);
+    }).then(user => {
+        createdUser = user;
+        if (typeof photo !== "undefined") {
+            console.log("photo found, will upload");
+            return CloudStorage.storeProfileImage(payload.photo, user.id)
+            .then((profileImgUrl) => {
+                return {
+                    id: createdUser.id,
+                    jwt: generateJWTFor(createdUser),
+                    profileImgUrl,
+                    status: 201,
+                };
+            });
+        } else {
             return {
-                id: user.id,
-                jwt: generateJWTFor(user),
+                id: createdUser.id,
+                jwt: generateJWTFor(createdUser),
                 status: 201,
             };
-        });
+        }
     });
 };
 
