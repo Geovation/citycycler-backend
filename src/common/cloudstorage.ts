@@ -24,7 +24,7 @@ export function storeProfileImage(imgUri: string, userId: number) {
     });
 }
 
-function createFilenameForUser(userId: number): string {
+export function createFilenameForUser(userId: number): string {
     return "profileimg-" + userId + ".jpg";
 }
 
@@ -32,5 +32,11 @@ export function deleteProfileImage(userId: number): Promise<any> {
     const bucket = gcs.bucket(process.env.STORAGE_BUCKET);
     const filename = createFilenameForUser(userId);
     const file = bucket.file(filename);
-    return file.delete();
+    return file.exists().then(data => {
+        if (data[0]) {
+            return file.delete();
+        } else {
+            return true;
+        }
+    });
 }

@@ -1,3 +1,4 @@
+import * as CloudStorage from "./common/cloudstorage";
 import { RouteDataModel } from "./common/RouteDataModel";
 import { app, gracefulShutdown, setupServer } from "./microservices-framework/web/server";
 import { senecaReady } from "./microservices-framework/web/services";
@@ -313,7 +314,8 @@ describe("MatchMyRoute API", () => {
                         email: "updatedtest@example.com",
                         name: "Updated Test User",
                         password: "updatedtest",
-                        photo: "Updated photo",
+                        photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21"
+                            + "bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
                     };
                     defaultRequest({
                         headers: {
@@ -336,7 +338,7 @@ describe("MatchMyRoute API", () => {
                             expect(user.name).to.equal("Updated Test User");
                             expect(user.email).to.equal("updatedtest@example.com");
                             expect(user.bio).to.equal("Updated bio");
-                            expect(user.photo).to.equal("Updated photo");
+                            expect(user.photo).to.equal(CloudStorage.createFilenameForUser(userIds[0]));
                             // Test password change by logging in with the new password
                             defaultRequest({
                                 headers: {
@@ -508,7 +510,8 @@ describe("MatchMyRoute API", () => {
                 });
                 it("should update a user's individual properties - photo", done => {
                     const userUpdates = {
-                        photo: "photo",
+                        photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21"
+                            + "bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
                     };
                     defaultRequest({
                         headers: {
@@ -528,7 +531,34 @@ describe("MatchMyRoute API", () => {
                             url: url + "/user/" + userIds[0],
                         }, (error2, response2, body2) => {
                             let user = body2.result;
-                            expect(user.photo).to.equal("photo");
+                            expect(user.photo).to.equal(CloudStorage.createFilenameForUser(userIds[0]));
+                            done();
+                        });
+                    });
+                });
+                it("should update a user's individual properties - photo (removal)", done => {
+                    const userUpdates = {
+                        photo: null,
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[0],
+                        },
+                        json: userUpdates,
+                        method: "POST",
+                        url: url + "/user",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Got non 200 response: " +
+                             JSON.stringify(response));
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[0],
+                            },
+                            method: "GET",
+                            url: url + "/user/" + userIds[0],
+                        }, (error2, response2, body2) => {
+                            let user = body2.result;
+                            expect(user.photo).to.be.null;
                             done();
                         });
                     });
