@@ -1,4 +1,5 @@
 import { getIdFromJWT, minimumHashingRounds } from "../../common/auth";
+import * as CloudStorage from "../../common/cloudstorage";
 import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 import * as crypto from "crypto";
@@ -128,8 +129,18 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         if (payload.name !== undefined && payload.name.trim().length !== 0) {
             updates.name = payload.name;
         }
-        if (payload.photo !== undefined && payload.photo.trim().length !== 0) {
-            updates.profile_photo = payload.photo;
+        // delete or replace profile photo
+        if (payload.photo === null) {
+            promises.push(CloudStorage.deleteProfileImage(userId));
+            updates.profile_photo = null;
+        } else if (payload.photo !== undefined && payload.photo.trim().length !== 0) {
+            promises.push(
+                CloudStorage.storeProfileImage(payload.photo, userId)
+                .then(profileImage => {
+                        updates.profile_photo = profileImage;
+                    }
+                )
+            );
         }
         if (payload.password !== undefined && payload.password.trim().length !== 0) {
             // Generate the new password hash
@@ -140,24 +151,17 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
                         if (err) {
                             reject("Error hashing: " + err);
                         } else {
-                            let kvs: any = [["pwh", key]];
+                            updates.pwh = key;
                             if (user.rounds !== minimumHashingRounds) {
-                                kvs.push([
-                                    "rounds", minimumHashingRounds,
-                                ]);
+                                updates.rounds = minimumHashingRounds;
                             }
-                            resolve(kvs);
+                            resolve(true);
                         }
                     });
                 });
             }));
         }
-        return Promise.all(promises).then(kvss => {
-            kvss.forEach((kvs) => {
-                kvs.forEach((kv) => {
-                    updates[kv[0]] = kv[1];
-                });
-            });
+        return Promise.all(promises).then(values => {
             if (!updates) {
                 return true;
             } else {

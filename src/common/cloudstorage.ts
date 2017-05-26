@@ -7,7 +7,7 @@ const getUri = promisify(getUriFunction);
 
 export function storeProfileImage(imgUri: string, userId: number) {
     const bucket = gcs.bucket(process.env.STORAGE_BUCKET);
-    const filename = "profileimg-" + userId + ".jpg";
+    const filename = createFilenameForUser(userId);
     const file = bucket.file(filename);
     return getUri(imgUri).then((readStream) => {
         const writeStream = file.createWriteStream();
@@ -25,8 +25,14 @@ export function storeProfileImage(imgUri: string, userId: number) {
     });
 }
 
-export function clearProfileImage(filename: string) {
+function createFilenameForUser(userId: number): string {
+    return "profileimg-" + userId + ".jpg";
+}
+
+export function deleteProfileImage(userId: number): Promise<any> {
     const bucket = gcs.bucket(process.env.STORAGE_BUCKET);
+    const filename = createFilenameForUser(userId);
+    console.log("File to delete " + filename);
     const file = bucket.file(filename);
     return file.delete();
 }

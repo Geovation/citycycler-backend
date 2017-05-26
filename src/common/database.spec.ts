@@ -117,7 +117,6 @@ describe("MatchMyRoute Database Functions", () => {
                 salt: "salty",
             }, transactionClient)
                 .then(response => {
-                    console.log(JSON.stringify(response));
                     expect(response.name).to.equal("Test User");
                     expect(response.bio).to.equal("mybio");
                 });
