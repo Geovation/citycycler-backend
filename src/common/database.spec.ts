@@ -93,8 +93,8 @@ describe("MatchMyRoute Database Functions", () => {
     });
 
     describe("User related functions", () => {
-        it("should create new user", () => {
-            Database.putUser({
+        it("should create new user (without bio)", () => {
+            return Database.putUser({
                 email: "test@example.com",
                 jwt_secret: "secret",
                 name: "Test User",
@@ -104,6 +104,22 @@ describe("MatchMyRoute Database Functions", () => {
             }, transactionClient)
                 .then(response => {
                     expect(response.name).to.equal("Test User");
+                });
+        });
+        it("should create new user (with bio)", () => {
+            return Database.putUser({
+                email: "test@example.com",
+                jwt_secret: "secret",
+                name: "Test User",
+                profile_bio: "mybio",
+                pwh: "pwhash",
+                rounds: 5,
+                salt: "salty",
+            }, transactionClient)
+                .then(response => {
+                    console.log(JSON.stringify(response));
+                    expect(response.name).to.equal("Test User");
+                    expect(response.bio).to.equal("mybio");
                 });
         });
         it("should escape SQL injections", () => {
