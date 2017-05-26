@@ -528,14 +528,14 @@ export function putUser(params, providedClient = null): Promise<User> {
                 return User.fromSQLRow(result.rows[0]);
             } else {
                 console.error("no row returned");
-                throw new Error("409:Could not create user (duplicate?)");
+                throw new Error("409:An account already exists using this email");
             }
         })
         .catch((error) => {
             if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
                 throw new Error("409:An account already exists using this email");
             } else {
-                throw new Error(error);
+                throw new Error(error.message);
             }
         });
 }

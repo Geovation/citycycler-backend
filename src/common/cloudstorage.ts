@@ -24,3 +24,9 @@ export function storeProfileImage(imgUri: string, userId: number) {
         return filename;
     });
 }
+
+export function clearProfileImage(filename: string) {
+    const bucket = gcs.bucket(process.env.STORAGE_BUCKET);
+    const file = bucket.file(filename);
+    return file.delete();
+}

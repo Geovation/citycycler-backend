@@ -153,8 +153,14 @@ describe("MatchMyRoute API", () => {
                         done();
                     });
                 });
-                it("should create a second user with different details", done => {
-                    const user = { email: "test1@example.com", name: "Test User2", password: "test" };
+                it("should create a second user with different details and a profile photo", done => {
+                    const user = {
+                        email: "test1@example.com",
+                        name: "Test User2",
+                        password: "test",
+                        photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21"
+                            + "bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
+                    };
                     defaultRequest({
                         json: user,
                         method: "PUT",
@@ -162,10 +168,10 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(201, "Expected 201 response but got " +
                             response.statusCode + ", error given is: " + error);
-                        expect(typeof body).to.equal("object",
-                            "Body is of unexpected type, expected object, " + "but it's a " + (typeof body));
-                        expect(parseInt(body.result.id, 10)).to.not.equal(NaN,
-                            "Id returned was not a number. result is: " + JSON.stringify(body.result));
+                        expect(typeof body).to.equal("object", "Body is of unexpected type");
+                        expect(typeof body.result).to.equal("object", "Result is of unexpected type. Got " +
+                            JSON.stringify(body));
+                        expect(parseInt(body.result.id, 10)).to.not.be.NaN;
                         expect(body.result.jwt, "JWT has no token: "
                             + JSON.stringify(body.result)).to.have.property("token")
                             .that.is.a("string", "JWT token is not a string, it's a " +
@@ -175,6 +181,7 @@ describe("MatchMyRoute API", () => {
                             .that.is.a("number", "JWT expires is not a number, it's a " +
                             (typeof body.result.jwt.expires) + ", here is the JWT " +
                             JSON.stringify(body.result.jwt));
+                        expect(body.result.profileImage).to.be.a.string;
 
                         userIds.push(parseInt(body.result.id, 10));
                         userJwts.push(body.result.jwt.token);
