@@ -90,7 +90,7 @@ const definitions = {
                 type: "string",
             },
             photo: {
-                description: "A profile photo for the user",
+                description: "A profile photo for the user as data URI",
                 type: "string",
             },
         },
@@ -114,6 +114,10 @@ const definitions = {
                         type: "string",
                     },
                 },
+            },
+            profileImage: {
+                description: "The public URL of the profileImage (null if no image was provided)",
+                type: "string",
             },
         },
         required: ["id", "jwt"],
