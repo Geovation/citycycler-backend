@@ -133,14 +133,17 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     const salt = crypto.randomBytes(128);
     const jwtSecret = crypto.randomBytes(20).toString("base64");
     let createdUser;
+    let pwh;
+    let client;
+    let profileImgUrl;
     return new Promise((resolve, reject) => {
-        if (email.trim().length === 0) {
+        if (typeof email === "undefined" || email.trim().length === 0) {
             reject("400:Email Required");
             return;
-        } else if (password.trim().length === 0) {
+        } else if (typeof password === "undefined" || password.trim().length === 0) {
             reject("400:Password Required");
             return;
-        } else if (name.trim().length === 0) {
+        } else if (typeof name === "undefined" || name.trim().length === 0) {
             reject("400:Name Required");
             return;
         }
@@ -151,31 +154,58 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
                 resolve(key);
             }
         });
-    }).then(pwh => {
-        let sqlParams = {name, email, pwh, salt, rounds, jwt_secret: jwtSecret};
-        if (typeof bio !== "undefined") {
-            sqlParams.profile_bio = bio;
-        }
-        return Database.putUser(sqlParams);
-    }).then(user => {
+    })
+    .then(newPwh => {
+        pwh = newPwh;
+        return Database.createTransactionClient();
+    })
+    // create user
+    .then(newClient => {
+        client = newClient;
+        let sqlParams = {name, email, pwh, salt, rounds, jwt_secret: jwtSecret, profile_bio: bio};
+        return Database.putUser(sqlParams, client);
+    })
+    // store profile photo for user if it exists
+    .then(user => {
         createdUser = user;
         if (typeof photo !== "undefined") {
             console.log("photo found, will upload");
             return CloudStorage.storeProfileImage(payload.photo, user.id)
-            .then((profileImgUrl) => {
-                return {
-                    id: createdUser.id,
-                    jwt: generateJWTFor(createdUser),
-                    profileImgUrl,
-                    status: 201,
-                };
+            .then((newProfileImgUrl) => {
+                profileImgUrl = newProfileImgUrl;
+                return Database.updateUser(createdUser.id, {profile_photo: profileImgUrl}, client);
             });
         } else {
-            return {
-                id: createdUser.id,
-                jwt: generateJWTFor(createdUser),
-                status: 201,
-            };
+            return true;
+        }
+    })
+    .then(() => {
+        return Database.commitAndReleaseTransaction(client);
+    })
+    // return information to client
+    .then(() => {
+        let returnValues = {
+            id: createdUser.id,
+            jwt: generateJWTFor(createdUser),
+            profileImage: null,
+            status: 201,
+        };
+        if (typeof profileImgUrl !== "undefined") {
+            returnValues.profileImage =
+                process.env.STORAGE_BASE_URL + "/" + process.env.STORAGE_BUCKET + "/" + profileImgUrl;
+        }
+        return returnValues;
+    })
+    // handle all errors and roll back if transaction already started
+    .catch(err => {
+        const originalError = typeof err === "string" ? err : err.message;
+        if (typeof client !== "undefined") {
+            return Database.rollbackAndReleaseTransaction(client)
+            .then(() => {
+                throw new Error(originalError);
+            });
+        } else {
+            throw new Error(originalError);
         }
     });
 };

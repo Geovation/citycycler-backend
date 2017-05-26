@@ -21,6 +21,6 @@ export function storeProfileImage(imgUri: string, userId: number) {
     })
     .then(() => {
         console.log("trying to return filename " + filename);
-        return process.env.STORAGE_BASE_URL + "/" + process.env.STORAGE_BUCKET + "/" + filename;
+        return filename;
     });
 }

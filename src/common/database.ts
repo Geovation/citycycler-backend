@@ -64,6 +64,12 @@ export function rollbackAndReleaseTransaction(client, source = "") {
     });
 }
 
+export function commitAndReleaseTransaction(client) {
+    return client.query("COMMIT").then(e => {
+        client.release();
+    });
+}
+
 // Execute an arbritary SQL command.
 export function sql(query: string, params: Array<string> = []): Promise<any> {
     return new Promise((resolve, reject) => {
@@ -521,6 +527,7 @@ export function putUser(params, providedClient = null): Promise<User> {
             if (result.rowCount > 0) {
                 return User.fromSQLRow(result.rows[0]);
             } else {
+                console.error("no row returned");
                 throw new Error("409:Could not create user (duplicate?)");
             }
         })
@@ -528,7 +535,7 @@ export function putUser(params, providedClient = null): Promise<User> {
             if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
                 throw new Error("409:An account already exists using this email");
             } else {
-                throw new Error("409:An account already exists using this email");
+                throw new Error(error);
             }
         });
 }
