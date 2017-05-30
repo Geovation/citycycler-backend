@@ -36,7 +36,7 @@ describe("MatchMyRoute Auth Functions", () => {
             }).then(client => {
                 return Database.putUser({
                     email: "test@example.com",
-                    jwtSecret: secret,
+                    jwt_secret: secret,
                     name: new Buffer("test"),
                     pwh: new Buffer("test"),
                     rounds: 1,

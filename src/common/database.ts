@@ -64,6 +64,12 @@ export function rollbackAndReleaseTransaction(client, source = "") {
     });
 }
 
+export function commitAndReleaseTransaction(client) {
+    return client.query("COMMIT").then(e => {
+        client.release();
+    });
+}
+
 // Execute an arbritary SQL command.
 export function sql(query: string, params: Array<string> = []): Promise<any> {
     return new Promise((resolve, reject) => {
@@ -507,29 +513,28 @@ export function createRouteQuery(owner: number, routeQ: RouteQuery): Promise<Boo
  * @returns A User object
  */
 export function putUser(params, providedClient = null): Promise<User> {
-    const query = "INSERT INTO users (name, email, pwh, salt, rounds, jwt_secret) " +
-        "VALUES ($1,$2,$3,$4,$5,$6) RETURNING *";
-    const sqlParams = [
-        params.name,
-        params.email,
-        params.pwh,
-        params.salt,
-        params.rounds,
-        params.jwtSecret,
-    ];
+    let queryParts = [];
+    let sqlParams = [];
+    const keys = Object.keys(params);
+    keys.forEach((key, i) => {
+        queryParts.push("$" + (i + 1));
+        sqlParams.push(params[key]);
+    });
+    const query = "INSERT INTO users (" + keys.join(", ") + ") VALUES (" + queryParts.join(",") + ") RETURNING *;";
     return sqlTransaction(query, sqlParams, providedClient)
         .then((result) => {
             if (result.rowCount > 0) {
                 return User.fromSQLRow(result.rows[0]);
             } else {
-                throw new Error("409:Could not create user (duplicate?)");
+                console.error("no row returned");
+                throw new Error("409:An account already exists using this email");
             }
         })
         .catch((error) => {
             if (error.message === "duplicate key value violates unique constraint \"users_email_key\"") {
                 throw new Error("409:An account already exists using this email");
             } else {
-                throw new Error("409:An account already exists using this email");
+                throw new Error(error.message);
             }
         });
 }

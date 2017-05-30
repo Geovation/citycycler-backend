@@ -78,6 +78,7 @@ function getBaseEnvVars() {
         WITH_SERVICES: true,
         NODE_PATH: ".",
         PGDATABASE: "matchMyRoute",
+        STORAGE_BASE_URL: "https://storage.googleapis.com"
     };
 };
 
@@ -89,6 +90,8 @@ function getDevelopmentEnvVars() {
         DOCURL: "http://localhost:8080",
         STATIC_DIR: "build/static",
         NODE_ENV: "development",
+        GOOGLE_APPLICATION_CREDENTIALS: "conf/storage-keyfile.json",
+        STORAGE_BUCKET: "matchmyroute-dev"
     });
 };
 
@@ -102,6 +105,8 @@ function getProductionEnvVars() {
         NODE_ENV: "production",
         PGUSER: "postgres",
         PGPASSWORD: "aUZw[:Gw38H&>Jf2hUwd",
+        GOOGLE_APPLICATION_CREDENTIALS: "conf/storage-keyfile.json",
+        STORAGE_BUCKET: "matchmyroute-prod"
     });
 };
 
@@ -113,6 +118,8 @@ function getStagingEnvVars() {
         NODE_ENV: "staging",
         PGUSER: "testuser",
         PGPASSWORD: "test",
+        GOOGLE_APPLICATION_CREDENTIALS: "conf/storage-keyfile.json",
+        STORAGE_BUCKET: "matchmyroute-dev"
     });
 };
 

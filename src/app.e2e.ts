@@ -1,3 +1,4 @@
+import * as CloudStorage from "./common/cloudstorage";
 import { RouteDataModel } from "./common/RouteDataModel";
 import { app, gracefulShutdown, setupServer } from "./microservices-framework/web/server";
 import { senecaReady } from "./microservices-framework/web/services";
@@ -153,8 +154,14 @@ describe("MatchMyRoute API", () => {
                         done();
                     });
                 });
-                it("should create a second user with different details", done => {
-                    const user = { email: "test1@example.com", name: "Test User2", password: "test" };
+                it("should create a second user with different details and a profile photo", done => {
+                    const user = {
+                        email: "test1@example.com",
+                        name: "Test User2",
+                        password: "test",
+                        photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21"
+                            + "bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
+                    };
                     defaultRequest({
                         json: user,
                         method: "PUT",
@@ -162,10 +169,10 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(201, "Expected 201 response but got " +
                             response.statusCode + ", error given is: " + error);
-                        expect(typeof body).to.equal("object",
-                            "Body is of unexpected type, expected object, " + "but it's a " + (typeof body));
-                        expect(parseInt(body.result.id, 10)).to.not.equal(NaN,
-                            "Id returned was not a number. result is: " + JSON.stringify(body.result));
+                        expect(typeof body).to.equal("object", "Body is of unexpected type");
+                        expect(typeof body.result).to.equal("object", "Result is of unexpected type. Got " +
+                            JSON.stringify(body));
+                        expect(parseInt(body.result.id, 10)).to.not.be.NaN;
                         expect(body.result.jwt, "JWT has no token: "
                             + JSON.stringify(body.result)).to.have.property("token")
                             .that.is.a("string", "JWT token is not a string, it's a " +
@@ -175,10 +182,20 @@ describe("MatchMyRoute API", () => {
                             .that.is.a("number", "JWT expires is not a number, it's a " +
                             (typeof body.result.jwt.expires) + ", here is the JWT " +
                             JSON.stringify(body.result.jwt));
+                        expect(body.result.profileImage).to.be.a.string;
 
                         userIds.push(parseInt(body.result.id, 10));
                         userJwts.push(body.result.jwt.token);
-                        done();
+
+                        // check if photo exists in cloud storage
+                        const imgUrl = body.result.profileImage;
+                        setTimeout(defaultRequest, 1000, {
+                            method: "GET",
+                            url: imgUrl,
+                        }, (error1, response1, body1) => {
+                            expect(response1.statusCode).to.equal(200, "Image doesn't exist in Cloud Storage");
+                            done();
+                        });
                     });
                 });
                 it("shouldn't create a user with no name", done => {
@@ -306,7 +323,8 @@ describe("MatchMyRoute API", () => {
                         email: "updatedtest@example.com",
                         name: "Updated Test User",
                         password: "updatedtest",
-                        photo: "Updated photo",
+                        photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21"
+                            + "bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
                     };
                     defaultRequest({
                         headers: {
@@ -329,7 +347,7 @@ describe("MatchMyRoute API", () => {
                             expect(user.name).to.equal("Updated Test User");
                             expect(user.email).to.equal("updatedtest@example.com");
                             expect(user.bio).to.equal("Updated bio");
-                            expect(user.photo).to.equal("Updated photo");
+                            expect(user.photo).to.equal(CloudStorage.createFilenameForUser(userIds[0]));
                             // Test password change by logging in with the new password
                             defaultRequest({
                                 headers: {
@@ -344,7 +362,19 @@ describe("MatchMyRoute API", () => {
                             }, (error3, response3, body3) => {
                                 expect(response3.statusCode).to.equal(200, "Got non 200 login response: " +
                                     JSON.stringify(response3));
-                                done();
+                                // check if photo exists in cloud storage
+                                const imgUrl = process.env.STORAGE_BASE_URL +
+                                "/" +
+                                process.env.STORAGE_BUCKET +
+                                "/" +
+                                user.photo;
+                                setTimeout(defaultRequest, 1000, {
+                                    method: "GET",
+                                    url: imgUrl,
+                                }, (error4, response4, body4) => {
+                                    expect(response4.statusCode).to.equal(200, "Image doesn't exist in Cloud Storage");
+                                    done();
+                                });
                             });
                         });
                     });
@@ -501,7 +531,8 @@ describe("MatchMyRoute API", () => {
                 });
                 it("should update a user's individual properties - photo", done => {
                     const userUpdates = {
-                        photo: "photo",
+                        photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21"
+                            + "bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
                     };
                     defaultRequest({
                         headers: {
@@ -521,9 +552,64 @@ describe("MatchMyRoute API", () => {
                             url: url + "/user/" + userIds[0],
                         }, (error2, response2, body2) => {
                             let user = body2.result;
-                            expect(user.photo).to.equal("photo");
+                            expect(user.photo).to.equal(CloudStorage.createFilenameForUser(userIds[0]));
+                            // done();
+                            // check if photo exists in cloud storage
+                            const imgUrl = process.env.STORAGE_BASE_URL +
+                            "/" +
+                            process.env.STORAGE_BUCKET +
+                            "/" +
+                            user.photo;
+                            defaultRequest({
+                                method: "GET",
+                                url: imgUrl,
+                            }, (error3, response3, body3) => {
+                                expect(response3.statusCode).to.equal(200, "Image doesn't exist in Cloud Storage");
+                                done();
+                            });
+                        });
+
+                    });
+                });
+                it("should update a user's individual properties - photo (removal)", done => {
+                    const userUpdates = {
+                        photo: null,
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[0],
+                        },
+                        json: userUpdates,
+                        method: "POST",
+                        url: url + "/user",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Got non 200 response: " +
+                             JSON.stringify(response));
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[0],
+                            },
+                            method: "GET",
+                            url: url + "/user/" + userIds[0],
+                        }, (error2, response2, body2) => {
+                            let user = body2.result;
+                            expect(user.photo).to.be.null;
                             done();
                         });
+                        // this does not work as the public URL is still available for some (unknown) time
+                        // through google cloud storage
+                        // const imgUrl = process.env.STORAGE_BASE_URL +
+                        // "/" +
+                        // process.env.STORAGE_BUCKET +
+                        // "/" +
+                        // CloudStorage.createFilenameForUser(userIds[0]);
+                        // defaultRequest({
+                        //     method: "GET",
+                        //     url: imgUrl,
+                        // }, (error3, response3, body3) => {
+                        //     expect(response3.statusCode).to.equal(403, "Image still exists in Cloud Storage");
+                        //     done();
+                        // });
                     });
                 });
                 it("should not update help count", done => {
