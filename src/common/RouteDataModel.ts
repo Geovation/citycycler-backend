@@ -1,5 +1,5 @@
-import * as moment from "moment";
 import { lineStringToCoords } from "./database";
+import * as moment from "moment";
 export class RouteDataModel {
     public static fromSQLRow(row) {
         // Convert the bitmasked int into an array of days
