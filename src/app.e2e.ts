@@ -186,7 +186,16 @@ describe("MatchMyRoute API", () => {
 
                         userIds.push(parseInt(body.result.id, 10));
                         userJwts.push(body.result.jwt.token);
-                        done();
+
+                        // check if photo exists in cloud storage
+                        const imgUrl = body.result.profileImage;
+                        setTimeout(defaultRequest, 1000, {
+                            method: "GET",
+                            url: imgUrl,
+                        }, (error1, response1, body1) => {
+                            expect(response1.statusCode).to.equal(200, "Image doesn't exist in Cloud Storage");
+                            done();
+                        });
                     });
                 });
                 it("shouldn't create a user with no name", done => {
@@ -353,7 +362,19 @@ describe("MatchMyRoute API", () => {
                             }, (error3, response3, body3) => {
                                 expect(response3.statusCode).to.equal(200, "Got non 200 login response: " +
                                     JSON.stringify(response3));
-                                done();
+                                // check if photo exists in cloud storage
+                                const imgUrl = process.env.STORAGE_BASE_URL +
+                                "/" +
+                                process.env.STORAGE_BUCKET +
+                                "/" +
+                                user.photo;
+                                setTimeout(defaultRequest, 1000, {
+                                    method: "GET",
+                                    url: imgUrl,
+                                }, (error4, response4, body4) => {
+                                    expect(response4.statusCode).to.equal(200, "Image doesn't exist in Cloud Storage");
+                                    done();
+                                });
                             });
                         });
                     });
@@ -532,8 +553,22 @@ describe("MatchMyRoute API", () => {
                         }, (error2, response2, body2) => {
                             let user = body2.result;
                             expect(user.photo).to.equal(CloudStorage.createFilenameForUser(userIds[0]));
-                            done();
+                            // done();
+                            // check if photo exists in cloud storage
+                            const imgUrl = process.env.STORAGE_BASE_URL +
+                            "/" +
+                            process.env.STORAGE_BUCKET +
+                            "/" +
+                            user.photo;
+                            defaultRequest({
+                                method: "GET",
+                                url: imgUrl,
+                            }, (error3, response3, body3) => {
+                                expect(response3.statusCode).to.equal(200, "Image doesn't exist in Cloud Storage");
+                                done();
+                            });
                         });
+
                     });
                 });
                 it("should update a user's individual properties - photo (removal)", done => {
@@ -561,6 +596,20 @@ describe("MatchMyRoute API", () => {
                             expect(user.photo).to.be.null;
                             done();
                         });
+                        // this does not work as the public URL is still available for some (unknown) time
+                        // through google cloud storage
+                        // const imgUrl = process.env.STORAGE_BASE_URL +
+                        // "/" +
+                        // process.env.STORAGE_BUCKET +
+                        // "/" +
+                        // CloudStorage.createFilenameForUser(userIds[0]);
+                        // defaultRequest({
+                        //     method: "GET",
+                        //     url: imgUrl,
+                        // }, (error3, response3, body3) => {
+                        //     expect(response3.statusCode).to.equal(403, "Image still exists in Cloud Storage");
+                        //     done();
+                        // });
                     });
                 });
                 it("should not update help count", done => {
