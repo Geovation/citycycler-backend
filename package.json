@@ -33,13 +33,13 @@
     "postinstall": "npm prune"
   },
   "dependencies": {
-    "@google-cloud/storage": "^1.1.1",
+    "@google-cloud/storage": "1.1.1",
     "babel-core": "6.24.0",
     "cache-manager": "2.2.0",
     "cache-manager-memcached-store": "2.1.0",
     "data.maybe": "1.2.2",
-    "es6-promisify": "^5.0.0",
-    "get-uri": "^2.0.0",
+    "es6-promisify": "5.0.0",
+    "get-uri": "2.0.0",
     "joi": "10.3.1",
     "jsonwebtoken": "7.3.0",
     "koa": "1.4.0",

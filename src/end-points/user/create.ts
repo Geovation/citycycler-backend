@@ -173,7 +173,6 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     .then(user => {
         createdUser = user;
         if (typeof photo !== "undefined") {
-            console.log("photo found, will upload");
             return CloudStorage.storeProfileImage(payload.photo, user.id)
             .then((newProfileImgUrl) => {
                 profileImgUrl = newProfileImgUrl;

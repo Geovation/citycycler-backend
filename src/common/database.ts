@@ -521,7 +521,6 @@ export function putUser(params, providedClient = null): Promise<User> {
         sqlParams.push(params[key]);
     });
     const query = "INSERT INTO users (" + keys.join(", ") + ") VALUES (" + queryParts.join(",") + ") RETURNING *;";
-    // console.log("new query: " + query);
     return sqlTransaction(query, sqlParams, providedClient)
         .then((result) => {
             if (result.rowCount > 0) {
