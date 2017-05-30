@@ -105,8 +105,8 @@ const definitions = {
     NewRouteData: {
         properties: {
             arrivalTime: {
-                description: "The time in seconds past midnight that the owner arrives at their destination",
-                type: "integer",
+                description: "The time in ISO 8106 extended format that the owner arrives at their destination",
+                type: "string",
             },
             days: {
                 description: "Which days of the week the owner cycles this route",
@@ -119,8 +119,8 @@ const definitions = {
                 type: "array",
             },
             departureTime: {
-                description: "The time in seconds past midnight that the owner will start their route",
-                type: "integer",
+                description: "The time in ISO 8106 extended format that the owner will start their route",
+                type: "string",
             },
             route: {
                 $ref: "#/definitions/CoordList",
@@ -137,7 +137,8 @@ const definitions = {
 export const service = (broadcast: Function, params: any): Promise<any> => {
     return getIdFromJWT(params.authorization).then(owner => {
         params.body.owner = owner;
-        return Database.putRoute(new RouteDataModel(params.body));
+        let route = new RouteDataModel(params.body);
+        return Database.putRoute(route);
     }).then(routeId => {
         return { id: routeId, status: 201 };
     });

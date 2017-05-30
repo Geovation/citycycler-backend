@@ -69,7 +69,7 @@ const definitions = {
     RouteChanges: {
         properties: {
             arrivalTime: {
-                description: "The time in seconds past midnight that the owner arrives at their destination",
+                description: "The time in ISO 8601 extended format that the owner arrives at their destination",
                 type: "integer",
             },
             days: {
@@ -83,7 +83,7 @@ const definitions = {
                 type: "array",
             },
             departureTime: {
-                description: "The time in seconds past midnight that the owner will start their route",
+                description: "The time in ISO 8601 extended format that the owner will start their route",
                 type: "integer",
             },
             id: {

@@ -122,7 +122,7 @@ const definitions = {
                 type: "array",
             },
             divorceTime: {
-                description: "The time in seconds past midnight that the route owner will reach the divorcePoint",
+                description: "The time in ISO 8601 extended format that the route owner will reach the divorcePoint",
                 type: "integer",
             },
             id: {
@@ -138,7 +138,7 @@ const definitions = {
                 type: "array",
             },
             meetingTime: {
-                description: "The time in seconds past midnight that the route owner will reach the meetingPoint",
+                description: "The time in ISO 8601 extended format that the route owner will reach the meetingPoint",
                 type: "integer",
             },
             owner: {
@@ -146,12 +146,14 @@ const definitions = {
                 type: "integer",
             },
             timeFromDivorcePoint : {
-                description: "How long in seconds it is estimated to take the user to cycle from the divorce point " +
+                description: "A time interval in ISO 8601 format that it is " +
+                "estimated to take the user to cycle from the divorce point " +
                 "to their destination",
                 type: "integer",
             },
             timeToMeetingPoint : {
-                description: "How long in seconds it is estimated to take the user to cycle from their start point " +
+                description: "A time interval in ISO 8601 format that it is " +
+                "estimated to take the user to cycle from their start point " +
                 "to the meeting point",
                 type: "integer",
             },
@@ -184,7 +186,7 @@ const definitions = {
                 $ref: "#/definitions/PointWithRadius",
             },
             time: {
-                description: "What time (in seconds past midnight), the user wants reach their destination",
+                description: "What time (in ISO 8601 extended format), the user wants reach their destination",
                 type: "integer",
             },
         },

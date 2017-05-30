@@ -20,7 +20,7 @@ export default class RouteQuery {
         });
     }
 
-    public arrivalTime: number;
+    public arrivalTime: string;
     public days?: string[];
     public endPoint: [number, number];
     public id?: number;

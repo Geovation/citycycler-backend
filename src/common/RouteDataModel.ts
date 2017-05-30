@@ -1,4 +1,5 @@
 import { lineStringToCoords } from "./database";
+import * as moment from "moment";
 export class RouteDataModel {
     public static fromSQLRow(row) {
         // Convert the bitmasked int into an array of days
@@ -18,28 +19,30 @@ export class RouteDataModel {
         });
     }
 
-    public arrivalTime: number;
+    public arrivalTime: string;
     public days: string[];
-    public departureTime: number;
+    public departureTime: string;
     public id: number;
     public owner: number;
     public route: number[][];
 
     constructor(obj) {
-        if (obj.arrivalTime === undefined || obj.arrivalTime === null) {
-            throw "400:Route requires an arrival time";
-        } else if (obj.departureTime === undefined || obj.departureTime === null) {
-            throw "400:Route requires a departure time";
-        } else if (obj.arrivalTime < obj.departureTime) {
-            throw "400:Arrival time is before Departure time";
+        let arrivalTime = moment("2000-01-01T" + obj.arrivalTime);
+        let departureTime = moment("2000-01-01T" + obj.departureTime);
+        if (!arrivalTime.isValid()) {
+            throw new Error("400:Route requires a valid arrival time");
+        } else if (!departureTime.isValid()) {
+            throw new Error("400:Route requires a valid departure time");
+        } else if (arrivalTime.isBefore(departureTime)) {
+            throw new Error("400:Arrival time is before Departure time");
         } else if (obj.route.length < 2) {
-            throw "400:Route requires at least 2 points";
+            throw new Error("400:Route requires at least 2 points");
         } else if (Math.max(...obj.route.map(pair => { return pair.length; })) > 2) {
-            throw "400:Coordinates in a Route should only have 2 items in them, [latitude, longitude]";
+            throw new Error("400:Coordinates in a Route should only have 2 items in them, [latitude, longitude]");
         } else if (Math.min(...obj.route.map(pair => { return pair.length; })) < 2) {
-            throw "400:Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]";
+            throw new Error("400:Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]");
         } else if (obj.owner === undefined || obj.owner === null) {
-            throw "400:Route requires an owner";
+            throw new Error("400:Route requires an owner");
         }
         if (!obj.days) {
             obj.days = [];

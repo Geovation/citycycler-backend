@@ -76,6 +76,11 @@ const definitions = {
     User: {
         description: "A User object",
         properties: {
+            bio: {
+                description: "A short description of the user",
+                example: "I really love to cycle because...",
+                type: "string",
+            },
             email: {
                 description: "The user's email address",
                 example: "joe@blogs.com",
@@ -85,9 +90,19 @@ const definitions = {
                 description: "The user's database ID",
                 type: "number",
             },
+            joined: {
+                description: "When the user joined MatchMyRoute, in UTC",
+                example: "2017-05-25T05:58:18.763Z",
+                type: "string",
+            },
             name: {
                 description: "The user's full name",
                 example: "Joe Blogs",
+                type: "string",
+            },
+            photo: {
+                description: "The url to a profile photo os this user",
+                example: "http://www.example.com/example.jpg",
                 type: "string",
             },
         },

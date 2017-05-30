@@ -4,6 +4,7 @@ import { senecaReady } from "./microservices-framework/web/services";
 import * as chai from "chai";
 import * as EventEmitter from "events";
 import * as mocha from "mocha";
+import * as moment from "moment";
 import * as request from "request";
 import * as logger from "winston";
 
@@ -763,9 +764,9 @@ describe("MatchMyRoute API", () => {
             describe("Creation", () => {
                 it("should create routes", done => {
                     const route = {
-                        arrivalTime: 1200,
+                        arrivalTime: "13:00:00+00",
                         days: ["monday"],
-                        departureTime: 600,
+                        departureTime: "12:00:00+00",
                         route: [[0, 0], [1, 0], [1, 1]],
                     };
                     defaultRequest({
@@ -777,7 +778,7 @@ describe("MatchMyRoute API", () => {
                         url: url + "/route",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(201, "Expected 201 response but got " +
-                            response.statusCode + ", error given is: " + error);
+                            response.statusCode + ", error given is: " + error + " body is " + body);
                         expect(typeof body).to.equal("object", "Body is of unexpected type. " +
                             "Expected object, but got a " + typeof body);
                         expect(parseInt(body.result, 10)).to.not.equal(NaN, "The returned ID is NaN. " +
@@ -788,8 +789,8 @@ describe("MatchMyRoute API", () => {
                 });
                 it("should not create routes when the auth is invalid", done => {
                     const route = {
-                        arrivalTime: 1200,
-                        departureTime: 600,
+                        arrivalTime: "13:00:00+00",
+                        departureTime: "12:00:00+00",
                         route: [[0, 0], [1, 0], [1, 1]],
                     };
                     defaultRequest({
@@ -809,8 +810,8 @@ describe("MatchMyRoute API", () => {
                 });
                 it("should not create routes when the arrival is before the departure", done => {
                     const route = {
-                        arrivalTime: 100,
-                        departureTime: 600,
+                        arrivalTime: "13:00:00+00",
+                        departureTime: "14:00:00+00",
                         route: [[0, 0], [1, 0], [1, 1]],
                     };
                     defaultRequest({
@@ -830,8 +831,8 @@ describe("MatchMyRoute API", () => {
                 });
                 it("should not create routes when the auth missing", done => {
                     const route = {
-                        arrivalTime: 1200,
-                        departureTime: 600,
+                        arrivalTime: "13:00:00+00",
+                        departureTime: "12:00:00+00",
                         route: [[0, 0], [1, 0], [1, 1]],
                     };
                     defaultRequest({
@@ -891,9 +892,9 @@ describe("MatchMyRoute API", () => {
                     before(done => {
                         // Set up a long straight route that is easy to reason about
                         const route = new RouteDataModel({
-                            arrivalTime: 660,
+                            arrivalTime: "13:15:00+00",
                             days: ["tuesday", "friday", "sunday"],
-                            departureTime: 60,
+                            departureTime: "12:15:00+00",
                             owner: userIds[1],
                             route: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6]],
                         });
@@ -907,7 +908,7 @@ describe("MatchMyRoute API", () => {
                         }, (error, response, body) => {
                             if (response.statusCode !== 201) {
                                 logger.error("Error while setting up the route to test route matching");
-                                throw error;
+                                throw error || body;
                             } else {
                                 routeIds.push(body.result.id); // Should be routeIds[1]
                                 done();
@@ -927,7 +928,7 @@ describe("MatchMyRoute API", () => {
                                 longitude: 1.4,
                                 radius: 500,
                             },
-                            time: 500,
+                            time: "13:10:00+00",
                         };
                         defaultRequest({
                             headers: {
@@ -952,12 +953,14 @@ describe("MatchMyRoute API", () => {
                             expect(thisRoute.owner).to.equal(userIds[1]);
                             // Should be the intersection between the route days and the search days
                             expect(thisRoute.days).to.eql(["friday", "sunday"]);
-                            expect(thisRoute.meetingTime).to.be.at.least(60, "meetingTime is smaller than the" +
-                                "route's start time (60). Got " + thisRoute.meetingTime + ". Route is: " +
-                                JSON.stringify(thisRoute));
-                            expect(thisRoute.meetingTime).to.be.at.most(660, "meetingTime is larger than the " +
-                                "route's end time (660). Got " + thisRoute.meetingTime + ". Route is: " +
-                                JSON.stringify(thisRoute));
+                            expect(moment("2000-01-01T12:15:00+00").isBefore("2000-01-01T" +
+                                thisRoute.meetingTime)).to.equal(true,
+                                "meetingTime is before the route's start time (12:15:00+00). Got " +
+                                thisRoute.meetingTime);
+                            expect(moment("2000-01-01T13:15:00+00").isAfter("2000-01-01T" +
+                                thisRoute.meetingTime)).to.equal(true,
+                                "meetingTime is after the route's end time (13:15:00+00). Got " +
+                                thisRoute.meetingTime);
                             expect(thisRoute.meetingPoint).to.eql([0, 1.4]);
                             expect(thisRoute.divorcePoint).to.eql([0, 4.6]);
                             done();
@@ -976,7 +979,7 @@ describe("MatchMyRoute API", () => {
                                 longitude: 4.6,
                                 radius: 500,
                             },
-                            time: 500,
+                            time: "13:10:00+00",
                         };
                         defaultRequest({
                             headers: {
@@ -1014,7 +1017,7 @@ describe("MatchMyRoute API", () => {
                                 longitude: 1.4,
                                 radius: 500,
                             },
-                            time: 500,
+                            time: "13:10:00+00",
                         };
                         defaultRequest({
                             headers: {
@@ -1075,12 +1078,14 @@ describe("MatchMyRoute API", () => {
                             expect(thisRoute.owner).to.equal(userIds[1]);
                             // Should be the intersection between the route days and the search days
                             expect(thisRoute.days).to.eql(["tuesday", "friday", "sunday"]);
-                            expect(thisRoute.meetingTime).to.be.at.least(60, "meetingTime is smaller than the" +
-                                "route's start time (60). Got " + thisRoute.meetingTime + ". Route is: " +
-                                JSON.stringify(thisRoute));
-                            expect(thisRoute.meetingTime).to.be.at.most(660, "meetingTime is larger than the " +
-                                "route's end time (660). Got " + thisRoute.meetingTime + ". Route is: " +
-                                JSON.stringify(thisRoute));
+                            expect(moment("2000-01-01T12:15:00+00").isBefore("2000-01-01T" +
+                                thisRoute.meetingTime)).to.equal(true,
+                                "meetingTime is before the route's start time (12:15:00+00). Got " +
+                                thisRoute.meetingTime);
+                            expect(moment("2000-01-01T13:15:00+00").isAfter("2000-01-01T" +
+                                thisRoute.meetingTime)).to.equal(true,
+                                "meetingTime is after the route's end time (13:15:00+00). Got " +
+                                thisRoute.meetingTime);
                             expect(thisRoute.meetingPoint).to.eql([0, 1.4]);
                             expect(thisRoute.divorcePoint).to.eql([0, 4.6]);
                             done();
@@ -1091,9 +1096,9 @@ describe("MatchMyRoute API", () => {
             describe("Updating", () => {
                 it("should update all properties at once", done => {
                     const updates = {
-                        arrivalTime: 1500,
+                        arrivalTime: "14:00:00+00",
                         days: ["tuesday"],
-                        departureTime: 900,
+                        departureTime: "13:00:00+00",
                         id: routeIds[0],
                         route: [[0, 0], [1, 0], [1, 1], [0, 1]],
                     };
@@ -1123,8 +1128,8 @@ describe("MatchMyRoute API", () => {
                                     err).and.notify(done);
                             }
                             expect(route.days).to.eql(["tuesday"]);
-                            expect(route.arrivalTime).to.equal(1500);
-                            expect(route.departureTime).to.equal(900);
+                            expect(route.arrivalTime).to.equal("14:00:00+00");
+                            expect(route.departureTime).to.equal("13:00:00+00");
                             expect(route.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
                             done();
                         });
@@ -1132,7 +1137,7 @@ describe("MatchMyRoute API", () => {
                 });
                 it("should update one property at a time - arrivalTime", done => {
                     const updates = {
-                        arrivalTime: 1200,
+                        arrivalTime: "15:00:00+00",
                         id: routeIds[0],
                     };
                     defaultRequest({
@@ -1160,8 +1165,8 @@ describe("MatchMyRoute API", () => {
                                     err).and.notify(done);
                             }
                             expect(route.days).to.eql(["tuesday"]);
-                            expect(route.arrivalTime).to.equal(1200);
-                            expect(route.departureTime).to.equal(900);
+                            expect(route.arrivalTime).to.equal("15:00:00+00");
+                            expect(route.departureTime).to.equal("13:00:00+00");
                             expect(route.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
                             done();
                         });
@@ -1169,7 +1174,7 @@ describe("MatchMyRoute API", () => {
                 });
                 it("should update one property at a time - departureTime", done => {
                     const updates = {
-                        departureTime: 600,
+                        departureTime: "14:00:00+00",
                         id: routeIds[0],
                     };
                     defaultRequest({
@@ -1197,8 +1202,8 @@ describe("MatchMyRoute API", () => {
                                     err).and.notify(done);
                             }
                             expect(route.days).to.eql(["tuesday"]);
-                            expect(route.arrivalTime).to.equal(1200);
-                            expect(route.departureTime).to.equal(600);
+                            expect(route.arrivalTime).to.equal("15:00:00+00");
+                            expect(route.departureTime).to.equal("14:00:00+00");
                             expect(route.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
                             done();
                         });
@@ -1234,8 +1239,8 @@ describe("MatchMyRoute API", () => {
                                     err).and.notify(done);
                             }
                             expect(route.days).to.eql(["monday", "sunday"]);
-                            expect(route.arrivalTime).to.equal(1200);
-                            expect(route.departureTime).to.equal(600);
+                            expect(route.arrivalTime).to.equal("15:00:00+00");
+                            expect(route.departureTime).to.equal("14:00:00+00");
                             expect(route.route).to.eql([[0, 0], [1, 0], [1, 1], [0, 1]]);
                             done();
                         });
@@ -1271,8 +1276,8 @@ describe("MatchMyRoute API", () => {
                                     err).and.notify(done);
                             }
                             expect(route.days).to.eql(["monday", "sunday"]);
-                            expect(route.arrivalTime).to.equal(1200);
-                            expect(route.departureTime).to.equal(600);
+                            expect(route.arrivalTime).to.equal("15:00:00+00");
+                            expect(route.departureTime).to.equal("14:00:00+00");
                             expect(route.route).to.eql([[0, 0], [1, 0], [1, 1]]);
                             done();
                         });
@@ -1314,7 +1319,7 @@ describe("MatchMyRoute API", () => {
                 });
                 it("should not allow updating to invalid departureTime", done => {
                     const updates = {
-                        departureTime: 1500,
+                        departureTime: "18:00:00+00",
                         id: routeIds[0],
                     };
                     defaultRequest({
@@ -1334,7 +1339,7 @@ describe("MatchMyRoute API", () => {
                 });
                 it("should not allow updating to invalid arrivalTime", done => {
                     const updates = {
-                        arrivalTime: 500,
+                        arrivalTime: "10:00:00+00",
                         id: routeIds[0],
                     };
                     defaultRequest({
@@ -1354,8 +1359,8 @@ describe("MatchMyRoute API", () => {
                 });
                 it("should not allow updating to invalid arrivalTime + departureTime", done => {
                     const updates = {
-                        arrivalTime: 1000,
-                        departureTime: 1500,
+                        arrivalTime: "05:00:00+00",
+                        departureTime: "07:00:00+00",
                         id: routeIds[0],
                     };
                     defaultRequest({
@@ -1419,8 +1424,8 @@ describe("MatchMyRoute API", () => {
                 before(done => {
                     // Set up another route belonging to userIds[2]
                     const route = {
-                        arrivalTime: 1200,
-                        departureTime: 600,
+                        arrivalTime: "14:00:00+00",
+                        departureTime: "13:00:00+00",
                         owner: userIds[2],
                         route: [[0, 0], [1, 0], [1, 1]],
                     };
