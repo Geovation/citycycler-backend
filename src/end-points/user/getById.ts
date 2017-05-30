@@ -77,7 +77,7 @@ const definitions = {
         description: "A User object",
         properties: {
             bio: {
-                description: "A short description of hte user",
+                description: "A short description of the user",
                 example: "I really love to cycle because...",
                 type: "string",
             },

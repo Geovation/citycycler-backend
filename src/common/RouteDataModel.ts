@@ -1,3 +1,4 @@
+import * as moment from "moment";
 import { lineStringToCoords } from "./database";
 export class RouteDataModel {
     public static fromSQLRow(row) {
@@ -26,36 +27,22 @@ export class RouteDataModel {
     public route: number[][];
 
     constructor(obj) {
-        if (obj.arrivalTime === undefined || obj.arrivalTime === null) {
-            throw "400:Route requires an arrival time";
-        } else if (obj.departureTime === undefined || obj.departureTime === null) {
-           throw "400:Route requires a departure time";
-        }
-        // Convert arrival and departuretimes into something that can be compared
-        let arrivalTimeEpoch = Date.parse("2000-01-01T" + obj.arrivalTime);
-        let departureTimeEpoch = Date.parse("2000-01-01T" + obj.departureTime);
-        if (isNaN(arrivalTimeEpoch)) {
-            // Date.parse thinks that timezones must have 4 characters... Unlike ISO 8106
-            arrivalTimeEpoch = Date.parse("2000-01-01T" + obj.arrivalTime + "00");
-        }
-        if (isNaN(departureTimeEpoch)) {
-            // Date.parse thinks that timezones must have 4 characters... Unlike ISO 8106
-            departureTimeEpoch = Date.parse("2000-01-01T" + obj.departureTime + "00");
-        }
-        if (isNaN(arrivalTimeEpoch)) {
-            throw "400:Route requires an arrival time";
-        } else if (isNaN(departureTimeEpoch)) {
-           throw "400:Route requires a departure time";
-       } else if (arrivalTimeEpoch <= departureTimeEpoch) {
-            throw "400:Arrival time is before Departure time";
+        let arrivalTime = moment("2000-01-01T" + obj.arrivalTime);
+        let departureTime = moment("2000-01-01T" + obj.departureTime);
+        if (!arrivalTime.isValid()) {
+            throw new Error("400:Route requires a valid arrival time");
+        } else if (!departureTime.isValid()) {
+            throw new Error("400:Route requires a valid departure time");
+        } else if (arrivalTime.isBefore(departureTime)) {
+            throw new Error("400:Arrival time is before Departure time");
         } else if (obj.route.length < 2) {
-            throw "400:Route requires at least 2 points";
+            throw new Error("400:Route requires at least 2 points");
         } else if (Math.max(...obj.route.map(pair => { return pair.length; })) > 2) {
-            throw "400:Coordinates in a Route should only have 2 items in them, [latitude, longitude]";
+            throw new Error("400:Coordinates in a Route should only have 2 items in them, [latitude, longitude]");
         } else if (Math.min(...obj.route.map(pair => { return pair.length; })) < 2) {
-            throw "400:Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]";
+            throw new Error("400:Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]");
         } else if (obj.owner === undefined || obj.owner === null) {
-            throw "400:Route requires an owner";
+            throw new Error("400:Route requires an owner");
         }
         if (!obj.days) {
             obj.days = [];

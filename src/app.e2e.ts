@@ -4,6 +4,7 @@ import { senecaReady } from "./microservices-framework/web/services";
 import * as chai from "chai";
 import * as EventEmitter from "events";
 import * as mocha from "mocha";
+import * as moment from "moment";
 import * as request from "request";
 import * as logger from "winston";
 
@@ -952,12 +953,14 @@ describe("MatchMyRoute API", () => {
                             expect(thisRoute.owner).to.equal(userIds[1]);
                             // Should be the intersection between the route days and the search days
                             expect(thisRoute.days).to.eql(["friday", "sunday"]);
-                            // expect(thisRoute.meetingTime).to.be.at.least(60, "meetingTime is smaller than the" +
-                            //     "route's start time (60). Got " + thisRoute.meetingTime + ". Route is: " +
-                            //     JSON.stringify(thisRoute));
-                            // expect(thisRoute.meetingTime).to.be.at.most(660, "meetingTime is larger than the " +
-                            //     "route's end time (660). Got " + thisRoute.meetingTime + ". Route is: " +
-                            //     JSON.stringify(thisRoute));
+                            expect(moment("2000-01-01T12:15:00+00").isBefore("2000-01-01T" +
+                                thisRoute.meetingTime)).to.equal(true,
+                                "meetingTime is before the route's start time (12:15:00+00). Got " +
+                                thisRoute.meetingTime);
+                            expect(moment("2000-01-01T13:15:00+00").isAfter("2000-01-01T" +
+                                thisRoute.meetingTime)).to.equal(true,
+                                "meetingTime is after the route's end time (13:15:00+00). Got " +
+                                thisRoute.meetingTime);
                             expect(thisRoute.meetingPoint).to.eql([0, 1.4]);
                             expect(thisRoute.divorcePoint).to.eql([0, 4.6]);
                             done();
@@ -1075,12 +1078,14 @@ describe("MatchMyRoute API", () => {
                             expect(thisRoute.owner).to.equal(userIds[1]);
                             // Should be the intersection between the route days and the search days
                             expect(thisRoute.days).to.eql(["tuesday", "friday", "sunday"]);
-                            // expect(thisRoute.meetingTime).to.be.at.least(60, "meetingTime is smaller than the" +
-                            //     "route's start time (60). Got " + thisRoute.meetingTime + ". Route is: " +
-                            //     JSON.stringify(thisRoute));
-                            // expect(thisRoute.meetingTime).to.be.at.most(660, "meetingTime is larger than the " +
-                            //     "route's end time (660). Got " + thisRoute.meetingTime + ". Route is: " +
-                            //     JSON.stringify(thisRoute));
+                            expect(moment("2000-01-01T12:15:00+00").isBefore("2000-01-01T" +
+                                thisRoute.meetingTime)).to.equal(true,
+                                "meetingTime is before the route's start time (12:15:00+00). Got " +
+                                thisRoute.meetingTime);
+                            expect(moment("2000-01-01T13:15:00+00").isAfter("2000-01-01T" +
+                                thisRoute.meetingTime)).to.equal(true,
+                                "meetingTime is after the route's end time (13:15:00+00). Got " +
+                                thisRoute.meetingTime);
                             expect(thisRoute.meetingPoint).to.eql([0, 1.4]);
                             expect(thisRoute.divorcePoint).to.eql([0, 4.6]);
                             done();

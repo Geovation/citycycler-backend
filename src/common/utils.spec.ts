@@ -77,7 +77,7 @@ describe("Various useful functions", () => {
             };
             expect(() => {
                 return new RouteDataModel(obj);
-            }).to.throw("400:Route requires an arrival time");
+            }).to.throw("400:Route requires a valid arrival time");
         });
         it("should throw an error if there is no departure time", () => {
             const obj = {
@@ -89,7 +89,7 @@ describe("Various useful functions", () => {
             };
             expect(() => {
                 return new RouteDataModel(obj);
-            }).to.throw("400:Route requires a departure time");
+            }).to.throw("400:Route requires a valid departure time");
         });
         it("should throw an error if the arrival is before departure", () => {
             const obj = {
