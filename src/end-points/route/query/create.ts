@@ -85,7 +85,9 @@ const definitions = {
         properties: {
             arrivalTime: {
                 description: "The time in ISO 8601 extended format that the route owner wants to arrive at <endPoint>",
-                type: "integer",
+                example: "2017-06-01 00:00:00",
+                type: "string",
+
             },
             days: {
                 description: "Which days of the week the user can cycle (a matching route) on",
@@ -101,6 +103,12 @@ const definitions = {
                 $ref: "#/definitions/Coordinate",
                 description: "Where the user will finish cycling. Must be within <radius> of a route to be " +
                 "considered a match",
+                example:  [ 0, 0] ,
+            },
+            notifyOwner: {
+                description: "How far away (in meters) the user is willing to cycle from the start and end point",
+                example: true,
+                type: "boolean",
             },
             radius: {
                 description: "How far away (in meters) the user is willing to cycle from the start and end point",
@@ -111,9 +119,10 @@ const definitions = {
                 $ref: "#/definitions/Coordinate",
                 description: "Where the user will start cycling from. Must be within <radius> of a route to be " +
                 "considered a match",
+                example:  [ 0, 0] ,
             },
         },
-        required: ["startPoint", "endPoint", "days"],
+        required: ["startPoint", "endPoint", "days","notifyOwner"],
     },
 };
 
