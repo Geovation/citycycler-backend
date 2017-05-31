@@ -7,6 +7,7 @@ import * as EventEmitter from "events";
 import * as mocha from "mocha";
 import * as moment from "moment";
 import * as request from "request";
+import * as retryRequest from "retry-request";
 import * as logger from "winston";
 
 const expect = chai.expect;
@@ -189,13 +190,20 @@ describe("MatchMyRoute API", () => {
 
                         // check if photo exists in cloud storage
                         const imgUrl = body.result.profileImage;
-                        setTimeout(defaultRequest, 1000, {
-                            method: "GET",
-                            url: imgUrl,
-                        }, (error1, response1, body1) => {
-                            expect(response1.statusCode).to.equal(200, "Image doesn't exist in Cloud Storage");
-                            done();
-                        });
+                        retryRequest(
+                            {
+                                json: true,
+                                method: "GET",
+                                retries: 10,
+                                shouldRetryFn: httpMessage => {
+                                    return httpMessage.statusMessage !== "OK";
+                                },
+                                url: imgUrl,
+                            }, (error1, response1, body1) => {
+                                expect(response1.statusCode).to.equal(200, "Image doesn't exist in Cloud Storage");
+                                done();
+                            }
+                        );
                     });
                 });
                 it("shouldn't create a user with no name", done => {
@@ -368,13 +376,21 @@ describe("MatchMyRoute API", () => {
                                 process.env.STORAGE_BUCKET +
                                 "/" +
                                 user.photo;
-                                setTimeout(defaultRequest, 1000, {
-                                    method: "GET",
-                                    url: imgUrl,
-                                }, (error4, response4, body4) => {
-                                    expect(response4.statusCode).to.equal(200, "Image doesn't exist in Cloud Storage");
-                                    done();
-                                });
+                                retryRequest(
+                                    {
+                                        json: true,
+                                        method: "GET",
+                                        retries: 10,
+                                        shouldRetryFn: httpMessage => {
+                                            return httpMessage.statusMessage !== "OK";
+                                        },
+                                        url: imgUrl,
+                                    }, (error4, response4, body4) => {
+                                        expect(response4.statusCode)
+                                            .to.equal(200, "Image doesn't exist in Cloud Storage");
+                                        done();
+                                    }
+                                );
                             });
                         });
                     });
@@ -560,13 +576,20 @@ describe("MatchMyRoute API", () => {
                             process.env.STORAGE_BUCKET +
                             "/" +
                             user.photo;
-                            defaultRequest({
-                                method: "GET",
-                                url: imgUrl,
-                            }, (error3, response3, body3) => {
-                                expect(response3.statusCode).to.equal(200, "Image doesn't exist in Cloud Storage");
-                                done();
-                            });
+                            retryRequest(
+                                {
+                                    json: true,
+                                    method: "GET",
+                                    retries: 10,
+                                    shouldRetryFn: httpMessage => {
+                                        return httpMessage.statusMessage !== "OK";
+                                    },
+                                    url: imgUrl,
+                                }, (error3, response3, body3) => {
+                                    expect(response3.statusCode).to.equal(200, "Image doesn't exist in Cloud Storage");
+                                    done();
+                                }
+                            );
                         });
 
                     });
