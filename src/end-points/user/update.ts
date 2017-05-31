@@ -133,7 +133,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         if (payload.photo === null) {
             promises.push(CloudStorage.deleteProfileImage(userId));
             updates.profile_photo = null;
-        } else if (payload.photo !== undefined && payload.photo.trim().length !== 0) {
+        } else if (typeof payload.photo !== "undefined" && payload.photo.trim().length !== 0) {
             promises.push(
                 CloudStorage.storeProfileImage(payload.photo, userId)
                 .then(profileImage => {
