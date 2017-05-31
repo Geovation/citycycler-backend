@@ -89,16 +89,6 @@ const definitions = {
                 type: "string",
 
             },
-            days: {
-                description: "Which days of the week the user can cycle (a matching route) on",
-                example: ["monday", "wednesday", "friday"],
-                items: {
-                    description: "A day of the week",
-                    enum: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
-                    type: "string",
-                },
-                type: "array",
-            },
             endPoint: {
                 $ref: "#/definitions/Coordinate",
                 description: "Where the user will finish cycling. Must be within <radius> of a route to be " +
@@ -122,7 +112,7 @@ const definitions = {
                 example:  [ 0, 0] ,
             },
         },
-        required: ["startPoint", "endPoint", "days","notifyOwner"],
+        required: ["startPoint", "endPoint", "notifyOwner"],
     },
 };
 
