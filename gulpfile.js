@@ -119,7 +119,7 @@ function getStagingEnvVars() {
         PGUSER: "testuser",
         PGPASSWORD: "test",
         GOOGLE_APPLICATION_CREDENTIALS: "conf/storage-keyfile.json",
-        STORAGE_BUCKET: "matchmyroute-dev"
+        STORAGE_BUCKET: "matchmyroute-prod"
     });
 };
 
