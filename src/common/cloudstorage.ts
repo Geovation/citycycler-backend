@@ -10,13 +10,15 @@ export function storeProfileImage(imgUri: string, userId: number) {
     const filename = createFilenameForUser(userId);
     const file = bucket.file(filename);
     return getUri(imgUri).then((readStream) => {
-        const writeStream = file.createWriteStream();
+        const writeStream = file.createWriteStream({
+            public: true,
+        });
         readStream.pipe(writeStream)
         .on("error", (err) => {
             throw new Error("Could not write image; " + err);
         })
         .on("finish", () => {
-            return file.makePublic();
+            return true;
         });
     })
     .then(() => {
