@@ -27,7 +27,7 @@ const operation = {
             200: {
                 description: "Buddy request was retrieved",
                 schema: {
-                    $ref: "#/definitions/GetResponse",
+                    $ref: "#/definitions/GetBuddyRequestResponse",
                 },
             },
             403: {
@@ -65,9 +65,10 @@ const operation = {
 const definitions = {
     BuddyRequestData: {
         properties: {
-            arrivalTime: {
+            arrivalDateTime: {
                 description: "The time in ISO 8601 extended format that the owner wants to arrive at " +
                 "their destination",
+                example: new Date().toISOString(),
                 type: "string",
             },
             endPoint: {
@@ -99,7 +100,7 @@ const definitions = {
                 "considered a match",
             },
         },
-        required: ["arrivalTime", "departureTime", "owner", "route", "id"],
+        required: ["arrivalDateTime", "departureTime", "startPoint", "endPoint", "owner", "radius", "route", "id"],
     },
     BuddyRequestGetResult: {
         description: "An array of buddy requests belonging to this user",
@@ -108,7 +109,7 @@ const definitions = {
         },
         type: "array",
     },
-    GetResponse: {
+    GetBuddyRequestResponse: {
         properties: {
             result: {
                 $ref: "#/definitions/BuddyRequestGetResult",

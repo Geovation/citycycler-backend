@@ -106,6 +106,7 @@ const definitions = {
         properties: {
             arrivalTime: {
                 description: "The time in ISO 8106 extended format that the owner arrives at their destination",
+                example: "12:22:00Z",
                 type: "string",
             },
             days: {
@@ -120,6 +121,7 @@ const definitions = {
             },
             departureTime: {
                 description: "The time in ISO 8106 extended format that the owner will start their route",
+                example: "12:22:00Z",
                 type: "string",
             },
             route: {

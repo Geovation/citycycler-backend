@@ -27,7 +27,7 @@ const operation = {
             200: {
                 description: "Route was retrieved",
                 schema: {
-                    $ref: "#/definitions/GetResponse",
+                    $ref: "#/definitions/GetRouteResponse",
                 },
             },
             403: {
@@ -63,7 +63,7 @@ const operation = {
 };
 
 const definitions = {
-    GetResponse: {
+    GetRouteResponse: {
         properties: {
             result: {
                 $ref: "#/definitions/RouteData",
@@ -75,7 +75,8 @@ const definitions = {
         properties: {
             arrivalTime: {
                 description: "The time in ISO 8601 extended format that the owner will arrive at their destination",
-                type: "integer",
+                example: "12:22:00Z",
+                type: "string",
             },
             days: {
                 description: "Which days of the week the owner cycles this route",
@@ -89,7 +90,8 @@ const definitions = {
             },
             departureTime: {
                 description: "The time in ISO 8601 extended format that the owner will start their route",
-                type: "integer",
+                example: "12:22:00Z",
+                type: "string",
             },
             id: {
                 description: "This route's internal id",

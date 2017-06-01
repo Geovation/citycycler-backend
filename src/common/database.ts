@@ -1,6 +1,6 @@
 // import * as _ from "lodash";
+import BuddyRequest from "./BuddyRequestDataModel";
 import { RouteDataModel } from "./RouteDataModel";
-import RouteQuery from "./RouteQueryDataModel";
 import User from "./UserDataModels";
 import * as fs from "fs";
 import * as pg from "pg";
@@ -171,10 +171,10 @@ export function resetDatabase() {
 export function putRoute(routeData: RouteDataModel, providedClient = null) {
     const wkt = coordsToLineString(routeData.route);
     const query = "INSERT INTO routes (route, departureTime, arrivalTime, days, owner) " +
-        "VALUES (ST_GeogFromText($1),$2,$3,$4::integer::bit(7),$5) " +
+        "VALUES (ST_GeogFromText($1),$2,$3,$4::day_of_week[],$5) " +
         "RETURNING id";
     const sqlParams = [wkt, routeData.departureTime, routeData.arrivalTime,
-        routeData.getDaysBitmask(), routeData.owner];
+        routeData.days, routeData.owner];
     return sqlTransaction(query, sqlParams, providedClient).then(result => {
         if (result.rowCount > 0) {
             return result.rows[0].id;
@@ -185,7 +185,7 @@ export function putRoute(routeData: RouteDataModel, providedClient = null) {
 }
 
 export function getRouteById(id: number, providedClient = null) {
-    const query = "SELECT id, owner, departuretime, arrivalTime, days::integer, ST_AsText(route) AS route " +
+    const query = "SELECT id, owner, departuretime, arrivalTime, days::text[], ST_AsText(route) AS route " +
         "FROM routes where id=$1";
     return sqlTransaction(query, [id], providedClient).then(result => {
         if (result.rows[0]) {
@@ -204,7 +204,7 @@ export function getRouteById(id: number, providedClient = null) {
  * @return {Object[]} Array of routes
  */
 export function getRoutes(params: {userId: number, id?: number}, providedClient = null) {
-    let query = "SELECT id, owner, departuretime, arrivalTime, days::integer, ST_AsText(route) AS route " +
+    let query = "SELECT id, owner, departuretime, arrivalTime, days::text[], ST_AsText(route) AS route " +
     "FROM routes where owner=$1";
     let queryParams = [params.userId];
     if (params.id !== null && typeof params.id !== "undefined") {
@@ -277,25 +277,16 @@ export function getRoutesNearby(radius: number, lat: number, lon: number, provid
  */
 export function matchRoutes(
     matchParams: {
-        start: {
-            latitude: number,
-            longitude: number,
-            radius: number,
-        },
-        end: {
-            latitude: number,
-            longitude: number,
-            radius: number,
-        },
-        days?: string[],
-        time?: string,
+        arrivalDateTime: string,
+        endPoint: [number, number],
+        radius: number,
+        startPoint: [number, number],
     },
     providedClient = null
 ): Promise<{
     id: number,
     meetingTime: string,
     divorceTime: string,
-    days: string[],
     owner: number,
     meetingPoint: [number, number],
     divorcePoint: [number, number],
@@ -304,94 +295,69 @@ export function matchRoutes(
     distanceToMeetingPoint: number,
     distanceFromDivorcePoint: number
 }[]> {
-    if (matchParams.start.radius > 2000 || matchParams.start.radius < 1) {
+    if (matchParams.radius > 2000 || matchParams.radius < 1) {
         return Promise.reject("400:Radius out of bounds. Must be between 1m and 2km");
-    } else if (matchParams.end.radius > 2000 || matchParams.end.radius < 1) {
-        return Promise.reject("400:End radius out of bounds. Must be between 1m and 2km");
     }
     let query = "" +
-    "SELECT id,  " +
-    "    match1.days, " +
+    "SELECT id, " +
     "    match2.meetingTime, " +
     "    match2.divorceTime, " +
     "    ST_AsText(match2.meetingPoint) AS meetingPoint, " +
     "    ST_AsText(match2.divorcePoint) AS divorcePoint, " +
     "    match3.*, " +
     "    match4.*, " +
-    "    owner  " +
-    "FROM routes,  " +
-    "    LATERAL (  " +
-    "        SELECT   " +
-    "            (ST_LineLocatePoint(route::geometry, ST_GeogFromText($1)::geometry))  " +
-    "                AS distFromStart,  " +
-    "            (ST_LineLocatePoint(route::geometry, ST_GeogFromText($2)::geometry))  " +
-    "                AS distFromEnd,  " +
-    "            (days & $5::integer::bit(7))::integer AS days, " +
-    //      Work out average speed in m/s
-    "	    ST_Length(route) / EXTRACT(EPOCH FROM (arrivalTime::time - departureTime::time)) AS averageSpeed " +
+    "    owner " +
+    "FROM routes, " +
+    "    LATERAL ( " +
+    "        SELECT " +
+    "            (ST_LineLocatePoint(route::geometry, ST_GeogFromText($1)::geometry)) " +
+    "                AS distFromStart, " +
+    "            (ST_LineLocatePoint(route::geometry, ST_GeogFromText($2)::geometry)) " +
+    "                AS distFromEnd, " +
+    //           Get the day of the week as a day_of_week
+    "            (SELECT pg_enum.enumlabel::day_of_week " +
+    "                FROM pg_enum JOIN pg_type ON (pg_enum.enumtypid=pg_type.oid) " +
+    "                WHERE pg_enum.enumsortorder = extract(dow from $4::timestamp)) AS requiredDay, " +
+    "            $4::timestamptz::date AS requiredDate, " +
+    //          Get the average speed in m/s
+    "	        ST_Length(route) / EXTRACT(EPOCH FROM (arrivalTime::time - departureTime::time)) AS averageSpeed " +
     "    ) AS match1, " +
     "    LATERAL ( " +
     "        SELECT " +
-    "            departureTime::time + distFromStart*(arrivalTime::time - departureTime::time) AS meetingTime,  " +
-    "            departureTime::time + distFromEnd*(arrivalTime::time - departureTime::time) AS divorceTime, " +
-    "            ST_LineInterpolatePoint(route::geometry, distFromStart) AS meetingPoint,  " +
+    "            requiredDate + departureTime::timetz + distFromStart*(arrivalTime::time - departureTime::time) " +
+    "               AS meetingTime, " +
+    "            requiredDate + departureTime::timetz + distFromEnd*(arrivalTime::time - departureTime::time) " +
+    "               AS divorceTime, " +
+    "            ST_LineInterpolatePoint(route::geometry, distFromStart) AS meetingPoint, " +
     "            ST_LineInterpolatePoint(route::geometry, distFromEnd) AS divorcePoint " +
-    "    ) AS match2,  " +
+    "    ) AS match2, " +
     "    LATERAL ( " +
     "	SELECT " +
     "	    ST_Distance(ST_GeogFromText($1), meetingPoint) AS distanceToMeetingPoint, " +
     "	    ST_Distance(ST_GeogFromText($2), divorcePoint) AS distanceToDivorcePoint " +
-    "    ) AS match3,  " +
+    "    ) AS match3, " +
     "    LATERAL ( " +
     "	SELECT " +
-    //      This is (I hope) the cleanest way to convert a number of seconds (distance/speed) to a time interval
     "	    interval '1 second' * (distanceToMeetingPoint / averageSpeed) AS timeToMeetingPoint, " +
     "	    interval '1 second' * (distanceToDivorcePoint / averageSpeed) AS timeFromDivorcePoint " +
     "    ) AS match4 " +
-    "WHERE  " +
-    "    distFromStart <  distFromEnd  " +
+    "WHERE " +
+    "    distFromStart <  distFromEnd " +
     "AND " +
-    "    ST_DWithin(ST_GeogFromText($1), route, $3)  " +
+    "    ST_DWithin(ST_GeogFromText($1), route, $3) " +
     "AND " +
-    "    ST_DWithin(ST_GeogFromText($2), route, $4) " +
+    "    ST_DWithin(ST_GeogFromText($2), route, $3) " +
     "AND " +
-    "    match1.days > 0 ";
-    const startPoint = "POINT(" + matchParams.start.latitude + " " + matchParams.start.longitude + ")";
-    const endPoint = "POINT(" + matchParams.end.latitude + " " + matchParams.end.longitude + ")";
-    let queryParams = [startPoint, endPoint, matchParams.start.radius, matchParams.end.radius];
+    "    requiredDay = ANY(days) " +
+    "ORDER BY " +
+    "   divorceTime::time + timeFromDivorcePoint - $4::timestamptz::time ";
+    const startPoint = "POINT(" + matchParams.startPoint[0] + " " + matchParams.startPoint[1] + ")";
+    const endPoint = "POINT(" + matchParams.endPoint[0] + " " + matchParams.endPoint[1] + ")";
+    let queryParams = [startPoint, endPoint, matchParams.radius, matchParams.arrivalDateTime];
 
-    // Add a filter for days of the week
-    if (matchParams.days !== undefined) {
-        /* tslint:disable no-bitwise */
-        const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-        const daysBitmask = matchParams.days.map((day) => {
-            return 1 << daysOfWeek.indexOf(day);
-        }).reduce((days, day) => {
-            return days | day;
-        }, 0);
-        /* tslint:enable no-bitwise */
-        queryParams.push(daysBitmask);
-    } else {
-        queryParams.push(127);  // 127 = 1111111
-    }
-    // Add sorting by time
-    if (matchParams.time !== undefined) {
-        query += "ORDER BY " +
-            "divorceTime::time + timeFromDivorcePoint - $6::time";
-        queryParams.push(matchParams.time);
-    } else {
-        query += "ORDER BY divorceTime::time + timeFromDivorcePoint";
-    }
     return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
         return result.rows.map((row) => {
-            const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-            /* tslint:disable no-bitwise */
-            const days = daysOfWeek.filter((day, i) => {
-                return row.days & 1 << i;
-            });
-            /* tslint:enable no-bitwise */
             return {
-                days,
                 distanceFromDivorcePoint: row.distanceFromDivorcePoint,
                 distanceToMeetingPoint: row.distanceToMeetingPoint,
                 divorcePoint: pointStringToCoords(row.divorcepoint),
@@ -442,11 +408,11 @@ export function updateRoute(
         }
 
         const query = "UPDATE routes " +
-        "SET route = $1, arrivalTime = $2, departureTime = $3, days = $4::integer::bit(7) " +
+        "SET route = $1, arrivalTime = $2, departureTime = $3, days = $4::day_of_week[] " +
         "WHERE id = $5";
         const sqlParams = [coordsToLineString(existingRoute.route),
             existingRoute.arrivalTime, existingRoute.departureTime,
-            existingRoute.getDaysBitmask(), existingRoute.id];
+            existingRoute.days, existingRoute.id];
 
         return sqlTransaction(query, sqlParams, providedClient).then(result => {
             return true;
@@ -464,41 +430,22 @@ export function deleteRoute(id: number, providedClient = null): Promise<Boolean>
     });
 }
 
-export function createBuddyRequest(owner: number, routeQ: RouteQuery): Promise<Boolean> {
-    routeQ = new RouteQuery(routeQ);
-    return new Promise((resolve, reject) => {
-        // Acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                reject(err);
-                return console.error("error fetching client from pool", err);
-            }
-            const query = "INSERT INTO route_queries (startPoint, endPoint, radius" +
-                ", notifyOwner, arrivalTime, owner)" +
-                "VALUES (ST_GeogFromText($1), ST_GeogFromText($2), $3, $4, $5, $6)" +
-                "RETURNING id";
-            const queryParams = [
-                coordsToPointString(routeQ.startPoint),
-                coordsToPointString(routeQ.endPoint),
-                routeQ.radius,
-                routeQ.notifyOwner,
-                routeQ.arrivalTime,
-                owner,
-            ];
-            client.query(query, queryParams, (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    reject("error running query: " + error);
-                    return;
-                } else {
-                    resolve(result.rows[0].id);
-                }
-            });
-        });
+export function createBuddyRequest(owner: number, buddyRequest: BuddyRequest, providedClient = null): Promise<Number> {
+    buddyRequest = new BuddyRequest(buddyRequest);
+    const query = "INSERT INTO buddy_requests (startPoint, endPoint, radius" +
+        ", notifyOwner, arrivalDateTime, owner)" +
+        "VALUES (ST_GeogFromText($1), ST_GeogFromText($2), $3, $4, $5, $6)" +
+        "RETURNING id";
+    const queryParams = [
+        coordsToPointString(buddyRequest.startPoint),
+        coordsToPointString(buddyRequest.endPoint),
+        buddyRequest.radius,
+        buddyRequest.notifyOwner,
+        buddyRequest.arrivalDateTime,
+        owner,
+    ];
+    return sqlTransaction(query, queryParams, providedClient).then(result => {
+        return result.rows[0].id;
     });
 }
 
@@ -509,9 +456,10 @@ export function createBuddyRequest(owner: number, routeQ: RouteQuery): Promise<B
  * @param  {client} providedClient Database client to use for this interaction
  * @return {Object[]} Array of buddy requests
  */
-export function getBuddyRequests(params: {userId: number, id?: number}, providedClient = null): Promise<RouteQuery[]> {
-    let query = "SELECT id, owner, radius, notifyOwner, arrivalTime, ST_AsText(startPoint) AS startPoint, " +
-    "ST_AsText(endPoint) AS endPoint FROM route_queries where owner=$1";
+export function getBuddyRequests(params: {userId: number, id?: number}, providedClient = null)
+: Promise<BuddyRequest[]> {
+    let query = "SELECT id, owner, radius, notifyOwner, arrivalDateTime, ST_AsText(startPoint) AS startPoint, " +
+    "ST_AsText(endPoint) AS endPoint FROM buddy_requests where owner=$1";
     let queryParams = [params.userId];
     if (params.id !== null && typeof params.id !== "undefined") {
         query +=  " AND id=$2";
@@ -520,7 +468,7 @@ export function getBuddyRequests(params: {userId: number, id?: number}, provided
     return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
         if (result.rowCount > 0) {
             return result.rows.map((buddyRequest) => {
-                return RouteQuery.fromSQLRow(buddyRequest);
+                return BuddyRequest.fromSQLRow(buddyRequest);
             });
         } else {
             throw new Error("404:Buddy Request doesn't exist");
@@ -536,7 +484,7 @@ export function getBuddyRequests(params: {userId: number, id?: number}, provided
  * @return {boolean} Whether the deletion succeded
  */
 export function deleteBuddyRequest(id: number, providedClient = null): Promise<Boolean> {
-    const query = "DELETE FROM route_queries WHERE id=$1";
+    const query = "DELETE FROM buddy_requests WHERE id=$1";
     return sqlTransaction(query, [id], providedClient).then(result => {
         if (result.rowCount) {
             return true;
@@ -549,14 +497,14 @@ export function deleteBuddyRequest(id: number, providedClient = null): Promise<B
 /**
  * updateBuddyRequest - description
  *
- * @param  {routeQuery} existingRequest The old buddyRequest to be updated
+ * @param  {BuddyRequest} existingRequest The old buddyRequest to be updated
  * @param  {client} providedClient Database client to use for this interaction
  * @return {boolean} Whether the update succeded
  */
 export function updateBuddyRequest(
-    existingRequest: RouteQuery,
+    existingRequest: BuddyRequest,
     updates: {
-        arrivalTime?: string,
+        arrivalDateTime?: string,
         endPoint?: [number, number],
         notifyOwner?: boolean,
         radius?: number,
@@ -565,9 +513,9 @@ export function updateBuddyRequest(
     providedClient = null): Promise<boolean> {
 
         // Move the updated properties into the existing model, and validate the new object
-        let newBuddyRequestObject = <RouteQuery> {};
-        newBuddyRequestObject.arrivalTime = updates.arrivalTime !== undefined ?
-            updates.arrivalTime : existingRequest.arrivalTime;
+        let newBuddyRequestObject = <BuddyRequest> {};
+        newBuddyRequestObject.arrivalDateTime = updates.arrivalDateTime !== undefined ?
+            updates.arrivalDateTime : existingRequest.arrivalDateTime;
         newBuddyRequestObject.endPoint = updates.endPoint !== undefined ?
             updates.endPoint : existingRequest.endPoint;
         newBuddyRequestObject.notifyOwner = updates.notifyOwner !== undefined ?
@@ -578,18 +526,19 @@ export function updateBuddyRequest(
             updates.startPoint : existingRequest.startPoint;
 
         // By instantating a new object, we run the tests in the constructor to make
-        // sure that this is still a valid RouteQuery
-        let newBuddyRequest = new RouteQuery(newBuddyRequestObject);
+        // sure that this is still a valid BuddyRequest
+        let newBuddyRequest = new BuddyRequest(newBuddyRequestObject);
 
-        const query = "UPDATE route_queries " +
-        "SET arrivalTime = $1, endPoint = $2, notifyOwner = $3, radius = $4, startPoint = $5 " +
+        const query = "UPDATE buddy_requests " +
+        "SET arrivalDateTime = $1, endPoint = ST_GeogFromText($2), notifyOwner = $3, radius = $4, " +
+        "startPoint = ST_GeogFromText($5) " +
         "WHERE id = $6";
-        const sqlParams = [newBuddyRequest.arrivalTime,
+        const sqlParams = [newBuddyRequest.arrivalDateTime,
             coordsToPointString(newBuddyRequest.endPoint),
             newBuddyRequest.notifyOwner,
             newBuddyRequest.radius,
             coordsToPointString(newBuddyRequest.startPoint),
-            newBuddyRequest.id];
+            existingRequest.id];
 
         return sqlTransaction(query, sqlParams, providedClient).then(result => {
             return true;

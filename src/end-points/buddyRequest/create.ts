@@ -70,11 +70,10 @@ const definitions = {
     BuddyRequest: {
         description: "Information needed to search for a matching route",
         properties: {
-            arrivalTime: {
+            arrivalDateTime: {
                 description: "The time in ISO 8601 extended format that the route owner wants to arrive at <endPoint>",
-                example: "2017-06-01 00:00:00",
+                example: new Date().toISOString(),
                 type: "string",
-
             },
             endPoint: {
                 $ref: "#/definitions/Coordinate",
@@ -99,7 +98,7 @@ const definitions = {
                 example:  [ 0, 0] ,
             },
         },
-        required: ["startPoint", "endPoint", "notifyOwner"],
+        required: ["arrivalDateTime", "radius", "startPoint", "endPoint", "notifyOwner"],
     },
     CreateBuddyRequestResponse: {
         properties: {

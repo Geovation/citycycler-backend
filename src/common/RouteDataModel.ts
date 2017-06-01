@@ -2,16 +2,9 @@ import { lineStringToCoords } from "./database";
 import * as moment from "moment";
 export class RouteDataModel {
     public static fromSQLRow(row) {
-        // Convert the bitmasked int into an array of days
-        const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-        /* tslint:disable no-bitwise */
-        const daysArray = daysOfWeek.filter((day, i) => {
-            return row.days & 1 << i;
-        });
-        /* tslint:enable no-bitwise */
         return new RouteDataModel({
             arrivalTime: row.arrivaltime,
-            days: daysArray,
+            days: row.days,
             departureTime: row.departuretime,
             id: row.id,
             owner: row.owner,
@@ -27,6 +20,11 @@ export class RouteDataModel {
     public route: number[][];
 
     constructor(obj) {
+        if (obj.arrivalTime === undefined) {
+            throw new Error("400:Route requires a valid arrival time");
+        } else if (obj.departureTime === undefined) {
+            throw new Error("400:Route requires a valid departure time");
+        }
         let arrivalTime = moment("2000-01-01T" + obj.arrivalTime);
         let departureTime = moment("2000-01-01T" + obj.departureTime);
         if (!arrivalTime.isValid()) {
@@ -54,16 +52,4 @@ export class RouteDataModel {
         this.owner = obj.owner;
         this.route = obj.route;
     }
-
-    // Convert an array of days into the bitmasked integer form
-    /* tslint:disable no-bitwise */
-    public getDaysBitmask = (): number => {
-        const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-        return this.days.map((day) => {
-            return 1 << daysOfWeek.indexOf(day);
-        }).reduce((days, day) => {
-            return days | day;
-        }, 0);
-    }
-    /* tslint:enable no-bitwise */
 }

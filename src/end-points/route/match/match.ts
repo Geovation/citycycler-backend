@@ -73,36 +73,9 @@ const definitions = {
         },
         required: ["result"],
     },
-    PointWithRadius: {
-        properties: {
-            latitude: {
-                description: "The latitude of this point",
-                type: "integer",
-            },
-            longitude: {
-                description: "The longitude of this point",
-                type: "integer",
-            },
-            radius: {
-                description: "The radius in which to search around this point, in meters",
-                type: "integer",
-            },
-        },
-        required: ["latitude", "longitude", "radius"],
-    },
     RouteSearchData: {
         description: "Information about a matching route",
         properties: {
-            days: {
-                description: "Which days of the week the owner cycles this route, that the user can also cycle on",
-                example: ["monday", "wednesday", "friday"],
-                items: {
-                    description: "A day of the week",
-                    enum: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
-                    type: "string",
-                },
-                type: "array",
-            },
             distanceFromDivorcePoint: {
                 description: "How far in meters the user will have to cycle from the divorce point to their " +
                 "destination",
@@ -122,8 +95,10 @@ const definitions = {
                 type: "array",
             },
             divorceTime: {
-                description: "The time in ISO 8601 extended format that the route owner will reach the divorcePoint",
-                type: "integer",
+                description: "The expected date and time in ISO 8601 extended format that the route owner will " +
+                "reach the divorcePoint",
+                example: new Date().toISOString(),
+                type: "string",
             },
             id: {
                 description: "This route's internal id",
@@ -138,8 +113,10 @@ const definitions = {
                 type: "array",
             },
             meetingTime: {
-                description: "The time in ISO 8601 extended format that the route owner will reach the meetingPoint",
-                type: "integer",
+                description: "The expected time in ISO 8601 extended format that the route owner will " +
+                "reach the meetingPoint",
+                example: new Date().toISOString(),
+                type: "string",
             },
             owner: {
                 description: "The userId of the user who owns this route",
@@ -149,13 +126,15 @@ const definitions = {
                 description: "A time interval in ISO 8601 format that it is " +
                 "estimated to take the user to cycle from the divorce point " +
                 "to their destination",
-                type: "integer",
+                example: "PT1H5M30S",
+                type: "string",
             },
             timeToMeetingPoint : {
                 description: "A time interval in ISO 8601 format that it is " +
                 "estimated to take the user to cycle from their start point " +
-                "to the meeting point",
-                type: "integer",
+                "to the meeting point. ",
+                example: "PT1H5M30S",
+                type: "string",
             },
         },
         required: ["meetingPoint", "divorcePoint", "meetingTime", "owner", "days", "id"],
@@ -169,28 +148,25 @@ const definitions = {
     },
     StartEndPoints: {
         properties: {
-            days: {
-                description: "Which days of the week the user wants to cycle this route. " +
-                "If unset, it will default to any day",
-                example: ["monday", "wednesday", "friday"],
-                items: {
-                    enum: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
-                    type: "string",
-                },
-                type: "array",
+            endPoint: {
+                $ref: "#/definitions/Coordinate",
             },
-            end: {
-                $ref: "#/definitions/PointWithRadius",
-            },
-            start: {
-                $ref: "#/definitions/PointWithRadius",
-            },
-            time: {
-                description: "What time (in ISO 8601 extended format), the user wants reach their destination",
+            radius: {
+                description: "How far the user is willing to travel alone to get to/from the meeting point and " +
+                "divorce point",
+                example: 500,
                 type: "integer",
             },
+            startPoint: {
+                $ref: "#/definitions/Coordinate",
+            },
+            time: {
+                description: "The date and time (in ISO 8601 extended format), the user wants reach their destination",
+                example: new Date().toISOString(),
+                type: "string",
+            },
         },
-        required: ["start", "end"],
+        required: ["start", "end", "radius", "time"],
     },
 };
 

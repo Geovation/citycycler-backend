@@ -92,8 +92,6 @@ function getDevelopmentEnvVars() {
         NODE_ENV: "development",
         GOOGLE_APPLICATION_CREDENTIALS: "conf/storage-keyfile.json",
         STORAGE_BUCKET: "matchmyroute-dev",
-        PGUSER: "postgres",
-        PGPASSWORD: "DeV$123",
     });
 };
 

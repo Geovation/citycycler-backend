@@ -68,9 +68,10 @@ const operation = {
 const definitions = {
     BuddyRequestChanges: {
         properties: {
-            arrivalTime: {
+            arrivalDateTime: {
                 description: "The time in ISO 8601 extended format that the owner wants to arrive at " +
                 "their destination",
+                example: new Date().toISOString(),
                 type: "string",
             },
             endPoint: {
@@ -118,7 +119,9 @@ const definitions = {
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
-    return getIdFromJWT(params.authorization).then(userId => {
+    let userId;
+    return getIdFromJWT(params.authorization).then(authUserId => {
+        userId = authUserId;
         if (userId !== undefined) {
             return Database.getBuddyRequests({userId, id: payload.id});
         } else {
@@ -126,7 +129,11 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         }
     }).then(buddyRequests => {
         if (buddyRequests.length === 1) {
-            return Database.updateBuddyRequest(buddyRequests[0], payload);
+            if (buddyRequests[0].owner === userId) {
+                return Database.updateBuddyRequest(buddyRequests[0], payload);
+            } else {
+                throw new Error("403:Invalid authorization");
+            }
         } else if (buddyRequests.length === 0) {
             throw new Error("404:Buddy request not found");
         } else {

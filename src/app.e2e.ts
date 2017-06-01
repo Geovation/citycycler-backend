@@ -1,3 +1,4 @@
+import BuddyRequest from "./common/BuddyRequestDataModel";
 import * as CloudStorage from "./common/cloudstorage";
 import { RouteDataModel } from "./common/RouteDataModel";
 import { app, gracefulShutdown, setupServer } from "./microservices-framework/web/server";
@@ -32,6 +33,7 @@ describe("MatchMyRoute API", () => {
     let userIds = [];   // A list of users created that will be deleted at the end of this test run
     let userJwts = [];  // JWTs corresponding to the respective users in userIds
     let routeIds = [];  // A list of routes created that will be deleted at the end of this test run
+    let buddyRequestIds = [];   // A list of buddy Request IDs that will be deleted at the end of this run
     /* tslint:disable only-arrow-functions */
     before(function(done) { // Must not be an arrow function because we need access to `this`
         this.timeout(0);    // Disable timeouts for the server startup
@@ -60,7 +62,6 @@ describe("MatchMyRoute API", () => {
         let promises = [];
         userIds.forEach((id, i) => {
             const jwt = userJwts[i];
-            logger.debug("Deleting test user " + id);
             promises.push(new Promise((resolve, reject) => {
                 defaultRequest({
                     headers: {
@@ -331,8 +332,8 @@ describe("MatchMyRoute API", () => {
                         email: "updatedtest@example.com",
                         name: "Updated Test User",
                         password: "updatedtest",
-                        photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21"
-                            + "bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
+                        photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21" +
+                        "bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
                     };
                     defaultRequest({
                         headers: {
@@ -1026,18 +1027,10 @@ describe("MatchMyRoute API", () => {
                     });
                     it("should match a route", done => {
                         const matchParams = {
-                            days: ["thursday", "friday", "sunday"],
-                            end: {
-                                latitude: 0,
-                                longitude: 4.6,
-                                radius: 500,
-                            },
-                            start: {
-                                latitude: 0,
-                                longitude: 1.4,
-                                radius: 500,
-                            },
-                            time: "13:10:00+00",
+                            arrivalDateTime: "2017-09-08T13:20:00+00",
+                            endPoint: [0, 4.6],
+                            radius: 500,
+                            startPoint: [0, 1.4],
                         };
                         defaultRequest({
                             headers: {
@@ -1061,13 +1054,10 @@ describe("MatchMyRoute API", () => {
                                 JSON.stringify(body.result));
                             expect(thisRoute.owner).to.equal(userIds[1]);
                             // Should be the intersection between the route days and the search days
-                            expect(thisRoute.days).to.eql(["friday", "sunday"]);
-                            expect(moment("2000-01-01T12:15:00+00").isBefore("2000-01-01T" +
-                                thisRoute.meetingTime)).to.equal(true,
+                            expect(moment("2017-09-08T12:15:00+00").isBefore(thisRoute.meetingTime)).to.equal(true,
                                 "meetingTime is before the route's start time (12:15:00+00). Got " +
                                 thisRoute.meetingTime);
-                            expect(moment("2000-01-01T13:15:00+00").isAfter("2000-01-01T" +
-                                thisRoute.meetingTime)).to.equal(true,
+                            expect(moment("2017-09-08T13:15:00+00").isAfter(thisRoute.meetingTime)).to.equal(true,
                                 "meetingTime is after the route's end time (13:15:00+00). Got " +
                                 thisRoute.meetingTime);
                             expect(thisRoute.meetingPoint).to.eql([0, 1.4]);
@@ -1077,18 +1067,10 @@ describe("MatchMyRoute API", () => {
                     });
                     it("should not match a route in the wrong direction", done => {
                         const matchParams = {
-                            days: ["thursday", "friday", "sunday"],
-                            end: {
-                                latitude: 0,
-                                longitude: 1.4,
-                                radius: 500,
-                            },
-                            start: {
-                                latitude: 0,
-                                longitude: 4.6,
-                                radius: 500,
-                            },
-                            time: "13:10:00+00",
+                            arrivalDateTime: "2017-09-08T13:20:00+00",
+                            endPoint: [0, 1.4],
+                            radius: 500,
+                            startPoint: [4.6, 0],
                         };
                         defaultRequest({
                             headers: {
@@ -1115,18 +1097,10 @@ describe("MatchMyRoute API", () => {
                     });
                     it("should not match a route when non-matching days are given", done => {
                         const matchParams = {
-                            days: ["thursday"],
-                            end: {
-                                latitude: 0,
-                                longitude: 4.6,
-                                radius: 500,
-                            },
-                            start: {
-                                latitude: 0,
-                                longitude: 1.4,
-                                radius: 500,
-                            },
-                            time: "13:10:00+00",
+                            arrivalDateTime: "2017-09-09T13:20:00+00",
+                            endPoint: [0, 4.6],
+                            radius: 500,
+                            startPoint: [0, 1.4],
                         };
                         defaultRequest({
                             headers: {
@@ -1148,55 +1122,6 @@ describe("MatchMyRoute API", () => {
                             })[0];
                             expect(thisRoute).to.equal(undefined, "Route was matched. Results were " +
                                 JSON.stringify(body.result));
-                            done();
-                        });
-                    });
-                    it("should match a route when neither days nor time is given", done => {
-                        const matchParams = {
-                            end: {
-                                latitude: 0,
-                                longitude: 4.6,
-                                radius: 500,
-                            },
-                            start: {
-                                latitude: 0,
-                                longitude: 1.4,
-                                radius: 500,
-                            },
-                        };
-                        defaultRequest({
-                            headers: {
-                                Authorization: "Bearer " + userJwts[1],
-                            },
-                            json: matchParams,
-                            method: "POST",
-                            url: url + "/routes/match",
-                        }, (error, response, body) => {
-                            expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
-                                response.statusCode + ", error given is: " + error);
-                            if (typeof body === "string") {
-                                body = JSON.parse(body);
-                            }
-                            expect(body.result instanceof Array).to.equal(true, "body.result is not a list of " +
-                                "results, body is: " + JSON.stringify(body));
-                            const thisRoute = body.result.filter((route) => {
-                                return route.id === routeIds[1];
-                            })[0];
-                            expect(thisRoute).to.not.equal(undefined, "Route was not matched. Results were " +
-                                JSON.stringify(body.result));
-                            expect(thisRoute.owner).to.equal(userIds[1]);
-                            // Should be the intersection between the route days and the search days
-                            expect(thisRoute.days).to.eql(["tuesday", "friday", "sunday"]);
-                            expect(moment("2000-01-01T12:15:00+00").isBefore("2000-01-01T" +
-                                thisRoute.meetingTime)).to.equal(true,
-                                "meetingTime is before the route's start time (12:15:00+00). Got " +
-                                thisRoute.meetingTime);
-                            expect(moment("2000-01-01T13:15:00+00").isAfter("2000-01-01T" +
-                                thisRoute.meetingTime)).to.equal(true,
-                                "meetingTime is after the route's end time (13:15:00+00). Got " +
-                                thisRoute.meetingTime);
-                            expect(thisRoute.meetingPoint).to.eql([0, 1.4]);
-                            expect(thisRoute.divorcePoint).to.eql([0, 4.6]);
                             done();
                         });
                     });
@@ -1641,6 +1566,786 @@ describe("MatchMyRoute API", () => {
                         });
                     });
                 });
+            });
+        });
+        describe("Buddy Requests", () => {
+            before(done => {
+                // Create another test user (userIds[3])
+                const user = { email: "test3@example.com", name: "Test User4", password: "test" };
+                defaultRequest({
+                    json: user,
+                    method: "PUT",
+                    url: url + "/user",
+                }, (error, response, body) => {
+                    userIds.push(parseInt(body.result.id, 10));
+                    userJwts.push(body.result.jwt.token);
+                    done();
+                });
+            });
+            describe("Creation", () => {
+                it("should create buddy requests", done => {
+                    const buddyRequest = {
+                        arrivalDateTime: "2000-01-01T13:00:00+00",
+                        endPoint: [15, 15],
+                        notifyOwner: false,
+                        radius: 1000,
+                        startPoint: [10, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: buddyRequest,
+                        method: "PUT",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(201, "Expected 201 response but got " +
+                            response.statusCode + ", error given is: " + error + " body is " + JSON.stringify(body));
+                        expect(typeof body).to.equal("object", "Body is of unexpected type. " +
+                            "Expected object, but got a " + typeof body);
+                        expect(parseInt(body.result, 10)).to.not.equal(NaN, "The returned ID is NaN. " +
+                            "Full response body is: " + JSON.stringify(body));
+                        buddyRequestIds.push(parseInt(body.result.id, 10));
+                        done();
+                    });
+                });
+                it("should not create buddy request with invalid auth", done => {
+                    const buddyRequest = {
+                        arrivalDateTime: "2000-01-01T13:00:00+00",
+                        endPoint: [15, 15],
+                        notifyOwner: false,
+                        radius: 1000,
+                        startPoint: [10, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer foobar",
+                        },
+                        json: buddyRequest,
+                        method: "PUT",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorization");
+                        expect(body.status).to.equal(403);
+                        done();
+                    });
+                });
+                it("should not create buddy request with no auth", done => {
+                    const buddyRequest = {
+                        arrivalDateTime: "2000-01-01T13:00:00+00",
+                        endPoint: [15, 15],
+                        notifyOwner: false,
+                        radius: 1000,
+                        startPoint: [10, 10],
+                    };
+                    defaultRequest({
+                        headers: {},
+                        json: buddyRequest,
+                        method: "PUT",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorization");
+                        expect(body.status).to.equal(403);
+                        done();
+                    });
+                });
+                it("should not create buddy request with invalid radius", done => {
+                    const buddyRequest = {
+                        arrivalDateTime: "2000-01-01T13:00:00+00",
+                        endPoint: [15, 15],
+                        notifyOwner: false,
+                        radius: -500,
+                        startPoint: [10, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: buddyRequest,
+                        method: "PUT",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Radius must be positive");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+                it("should not create buddy request with invalid startPoint (3D)", done => {
+                    const buddyRequest = {
+                        arrivalDateTime: "2000-01-01T13:00:00+00",
+                        endPoint: [15, 15],
+                        notifyOwner: false,
+                        radius: -500,
+                        startPoint: [10, 10, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: buddyRequest,
+                        method: "PUT",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("BuddyRequest requires a 2D start point");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+                it("should not create buddy request with invalid startPoint (1D)", done => {
+                    const buddyRequest = {
+                        arrivalDateTime: "2000-01-01T13:00:00+00",
+                        endPoint: [15, 15],
+                        notifyOwner: false,
+                        radius: -500,
+                        startPoint: [10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: buddyRequest,
+                        method: "PUT",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("BuddyRequest requires a 2D start point");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+                it("should not create buddy request with invalid endPoint (3D)", done => {
+                    const buddyRequest = {
+                        arrivalDateTime: "2000-01-01T13:00:00+00",
+                        endPoint: [15, 15, 15],
+                        notifyOwner: false,
+                        radius: -500,
+                        startPoint: [10, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: buddyRequest,
+                        method: "PUT",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("BuddyRequest requires a 2D end point");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+                it("should not create buddy request with invalid endPoint (1D)", done => {
+                    const buddyRequest = {
+                        arrivalDateTime: "2000-01-01T13:00:00+00",
+                        endPoint: [15],
+                        notifyOwner: false,
+                        radius: -500,
+                        startPoint: [10, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: buddyRequest,
+                        method: "PUT",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("BuddyRequest requires a 2D end point");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+            });
+            describe("Retrieval", () => {
+                it("should get a buddyRequest by a valid id", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        method: "GET",
+                        url: url + "/buddyRequest?id=" + buddyRequestIds[0],
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        expect(body.result.length).to.equal(1);
+                        expect(body.result[0].owner).to.equal(userIds[3], "Buddy request belongs to another user." +
+                            "Expected owner to be " + userIds[3] + ", but it was " + body.result.owner +
+                            ". Full response body is: " + JSON.stringify(body));
+                        done();
+                    });
+                });
+                it("should not get a route by an invalid id", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        method: "GET",
+                        url: url + "/buddyRequest?id=-1",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Buddy Request doesn't exist");
+                        expect(body.status).to.equal(404);
+                        done();
+                    });
+                });
+                it("should not get a buddy request with no auth", done => {
+                    defaultRequest({
+                        headers: {},
+                        method: "GET",
+                        url: url + "/buddyRequest?id=" + buddyRequestIds[0],
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorization");
+                        expect(body.status).to.equal(403);
+                        done();
+                    });
+                });
+            });
+            describe("Updating", () => {
+                it("should handle an empty update", done => {
+                    const updates = {
+                        id: buddyRequestIds[0],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        done();
+                    });
+                });
+                it("should update all properties at once", done => {
+                    const updates = {
+                        arrivalDateTime: "2000-01-01T13:30:00+00",
+                        endPoint: [14, 14],
+                        id: buddyRequestIds[0],
+                        notifyOwner: true,
+                        radius: 1500,
+                        startPoint: [11, 11],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest?id=" + buddyRequestIds[0],
+                        }, (error2, response2, body2) => {
+                            let buddyRequest;
+                            expect(body2.result.length).to.equal(1);
+                            try {
+                                buddyRequest = new BuddyRequest(body2.result[0]);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid BuddyRequest: " +
+                                    err).and.notify(done);
+                            }
+                            expect(moment(buddyRequest.arrivalDateTime).isSame(updates.arrivalDateTime)).to.be.true;
+                            expect(buddyRequest.endPoint).to.eql(updates.endPoint);
+                            expect(buddyRequest.notifyOwner).to.equal(updates.notifyOwner);
+                            expect(buddyRequest.radius).to.equal(updates.radius);
+                            expect(buddyRequest.startPoint).to.eql(updates.startPoint);
+                            done();
+                        });
+                    });
+                });
+                it("should update one property at a time - arrivalDateTime", done => {
+                    const updates = {
+                        arrivalDateTime: "2000-01-01T13:00:00+00",
+                        id: buddyRequestIds[0],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest?id=" + buddyRequestIds[0],
+                        }, (error2, response2, body2) => {
+                            let buddyRequest;
+                            expect(body2.result.length).to.equal(1);
+                            try {
+                                buddyRequest = new BuddyRequest(body2.result[0]);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid BuddyRequest: " +
+                                    err).and.notify(done);
+                            }
+                            expect(moment(buddyRequest.arrivalDateTime).isSame(updates.arrivalDateTime)).to.be.true;
+                            done();
+                        });
+                    });
+                });
+                it("should update one property at a time - radius", done => {
+                    const updates = {
+                        id: buddyRequestIds[0],
+                        radius: 1000,
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest?id=" + buddyRequestIds[0],
+                        }, (error2, response2, body2) => {
+                            let buddyRequest;
+                            expect(body2.result.length).to.equal(1);
+                            try {
+                                buddyRequest = new BuddyRequest(body2.result[0]);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid BuddyRequest: " +
+                                    err).and.notify(done);
+                            }
+                            expect(buddyRequest.radius).to.equal(updates.radius);
+                            done();
+                        });
+                    });
+                });
+                it("should update one property at a time - notifyOwner", done => {
+                    const updates = {
+                        id: buddyRequestIds[0],
+                        notifyOwner: false,
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest?id=" + buddyRequestIds[0],
+                        }, (error2, response2, body2) => {
+                            let buddyRequest;
+                            expect(body2.result.length).to.equal(1);
+                            try {
+                                buddyRequest = new BuddyRequest(body2.result[0]);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid BuddyRequest: " +
+                                    err).and.notify(done);
+                            }
+                            expect(buddyRequest.notifyOwner).to.equal(updates.notifyOwner);
+                            done();
+                        });
+                    });
+                });
+                it("should update one property at a time - endPoint", done => {
+                    const updates = {
+                        endPoint: [15, 15],
+                        id: buddyRequestIds[0],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest?id=" + buddyRequestIds[0],
+                        }, (error2, response2, body2) => {
+                            let buddyRequest;
+                            expect(body2.result.length).to.equal(1);
+                            try {
+                                buddyRequest = new BuddyRequest(body2.result[0]);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid BuddyRequest: " +
+                                    err).and.notify(done);
+                            }
+                            expect(buddyRequest.endPoint).to.eql(updates.endPoint);
+                            done();
+                        });
+                    });
+                });
+                it("should update one property at a time - startPoint", done => {
+                    const updates = {
+                        id: buddyRequestIds[0],
+                        startPoint: [10, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest?id=" + buddyRequestIds[0],
+                        }, (error2, response2, body2) => {
+                            let buddyRequest;
+                            expect(body2.result.length).to.equal(1);
+                            try {
+                                buddyRequest = new BuddyRequest(body2.result[0]);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid BuddyRequest: " +
+                                    err).and.notify(done);
+                            }
+                            expect(buddyRequest.startPoint).to.eql(updates.startPoint);
+                            done();
+                        });
+                    });
+                });
+                it("should not update owner", done => {
+                    const updates = {
+                        id: buddyRequestIds[0],
+                        owner: -10,
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest?id=" + buddyRequestIds[0],
+                        }, (error2, response2, body2) => {
+                            let buddyRequest;
+                            expect(body2.result.length).to.equal(1);
+                            try {
+                                buddyRequest = new BuddyRequest(body2.result[0]);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid BuddyRequest: " +
+                                    err).and.notify(done);
+                            }
+                            expect(buddyRequest.owner).not.to.equal(updates.owner);
+                            done();
+                        });
+                    });
+                });
+                it("should not update with bad auth", done => {
+                    const updates = {
+                        arrivalDateTime: "2000-01-01T13:30:00+00",
+                        endPoint: [14, 14],
+                        id: buddyRequestIds[0],
+                        notifyOwner: true,
+                        radius: 1500,
+                        startPoint: [11, 11],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[1],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest?id=" + buddyRequestIds[0],
+                        }, (error2, response2, body2) => {
+                            let buddyRequest;
+                            expect(body2.result.length).to.equal(1);
+                            try {
+                                buddyRequest = new BuddyRequest(body2.result[0]);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid BuddyRequest: " +
+                                    err).and.notify(done);
+                            }
+                            expect(buddyRequest.arrivalDateTime).not.to.equal(updates.arrivalDateTime);
+                            expect(buddyRequest.endPoint).not.to.eql(updates.endPoint);
+                            expect(buddyRequest.notifyOwner).not.to.equal(updates.notifyOwner);
+                            expect(buddyRequest.radius).not.to.equal(updates.radius);
+                            expect(buddyRequest.startPoint).not.to.eql(updates.startPoint);
+                            done();
+                        });
+                    });
+                });
+                it("should not update with invalid radius", done => {
+                    const updates = {
+                        id: buddyRequestIds[0],
+                        radius: -1500,
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        expect(body.error).to.equal("Radius must be positive");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+                it("should not update with invalid startPoint (3D)", done => {
+                    const updates = {
+                        id: buddyRequestIds[0],
+                        startPoint: [10, 10, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        expect(body.error).to.equal("BuddyRequest requires a 2D start point");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+                it("should not update with invalid startPoint (1D)", done => {
+                    const updates = {
+                        id: buddyRequestIds[0],
+                        startPoint: [10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        expect(body.error).to.equal("BuddyRequest requires a 2D start point");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+                it("should not update with invalid endPoint (3D)", done => {
+                    const updates = {
+                        endPoint: [10, 10, 10],
+                        id: buddyRequestIds[0],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        expect(body.error).to.equal("BuddyRequest requires a 2D end point");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+                it("should not update with invalid endPoint (1D)", done => {
+                    const updates = {
+                        endPoint: [10],
+                        id: buddyRequestIds[0],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        expect(body.error).to.equal("BuddyRequest requires a 2D end point");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+            });
+            describe("Deleting", () => {
+                before(done => {
+                    // Make a new buddy request (buddyRequestIds[1])
+                    const buddyRequest = {
+                        arrivalTime: "2000-01-01T13:00:00+00",
+                        endPoint: [15, 15],
+                        notifyOwner: false,
+                        radius: 1000,
+                        startPoint: [10, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: buddyRequest,
+                        method: "PUT",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        buddyRequestIds.push(body.result);
+                        done();
+                    });
+                });
+                it("should not delete a buddy request with an invalid id", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        method: "DELETE",
+                        url: url + "/buddyRequest?id=" + -1,
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(404, "Expected 403 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Buddy Request doesn't exist");
+                        expect(body.status).to.equal(404);
+                        done();
+                    });
+                });
+                it("should not delete a buddy request with no auth", done => {
+                    defaultRequest({
+                        method: "DELETE",
+                        url: url + "/BuddyRequest?id=" + buddyRequestIds[0],
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorization");
+                        expect(body.status).to.equal(403);
+                        done();
+                    });
+                });
+                it("should not be able to delete another user's buddy request", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[2],
+                        },
+                        method: "DELETE",
+                        url: url + "/buddyRequest?id=" + buddyRequestIds[0],
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(403, "Expected 404 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorization");
+                        expect(body.status).to.equal(403);
+                        done();
+                    });
+                });
+                it("should delete a buddy request", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        method: "DELETE",
+                        url: url + "/BuddyRequest?id=" + buddyRequestIds[0],
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest?id=" + buddyRequestIds[0],
+                        }, (error2, response2, body2) => {
+                            expect(response2.statusCode).to.equal(404, "Expected 404 response but got " +
+                                response2.statusCode + ", body returned is: " + JSON.stringify(body2) +
+                                ". This means the buddyRequest was not deleted");
+                            done();
+                        });
+                    });
+                });
+                it("should delete a user's buddy requests when that user is deleted", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        method: "DELETE",
+                        url: url + "/user?id=" + userIds[3],
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest?id=" + buddyRequestIds[1],
+                        }, (error2, response2, body2) => {
+                            expect(response2.statusCode).to.equal(403, "Expected 403 response but got " +
+                                response2.statusCode + ", body returned is: " + JSON.stringify(body2) +
+                                ". This means the buddyRequest was not deleted");
+                            done();
+                        });
+                    });
+                });
+            });
+            describe("Querying against Routes", () => {
+                console.log("skipping");
             });
         });
     });

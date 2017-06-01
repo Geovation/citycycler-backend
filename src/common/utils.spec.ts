@@ -1,9 +1,10 @@
+import BuddyRequest from "./BuddyRequestDataModel";
 import * as Database from "./database";
 import { RouteDataModel } from "./RouteDataModel";
-import RouteQuery from "./RouteQueryDataModel";
 import User from "./UserDataModels";
 import * as chai from "chai";
 import * as mocha from "mocha";
+import * as moment from "moment";
 
 // const before = mocha.before;
 // const after = mocha.after;
@@ -158,7 +159,7 @@ describe("Various useful functions", () => {
         it("should be constructed correctly from an SQL row", () => {
             const row = {
                 arrivaltime: "13:00:00+00",
-                days: 66,
+                days: ["tuesday", "sunday"],
                 departuretime: "12:00:00+00",
                 id: 321,
                 owner: 123,
@@ -176,110 +177,99 @@ describe("Various useful functions", () => {
             expect(route.route).to.eql([[0, 0], [1, 1], [2, 2]]);
         });
     });
-    describe("RouteQuery", () => {
+    describe("BuddyRequest", () => {
         it("should be constructed correctly", () => {
             const obj = {
-                arrivalTime: "13:00:00+00",
-                days: ["tuesday", "sunday"],
+                arrivalDateTime: "2017-09-08T13:00:00+00",
                 endPoint: [1, 1],
                 id: 321,
-                notifyOwner: true,
+                notifyOwner: false,
                 owner: 123,
                 radius: 200,
                 startPoint: [0, 0],
             };
-            const routeQuery = new RouteQuery(obj);
-            expect(routeQuery.arrivalTime).to.equal(
-                "13:00:00+00",
-                "Arrival time is wrong! expected 13:00:00+00, got " + routeQuery.arrivalTime
-            );
-            expect(routeQuery.id).to.equal(321, "ID is wrong! expected 321, got " + routeQuery.id);
-            expect(routeQuery.owner).to.equal(123, "Owner is wrong! expected 123, got " + routeQuery.owner);
-            expect(routeQuery.radius).to.equal(200, "Radius is wrong! expected 200, got " + routeQuery.radius);
-            expect(routeQuery.days).to.eql(["tuesday", "sunday"], "Days is wrong!");
-            expect(routeQuery.startPoint).to.eql([0, 0]);
-            expect(routeQuery.endPoint).to.eql([1, 1]);
-            expect(routeQuery.notifyOwner).to.equal(true);
+            const buddyRequest = new BuddyRequest(obj);
+            expect(moment(buddyRequest.arrivalDateTime).isSame(obj.arrivalDateTime)).to.be.true;
+            expect(buddyRequest.id).to.equal(321, "ID is wrong! expected 321, got " + buddyRequest.id);
+            expect(buddyRequest.owner).to.equal(123, "Owner is wrong! expected 123, got " + buddyRequest.owner);
+            expect(buddyRequest.radius).to.equal(200, "Radius is wrong! expected 200, got " + buddyRequest.radius);
+            expect(buddyRequest.startPoint).to.eql([0, 0]);
+            expect(buddyRequest.endPoint).to.eql([1, 1]);
+            expect(buddyRequest.notifyOwner).to.equal(false);
         });
         it("should throw an error if startPoint is 1D", () => {
             const obj = {
-                arrivalTime: "13:00:00+00",
-                days: ["tuesday", "sunday"],
+                arrivalDateTime: "2017-09-09T13:00:00+00",
                 endPoint: [1, 1],
                 id: 321,
+                notifyOwner: false,
                 owner: 123,
                 radius: 200,
                 startPoint: [0],
             };
             expect(() => {
-                return new RouteQuery(obj);
-            }).to.throw("400:RouteQuery requires a 2D start point");
+                return new BuddyRequest(obj);
+            }).to.throw("400:BuddyRequest requires a 2D start point");
         });
         it("should throw an error if startPoint is 3D", () => {
             const obj = {
-                arrivalTime: "13:00:00+00",
-                days: ["tuesday", "sunday"],
+                arrivalDateTime: "2017-09-09T13:00:00+00",
                 endPoint: [1, 1],
                 id: 321,
+                notifyOwner: false,
                 owner: 123,
                 radius: 200,
                 startPoint: [0, 0, 0],
             };
             expect(() => {
-                return new RouteQuery(obj);
-            }).to.throw("400:RouteQuery requires a 2D start point");
+                return new BuddyRequest(obj);
+            }).to.throw("400:BuddyRequest requires a 2D start point");
         });
         it("should throw an error if endPoint is 1D", () => {
             const obj = {
-                arrivalTime: "13:00:00+00",
-                days: ["tuesday", "sunday"],
+                arrivalDateTime: "2017-09-09T13:00:00+00",
                 endPoint: [1],
                 id: 321,
+                notifyOwner: false,
                 owner: 123,
                 radius: 200,
                 startPoint: [0, 0],
             };
             expect(() => {
-                return new RouteQuery(obj);
-            }).to.throw("400:RouteQuery requires a 2D end point");
+                return new BuddyRequest(obj);
+            }).to.throw("400:BuddyRequest requires a 2D end point");
         });
         it("should throw an error if endPoint is 3D", () => {
             const obj = {
-                arrivalTime: "13:00:00+00",
-                days: ["tuesday", "sunday"],
+                arrivalDateTime: "2017-09-09T13:00:00+00",
                 endPoint: [1, 1, 1],
                 id: 321,
+                notifyOwner: false,
                 owner: 123,
                 radius: 200,
                 startPoint: [0, 0],
             };
             expect(() => {
-                return new RouteQuery(obj);
-            }).to.throw("400:RouteQuery requires a 2D end point");
+                return new BuddyRequest(obj);
+            }).to.throw("400:BuddyRequest requires a 2D end point");
         });
         it("should be constructed correctly from an SQL row", () => {
             const row = {
-                arrivalTime: "13:00:00+00",
-                days: 21,
-                endPoint: "POINT(1 1)",
+                arrivaldatetime: "2017-09-09T13:00:00+00",
+                endpoint: "POINT(1 1)",
                 id: 321,
-                notifyOwner: true,
+                notifyowner: false,
                 owner: 123,
                 radius: 200,
-                startPoint: "POINT(0 0)",
+                startpoint: "POINT(0 0)",
             };
-            const routeQuery = RouteQuery.fromSQLRow(row);
-            expect(routeQuery.arrivalTime).to.equal(
-                "13:00:00+00",
-                "Arrival time is wrong! expected 13:00:00+00, got " + routeQuery.arrivalTime
-            );
-            expect(routeQuery.id).to.equal(321, "ID is wrong! expected 321, got " + routeQuery.id);
-            expect(routeQuery.owner).to.equal(123, "Owner is wrong! expected 123, got " + routeQuery.owner);
-            expect(routeQuery.days).to.eql(["monday", "wednesday", "friday"], "Days is wrong! expected " +
-                "['monday', 'wednesday', 'friday'], got " + routeQuery.days);
-            expect(routeQuery.startPoint).to.eql([0, 0]);
-            expect(routeQuery.endPoint).to.eql([1, 1]);
-            expect(routeQuery.notifyOwner).to.equal(true);
+            const buddyRequest = BuddyRequest.fromSQLRow(row);
+            expect(moment(buddyRequest.arrivalDateTime).isSame(row.arrivaldatetime)).to.be.true;
+            expect(buddyRequest.id).to.equal(321, "ID is wrong! expected 321, got " + buddyRequest.id);
+            expect(buddyRequest.owner).to.equal(123, "Owner is wrong! expected 123, got " + buddyRequest.owner);
+            expect(buddyRequest.startPoint).to.eql([0, 0]);
+            expect(buddyRequest.endPoint).to.eql([1, 1]);
+            expect(buddyRequest.notifyOwner).to.equal(false);
         });
     });
     describe("User", () => {
