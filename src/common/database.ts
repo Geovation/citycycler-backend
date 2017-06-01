@@ -464,7 +464,7 @@ export function deleteRoute(id: number, providedClient = null): Promise<Boolean>
     });
 }
 
-export function createRouteQuery(owner: number, routeQ: RouteQuery): Promise<Boolean> {
+export function createBuddyRequest(owner: number, routeQ: RouteQuery): Promise<Boolean> {
     routeQ = new RouteQuery(routeQ);
     return new Promise((resolve, reject) => {
         // Acquire a client from the pool,
