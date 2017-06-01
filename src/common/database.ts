@@ -474,14 +474,15 @@ export function createBuddyRequest(owner: number, routeQ: RouteQuery): Promise<B
                 reject(err);
                 return console.error("error fetching client from pool", err);
             }
-            const query = "INSERT INTO route_queries (startPoint, endPoint, radius, days, arrivalTime, owner)" +
-                "VALUES (ST_GeogFromText($1), ST_GeogFromText($2), $3, $4::integer::bit(7), $5, $6)" +
+            const query = "INSERT INTO route_queries (startPoint, endPoint, radius" +
+                ", notifyOwner, arrivalTime, owner)" +
+                "VALUES (ST_GeogFromText($1), ST_GeogFromText($2), $3, $4, $5, $6)" +
                 "RETURNING id";
             const queryParams = [
                 coordsToPointString(routeQ.startPoint),
                 coordsToPointString(routeQ.endPoint),
                 routeQ.radius,
-                routeQ.getDaysBitmask(),
+                routeQ.notifyOwner,
                 routeQ.arrivalTime,
                 owner,
             ];

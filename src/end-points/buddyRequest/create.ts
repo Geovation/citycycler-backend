@@ -84,23 +84,21 @@ const definitions = {
         description: "Information needed to search for a matching route",
         properties: {
             arrivalTime: {
-                description: "The time in ISO 8601 extended format that the user wants to arrive at <endPoint>",
-                type: "integer",
-            },
-            days: {
-                description: "Which days of the week the user can cycle (a matching route) on",
-                example: ["monday", "wednesday", "friday"],
-                items: {
-                    description: "A day of the week",
-                    enum: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
-                    type: "string",
-                },
-                type: "array",
+                description: "The time in ISO 8601 extended format that the route owner wants to arrive at <endPoint>",
+                example: "2017-06-01 00:00:00",
+                type: "string",
+
             },
             endPoint: {
                 $ref: "#/definitions/Coordinate",
                 description: "Where the user will finish cycling. Must be within <radius> of a route to be " +
                 "considered a match",
+                example:  [ 0, 0] ,
+            },
+            notifyOwner: {
+                description: "Does the user want to be notified of any new experienced cyclists who can help them",
+                example: true,
+                type: "boolean",
             },
             radius: {
                 description: "How far away (in meters) the user is willing to cycle from the start and end point",
@@ -111,9 +109,10 @@ const definitions = {
                 $ref: "#/definitions/Coordinate",
                 description: "Where the user will start cycling from. Must be within <radius> of a route to be " +
                 "considered a match",
+                example:  [ 0, 0] ,
             },
         },
-        required: ["startPoint", "endPoint", "days"],
+        required: ["startPoint", "endPoint", "notifyOwner"],
     },
 };
 
