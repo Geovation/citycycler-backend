@@ -503,6 +503,100 @@ export function createBuddyRequest(owner: number, routeQ: RouteQuery): Promise<B
 }
 
 /**
+ * getBuddyRequests - description
+ *
+ * @param  {object} params The query parameters, including the id of the buddy request to query and the user id
+ * @param  {client} providedClient Database client to use for this interaction
+ * @return {Object[]} Array of buddy requests
+ */
+export function getBuddyRequests(params: {userId: number, id?: number}, providedClient = null): Promise<RouteQuery[]> {
+    let query = "SELECT id, owner, radius, notifyOwner, arrivalTime, ST_AsText(startPoint) AS startPoint, " +
+    "ST_AsText(endPoint) AS endPoint FROM route_queries where owner=$1";
+    let queryParams = [params.userId];
+    if (params.id !== null && typeof params.id !== "undefined") {
+        query +=  " AND id=$2";
+        queryParams.push(params.id);
+    }
+    return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
+        if (result.rowCount > 0) {
+            return result.rows.map((buddyRequest) => {
+                return RouteQuery.fromSQLRow(buddyRequest);
+            });
+        } else {
+            throw new Error("404:Buddy Request doesn't exist");
+        }
+    });
+}
+
+/**
+ * deleteBuddyRequest - description
+ *
+ * @param  {number} id The id of the buddyRequest to delete
+ * @param  {client} providedClient Database client to use for this interaction
+ * @return {boolean} Whether the deletion succeded
+ */
+export function deleteBuddyRequest(id: number, providedClient = null): Promise<Boolean> {
+    const query = "DELETE FROM route_queries WHERE id=$1";
+    return sqlTransaction(query, [id], providedClient).then(result => {
+        if (result.rowCount) {
+            return true;
+        } else {
+            throw new Error("404:BuddyRequest doesn't exist");
+        }
+    });
+}
+
+/**
+ * updateBuddyRequest - description
+ *
+ * @param  {routeQuery} existingRequest The old buddyRequest to be updated
+ * @param  {client} providedClient Database client to use for this interaction
+ * @return {boolean} Whether the update succeded
+ */
+export function updateBuddyRequest(
+    existingRequest: RouteQuery,
+    updates: {
+        arrivalTime?: string,
+        endPoint?: [number, number],
+        notifyOwner?: boolean,
+        radius?: number,
+        startPoint?: [number, number],
+    },
+    providedClient = null): Promise<boolean> {
+
+        // Move the updated properties into the existing model, and validate the new object
+        let newBuddyRequestObject = <RouteQuery> {};
+        newBuddyRequestObject.arrivalTime = updates.arrivalTime !== undefined ?
+            updates.arrivalTime : existingRequest.arrivalTime;
+        newBuddyRequestObject.endPoint = updates.endPoint !== undefined ?
+            updates.endPoint : existingRequest.endPoint;
+        newBuddyRequestObject.notifyOwner = updates.notifyOwner !== undefined ?
+            updates.notifyOwner : existingRequest.notifyOwner;
+        newBuddyRequestObject.radius = updates.radius !== undefined ?
+            updates.radius : existingRequest.radius;
+        newBuddyRequestObject.startPoint = updates.startPoint !== undefined ?
+            updates.startPoint : existingRequest.startPoint;
+
+        // By instantating a new object, we run the tests in the constructor to make
+        // sure that this is still a valid RouteQuery
+        let newBuddyRequest = new RouteQuery(newBuddyRequestObject);
+
+        const query = "UPDATE route_queries " +
+        "SET arrivalTime = $1, endPoint = $2, notifyOwner = $3, radius = $4, startPoint = $5 " +
+        "WHERE id = $6";
+        const sqlParams = [newBuddyRequest.arrivalTime,
+            coordsToPointString(newBuddyRequest.endPoint),
+            newBuddyRequest.notifyOwner,
+            newBuddyRequest.radius,
+            coordsToPointString(newBuddyRequest.startPoint),
+            newBuddyRequest.id];
+
+        return sqlTransaction(query, sqlParams, providedClient).then(result => {
+            return true;
+        });
+}
+
+/**
  * Put a new user in the database, returning the new user
  * @param name - The new user's name.
  * @param email - Email address. Must be unique.

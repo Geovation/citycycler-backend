@@ -1,4 +1,4 @@
-import { doIfUser } from "../../common/auth";
+import { getIdFromJWT } from "../../common/auth";
 import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 // import * as logger from "winston";
@@ -15,7 +15,7 @@ const operation = {
         consumes: ["application/json"],
         parameters: [
             {
-                description: "The route ID",
+                description: "The buddy request ID",
                 in: "query",
                 name: "id",
                 required: true,
@@ -25,7 +25,7 @@ const operation = {
         produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
-                description: "The route was deleted",
+                description: "The buddy request was deleted",
             },
             403: {
                 description: "An invalid authorization token was supplied",
@@ -34,7 +34,7 @@ const operation = {
                 },
             },
             404: {
-                description: "The route doesn't exist",
+                description: "The buddy request doesn't exist",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
@@ -51,9 +51,9 @@ const operation = {
                 userAuth: [],
             },
         ],
-        summary: "Delete a route",
+        summary: "Delete a buddy request",
         tags: [
-            "Routes",
+            "BuddyRequests",
         ],
     },
 };
@@ -63,15 +63,22 @@ const operation = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    const id = parseInt(params.id, 10);
-    return Database.getRouteById(id).then(route => {
-        return doIfUser(params.authorization, route.owner, () => {
-            return Database.deleteRoute(id);
-        });
+    const buddyRequestId = parseInt(params.id, 10);
+    return getIdFromJWT(params.authorization).then(userId => {
+        return Database.getBuddyRequests({userId, id: buddyRequestId});
+    }).then(buddyRequests => {
+        if (buddyRequests.length === 1) {
+            return Database.deleteBuddyRequest(buddyRequestId);
+        } else if (buddyRequests.length === 0) {
+            return true;
+        } else {
+            throw new Error("Multiple buddy requests exist with the id " + buddyRequestId +
+                "! This needs to be resolved");
+        }
     });
 };
 
 // end point definition
-export const deleteRoute = new MicroserviceEndpoint("delete")
+export const deleteBuddyRequest = new MicroserviceEndpoint("deleteBuddyRequest")
     .addSwaggerOperation(operation)
     .addService(service);

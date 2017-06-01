@@ -2,14 +2,14 @@ import { EndpointCollection } from "../../microservices-framework/web/services/e
 
 // Import Endpoints
 import { createBuddyRequest } from "./create";
-// import { deleteBuddyRequest } from "./delete";
-// import { getBuddyRequest } from "./get";
-// import { updateBuddyRequest } from "./update";
+import { deleteBuddyRequest } from "./delete";
+import { getBuddyRequests } from "./get";
+import { updateBuddyRequest } from "./update";
 
 export const buddyRequest: EndpointCollection = new EndpointCollection("buddyRequest");
 
 // export Endpoints
 buddyRequest.addEndpoint(createBuddyRequest);
-// buddyRequest.addEndpoint(getBuddyRequests);
-// buddyRequest.addEndpoint(deleteBuddyRequest);
-// buddyRequest.addEndpoint(updateBuddyRequest);
+buddyRequest.addEndpoint(getBuddyRequests);
+buddyRequest.addEndpoint(deleteBuddyRequest);
+buddyRequest.addEndpoint(updateBuddyRequest);

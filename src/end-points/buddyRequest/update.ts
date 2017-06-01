@@ -15,21 +15,21 @@ const operation = {
         consumes: ["application/json"],
         parameters: [
             {
-                description: "The route and metadata about it",
+                description: "The buddy request and metadata about it",
                 in: "body",
                 name: "route",
                 required: true,
                 schema: {
-                    $ref: "#/definitions/RouteChanges",
+                    $ref: "#/definitions/BuddyRequestChanges",
                 },
             },
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
-                description: "Route was updated",
+                description: "Buddy request was updated",
                 schema: {
-                    $ref: "#/definitions/UpdateRouteResponse",
+                    $ref: "#/definitions/UpdateBuddyRequestResponse",
                 },
             },
             400: {
@@ -56,9 +56,9 @@ const operation = {
                 userAuth: [],
             },
         ],
-        summary: "Update an existing route",
+        summary: "Update an existing buddy request",
         tags: [
-            "Routes",
+            "BuddyRequests",
         ],
     },
 };
@@ -66,38 +66,42 @@ const operation = {
 // DEFINITIONS
 
 const definitions = {
-    RouteChanges: {
+    BuddyRequestChanges: {
         properties: {
             arrivalTime: {
-                description: "The time in ISO 8601 extended format that the owner arrives at their destination",
-                type: "integer",
+                description: "The time in ISO 8601 extended format that the owner wants to arrive at " +
+                "their destination",
+                type: "string",
             },
-            days: {
-                description: "Which days of the week the owner cycles this route",
-                example: ["monday", "wednesday", "friday"],
-                items: {
-                    description: "A day of the week",
-                    enum: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
-                    type: "string",
-                },
-                type: "array",
-            },
-            departureTime: {
-                description: "The time in ISO 8601 extended format that the owner will start their route",
-                type: "integer",
+            endPoint: {
+                $ref: "#/definitions/Coordinate",
+                description: "Where the user will finish cycling. Must be within <radius> of a route to be " +
+                "considered a match",
             },
             id: {
-                description: "The internal id of this route",
+                description: "The internal id of this buddy request",
                 format: "int32",
                 type: "integer",
             },
-            route: {
-                $ref: "#/definitions/CoordList",
+            notifyOwner: {
+                description: "Does the user want to be notified of any new experienced cyclists who can help them",
+                example: true,
+                type: "boolean",
+            },
+            radius: {
+                 description: "How far away (in meters) the user is willing to cycle from the start and end point",
+                 example: 1000,
+                 type: "integer",
+            },
+            startPoint: {
+                $ref: "#/definitions/Coordinate",
+                description: "Where the user will start cycling from. Must be within <radius> of a route to be " +
+                "considered a match",
             },
         },
         required: ["id"],
     },
-    UpdateRouteResponse: {
+    UpdateBuddyRequestResponse: {
         description: "Whether the update succeded",
         properties: {
             result: {
@@ -116,25 +120,24 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
     return getIdFromJWT(params.authorization).then(userId => {
         if (userId !== undefined) {
-            return Database.getRouteById(payload.id).then(route => {
-                if (route.owner === userId) {
-                    return Database.updateRoute(route, payload);
-                } else {
-                    throw "403:Invalid authorization";
-                }
-            }, err => {
-                throw err;
-            });
+            return Database.getBuddyRequests({userId, id: payload.id});
         } else {
-            throw "403:Invalid authorization";
+            throw new Error("403:Invalid authorization");
         }
-    }, err => {
-        throw err;
+    }).then(buddyRequests => {
+        if (buddyRequests.length === 1) {
+            return Database.updateBuddyRequest(buddyRequests[0], payload);
+        } else if (buddyRequests.length === 0) {
+            throw new Error("404:Buddy request not found");
+        } else {
+            throw new Error("Multiple buddy requests exist with the id " + payload.id +
+                "! This needs to be resolved");
+        }
     });
 };
 
 // end point definition
-export const updateRoute = new MicroserviceEndpoint("updateRoute")
+export const updateBuddyRequest = new MicroserviceEndpoint("updateBuddyRequest")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);

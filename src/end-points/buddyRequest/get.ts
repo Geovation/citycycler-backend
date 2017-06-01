@@ -15,7 +15,7 @@ const operation = {
         consumes: ["application/json"],
         parameters: [
             {
-                description: "The route ID (if empty, all routes of the user will be returned)",
+                description: "The buddy request ID (if empty, all buddy requests of the user will be returned)",
                 in: "query",
                 name: "id",
                 required: false,
@@ -25,7 +25,7 @@ const operation = {
         produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
-                description: "Route was retrieved",
+                description: "Buddy request was retrieved",
                 schema: {
                     $ref: "#/definitions/GetResponse",
                 },
@@ -37,7 +37,7 @@ const operation = {
                 },
             },
             404: {
-                description: "Route doesn't exist",
+                description: "Buddy request doesn't exist",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
@@ -54,63 +54,67 @@ const operation = {
                 userAuth: [],
             },
         ],
-        summary: "Retrieve a route by it's ID. If no ID is provided, all routes " +
+        summary: "Retrieve a buddy request by it's ID. If no ID is provided, all buddy requests " +
         "of the user are returned",
         tags: [
-            "Routes",
+            "BuddyRequests",
         ],
     },
 };
 
 const definitions = {
-    GetResponse: {
-        properties: {
-            result: {
-                $ref: "#/definitions/RouteData",
-            },
-        },
-        required: ["result"],
-    },
-    RouteData: {
+    BuddyRequestData: {
         properties: {
             arrivalTime: {
-                description: "The time in ISO 8601 extended format that the owner will arrive at their destination",
-                type: "integer",
+                description: "The time in ISO 8601 extended format that the owner wants to arrive at " +
+                "their destination",
+                type: "string",
             },
-            days: {
-                description: "Which days of the week the owner cycles this route",
-                example: ["monday", "wednesday", "friday"],
-                items: {
-                    description: "A day of the week",
-                    enum: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
-                    type: "string",
-                },
-                type: "array",
-            },
-            departureTime: {
-                description: "The time in ISO 8601 extended format that the owner will start their route",
-                type: "integer",
+            endPoint: {
+                $ref: "#/definitions/Coordinate",
+                description: "Where the user will finish cycling. Must be within <radius> of a route to be " +
+                "considered a match",
             },
             id: {
-                description: "This route's internal id",
+                description: "This buddy request's internal id",
                 type: "integer",
+            },
+            notifyOwner: {
+                description: "Does the user want to be notified of any new experienced cyclists who can help them",
+                example: true,
+                type: "boolean",
             },
             owner: {
                 description: "The userId of the user who owns this route",
                 type: "integer",
             },
-            route: {
-                $ref: "#/definitions/CoordList",
+            radius: {
+                 description: "How far away (in meters) the user is willing to cycle from the start and end point",
+                 example: 1000,
+                 type: "integer",
+            },
+            startPoint: {
+                $ref: "#/definitions/Coordinate",
+                description: "Where the user will start cycling from. Must be within <radius> of a route to be " +
+                "considered a match",
             },
         },
         required: ["arrivalTime", "departureTime", "owner", "route", "id"],
     },
-    RouteGetResult: {
-        description: "An array of routes belonging to this user",
+    BuddyRequestGetResult: {
+        description: "An array of buddy requests belonging to this user",
         items: {
-            $ref: "#/definitions/RouteData",
+            $ref: "#/definitions/BuddyRequestData",
         },
         type: "array",
+    },
+    GetResponse: {
+        properties: {
+            result: {
+                $ref: "#/definitions/BuddyRequestGetResult",
+            },
+        },
+        required: ["result"],
     },
 };
 
@@ -124,12 +128,12 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         id = null;
     }
     return getIdFromJWT(params.authorization).then((userId) => {
-        return Database.getRoutes({userId, id});
+        return Database.getBuddyRequests({userId, id});
     });
 };
 
 // end point definition
-export const getRoutes = new MicroserviceEndpoint("getRouteById")
+export const getBuddyRequests = new MicroserviceEndpoint("getBuddyRequests")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);

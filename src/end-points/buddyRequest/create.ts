@@ -57,7 +57,7 @@ const operation = {
                 userAuth: [],
             },
         ],
-        summary: "Save an inexperienced route",
+        summary: "Save a buddy request",
         tags: [
             "BuddyRequests",
         ],
@@ -67,19 +67,6 @@ const operation = {
 // DEFINITIONS
 
 const definitions = {
-    CreateBuddyRequestResponse: {
-        properties: {
-            result: {
-                properties: {
-                    id: {
-                        description: "The buddy request's id",
-                        type: "integer",
-                    },
-                },
-            },
-        },
-        required: ["result"],
-    },
     BuddyRequest: {
         description: "Information needed to search for a matching route",
         properties: {
@@ -113,6 +100,19 @@ const definitions = {
             },
         },
         required: ["startPoint", "endPoint", "notifyOwner"],
+    },
+    CreateBuddyRequestResponse: {
+        properties: {
+            result: {
+                properties: {
+                    id: {
+                        description: "The buddy request's id",
+                        type: "integer",
+                    },
+                },
+            },
+        },
+        required: ["result"],
     },
 };
 
