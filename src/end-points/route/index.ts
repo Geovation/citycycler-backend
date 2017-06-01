@@ -6,7 +6,7 @@ import { EndpointCollection } from "../../microservices-framework/web/services/e
 import { createRoute } from "./create";
 import { deleteRoute } from "./delete";
 import { getRoutes } from "./get";
-import { matchRoute } from "./match"
+import { matchRoute } from "./match";
 import { nearby } from "./nearby";
 import { routeQuery } from "./query";
 import { updateRoute } from "./update";
