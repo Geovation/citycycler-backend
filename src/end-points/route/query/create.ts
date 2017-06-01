@@ -96,7 +96,7 @@ const definitions = {
                 example:  [ 0, 0] ,
             },
             notifyOwner: {
-                description: "How far away (in meters) the user is willing to cycle from the start and end point",
+                description: "Does the user want to be notified of any new experienced cyclists who can help them",
                 example: true,
                 type: "boolean",
             },
