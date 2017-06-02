@@ -1816,6 +1816,169 @@ describe("MatchMyRoute API", () => {
                     });
                 });
             });
+            describe("Querying against Routes", () => {
+                let routeId;
+                let shouldMatchId;
+                let shouldNotMatchId;
+                before("set up a route and two buddy requests that do and don't match it", done => {
+                    // Set up a long straight route that is easy to reason about
+                    // Then set up a buddy request that should match this route,
+                    // and one that shouldn't
+                    const route = new RouteDataModel({
+                        arrivalTime: "13:15:00+00",
+                        days: ["tuesday", "friday", "sunday"],
+                        departureTime: "12:15:00+00",
+                        owner: userIds[3],
+                        route: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6]],
+                    });
+                    const matchingBuddyRequest = {
+                        arrivalDateTime: "2017-06-02T12:00:00+00",
+                        endPoint: [0, 4.8],
+                        notifyOwner: false,
+                        radius: 1000,
+                        startPoint: [0, 1.3],
+                    };
+                    const nonMatchingBuddyRequest = {
+                        arrivalDateTime: "2017-06-02T12:00:00+00",
+                        endPoint: [0, 1.5],
+                        notifyOwner: false,
+                        radius: 1000,
+                        startPoint: [0, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: route,
+                        method: "PUT",
+                        url: url + "/route",
+                    }, (error, response, body) => {
+                        if (response.statusCode !== 201) {
+                            logger.error("Error while setting up the route to test route matching");
+                            throw error || body;
+                        } else {
+                            routeIds.push(body.result.id);
+                            routeId = body.result.id;
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + userJwts[3],
+                                },
+                                json: matchingBuddyRequest,
+                                method: "PUT",
+                                url: url + "/buddyrequest",
+                            }, (error2, response2, body2) => {
+                                if (response2.statusCode !== 201) {
+                                    logger.error("Error while setting up the (matching) buddy request to " +
+                                        "test route matching");
+                                    throw error2 || body2;
+                                } else {
+                                    shouldMatchId = body2.result.id;
+                                    defaultRequest({
+                                        headers: {
+                                            Authorization: "Bearer " + userJwts[3],
+                                        },
+                                        json: nonMatchingBuddyRequest,
+                                        method: "PUT",
+                                        url: url + "/buddyrequest",
+                                    }, (error3, response3, body3) => {
+                                        if (response3.statusCode !== 201) {
+                                            logger.error("Error while setting up the (non-matching) buddy request " +
+                                                "to test route matching");
+                                            throw error3 || body3;
+                                        } else {
+                                            shouldNotMatchId = body3.result.id;
+                                            done();
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                });
+                it("should match with a matching buddy request", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        method: "GET",
+                        url: url + "/buddyrequest/query?id=" + shouldMatchId,
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        expect(body.result instanceof Array).to.equal(true, "body.result is not a list of " +
+                            "results, body is: " + JSON.stringify(body));
+                        const thisRoute = body.result.filter((route) => {
+                            return route.id === routeId;
+                        })[0];
+                        expect(thisRoute).to.not.equal(undefined, "Route was not matched. Results were " +
+                            JSON.stringify(body.result));
+                        done();
+                    });
+                });
+                it("should give an empty list with a non matching buddy request", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        method: "GET",
+                        url: url + "/buddyrequest/query?id=" + shouldNotMatchId,
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        expect(body.result instanceof Array).to.equal(true, "body.result is not a list of " +
+                            "results, body is: " + JSON.stringify(body));
+                        const routes = body.result.filter((route) => {
+                            return route.id === routeId;
+                        });
+                        expect(routes.length).to.equal(0, "Route was matched. Results were " +
+                            JSON.stringify(body.result));
+                        done();
+                    });
+                });
+                it("should err with no auth", done => {
+                    defaultRequest({
+                        headers: {},
+                        method: "GET",
+                        url: url + "/buddyrequest/query?id=" + shouldMatchId,
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorization");
+                        expect(body.status).to.equal(403);
+                        done();
+                    });
+                });
+                it("should err with someone elses buddy request", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[2],
+                        },
+                        method: "GET",
+                        url: url + "/buddyrequest/query?id=" + shouldMatchId,
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorization");
+                        expect(body.status).to.equal(403);
+                        done();
+                    });
+                });
+                it("should err with no id", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[2],
+                        },
+                        method: "GET",
+                        url: url + "/buddyrequest/query?id",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid ID");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+            });
             describe("Updating", () => {
                 it("should handle an empty update", done => {
                     const updates = {
@@ -2343,9 +2506,6 @@ describe("MatchMyRoute API", () => {
                         });
                     });
                 });
-            });
-            describe("Querying against Routes", () => {
-                console.log("skipping");
             });
         });
     });

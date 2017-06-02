@@ -10,12 +10,12 @@ import { MicroserviceEndpoint } from "../../../microservices-framework/web/servi
 // TODO:
 // PATH
 const operation = {
-    post: {
+    get: {
         consumes: ["application/json"],
         parameters: [
             {
                 description: "The id of the buddyRequest to use as a query",
-                in: "body",
+                in: "query",
                 name: "id",
                 required: true,
                 type: "integer",
@@ -59,11 +59,14 @@ const operation = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    const payload = params.body;
+    const buddyRequestId = parseInt(params.id, 10);
+    if (isNaN(buddyRequestId) || buddyRequestId < 0) {
+        throw new Error("400:Invalid ID");
+    }
     let userId;
     return getIdFromJWT(params.authorization).then(authUserId => {
         userId = authUserId;
-        return Database.getBuddyRequests({userId, id: payload.id});
+        return Database.getBuddyRequests({userId, id: buddyRequestId});
     }).then(buddyRequests => {
         if (buddyRequests.length === 1) {
             if (buddyRequests[0].owner === userId) {
@@ -74,12 +77,12 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         } else if (buddyRequests.length === 0) {
             throw new Error("404:Buddy Request doesn't exist");
         } else {
-            throw new Error("There are multiple buddy requests with the id " + payload.id + "!");
+            throw new Error("There are multiple buddy requests with the id " + buddyRequestId + "!");
         }
     });
 };
 
 // end point definition
-export const query = new MicroserviceEndpoint("buddyRequestQuery")
+export const buddyRequestQuery = new MicroserviceEndpoint("buddyRequestQuery")
     .addSwaggerOperation(operation)
     .addService(service);
