@@ -51,9 +51,9 @@ const operation = {
                 userAuth: [],
             },
         ],
-        summary: "Delete a route",
+        summary: "Delete an experienced route",
         tags: [
-            "Routes",
+            "ExperiencedRoutes",
         ],
     },
 };
@@ -64,14 +64,14 @@ const operation = {
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const id = parseInt(params.id, 10);
-    return Database.getRouteById(id).then(route => {
+    return Database.getExperiencedRouteById(id).then(route => {
         return doIfUser(params.authorization, route.owner, () => {
-            return Database.deleteRoute(id);
+            return Database.deleteExperiencedRoute(id);
         });
     });
 };
 
 // end point definition
-export const deleteRoute = new MicroserviceEndpoint("delete")
+export const deleteExperiencedRoute = new MicroserviceEndpoint("delete")
     .addSwaggerOperation(operation)
     .addService(service);

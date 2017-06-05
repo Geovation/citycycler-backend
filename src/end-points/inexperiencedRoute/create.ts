@@ -1,5 +1,5 @@
 import { getIdFromJWT } from "../../common/auth";
-import { createBuddyRequest as createQuery } from "../../common/database";
+import { createInexperiencedRoute as createQuery } from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 
 // /////////////////////////////////////////////////////////////
@@ -13,7 +13,7 @@ const operation = {
     put: {
         consumes: ["application/json"],
         description: "This endpoint stores an object that can be used to find matching routes - in effect a " +
-        "query object. To search for routes created by this endpoint, make a request to buddyRequest/query?{ID}",
+        "query object. To search for routes created by this endpoint, make a request to inexperiencedRoute/query?{ID}",
         parameters: [
             {
                 description: "The start and end points of the route that this query will match",
@@ -21,16 +21,16 @@ const operation = {
                 name: "queryObj",
                 required: true,
                 schema: {
-                    $ref: "#/definitions/BuddyRequest",
+                    $ref: "#/definitions/InexperiencedRoute",
                 },
             },
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
             201: {
-                description: "Created a new route query",
+                description: "Created a new inexperienced route",
                 schema: {
-                    $ref: "#/definitions/CreateBuddyRequestResponse",
+                    $ref: "#/definitions/CreateInexperiencedRouteResponse",
                 },
             },
             400: {
@@ -57,9 +57,9 @@ const operation = {
                 userAuth: [],
             },
         ],
-        summary: "Save a buddy request",
+        summary: "Save a inexperienced route",
         tags: [
-            "BuddyRequests",
+            "InexperiencedRoutes",
         ],
     },
 };
@@ -67,7 +67,20 @@ const operation = {
 // DEFINITIONS
 
 const definitions = {
-    BuddyRequest: {
+    CreateInexperiencedRouteResponse: {
+        properties: {
+            result: {
+                properties: {
+                    id: {
+                        description: "The inexperienced route's id",
+                        type: "integer",
+                    },
+                },
+            },
+        },
+        required: ["result"],
+    },
+    InexperiencedRoute: {
         description: "Information needed to search for a matching route",
         properties: {
             arrivalDateTime: {
@@ -77,8 +90,8 @@ const definitions = {
             },
             endPoint: {
                 $ref: "#/definitions/Coordinate",
-                description: "Where the user will finish cycling. Must be within <radius> of a route to be " +
-                "considered a match",
+                description: "Where the user will finish cycling. Must be within <radius> of " +
+                "an experienced route to be considered a match",
                 example:  [ 0, 0] ,
             },
             notifyOwner: {
@@ -93,25 +106,12 @@ const definitions = {
             },
             startPoint: {
                 $ref: "#/definitions/Coordinate",
-                description: "Where the user will start cycling from. Must be within <radius> of a route to be " +
-                "considered a match",
+                description: "Where the user will start cycling from. Must be within <radius> of " +
+                "an experienced route to be considered a match",
                 example:  [ 0, 0] ,
             },
         },
         required: ["arrivalDateTime", "radius", "startPoint", "endPoint", "notifyOwner"],
-    },
-    CreateBuddyRequestResponse: {
-        properties: {
-            result: {
-                properties: {
-                    id: {
-                        description: "The buddy request's id",
-                        type: "integer",
-                    },
-                },
-            },
-        },
-        required: ["result"],
     },
 };
 
@@ -131,7 +131,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
 };
 
 // end point definition
-export const createBuddyRequest = new MicroserviceEndpoint("createBuddyRequest")
+export const createInexperiencedRoute = new MicroserviceEndpoint("createInexperiencedRoute")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);

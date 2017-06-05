@@ -1,6 +1,6 @@
 // import * as _ from "lodash";
-import BuddyRequest from "./BuddyRequestDataModel";
-import { RouteDataModel } from "./RouteDataModel";
+import ExperiencedRoute from "./ExperiencedRouteDataModel";
+import InexperiencedRoute from "./InexperiencedRouteDataModel";
 import User from "./UserDataModels";
 import * as fs from "fs";
 import * as pg from "pg";
@@ -167,10 +167,10 @@ export function resetDatabase() {
         });
 }
 
-// Put a route in the database, returning the new database ID for the route
-export function putRoute(routeData: RouteDataModel, providedClient = null) {
+// Put an experienced route in the database, returning the new database ID for the route
+export function putExperiencedRoute(routeData: ExperiencedRoute, providedClient = null) {
     const wkt = coordsToLineString(routeData.route);
-    const query = "INSERT INTO routes (route, departureTime, arrivalTime, days, owner) " +
+    const query = "INSERT INTO experienced_routes (route, departureTime, arrivalTime, days, owner) " +
         "VALUES (ST_GeogFromText($1),$2,$3,$4::day_of_week[],$5) " +
         "RETURNING id";
     const sqlParams = [wkt, routeData.departureTime, routeData.arrivalTime,
@@ -184,28 +184,28 @@ export function putRoute(routeData: RouteDataModel, providedClient = null) {
     });
 }
 
-export function getRouteById(id: number, providedClient = null) {
+export function getExperiencedRouteById(id: number, providedClient = null) {
     const query = "SELECT id, owner, departuretime, arrivalTime, days::text[], ST_AsText(route) AS route " +
-        "FROM routes where id=$1";
+        "FROM experienced_routes where id=$1";
     return sqlTransaction(query, [id], providedClient).then(result => {
         if (result.rows[0]) {
-            return RouteDataModel.fromSQLRow(result.rows[0]);
+            return ExperiencedRoute.fromSQLRow(result.rows[0]);
         } else {
-            throw new Error("404:Route doesn't exist");
+            throw new Error("404:ExperiencedRoute doesn't exist");
         }
     });
 }
 
 /**
- * getRoutes - description
+ * getExperiencedRoutes - description
  *
  * @param  {object} params The query parameters, including the id of the route to query and the user id
  * @param  {client} providedClient Database client to use for this interaction
- * @return {Object[]} Array of routes
+ * @return {Object[]} Array of experienced_routes
  */
-export function getRoutes(params: {userId: number, id?: number}, providedClient = null) {
+export function getExperiencedRoutes(params: {userId: number, id?: number}, providedClient = null) {
     let query = "SELECT id, owner, departuretime, arrivalTime, days::text[], ST_AsText(route) AS route " +
-    "FROM routes where owner=$1";
+    "FROM experienced_routes where owner=$1";
     let queryParams = [params.userId];
     if (params.id !== null && typeof params.id !== "undefined") {
         query +=  " AND id=$2";
@@ -214,10 +214,10 @@ export function getRoutes(params: {userId: number, id?: number}, providedClient 
     return sqlTransaction(query, queryParams, providedClient).then(result => {
         if (result.rowCount > 0) {
             return result.rows.map((route) => {
-                return RouteDataModel.fromSQLRow(route);
+                return ExperiencedRoute.fromSQLRow(route);
             });
         } else {
-            throw new Error("404:Route doesn't exist");
+            throw new Error("404:ExperiencedRoute doesn't exist");
         }
     });
 }
@@ -255,17 +255,18 @@ export function coordsToPointString(coord: [number, number]): string {
     return "POINT(" + coord.join(" ") + ")";
 }
 
-export function getRoutesNearby(radius: number, lat: number, lon: number, providedClient = null): Promise<any> {
+export function getExperiencedRoutesNearby(radius: number, lat: number, lon: number, providedClient = null)
+: Promise<any> {
     if (radius > 2000 || radius < 1) {
         return new Promise((resolve, reject) => {
             reject("400:Radius out of bounds");
         });
     }
-    const query = "select id, owner, departuretime, arrivalTime, ST_AsText(route) AS route from routes " +
+    const query = "select id, owner, departuretime, arrivalTime, ST_AsText(route) AS route from experienced_routes " +
         "where ST_DISTANCE(route, ST_GeogFromText($2) ) < $1";
     const geoJson = "POINT(" + lat + " " + lon + ")";
     return sqlTransaction(query, [radius, geoJson], providedClient).then(result => {
-        return result.rows.map(RouteDataModel.fromSQLRow);
+        return result.rows.map(ExperiencedRoute.fromSQLRow);
     });
 }
 
@@ -273,7 +274,7 @@ export function getRoutesNearby(radius: number, lat: number, lon: number, provid
  * The function this service is built around - route matching!
  * @param matchParams - The parameters that we use for matching - see the type definiton here or in the swagger docs
  *
- * @returns routes - A list of RouteDataModels
+ * @returns routes - A list of ExperiencedRoutes
  */
 export function matchRoutes(
     matchParams: {
@@ -307,7 +308,7 @@ export function matchRoutes(
     "    match3.*, " +
     "    match4.*, " +
     "    owner " +
-    "FROM routes, " +
+    "FROM experienced_routes, " +
     "    LATERAL ( " +
     "        SELECT " +
     "            (ST_LineLocatePoint(route::geometry, ST_GeogFromText($1)::geometry)) " +
@@ -374,9 +375,9 @@ export function matchRoutes(
 
 }
 
-// Updates a route from the given update object
-export function updateRoute(
-    existingRoute: RouteDataModel,
+// Updates an experienced route from the given update object
+export function updateExperiencedRoute(
+    existingRoute: ExperiencedRoute,
     updates: {
         arrivalTime?: string,
         departureTime?: string,
@@ -397,17 +398,17 @@ export function updateRoute(
         if (existingRoute.arrivalTime < existingRoute.departureTime) {
             error = "400:Arrival time is before Departure time";
         } else if (existingRoute.route.length < 2) {
-            error = "400:Route requires at least 2 points";
+            error = "400:ExperiencedRoute requires at least 2 points";
         } else if (Math.max(...existingRoute.route.map(pair => { return pair.length; })) > 2) {
-            error = "400:Coordinates in a Route should only have 2 items in them, [latitude, longitude]";
+            error = "400:Coordinates in a ExperiencedRoute should only have 2 items in them, [latitude, longitude]";
         } else if (Math.min(...existingRoute.route.map(pair => { return pair.length; })) < 2) {
-            error = "400:Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]";
+            error = "400:Coordinates in a ExperiencedRoute should have exactly 2 items in them, [latitude, longitude]";
         }
         if (typeof error !== "undefined") {
             return new Promise((resolve, reject) => { reject(error); } );
         }
 
-        const query = "UPDATE routes " +
+        const query = "UPDATE experienced_routes " +
         "SET route = $1, arrivalTime = $2, departureTime = $3, days = $4::day_of_week[] " +
         "WHERE id = $5";
         const sqlParams = [coordsToLineString(existingRoute.route),
@@ -419,29 +420,30 @@ export function updateRoute(
         });
 }
 
-export function deleteRoute(id: number, providedClient = null): Promise<Boolean> {
-    const query = "DELETE FROM routes WHERE id=$1";
+export function deleteExperiencedRoute(id: number, providedClient = null): Promise<Boolean> {
+    const query = "DELETE FROM experienced_routes WHERE id=$1";
     return sqlTransaction(query, [id], providedClient).then(result => {
         if (result.rowCount) {
             return true;
         } else {
-            throw new Error("404:Route doesn't exist");
+            throw new Error("404:ExperiencedRoute doesn't exist");
         }
     });
 }
 
-export function createBuddyRequest(owner: number, buddyRequest: BuddyRequest, providedClient = null): Promise<Number> {
-    buddyRequest = new BuddyRequest(buddyRequest);
-    const query = "INSERT INTO buddy_requests (startPoint, endPoint, radius" +
+export function createInexperiencedRoute(owner: number, inexperiencedRoute: InexperiencedRoute, providedClient = null)
+: Promise<Number> {
+    inexperiencedRoute = new InexperiencedRoute(inexperiencedRoute);
+    const query = "INSERT INTO inexperienced_routes (startPoint, endPoint, radius" +
         ", notifyOwner, arrivalDateTime, owner)" +
         "VALUES (ST_GeogFromText($1), ST_GeogFromText($2), $3, $4, $5, $6)" +
         "RETURNING id";
     const queryParams = [
-        coordsToPointString(buddyRequest.startPoint),
-        coordsToPointString(buddyRequest.endPoint),
-        buddyRequest.radius,
-        buddyRequest.notifyOwner,
-        buddyRequest.arrivalDateTime,
+        coordsToPointString(inexperiencedRoute.startPoint),
+        coordsToPointString(inexperiencedRoute.endPoint),
+        inexperiencedRoute.radius,
+        inexperiencedRoute.notifyOwner,
+        inexperiencedRoute.arrivalDateTime,
         owner,
     ];
     return sqlTransaction(query, queryParams, providedClient).then(result => {
@@ -450,16 +452,16 @@ export function createBuddyRequest(owner: number, buddyRequest: BuddyRequest, pr
 }
 
 /**
- * getBuddyRequests - description
+ * getInexperiencedRoutes - description
  *
- * @param  {object} params The query parameters, including the id of the buddy request to query and the user id
+ * @param  {object} params The query parameters, including the id of the inexperienced route to query and the user id
  * @param  {client} providedClient Database client to use for this interaction
- * @return {Object[]} Array of buddy requests
+ * @return {Object[]} Array of inexperienced routes
  */
-export function getBuddyRequests(params: {userId: number, id?: number}, providedClient = null)
-: Promise<BuddyRequest[]> {
+export function getInexperiencedRoutes(params: {userId: number, id?: number}, providedClient = null)
+: Promise<InexperiencedRoute[]> {
     let query = "SELECT id, owner, radius, notifyOwner, arrivalDateTime, ST_AsText(startPoint) AS startPoint, " +
-    "ST_AsText(endPoint) AS endPoint FROM buddy_requests where owner=$1";
+    "ST_AsText(endPoint) AS endPoint FROM inexperienced_routes where owner=$1";
     let queryParams = [params.userId];
     if (params.id !== null && typeof params.id !== "undefined") {
         query +=  " AND id=$2";
@@ -467,42 +469,42 @@ export function getBuddyRequests(params: {userId: number, id?: number}, provided
     }
     return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
         if (result.rowCount > 0) {
-            return result.rows.map((buddyRequest) => {
-                return BuddyRequest.fromSQLRow(buddyRequest);
+            return result.rows.map((inexperiencedRoute) => {
+                return InexperiencedRoute.fromSQLRow(inexperiencedRoute);
             });
         } else {
-            throw new Error("404:Buddy Request doesn't exist");
+            throw new Error("404:Inexperienced Route doesn't exist");
         }
     });
 }
 
 /**
- * deleteBuddyRequest - description
+ * deleteInexperiencedRoute - description
  *
- * @param  {number} id The id of the buddyRequest to delete
+ * @param  {number} id The id of the inexperiencedRoute to delete
  * @param  {client} providedClient Database client to use for this interaction
  * @return {boolean} Whether the deletion succeded
  */
-export function deleteBuddyRequest(id: number, providedClient = null): Promise<Boolean> {
-    const query = "DELETE FROM buddy_requests WHERE id=$1";
+export function deleteInexperiencedRoute(id: number, providedClient = null): Promise<Boolean> {
+    const query = "DELETE FROM inexperienced_routes WHERE id=$1";
     return sqlTransaction(query, [id], providedClient).then(result => {
         if (result.rowCount) {
             return true;
         } else {
-            throw new Error("404:BuddyRequest doesn't exist");
+            throw new Error("404:InexperiencedRoute doesn't exist");
         }
     });
 }
 
 /**
- * updateBuddyRequest - description
+ * updateInexperiencedRoute - description
  *
- * @param  {BuddyRequest} existingRequest The old buddyRequest to be updated
+ * @param  {InexperiencedRoute} existingRequest The old inexperiencedRoute to be updated
  * @param  {client} providedClient Database client to use for this interaction
  * @return {boolean} Whether the update succeded
  */
-export function updateBuddyRequest(
-    existingRequest: BuddyRequest,
+export function updateInexperiencedRoute(
+    existingRequest: InexperiencedRoute,
     updates: {
         arrivalDateTime?: string,
         endPoint?: [number, number],
@@ -513,31 +515,31 @@ export function updateBuddyRequest(
     providedClient = null): Promise<boolean> {
 
         // Move the updated properties into the existing model, and validate the new object
-        let newBuddyRequestObject = <BuddyRequest> {};
-        newBuddyRequestObject.arrivalDateTime = updates.arrivalDateTime !== undefined ?
+        let newInexperiencedRouteObject = <InexperiencedRoute> {};
+        newInexperiencedRouteObject.arrivalDateTime = updates.arrivalDateTime !== undefined ?
             updates.arrivalDateTime : existingRequest.arrivalDateTime;
-        newBuddyRequestObject.endPoint = updates.endPoint !== undefined ?
+        newInexperiencedRouteObject.endPoint = updates.endPoint !== undefined ?
             updates.endPoint : existingRequest.endPoint;
-        newBuddyRequestObject.notifyOwner = updates.notifyOwner !== undefined ?
+        newInexperiencedRouteObject.notifyOwner = updates.notifyOwner !== undefined ?
             updates.notifyOwner : existingRequest.notifyOwner;
-        newBuddyRequestObject.radius = updates.radius !== undefined ?
+        newInexperiencedRouteObject.radius = updates.radius !== undefined ?
             updates.radius : existingRequest.radius;
-        newBuddyRequestObject.startPoint = updates.startPoint !== undefined ?
+        newInexperiencedRouteObject.startPoint = updates.startPoint !== undefined ?
             updates.startPoint : existingRequest.startPoint;
 
         // By instantating a new object, we run the tests in the constructor to make
-        // sure that this is still a valid BuddyRequest
-        let newBuddyRequest = new BuddyRequest(newBuddyRequestObject);
+        // sure that this is still a valid InexperiencedRoute
+        let newInexperiencedRoute = new InexperiencedRoute(newInexperiencedRouteObject);
 
-        const query = "UPDATE buddy_requests " +
+        const query = "UPDATE inexperienced_routes " +
         "SET arrivalDateTime = $1, endPoint = ST_GeogFromText($2), notifyOwner = $3, radius = $4, " +
         "startPoint = ST_GeogFromText($5) " +
         "WHERE id = $6";
-        const sqlParams = [newBuddyRequest.arrivalDateTime,
-            coordsToPointString(newBuddyRequest.endPoint),
-            newBuddyRequest.notifyOwner,
-            newBuddyRequest.radius,
-            coordsToPointString(newBuddyRequest.startPoint),
+        const sqlParams = [newInexperiencedRoute.arrivalDateTime,
+            coordsToPointString(newInexperiencedRoute.endPoint),
+            newInexperiencedRoute.notifyOwner,
+            newInexperiencedRoute.radius,
+            coordsToPointString(newInexperiencedRoute.startPoint),
             existingRequest.id];
 
         return sqlTransaction(query, sqlParams, providedClient).then(result => {

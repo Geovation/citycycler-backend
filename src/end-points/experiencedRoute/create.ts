@@ -1,5 +1,6 @@
 import { getIdFromJWT } from "../../common/auth";
 import * as Database from "../../common/database";
+import ExperiencedRoute from "../../common/ExperiencedRouteDataModel";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 // import * as logger from "winston";
 
@@ -11,7 +12,7 @@ import { MicroserviceEndpoint } from "../../microservices-framework/web/services
 // TODO:
 // PATH
 const operation = {
-    post: {
+    put: {
         consumes: ["application/json"],
         parameters: [
             {
@@ -20,20 +21,20 @@ const operation = {
                 name: "route",
                 required: true,
                 schema: {
-                    $ref: "#/definitions/RouteChanges",
+                    $ref: "#/definitions/NewRouteData",
                 },
             },
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
-            200: {
-                description: "Route was updated",
+            201: {
+                description: "New route was created",
                 schema: {
-                    $ref: "#/definitions/UpdateRouteResponse",
+                    $ref: "#/definitions/CreateRouteResponse",
                 },
             },
             400: {
-                description: "Invalid update parameters, see error message",
+                description: "An invalid route object was supplied, see the error message for an explanation",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
@@ -56,9 +57,9 @@ const operation = {
                 userAuth: [],
             },
         ],
-        summary: "Update an existing route",
+        summary: "Create a new route",
         tags: [
-            "Routes",
+            "ExperiencedRoutes",
         ],
     },
 };
@@ -66,10 +67,45 @@ const operation = {
 // DEFINITIONS
 
 const definitions = {
-    RouteChanges: {
+    CoordList: {
+        description: "A list of [lat,long] coordinates that make up the route",
+        example: [[0, 0], [1, 1]],
+        items: {
+            items: {
+                $ref: "#/definitions/Coordinate",
+            },
+            minItems: 2,
+            type: "array",
+        },
+        type: "array",
+    },
+    Coordinate: {
+        items: {
+            maxLength: 2,
+            minLength: 2,
+            type: "integer",
+        },
+        type: "array",
+    },
+    CreateRouteResponse: {
+        description: "The Route's ID",
+        properties: {
+            result: {
+                properties: {
+                    id: {
+                        format: "int32",
+                        type: "number",
+                    },
+                },
+                required: ["id"],
+            },
+        },
+        required: ["result"],
+    },
+    NewRouteData: {
         properties: {
             arrivalTime: {
-                description: "The time in ISO 8601 extended format that the owner arrives at their destination",
+                description: "The time in ISO 8106 extended format that the owner arrives at their destination",
                 example: "12:22:00Z",
                 type: "string",
             },
@@ -84,29 +120,15 @@ const definitions = {
                 type: "array",
             },
             departureTime: {
-                description: "The time in ISO 8601 extended format that the owner will start their route",
+                description: "The time in ISO 8106 extended format that the owner will start their route",
                 example: "12:22:00Z",
                 type: "string",
-            },
-            id: {
-                description: "The internal id of this route",
-                format: "int32",
-                type: "integer",
             },
             route: {
                 $ref: "#/definitions/CoordList",
             },
         },
-        required: ["id"],
-    },
-    UpdateRouteResponse: {
-        description: "Whether the update succeded",
-        properties: {
-            result: {
-                type: "boolean",
-            },
-        },
-        required: ["result"],
+        required: ["arrivalTime", "departureTime", "owner", "route", "days"],
     },
 };
 
@@ -115,28 +137,17 @@ const definitions = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    const payload = params.body;
-    return getIdFromJWT(params.authorization).then(userId => {
-        if (userId !== undefined) {
-            return Database.getRouteById(payload.id).then(route => {
-                if (route.owner === userId) {
-                    return Database.updateRoute(route, payload);
-                } else {
-                    throw "403:Invalid authorization";
-                }
-            }, err => {
-                throw err;
-            });
-        } else {
-            throw "403:Invalid authorization";
-        }
-    }, err => {
-        throw err;
+    return getIdFromJWT(params.authorization).then(owner => {
+        params.body.owner = owner;
+        let route = new ExperiencedRoute(params.body);
+        return Database.putExperiencedRoute(route);
+    }).then(routeId => {
+        return { id: routeId, status: 201 };
     });
 };
 
 // end point definition
-export const updateRoute = new MicroserviceEndpoint("updateRoute")
+export const createExperiencedRoute = new MicroserviceEndpoint("createExperiencedRoute")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);

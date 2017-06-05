@@ -1,7 +1,7 @@
 import { pointStringToCoords } from "./database";
-export default class BuddyRequest {
+export default class InexperiencedRoute {
     public static fromSQLRow(row) {
-        return new BuddyRequest({
+        return new InexperiencedRoute({
             arrivalDateTime: row.arrivaldatetime,
             endPoint: pointStringToCoords(row.endpoint),
             id: row.id,
@@ -22,9 +22,9 @@ export default class BuddyRequest {
 
     constructor(obj) {
         if (!obj.startPoint || obj.startPoint.length !== 2 ) {
-            throw new Error("400:BuddyRequest requires a 2D start point");
+            throw new Error("400:InexperiencedRoute requires a 2D start point");
         } else if (!obj.endPoint || obj.endPoint.length !== 2 ) {
-            throw new Error("400:BuddyRequest requires a 2D end point");
+            throw new Error("400:InexperiencedRoute requires a 2D end point");
         } else if (obj.radius <= 0) {
             throw new Error("400:Radius must be positive");
         }

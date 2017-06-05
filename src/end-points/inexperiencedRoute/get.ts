@@ -11,35 +11,34 @@ import { MicroserviceEndpoint } from "../../microservices-framework/web/services
 // TODO:
 // PATH
 const operation = {
-    post: {
+    get: {
         consumes: ["application/json"],
         parameters: [
             {
-                description: "The buddy request and metadata about it",
-                in: "body",
-                name: "route",
-                required: true,
-                schema: {
-                    $ref: "#/definitions/BuddyRequestChanges",
-                },
+                description: "The inexperienced route ID (if empty, all " +
+                    "inexperienced routes of the user will be returned)",
+                in: "query",
+                name: "id",
+                required: false,
+                type: "integer",
             },
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
-                description: "Buddy request was updated",
+                description: "Inexperienced route was retrieved",
                 schema: {
-                    $ref: "#/definitions/UpdateBuddyRequestResponse",
+                    $ref: "#/definitions/GetInexperiencedRouteResponse",
                 },
             },
-            400: {
-                description: "Invalid update parameters, see error message",
+            403: {
+                description: "An invalid authorisation token was supplied",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
             },
-            403: {
-                description: "An invalid authorization token was supplied",
+            404: {
+                description: "Inexperienced route doesn't exist",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
@@ -56,17 +55,24 @@ const operation = {
                 userAuth: [],
             },
         ],
-        summary: "Update an existing buddy request",
+        summary: "Retrieve a inexperienced route by it's ID. If no ID is provided, all inexperienced routes " +
+        "of the user are returned",
         tags: [
-            "BuddyRequests",
+            "InexperiencedRoutes",
         ],
     },
 };
 
-// DEFINITIONS
-
 const definitions = {
-    BuddyRequestChanges: {
+    GetInexperiencedRouteResponse: {
+        properties: {
+            result: {
+                $ref: "#/definitions/InexperiencedRouteGetResult",
+            },
+        },
+        required: ["result"],
+    },
+    InexperiencedRouteData: {
         properties: {
             arrivalDateTime: {
                 description: "The time in ISO 8601 extended format that the owner wants to arrive at " +
@@ -76,18 +82,21 @@ const definitions = {
             },
             endPoint: {
                 $ref: "#/definitions/Coordinate",
-                description: "Where the user will finish cycling. Must be within <radius> of a route to be " +
-                "considered a match",
+                description: "Where the user will finish cycling. Must be within <radius> of " +
+                "an experienced route to be considered a match",
             },
             id: {
-                description: "The internal id of this buddy request",
-                format: "int32",
+                description: "This inexperienced route's internal id",
                 type: "integer",
             },
             notifyOwner: {
                 description: "Does the user want to be notified of any new experienced cyclists who can help them",
                 example: true,
                 type: "boolean",
+            },
+            owner: {
+                description: "The userId of the user who owns this route",
+                type: "integer",
             },
             radius: {
                  description: "How far away (in meters) the user is willing to cycle from the start and end point",
@@ -96,20 +105,18 @@ const definitions = {
             },
             startPoint: {
                 $ref: "#/definitions/Coordinate",
-                description: "Where the user will start cycling from. Must be within <radius> of a route to be " +
-                "considered a match",
+                description: "Where the user will start cycling from. Must be within <radius> of " +
+                "an experienced route to be considered a match",
             },
         },
-        required: ["id"],
+        required: ["arrivalDateTime", "departureTime", "startPoint", "endPoint", "owner", "radius", "route", "id"],
     },
-    UpdateBuddyRequestResponse: {
-        description: "Whether the update succeded",
-        properties: {
-            result: {
-                type: "boolean",
-            },
+    InexperiencedRouteGetResult: {
+        description: "An array of inexperienced routes belonging to this user",
+        items: {
+            $ref: "#/definitions/InexperiencedRouteData",
         },
-        required: ["result"],
+        type: "array",
     },
 };
 
@@ -118,33 +125,17 @@ const definitions = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    const payload = params.body;
-    let userId;
-    return getIdFromJWT(params.authorization).then(authUserId => {
-        userId = authUserId;
-        if (userId !== undefined) {
-            return Database.getBuddyRequests({userId, id: payload.id});
-        } else {
-            throw new Error("403:Invalid authorization");
-        }
-    }).then(buddyRequests => {
-        if (buddyRequests.length === 1) {
-            if (buddyRequests[0].owner === userId) {
-                return Database.updateBuddyRequest(buddyRequests[0], payload);
-            } else {
-                throw new Error("403:Invalid authorization");
-            }
-        } else if (buddyRequests.length === 0) {
-            throw new Error("404:Buddy request not found");
-        } else {
-            throw new Error("Multiple buddy requests exist with the id " + payload.id +
-                "! This needs to be resolved");
-        }
+    let id = parseInt(params.id, 10);
+    if (!id) {
+        id = null;
+    }
+    return getIdFromJWT(params.authorization).then((userId) => {
+        return Database.getInexperiencedRoutes({userId, id});
     });
 };
 
 // end point definition
-export const updateBuddyRequest = new MicroserviceEndpoint("updateBuddyRequest")
+export const getInexperiencedRoutes = new MicroserviceEndpoint("getInexperiencedRoutes")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);

@@ -14,7 +14,7 @@ const operation = {
         consumes: ["application/json"],
         parameters: [
             {
-                description: "The id of the buddyRequest to use as a query",
+                description: "The id of the inexperiencedRoute to use as a query",
                 in: "query",
                 name: "id",
                 required: true,
@@ -47,9 +47,9 @@ const operation = {
                 userAuth: [],
             },
         ],
-        summary: "Find routes that match this buddy request",
+        summary: "Find routes that match this inexperienced route",
         tags: [
-            "BuddyRequests",
+            "InexperiencedRoutes",
         ],
     },
 };
@@ -59,30 +59,30 @@ const operation = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    const buddyRequestId = parseInt(params.id, 10);
-    if (isNaN(buddyRequestId) || buddyRequestId < 0) {
+    const inexperiencedRouteId = parseInt(params.id, 10);
+    if (isNaN(inexperiencedRouteId) || inexperiencedRouteId < 0) {
         throw new Error("400:Invalid ID");
     }
     let userId;
     return getIdFromJWT(params.authorization).then(authUserId => {
         userId = authUserId;
-        return Database.getBuddyRequests({userId, id: buddyRequestId});
-    }).then(buddyRequests => {
-        if (buddyRequests.length === 1) {
-            if (buddyRequests[0].owner === userId) {
-                return Database.matchRoutes(buddyRequests[0]);
+        return Database.getInexperiencedRoutes({userId, id: inexperiencedRouteId});
+    }).then(inexperiencedRoutes => {
+        if (inexperiencedRoutes.length === 1) {
+            if (inexperiencedRoutes[0].owner === userId) {
+                return Database.matchRoutes(inexperiencedRoutes[0]);
             } else {
                 throw new Error("403:Invalid authorization");
             }
-        } else if (buddyRequests.length === 0) {
-            throw new Error("404:Buddy Request doesn't exist");
+        } else if (inexperiencedRoutes.length === 0) {
+            throw new Error("404:Inexperienced Route doesn't exist");
         } else {
-            throw new Error("There are multiple buddy requests with the id " + buddyRequestId + "!");
+            throw new Error("There are multiple inexperienced routes with the id " + inexperiencedRouteId + "!");
         }
     });
 };
 
 // end point definition
-export const buddyRequestQuery = new MicroserviceEndpoint("buddyRequestQuery")
+export const inexperiencedRouteQuery = new MicroserviceEndpoint("inexperiencedRouteQuery")
     .addSwaggerOperation(operation)
     .addService(service);

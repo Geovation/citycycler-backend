@@ -10,8 +10,6 @@ BEGIN
     END IF;
 END$$;
 
---CREATE TYPE day_of_week AS ENUM ('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday');
-
 CREATE TABLE users (
 -- Core User attributes. Can't be null
 id serial PRIMARY KEY,
@@ -30,7 +28,7 @@ profile_rating_sum integer DEFAULT 0    -- Average rating = rating_sum/help_coun
 );
 
 -- An experienced cyclist's route
-CREATE TABLE routes (
+CREATE TABLE experienced_routes (
 id serial PRIMARY KEY,
 route geography NOT NULL,		-- The route itself
 departureTime time with time zone NOT NULL,	-- When the owner cycles this route
@@ -39,8 +37,8 @@ days day_of_week[] DEFAULT ARRAY[]::day_of_week[],	-- An array of the days of th
 owner integer REFERENCES users ON DELETE CASCADE	-- User who created this route
 );
 
--- A buddy request
-CREATE TABLE buddy_requests (
+-- A inexperienced route
+CREATE TABLE inexperienced_routes (
 id serial PRIMARY KEY,
 startPoint geography NOT NULL,      -- Where the user wants to leave from
 endPoint geography NOT NULL,        -- Where the user wants to get to
@@ -51,8 +49,8 @@ notifyOwner boolean DEFAULT FALSE   -- If the owner wants to be notified of any 
 );
 
 CREATE INDEX IF NOT EXISTS user_email_index ON users USING btree ( "email" );
-CREATE INDEX IF NOT EXISTS route_index ON routes USING GIST ( "route" );
-CREATE INDEX IF NOT EXISTS route_owner_index ON routes USING btree ( "owner" );
-CREATE INDEX IF NOT EXISTS buddy_requests_start_index ON buddy_requests USING GIST ( "startpoint" );
-CREATE INDEX IF NOT EXISTS buddy_requests_end_index ON buddy_requests USING GIST ( "endpoint" );
-CREATE INDEX IF NOT EXISTS buddy_requests_owner_index ON buddy_requests USING btree ( "owner" );
+CREATE INDEX IF NOT EXISTS experienced_route_index ON experienced_routes USING GIST ( "route" );
+CREATE INDEX IF NOT EXISTS experienced_route_owner_index ON experienced_routes USING btree ( "owner" );
+CREATE INDEX IF NOT EXISTS inexperienced_routes_start_index ON inexperienced_routes USING GIST ( "startpoint" );
+CREATE INDEX IF NOT EXISTS inexperienced_routes_end_index ON inexperienced_routes USING GIST ( "endpoint" );
+CREATE INDEX IF NOT EXISTS inexperienced_routes_owner_index ON inexperienced_routes USING btree ( "owner" );

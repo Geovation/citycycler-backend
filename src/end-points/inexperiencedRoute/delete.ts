@@ -15,7 +15,7 @@ const operation = {
         consumes: ["application/json"],
         parameters: [
             {
-                description: "The buddy request ID",
+                description: "The inexperienced route ID",
                 in: "query",
                 name: "id",
                 required: true,
@@ -25,7 +25,7 @@ const operation = {
         produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
-                description: "The buddy request was deleted",
+                description: "The inexperienced route was deleted",
             },
             403: {
                 description: "An invalid authorization token was supplied",
@@ -34,7 +34,7 @@ const operation = {
                 },
             },
             404: {
-                description: "The buddy request doesn't exist",
+                description: "The inexperienced route doesn't exist",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
@@ -51,9 +51,9 @@ const operation = {
                 userAuth: [],
             },
         ],
-        summary: "Delete a buddy request",
+        summary: "Delete a inexperienced route",
         tags: [
-            "BuddyRequests",
+            "InexperiencedRoutes",
         ],
     },
 };
@@ -63,22 +63,22 @@ const operation = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    const buddyRequestId = parseInt(params.id, 10);
+    const inexperiencedRouteId = parseInt(params.id, 10);
     return getIdFromJWT(params.authorization).then(userId => {
-        return Database.getBuddyRequests({userId, id: buddyRequestId});
-    }).then(buddyRequests => {
-        if (buddyRequests.length === 1) {
-            return Database.deleteBuddyRequest(buddyRequestId);
-        } else if (buddyRequests.length === 0) {
-            throw new Error("404:BuddyRequest doesn't exist");
+        return Database.getInexperiencedRoutes({userId, id: inexperiencedRouteId});
+    }).then(inexperiencedRoutes => {
+        if (inexperiencedRoutes.length === 1) {
+            return Database.deleteInexperiencedRoute(inexperiencedRouteId);
+        } else if (inexperiencedRoutes.length === 0) {
+            throw new Error("404:InexperiencedRoute doesn't exist");
         } else {
-            throw new Error("Multiple buddy requests exist with the id " + buddyRequestId +
+            throw new Error("Multiple inexperienced routes exist with the id " + inexperiencedRouteId +
                 "! This needs to be resolved");
         }
     });
 };
 
 // end point definition
-export const deleteBuddyRequest = new MicroserviceEndpoint("deleteBuddyRequest")
+export const deleteInexperiencedRoute = new MicroserviceEndpoint("deleteInexperiencedRoute")
     .addSwaggerOperation(operation)
     .addService(service);

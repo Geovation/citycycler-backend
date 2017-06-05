@@ -57,7 +57,7 @@ const operation = {
         ],
         summary: "Find routes that pass through 2 points",
         tags: [
-            "Routes",
+            "ExperiencedRoutes",
         ],
     },
 };

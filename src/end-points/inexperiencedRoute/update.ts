@@ -11,33 +11,35 @@ import { MicroserviceEndpoint } from "../../microservices-framework/web/services
 // TODO:
 // PATH
 const operation = {
-    get: {
+    post: {
         consumes: ["application/json"],
         parameters: [
             {
-                description: "The buddy request ID (if empty, all buddy requests of the user will be returned)",
-                in: "query",
-                name: "id",
-                required: false,
-                type: "integer",
+                description: "The inexperienced route and metadata about it",
+                in: "body",
+                name: "route",
+                required: true,
+                schema: {
+                    $ref: "#/definitions/InexperiencedRouteChanges",
+                },
             },
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
-                description: "Buddy request was retrieved",
+                description: "Inexperienced route was updated",
                 schema: {
-                    $ref: "#/definitions/GetBuddyRequestResponse",
+                    $ref: "#/definitions/UpdateInexperiencedRouteResponse",
                 },
             },
-            403: {
-                description: "An invalid authorisation token was supplied",
+            400: {
+                description: "Invalid update parameters, see error message",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
             },
-            404: {
-                description: "Buddy request doesn't exist",
+            403: {
+                description: "An invalid authorization token was supplied",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
@@ -54,16 +56,17 @@ const operation = {
                 userAuth: [],
             },
         ],
-        summary: "Retrieve a buddy request by it's ID. If no ID is provided, all buddy requests " +
-        "of the user are returned",
+        summary: "Update an existing inexperienced route",
         tags: [
-            "BuddyRequests",
+            "InexperiencedRoutes",
         ],
     },
 };
 
+// DEFINITIONS
+
 const definitions = {
-    BuddyRequestData: {
+    InexperiencedRouteChanges: {
         properties: {
             arrivalDateTime: {
                 description: "The time in ISO 8601 extended format that the owner wants to arrive at " +
@@ -73,21 +76,18 @@ const definitions = {
             },
             endPoint: {
                 $ref: "#/definitions/Coordinate",
-                description: "Where the user will finish cycling. Must be within <radius> of a route to be " +
-                "considered a match",
+                description: "Where the user will finish cycling. Must be within <radius> of " +
+                "an experienced route to be considered a match",
             },
             id: {
-                description: "This buddy request's internal id",
+                description: "The internal id of this inexperienced route",
+                format: "int32",
                 type: "integer",
             },
             notifyOwner: {
                 description: "Does the user want to be notified of any new experienced cyclists who can help them",
                 example: true,
                 type: "boolean",
-            },
-            owner: {
-                description: "The userId of the user who owns this route",
-                type: "integer",
             },
             radius: {
                  description: "How far away (in meters) the user is willing to cycle from the start and end point",
@@ -96,23 +96,17 @@ const definitions = {
             },
             startPoint: {
                 $ref: "#/definitions/Coordinate",
-                description: "Where the user will start cycling from. Must be within <radius> of a route to be " +
-                "considered a match",
+                description: "Where the user will start cycling from. Must be within <radius> of " +
+                "an experienced route to be considered a match",
             },
         },
-        required: ["arrivalDateTime", "departureTime", "startPoint", "endPoint", "owner", "radius", "route", "id"],
+        required: ["id"],
     },
-    BuddyRequestGetResult: {
-        description: "An array of buddy requests belonging to this user",
-        items: {
-            $ref: "#/definitions/BuddyRequestData",
-        },
-        type: "array",
-    },
-    GetBuddyRequestResponse: {
+    UpdateInexperiencedRouteResponse: {
+        description: "Whether the update succeded",
         properties: {
             result: {
-                $ref: "#/definitions/BuddyRequestGetResult",
+                type: "boolean",
             },
         },
         required: ["result"],
@@ -124,17 +118,33 @@ const definitions = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    let id = parseInt(params.id, 10);
-    if (!id) {
-        id = null;
-    }
-    return getIdFromJWT(params.authorization).then((userId) => {
-        return Database.getBuddyRequests({userId, id});
+    const payload = params.body;
+    let userId;
+    return getIdFromJWT(params.authorization).then(authUserId => {
+        userId = authUserId;
+        if (userId !== undefined) {
+            return Database.getInexperiencedRoutes({userId, id: payload.id});
+        } else {
+            throw new Error("403:Invalid authorization");
+        }
+    }).then(inexperiencedRoutes => {
+        if (inexperiencedRoutes.length === 1) {
+            if (inexperiencedRoutes[0].owner === userId) {
+                return Database.updateInexperiencedRoute(inexperiencedRoutes[0], payload);
+            } else {
+                throw new Error("403:Invalid authorization");
+            }
+        } else if (inexperiencedRoutes.length === 0) {
+            throw new Error("404:Inexperienced route not found");
+        } else {
+            throw new Error("Multiple inexperienced routes exist with the id " + payload.id +
+                "! This needs to be resolved");
+        }
     });
 };
 
 // end point definition
-export const getBuddyRequests = new MicroserviceEndpoint("getBuddyRequests")
+export const updateInexperiencedRoute = new MicroserviceEndpoint("updateInexperiencedRoute")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);

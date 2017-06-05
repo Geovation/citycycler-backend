@@ -11,33 +11,35 @@ import { MicroserviceEndpoint } from "../../microservices-framework/web/services
 // TODO:
 // PATH
 const operation = {
-    get: {
+    post: {
         consumes: ["application/json"],
         parameters: [
             {
-                description: "The route ID (if empty, all routes of the user will be returned)",
-                in: "query",
-                name: "id",
-                required: false,
-                type: "integer",
+                description: "The route and metadata about it",
+                in: "body",
+                name: "route",
+                required: true,
+                schema: {
+                    $ref: "#/definitions/RouteChanges",
+                },
             },
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
-                description: "Route was retrieved",
+                description: "Route was updated",
                 schema: {
-                    $ref: "#/definitions/GetRouteResponse",
+                    $ref: "#/definitions/UpdateRouteResponse",
                 },
             },
-            403: {
-                description: "An invalid authorisation token was supplied",
+            400: {
+                description: "Invalid update parameters, see error message",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
             },
-            404: {
-                description: "Route doesn't exist",
+            403: {
+                description: "An invalid authorization token was supplied",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
@@ -54,27 +56,20 @@ const operation = {
                 userAuth: [],
             },
         ],
-        summary: "Retrieve a route by it's ID. If no ID is provided, all routes " +
-        "of the user are returned",
+        summary: "Update an existing route",
         tags: [
-            "Routes",
+            "ExperiencedRoutes",
         ],
     },
 };
 
+// DEFINITIONS
+
 const definitions = {
-    GetRouteResponse: {
-        properties: {
-            result: {
-                $ref: "#/definitions/RouteData",
-            },
-        },
-        required: ["result"],
-    },
-    RouteData: {
+    RouteChanges: {
         properties: {
             arrivalTime: {
-                description: "The time in ISO 8601 extended format that the owner will arrive at their destination",
+                description: "The time in ISO 8601 extended format that the owner arrives at their destination",
                 example: "12:22:00Z",
                 type: "string",
             },
@@ -94,25 +89,24 @@ const definitions = {
                 type: "string",
             },
             id: {
-                description: "This route's internal id",
-                type: "integer",
-            },
-            owner: {
-                description: "The userId of the user who owns this route",
+                description: "The internal id of this route",
+                format: "int32",
                 type: "integer",
             },
             route: {
                 $ref: "#/definitions/CoordList",
             },
         },
-        required: ["arrivalTime", "departureTime", "owner", "route", "id"],
+        required: ["id"],
     },
-    RouteGetResult: {
-        description: "An array of routes belonging to this user",
-        items: {
-            $ref: "#/definitions/RouteData",
+    UpdateRouteResponse: {
+        description: "Whether the update succeded",
+        properties: {
+            result: {
+                type: "boolean",
+            },
         },
-        type: "array",
+        required: ["result"],
     },
 };
 
@@ -121,17 +115,28 @@ const definitions = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    let id = parseInt(params.id, 10);
-    if (!id) {
-        id = null;
-    }
-    return getIdFromJWT(params.authorization).then((userId) => {
-        return Database.getRoutes({userId, id});
+    const payload = params.body;
+    return getIdFromJWT(params.authorization).then(userId => {
+        if (userId !== undefined) {
+            return Database.getExperiencedRouteById(payload.id).then(route => {
+                if (route.owner === userId) {
+                    return Database.updateExperiencedRoute(route, payload);
+                } else {
+                    throw "403:Invalid authorization";
+                }
+            }, err => {
+                throw err;
+            });
+        } else {
+            throw "403:Invalid authorization";
+        }
+    }, err => {
+        throw err;
     });
 };
 
 // end point definition
-export const getRoutes = new MicroserviceEndpoint("getRouteById")
+export const updateExperiencedRoute = new MicroserviceEndpoint("updateExperiencedRoute")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);
