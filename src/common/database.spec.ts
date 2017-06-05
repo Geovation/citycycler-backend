@@ -42,21 +42,8 @@ describe("MatchMyRoute Database Functions", () => {
             }
         });
     });
-    after(done => {
-        let promises = [];
-        routeIds.forEach(id => {
-            promises.push(Database.sql("DELETE FROM experienced_routes WHERE id=$1", [id]));
-        });
-        userIds.forEach(id => {
-            promises.push(Database.sql("DELETE FROM users WHERE id=$1", [id]));
-        });
-        Promise.all(promises).then(() => {
-            Database.shutDownPool();
-            done();
-        }).catch((err) => {
-            Database.shutDownPool();
-            done();
-        });
+    after(() => {
+        return Database.shutDownPool();
     });
     let transactionClient;
     beforeEach("Create transaction client", function(done){
@@ -966,7 +953,7 @@ describe("Database shutdown", () => {
     it("should reject all database operations", done => {
         let promises = [];
         // sql
-        promises.push(Database.sql("SELECT now();"));
+        promises.push(Database.sqlTransaction("SELECT now();"));
         // putExperiencedRoute
         const route = new ExperiencedRoute({
             arrivalTime: "13:00:00+00",

@@ -70,32 +70,6 @@ export function commitAndReleaseTransaction(client) {
     });
 }
 
-// Execute an arbritary SQL command.
-export function sql(query: string, params: Array<string> = []): Promise<any> {
-    return new Promise((resolve, reject) => {
-        // to run a query we can acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                console.error("error fetching client from pool", err);
-                reject(err);
-                return;
-            }
-            client.query(query, params, (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    reject("error running query: " + error);
-                    return;
-                }
-                resolve(result);
-            });
-        });
-    });
-}
-
 export function sqlTransaction(query: string, params: Array<any> = [], providedClient = null): Promise<any> {
     let client;
     // console.log("in sqlTransaction");
@@ -147,9 +121,9 @@ export function startUpPool(testing: boolean): void {
  * resetDatabase - resets the database schema in the given database to original state
  */
 export function resetDatabase() {
-    return sql("DROP SCHEMA IF EXISTS public CASCADE;", [])
+    return sqlTransaction("DROP SCHEMA IF EXISTS public CASCADE;", [])
         .then(result => {
-            return sql("CREATE SCHEMA public AUTHORIZATION " + process.env.PGUSER + ";", []);
+            return sqlTransaction("CREATE SCHEMA public AUTHORIZATION " + process.env.PGUSER + ";", []);
         })
         .then(result => {
             return new Promise((resolve, reject) => {
@@ -158,7 +132,7 @@ export function resetDatabase() {
                         reject(new Error("Could not read schema file"));
                     }
                     const schemaRecreateCommands = data;
-                    resolve(sql(schemaRecreateCommands));
+                    resolve(sqlTransaction(schemaRecreateCommands));
                 });
             });
         })
