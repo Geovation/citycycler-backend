@@ -1,3 +1,4 @@
+import { E2EUtils } from "./clearE2EUsers";
 import { experiencedRoute } from "./experiencedRoute";
 import { matchRoute } from "./experiencedRoute/match";
 import { nearby } from "./experiencedRoute/nearby";
@@ -14,4 +15,5 @@ export const endpoints = [
     authUser,
     inexperiencedRoute,
     queryInexperiencedRoute,
+    E2EUtils,
 ];
