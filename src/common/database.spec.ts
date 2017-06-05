@@ -199,6 +199,8 @@ describe("MatchMyRoute Database Functions", () => {
                 { email: "updated@example.com" },
                 { pwh: new Buffer("updated") },
                 { rounds: 10 },
+                { preferences_units: "kilometers" },
+                { preferences_difficulty: "quiet" },
                 { profile_photo: "http://lorempixel.com/400/400/people/Updated" },
                 { profile_bio: "Updated Biography" },
                 {
@@ -215,8 +217,9 @@ describe("MatchMyRoute Database Functions", () => {
                 let keys = Object.keys(updates).join(", ");
                 it("should update " + keys, () => {
                     return Database.updateUser(thisUserId, updates, transactionClient).then(() => {
-                        return Database.sqlTransaction("SELECT name, email, pwh, rounds, profile_photo, profile_bio " +
-                            "FROM users WHERE id=$1;", [thisUserId], transactionClient).then(result => {
+                        return Database.sqlTransaction("SELECT name, email, pwh, rounds, profile_photo, profile_bio, " +
+                            "preferences_difficulty, preferences_units FROM users WHERE id=$1;",
+                            [thisUserId], transactionClient).then(result => {
                                 return result.rows[0];
                             });
                     }).then(user => {
@@ -231,6 +234,22 @@ describe("MatchMyRoute Database Functions", () => {
                     });
                 });
             }
+            it("should not update preferences_units to an invalid value", done => {
+                const updates = {preferences_units: "smoots"};
+                const promise = Database.updateUser(thisUserId, updates, transactionClient).then(() => {
+                    return Database.sqlTransaction("SELECT preferences_units FROM users WHERE id=$1;",
+                        [thisUserId], transactionClient);
+                });
+                expect(promise).to.be.rejected.and.notify(done);
+            });
+            it("should not update preferences_difficulty to an invalid value", done => {
+                const updates = {preferences_difficulty: "easy peasy"};
+                const promise = Database.updateUser(thisUserId, updates, transactionClient).then(() => {
+                    return Database.sqlTransaction("SELECT preferences_difficulty FROM users WHERE id=$1;",
+                        [thisUserId], transactionClient);
+                });
+                expect(promise).to.be.rejected.and.notify(done);
+            });
         });
     });
     describe("General ExperiencedRoute Functions", () => {

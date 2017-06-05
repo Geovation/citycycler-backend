@@ -639,10 +639,92 @@ describe("MatchMyRoute API", () => {
                         // });
                     });
                 });
-                it("should not update help count", done => {
+                it("should update a user's individual properties - preferences", done => {
                     const userUpdates = {
-                        helped: 999,
-                        profile_helped: 999,
+                        preferences: {
+                            rideDifficulty: "fast",
+                            units: "kilometers",
+                        },
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[0],
+                        },
+                        json: userUpdates,
+                        method: "POST",
+                        url: url + "/user",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Got non 200 response: " +
+                             JSON.stringify(response));
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[0],
+                            },
+                            method: "GET",
+                            url: url + "/user/" + userIds[0],
+                        }, (error2, response2, body2) => {
+                            let user = body2.result;
+                            expect(user.preferences.rideDifficulty).to.equal("fast");
+                            expect(user.preferences.units).to.equal("kilometers");
+                            done();
+                        });
+                    });
+                });
+                it("should not update helped count", done => {
+                    const userUpdates = {
+                        helpedCount: 999,
+                        profile_helped_count: 999,
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[0],
+                        },
+                        json: userUpdates,
+                        method: "POST",
+                        url: url + "/user",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Got non 400 response: " + JSON.stringify(response));
+                        done();
+                    });
+                });
+                it("should not update users helped count", done => {
+                    const userUpdates = {
+                        profile_help_count: 999,
+                        usersHelped: 999,
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[0],
+                        },
+                        json: userUpdates,
+                        method: "POST",
+                        url: url + "/user",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Got non 400 response: " + JSON.stringify(response));
+                        done();
+                    });
+                });
+                it("should not update users rating", done => {
+                    const userUpdates = {
+                        profile_rating_sum: 999,
+                        rating: 10,
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[0],
+                        },
+                        json: userUpdates,
+                        method: "POST",
+                        url: url + "/user",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Got non 400 response: " + JSON.stringify(response));
+                        done();
+                    });
+                });
+                it("should not update users distance", done => {
+                    const userUpdates = {
+                        distance: 100000,
+                        profile_distance: 100000,
                     };
                     defaultRequest({
                         headers: {

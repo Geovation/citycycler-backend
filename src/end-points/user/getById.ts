@@ -81,10 +81,20 @@ const definitions = {
                 example: "I really love to cycle because...",
                 type: "string",
             },
+            distance: {
+                description: "How far this user has cycled using this app, in meters",
+                example: 12321,
+                type: "integer",
+            },
             email: {
                 description: "The user's email address",
                 example: "joe@blogs.com",
                 type: "string",
+            },
+            helpedCount: {
+                description: "How many times this user has been helped by an expeienced cyclist",
+                example: 3,
+                type: "integer",
             },
             id: {
                 description: "The user's database ID",
@@ -105,8 +115,38 @@ const definitions = {
                 example: "http://www.example.com/example.jpg",
                 type: "string",
             },
+            preferences: {
+                $ref: "#/definitions/UserPreferences",
+            },
+            rating: {
+                description: "This user's rating as a number from 0 (low) to 10 (high)",
+                example: 7.5,
+                type: "number",
+            },
+            usersHelped: {
+                description: "How many inexperienced cyclists this user has helped",
+                example: 3,
+                type: "integer",
+            },
         },
-        required: ["email", "id", "name"],
+        required: ["email", "id", "name", "rating", "usersHelped", "preferences", "helpedCount", "distance"],
+    },
+    UserPreferences: {
+        description: "A user's preferences",
+        properties: {
+            rideDifficulty: {
+                description: "The intensity of rides shown to this user",
+                enum: ["quiet", "balanced", "fast"],
+                example: "balanced",
+                type: "string",
+            },
+            units: {
+                description: "What units the user prefers to see distances in",
+                enum: ["miles", "kilometers"],
+                example: "miles",
+                type: "string",
+            },
+        },
     },
 };
 

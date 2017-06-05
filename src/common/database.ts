@@ -572,7 +572,16 @@ export function updateUser(id, updates, providedClient = null): Promise<Boolean>
     let sqlParams = [id];
     const keys = Object.keys(updates);
     keys.forEach((key, i) => {
-        queryParts.push(key + " = $" + (i + 2) + " ");
+        switch (key) {
+            case "preferences_difficulty":
+                queryParts.push(key + " = $" + (i + 2) + "::ride_difficulty ");
+                break;
+            case "preferences_units":
+                queryParts.push(key + " = $" + (i + 2) + "::distance_units ");
+                break;
+            default:
+                queryParts.push(key + " = $" + (i + 2) + " ");
+        }
         sqlParams.push(updates[key]);
     });
     if (queryParts.length === 0) {
