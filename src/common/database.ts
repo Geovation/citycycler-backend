@@ -1,6 +1,6 @@
 // import * as _ from "lodash";
-import { RouteDataModel } from "./RouteDataModel";
-import RouteQuery from "./RouteQueryDataModel";
+import ExperiencedRoute from "./ExperiencedRouteDataModel";
+import InexperiencedRoute from "./InexperiencedRouteDataModel";
 import User from "./UserDataModels";
 import * as fs from "fs";
 import * as pg from "pg";
@@ -167,14 +167,14 @@ export function resetDatabase() {
         });
 }
 
-// Put a route in the database, returning the new database ID for the route
-export function putRoute(routeData: RouteDataModel, providedClient = null) {
+// Put an experienced route in the database, returning the new database ID for the route
+export function putExperiencedRoute(routeData: ExperiencedRoute, providedClient = null) {
     const wkt = coordsToLineString(routeData.route);
-    const query = "INSERT INTO routes (route, departureTime, arrivalTime, days, owner) " +
-        "VALUES (ST_GeogFromText($1),$2,$3,$4::integer::bit(7),$5) " +
+    const query = "INSERT INTO experienced_routes (route, departureTime, arrivalTime, days, owner) " +
+        "VALUES (ST_GeogFromText($1),$2,$3,$4::day_of_week[],$5) " +
         "RETURNING id";
     const sqlParams = [wkt, routeData.departureTime, routeData.arrivalTime,
-        routeData.getDaysBitmask(), routeData.owner];
+        routeData.days, routeData.owner];
     return sqlTransaction(query, sqlParams, providedClient).then(result => {
         if (result.rowCount > 0) {
             return result.rows[0].id;
@@ -184,28 +184,28 @@ export function putRoute(routeData: RouteDataModel, providedClient = null) {
     });
 }
 
-export function getRouteById(id: number, providedClient = null) {
-    const query = "SELECT id, owner, departuretime, arrivalTime, days::integer, ST_AsText(route) AS route " +
-        "FROM routes where id=$1";
+export function getExperiencedRouteById(id: number, providedClient = null) {
+    const query = "SELECT id, owner, departuretime, arrivalTime, days::text[], ST_AsText(route) AS route " +
+        "FROM experienced_routes where id=$1";
     return sqlTransaction(query, [id], providedClient).then(result => {
         if (result.rows[0]) {
-            return RouteDataModel.fromSQLRow(result.rows[0]);
+            return ExperiencedRoute.fromSQLRow(result.rows[0]);
         } else {
-            throw new Error("404:Route doesn't exist");
+            throw new Error("404:ExperiencedRoute doesn't exist");
         }
     });
 }
 
 /**
- * getRoutes - description
+ * getExperiencedRoutes - description
  *
  * @param  {object} params The query parameters, including the id of the route to query and the user id
  * @param  {client} providedClient Database client to use for this interaction
- * @return {Object[]} Array of routes
+ * @return {Object[]} Array of experienced_routes
  */
-export function getRoutes(params: {userId: number, id?: number}, providedClient = null) {
-    let query = "SELECT id, owner, departuretime, arrivalTime, days::integer, ST_AsText(route) AS route " +
-    "FROM routes where owner=$1";
+export function getExperiencedRoutes(params: {userId: number, id?: number}, providedClient = null) {
+    let query = "SELECT id, owner, departuretime, arrivalTime, days::text[], ST_AsText(route) AS route " +
+    "FROM experienced_routes where owner=$1";
     let queryParams = [params.userId];
     if (params.id !== null && typeof params.id !== "undefined") {
         query +=  " AND id=$2";
@@ -214,10 +214,10 @@ export function getRoutes(params: {userId: number, id?: number}, providedClient 
     return sqlTransaction(query, queryParams, providedClient).then(result => {
         if (result.rowCount > 0) {
             return result.rows.map((route) => {
-                return RouteDataModel.fromSQLRow(route);
+                return ExperiencedRoute.fromSQLRow(route);
             });
         } else {
-            throw new Error("404:Route doesn't exist");
+            throw new Error("404:ExperiencedRoute doesn't exist");
         }
     });
 }
@@ -255,17 +255,18 @@ export function coordsToPointString(coord: [number, number]): string {
     return "POINT(" + coord.join(" ") + ")";
 }
 
-export function getRoutesNearby(radius: number, lat: number, lon: number, providedClient = null): Promise<any> {
+export function getExperiencedRoutesNearby(radius: number, lat: number, lon: number, providedClient = null)
+: Promise<any> {
     if (radius > 2000 || radius < 1) {
         return new Promise((resolve, reject) => {
             reject("400:Radius out of bounds");
         });
     }
-    const query = "select id, owner, departuretime, arrivalTime, ST_AsText(route) AS route from routes " +
+    const query = "select id, owner, departuretime, arrivalTime, ST_AsText(route) AS route from experienced_routes " +
         "where ST_DISTANCE(route, ST_GeogFromText($2) ) < $1";
     const geoJson = "POINT(" + lat + " " + lon + ")";
     return sqlTransaction(query, [radius, geoJson], providedClient).then(result => {
-        return result.rows.map(RouteDataModel.fromSQLRow);
+        return result.rows.map(ExperiencedRoute.fromSQLRow);
     });
 }
 
@@ -273,29 +274,20 @@ export function getRoutesNearby(radius: number, lat: number, lon: number, provid
  * The function this service is built around - route matching!
  * @param matchParams - The parameters that we use for matching - see the type definiton here or in the swagger docs
  *
- * @returns routes - A list of RouteDataModels
+ * @returns routes - A list of ExperiencedRoutes
  */
 export function matchRoutes(
     matchParams: {
-        start: {
-            latitude: number,
-            longitude: number,
-            radius: number,
-        },
-        end: {
-            latitude: number,
-            longitude: number,
-            radius: number,
-        },
-        days?: string[],
-        time?: string,
+        arrivalDateTime: string,
+        endPoint: [number, number],
+        radius: number,
+        startPoint: [number, number],
     },
     providedClient = null
 ): Promise<{
     id: number,
     meetingTime: string,
     divorceTime: string,
-    days: string[],
     owner: number,
     meetingPoint: [number, number],
     divorcePoint: [number, number],
@@ -304,94 +296,69 @@ export function matchRoutes(
     distanceToMeetingPoint: number,
     distanceFromDivorcePoint: number
 }[]> {
-    if (matchParams.start.radius > 2000 || matchParams.start.radius < 1) {
+    if (matchParams.radius > 2000 || matchParams.radius < 1) {
         return Promise.reject("400:Radius out of bounds. Must be between 1m and 2km");
-    } else if (matchParams.end.radius > 2000 || matchParams.end.radius < 1) {
-        return Promise.reject("400:End radius out of bounds. Must be between 1m and 2km");
     }
     let query = "" +
-    "SELECT id,  " +
-    "    match1.days, " +
+    "SELECT id, " +
     "    match2.meetingTime, " +
     "    match2.divorceTime, " +
     "    ST_AsText(match2.meetingPoint) AS meetingPoint, " +
     "    ST_AsText(match2.divorcePoint) AS divorcePoint, " +
     "    match3.*, " +
     "    match4.*, " +
-    "    owner  " +
-    "FROM routes,  " +
-    "    LATERAL (  " +
-    "        SELECT   " +
-    "            (ST_LineLocatePoint(route::geometry, ST_GeogFromText($1)::geometry))  " +
-    "                AS distFromStart,  " +
-    "            (ST_LineLocatePoint(route::geometry, ST_GeogFromText($2)::geometry))  " +
-    "                AS distFromEnd,  " +
-    "            (days & $5::integer::bit(7))::integer AS days, " +
-    //      Work out average speed in m/s
-    "	    ST_Length(route) / EXTRACT(EPOCH FROM (arrivalTime::time - departureTime::time)) AS averageSpeed " +
+    "    owner " +
+    "FROM experienced_routes, " +
+    "    LATERAL ( " +
+    "        SELECT " +
+    "            (ST_LineLocatePoint(route::geometry, ST_GeogFromText($1)::geometry)) " +
+    "                AS distFromStart, " +
+    "            (ST_LineLocatePoint(route::geometry, ST_GeogFromText($2)::geometry)) " +
+    "                AS distFromEnd, " +
+    //           Get the day of the week as a day_of_week
+    "            (SELECT pg_enum.enumlabel::day_of_week " +
+    "                FROM pg_enum JOIN pg_type ON (pg_enum.enumtypid=pg_type.oid) " +
+    "                WHERE pg_enum.enumsortorder = extract(dow from $4::timestamp)) AS requiredDay, " +
+    "            $4::timestamptz::date AS requiredDate, " +
+    //          Get the average speed in m/s
+    "	        ST_Length(route) / EXTRACT(EPOCH FROM (arrivalTime::time - departureTime::time)) AS averageSpeed " +
     "    ) AS match1, " +
     "    LATERAL ( " +
     "        SELECT " +
-    "            departureTime::time + distFromStart*(arrivalTime::time - departureTime::time) AS meetingTime,  " +
-    "            departureTime::time + distFromEnd*(arrivalTime::time - departureTime::time) AS divorceTime, " +
-    "            ST_LineInterpolatePoint(route::geometry, distFromStart) AS meetingPoint,  " +
+    "            requiredDate + departureTime::timetz + distFromStart*(arrivalTime::time - departureTime::time) " +
+    "               AS meetingTime, " +
+    "            requiredDate + departureTime::timetz + distFromEnd*(arrivalTime::time - departureTime::time) " +
+    "               AS divorceTime, " +
+    "            ST_LineInterpolatePoint(route::geometry, distFromStart) AS meetingPoint, " +
     "            ST_LineInterpolatePoint(route::geometry, distFromEnd) AS divorcePoint " +
-    "    ) AS match2,  " +
+    "    ) AS match2, " +
     "    LATERAL ( " +
     "	SELECT " +
     "	    ST_Distance(ST_GeogFromText($1), meetingPoint) AS distanceToMeetingPoint, " +
     "	    ST_Distance(ST_GeogFromText($2), divorcePoint) AS distanceToDivorcePoint " +
-    "    ) AS match3,  " +
+    "    ) AS match3, " +
     "    LATERAL ( " +
     "	SELECT " +
-    //      This is (I hope) the cleanest way to convert a number of seconds (distance/speed) to a time interval
     "	    interval '1 second' * (distanceToMeetingPoint / averageSpeed) AS timeToMeetingPoint, " +
     "	    interval '1 second' * (distanceToDivorcePoint / averageSpeed) AS timeFromDivorcePoint " +
     "    ) AS match4 " +
-    "WHERE  " +
-    "    distFromStart <  distFromEnd  " +
+    "WHERE " +
+    "    distFromStart <  distFromEnd " +
     "AND " +
-    "    ST_DWithin(ST_GeogFromText($1), route, $3)  " +
+    "    ST_DWithin(ST_GeogFromText($1), route, $3) " +
     "AND " +
-    "    ST_DWithin(ST_GeogFromText($2), route, $4) " +
+    "    ST_DWithin(ST_GeogFromText($2), route, $3) " +
     "AND " +
-    "    match1.days > 0 ";
-    const startPoint = "POINT(" + matchParams.start.latitude + " " + matchParams.start.longitude + ")";
-    const endPoint = "POINT(" + matchParams.end.latitude + " " + matchParams.end.longitude + ")";
-    let queryParams = [startPoint, endPoint, matchParams.start.radius, matchParams.end.radius];
+    "    requiredDay = ANY(days) " +
+    "ORDER BY " +
+    "   divorceTime::time + timeFromDivorcePoint - $4::timestamptz::time ";
+    const startPoint = "POINT(" + matchParams.startPoint[0] + " " + matchParams.startPoint[1] + ")";
+    const endPoint = "POINT(" + matchParams.endPoint[0] + " " + matchParams.endPoint[1] + ")";
+    let queryParams = [startPoint, endPoint, matchParams.radius, matchParams.arrivalDateTime];
 
-    // Add a filter for days of the week
-    if (matchParams.days !== undefined) {
-        /* tslint:disable no-bitwise */
-        const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-        const daysBitmask = matchParams.days.map((day) => {
-            return 1 << daysOfWeek.indexOf(day);
-        }).reduce((days, day) => {
-            return days | day;
-        }, 0);
-        /* tslint:enable no-bitwise */
-        queryParams.push(daysBitmask);
-    } else {
-        queryParams.push(127);  // 127 = 1111111
-    }
-    // Add sorting by time
-    if (matchParams.time !== undefined) {
-        query += "ORDER BY " +
-            "divorceTime::time + timeFromDivorcePoint - $6::time";
-        queryParams.push(matchParams.time);
-    } else {
-        query += "ORDER BY divorceTime::time + timeFromDivorcePoint";
-    }
     return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
         return result.rows.map((row) => {
-            const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-            /* tslint:disable no-bitwise */
-            const days = daysOfWeek.filter((day, i) => {
-                return row.days & 1 << i;
-            });
-            /* tslint:enable no-bitwise */
             return {
-                days,
                 distanceFromDivorcePoint: row.distanceFromDivorcePoint,
                 distanceToMeetingPoint: row.distanceToMeetingPoint,
                 divorcePoint: pointStringToCoords(row.divorcepoint),
@@ -408,9 +375,9 @@ export function matchRoutes(
 
 }
 
-// Updates a route from the given update object
-export function updateRoute(
-    existingRoute: RouteDataModel,
+// Updates an experienced route from the given update object
+export function updateExperiencedRoute(
+    existingRoute: ExperiencedRoute,
     updates: {
         arrivalTime?: string,
         departureTime?: string,
@@ -431,74 +398,153 @@ export function updateRoute(
         if (existingRoute.arrivalTime < existingRoute.departureTime) {
             error = "400:Arrival time is before Departure time";
         } else if (existingRoute.route.length < 2) {
-            error = "400:Route requires at least 2 points";
+            error = "400:ExperiencedRoute requires at least 2 points";
         } else if (Math.max(...existingRoute.route.map(pair => { return pair.length; })) > 2) {
-            error = "400:Coordinates in a Route should only have 2 items in them, [latitude, longitude]";
+            error = "400:Coordinates in a ExperiencedRoute should only have 2 items in them, [latitude, longitude]";
         } else if (Math.min(...existingRoute.route.map(pair => { return pair.length; })) < 2) {
-            error = "400:Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]";
+            error = "400:Coordinates in a ExperiencedRoute should have exactly 2 items in them, [latitude, longitude]";
         }
         if (typeof error !== "undefined") {
             return new Promise((resolve, reject) => { reject(error); } );
         }
 
-        const query = "UPDATE routes " +
-        "SET route = $1, arrivalTime = $2, departureTime = $3, days = $4::integer::bit(7) " +
+        const query = "UPDATE experienced_routes " +
+        "SET route = $1, arrivalTime = $2, departureTime = $3, days = $4::day_of_week[] " +
         "WHERE id = $5";
         const sqlParams = [coordsToLineString(existingRoute.route),
             existingRoute.arrivalTime, existingRoute.departureTime,
-            existingRoute.getDaysBitmask(), existingRoute.id];
+            existingRoute.days, existingRoute.id];
 
         return sqlTransaction(query, sqlParams, providedClient).then(result => {
             return true;
         });
 }
 
-export function deleteRoute(id: number, providedClient = null): Promise<Boolean> {
-    const query = "DELETE FROM routes WHERE id=$1";
+export function deleteExperiencedRoute(id: number, providedClient = null): Promise<Boolean> {
+    const query = "DELETE FROM experienced_routes WHERE id=$1";
     return sqlTransaction(query, [id], providedClient).then(result => {
         if (result.rowCount) {
             return true;
         } else {
-            throw new Error("404:Route doesn't exist");
+            throw new Error("404:ExperiencedRoute doesn't exist");
         }
     });
 }
 
-export function createRouteQuery(owner: number, routeQ: RouteQuery): Promise<Boolean> {
-    routeQ = new RouteQuery(routeQ);
-    return new Promise((resolve, reject) => {
-        // Acquire a client from the pool,
-        // run a query on the client, and then return the client to the pool
-        pool.connect((err, client, done) => {
-            if (err) {
-                reject(err);
-                return console.error("error fetching client from pool", err);
-            }
-            const query = "INSERT INTO route_queries (startPoint, endPoint, radius, days, arrivalTime, owner)" +
-                "VALUES (ST_GeogFromText($1), ST_GeogFromText($2), $3, $4::integer::bit(7), $5, $6)" +
-                "RETURNING id";
-            const queryParams = [
-                coordsToPointString(routeQ.startPoint),
-                coordsToPointString(routeQ.endPoint),
-                routeQ.radius,
-                routeQ.getDaysBitmask(),
-                routeQ.arrivalTime,
-                owner,
-            ];
-            client.query(query, queryParams, (error, result) => {
-                // call `done(err)` to release the client back to the pool (or destroy it if there is an error)
-                done(error);
-
-                if (error) {
-                    // logger.error("error running query", error);
-                    reject("error running query: " + error);
-                    return;
-                } else {
-                    resolve(result.rows[0].id);
-                }
-            });
-        });
+export function createInexperiencedRoute(owner: number, inexperiencedRoute: InexperiencedRoute, providedClient = null)
+: Promise<Number> {
+    inexperiencedRoute = new InexperiencedRoute(inexperiencedRoute);
+    const query = "INSERT INTO inexperienced_routes (startPoint, endPoint, radius" +
+        ", notifyOwner, arrivalDateTime, owner)" +
+        "VALUES (ST_GeogFromText($1), ST_GeogFromText($2), $3, $4, $5, $6)" +
+        "RETURNING id";
+    const queryParams = [
+        coordsToPointString(inexperiencedRoute.startPoint),
+        coordsToPointString(inexperiencedRoute.endPoint),
+        inexperiencedRoute.radius,
+        inexperiencedRoute.notifyOwner,
+        inexperiencedRoute.arrivalDateTime,
+        owner,
+    ];
+    return sqlTransaction(query, queryParams, providedClient).then(result => {
+        return result.rows[0].id;
     });
+}
+
+/**
+ * getInexperiencedRoutes - description
+ *
+ * @param  {object} params The query parameters, including the id of the inexperienced route to query and the user id
+ * @param  {client} providedClient Database client to use for this interaction
+ * @return {Object[]} Array of inexperienced routes
+ */
+export function getInexperiencedRoutes(params: {userId: number, id?: number}, providedClient = null)
+: Promise<InexperiencedRoute[]> {
+    let query = "SELECT id, owner, radius, notifyOwner, arrivalDateTime, ST_AsText(startPoint) AS startPoint, " +
+    "ST_AsText(endPoint) AS endPoint FROM inexperienced_routes where owner=$1";
+    let queryParams = [params.userId];
+    if (params.id !== null && typeof params.id !== "undefined") {
+        query +=  " AND id=$2";
+        queryParams.push(params.id);
+    }
+    return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
+        if (result.rowCount > 0) {
+            return result.rows.map((inexperiencedRoute) => {
+                return InexperiencedRoute.fromSQLRow(inexperiencedRoute);
+            });
+        } else {
+            throw new Error("404:Inexperienced Route doesn't exist");
+        }
+    });
+}
+
+/**
+ * deleteInexperiencedRoute - description
+ *
+ * @param  {number} id The id of the inexperiencedRoute to delete
+ * @param  {client} providedClient Database client to use for this interaction
+ * @return {boolean} Whether the deletion succeded
+ */
+export function deleteInexperiencedRoute(id: number, providedClient = null): Promise<Boolean> {
+    const query = "DELETE FROM inexperienced_routes WHERE id=$1";
+    return sqlTransaction(query, [id], providedClient).then(result => {
+        if (result.rowCount) {
+            return true;
+        } else {
+            throw new Error("404:InexperiencedRoute doesn't exist");
+        }
+    });
+}
+
+/**
+ * updateInexperiencedRoute - description
+ *
+ * @param  {InexperiencedRoute} existingRequest The old inexperiencedRoute to be updated
+ * @param  {client} providedClient Database client to use for this interaction
+ * @return {boolean} Whether the update succeded
+ */
+export function updateInexperiencedRoute(
+    existingRoute: InexperiencedRoute,
+    updates: {
+        arrivalDateTime?: string,
+        endPoint?: [number, number],
+        notifyOwner?: boolean,
+        radius?: number,
+        startPoint?: [number, number],
+    },
+    providedClient = null): Promise<boolean> {
+
+        // Move the updated properties into the existing model, and validate the new object
+        let newInexperiencedRouteObject = <InexperiencedRoute> {};
+        newInexperiencedRouteObject.arrivalDateTime = updates.arrivalDateTime !== undefined ?
+            updates.arrivalDateTime : existingRoute.arrivalDateTime;
+        newInexperiencedRouteObject.endPoint = updates.endPoint !== undefined ?
+            updates.endPoint : existingRoute.endPoint;
+        newInexperiencedRouteObject.notifyOwner = updates.notifyOwner !== undefined ?
+            updates.notifyOwner : existingRoute.notifyOwner;
+        newInexperiencedRouteObject.radius = updates.radius !== undefined ?
+            updates.radius : existingRoute.radius;
+        newInexperiencedRouteObject.startPoint = updates.startPoint !== undefined ?
+            updates.startPoint : existingRoute.startPoint;
+
+        // By instantating a new object, we run the tests in the constructor to make
+        // sure that this is still a valid InexperiencedRoute
+        let newInexperiencedRoute = new InexperiencedRoute(newInexperiencedRouteObject);
+
+        const query = "UPDATE inexperienced_routes " +
+        "SET arrivalDateTime = $1, endPoint = ST_GeogFromText($2), notifyOwner = $3, radius = $4, " +
+        "startPoint = ST_GeogFromText($5) " +
+        "WHERE id = $6";
+        const sqlParams = [newInexperiencedRoute.arrivalDateTime,
+            coordsToPointString(newInexperiencedRoute.endPoint),
+            newInexperiencedRoute.notifyOwner,
+            newInexperiencedRoute.radius,
+            coordsToPointString(newInexperiencedRoute.startPoint),
+            existingRoute.id];
+
+        return sqlTransaction(query, sqlParams, providedClient).then(result => {
+            return true;
+        });
 }
 
 /**

@@ -91,7 +91,7 @@ function getDevelopmentEnvVars() {
         STATIC_DIR: "build/static",
         NODE_ENV: "development",
         GOOGLE_APPLICATION_CREDENTIALS: "conf/storage-keyfile.json",
-        STORAGE_BUCKET: "matchmyroute-dev"
+        STORAGE_BUCKET: "matchmyroute-dev",
     });
 };
 

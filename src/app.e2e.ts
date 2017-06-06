@@ -1,5 +1,6 @@
 import * as CloudStorage from "./common/cloudstorage";
-import { RouteDataModel } from "./common/RouteDataModel";
+import ExperiencedRoute from "./common/ExperiencedRouteDataModel";
+import InexperiencedRoute from "./common/InexperiencedRouteDataModel";
 import { app, gracefulShutdown, setupServer } from "./microservices-framework/web/server";
 import { senecaReady } from "./microservices-framework/web/services";
 import * as chai from "chai";
@@ -32,6 +33,7 @@ describe("MatchMyRoute API", () => {
     let userIds = [];   // A list of users created that will be deleted at the end of this test run
     let userJwts = [];  // JWTs corresponding to the respective users in userIds
     let routeIds = [];  // A list of routes created that will be deleted at the end of this test run
+    let inexperiencedRouteIds = [];   // A list of Inexperienced Route IDs that will be deleted at the end of this run
     /* tslint:disable only-arrow-functions */
     before(function(done) { // Must not be an arrow function because we need access to `this`
         this.timeout(0);    // Disable timeouts for the server startup
@@ -60,7 +62,6 @@ describe("MatchMyRoute API", () => {
         let promises = [];
         userIds.forEach((id, i) => {
             const jwt = userJwts[i];
-            logger.debug("Deleting test user " + id);
             promises.push(new Promise((resolve, reject) => {
                 defaultRequest({
                     headers: {
@@ -331,8 +332,8 @@ describe("MatchMyRoute API", () => {
                         email: "updatedtest@example.com",
                         name: "Updated Test User",
                         password: "updatedtest",
-                        photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21"
-                            + "bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
+                        photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21" +
+                        "bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
                     };
                     defaultRequest({
                         headers: {
@@ -856,7 +857,7 @@ describe("MatchMyRoute API", () => {
                 });
             });
         });
-        describe("Routes", () => {
+        describe("ExperiencedRoutes", () => {
             before(done => {
                 // Create another test user (userIds[2])
                 const user = { email: "test2@example.com", name: "Test User3", password: "test" };
@@ -871,7 +872,7 @@ describe("MatchMyRoute API", () => {
                 });
             });
             describe("Creation", () => {
-                it("should create routes", done => {
+                it("should create experienced routes", done => {
                     const route = {
                         arrivalTime: "13:00:00+00",
                         days: ["monday"],
@@ -884,7 +885,7 @@ describe("MatchMyRoute API", () => {
                         },
                         json: route,
                         method: "PUT",
-                        url: url + "/route",
+                        url: url + "/experiencedRoute",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(201, "Expected 201 response but got " +
                             response.statusCode + ", error given is: " + error + " body is " + body);
@@ -896,7 +897,7 @@ describe("MatchMyRoute API", () => {
                         done();
                     });
                 });
-                it("should not create routes when the auth is invalid", done => {
+                it("should not create experienced routes when the auth is invalid", done => {
                     const route = {
                         arrivalTime: "13:00:00+00",
                         departureTime: "12:00:00+00",
@@ -908,7 +909,7 @@ describe("MatchMyRoute API", () => {
                         },
                         json: route,
                         method: "PUT",
-                        url: url + "/route",
+                        url: url + "/experiencedRoute",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
@@ -917,7 +918,7 @@ describe("MatchMyRoute API", () => {
                         done();
                     });
                 });
-                it("should not create routes when the arrival is before the departure", done => {
+                it("should not create experienced routes when the arrival is before the departure", done => {
                     const route = {
                         arrivalTime: "13:00:00+00",
                         departureTime: "14:00:00+00",
@@ -929,7 +930,7 @@ describe("MatchMyRoute API", () => {
                         },
                         json: route,
                         method: "PUT",
-                        url: url + "/route",
+                        url: url + "/experiencedRoute",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
@@ -938,7 +939,7 @@ describe("MatchMyRoute API", () => {
                         done();
                     });
                 });
-                it("should not create routes when the auth missing", done => {
+                it("should not create experienced routes when the auth missing", done => {
                     const route = {
                         arrivalTime: "13:00:00+00",
                         departureTime: "12:00:00+00",
@@ -947,7 +948,7 @@ describe("MatchMyRoute API", () => {
                     defaultRequest({
                         json: route,
                         method: "PUT",
-                        url: url + "/route",
+                        url: url + "/experiencedRoute",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
@@ -959,13 +960,13 @@ describe("MatchMyRoute API", () => {
             });
             describe("Getting", () => {
                 describe("By ID", () => {
-                    it("should get a route by a valid id with no auth", done => {
+                    it("should get an experienced route by a valid id with no auth", done => {
                         defaultRequest({
                             headers: {
                                 Authorization: "Bearer " + userJwts[1],
                             },
                             method: "GET",
-                            url: url + "/route?id=" + routeIds[0],
+                            url: url + "/experiencedRoute?id=" + routeIds[0],
                         }, (error, response, body) => {
                             expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                                 response.statusCode + ", error given is: " + error);
@@ -976,17 +977,17 @@ describe("MatchMyRoute API", () => {
                             done();
                         });
                     });
-                    it("should not get a route by an invalid id", done => {
+                    it("should not get an experienced route by an invalid id", done => {
                         defaultRequest({
                             headers: {
                                 Authorization: "Bearer " + userJwts[1],
                             },
                             method: "GET",
-                            url: url + "/route?id=" + -1,
+                            url: url + "/experiencedRoute?id=" + -1,
                         }, (error, response, body) => {
                             expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
                                 response.statusCode + ", body returned is: " + JSON.stringify(body));
-                            expect(body.error).to.equal("Route doesn't exist");
+                            expect(body.error).to.equal("ExperiencedRoute doesn't exist");
                             expect(body.status).to.equal(404);
                             done();
                         });
@@ -1000,7 +1001,7 @@ describe("MatchMyRoute API", () => {
                 describe("By Matching", () => {
                     before(done => {
                         // Set up a long straight route that is easy to reason about
-                        const route = new RouteDataModel({
+                        const route = new ExperiencedRoute({
                             arrivalTime: "13:15:00+00",
                             days: ["tuesday", "friday", "sunday"],
                             departureTime: "12:15:00+00",
@@ -1013,10 +1014,10 @@ describe("MatchMyRoute API", () => {
                             },
                             json: route,
                             method: "PUT",
-                            url: url + "/route",
+                            url: url + "/experiencedRoute",
                         }, (error, response, body) => {
                             if (response.statusCode !== 201) {
-                                logger.error("Error while setting up the route to test route matching");
+                                logger.error("Error while setting up the experienced route to test route matching");
                                 throw error || body;
                             } else {
                                 routeIds.push(body.result.id); // Should be routeIds[1]
@@ -1024,20 +1025,12 @@ describe("MatchMyRoute API", () => {
                             }
                         });
                     });
-                    it("should match a route", done => {
+                    it("should match an experienced route", done => {
                         const matchParams = {
-                            days: ["thursday", "friday", "sunday"],
-                            end: {
-                                latitude: 0,
-                                longitude: 4.6,
-                                radius: 500,
-                            },
-                            start: {
-                                latitude: 0,
-                                longitude: 1.4,
-                                radius: 500,
-                            },
-                            time: "13:10:00+00",
+                            arrivalDateTime: "2017-09-08T13:20:00+00",
+                            endPoint: [0, 4.6],
+                            radius: 500,
+                            startPoint: [0, 1.4],
                         };
                         defaultRequest({
                             headers: {
@@ -1045,7 +1038,7 @@ describe("MatchMyRoute API", () => {
                             },
                             json: matchParams,
                             method: "POST",
-                            url: url + "/routes/match",
+                            url: url + "/experiencedRoutes/match",
                         }, (error, response, body) => {
                             expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                                 response.statusCode + ", error given is: " + error);
@@ -1061,13 +1054,10 @@ describe("MatchMyRoute API", () => {
                                 JSON.stringify(body.result));
                             expect(thisRoute.owner).to.equal(userIds[1]);
                             // Should be the intersection between the route days and the search days
-                            expect(thisRoute.days).to.eql(["friday", "sunday"]);
-                            expect(moment("2000-01-01T12:15:00+00").isBefore("2000-01-01T" +
-                                thisRoute.meetingTime)).to.equal(true,
+                            expect(moment("2017-09-08T12:15:00+00").isBefore(thisRoute.meetingTime)).to.equal(true,
                                 "meetingTime is before the route's start time (12:15:00+00). Got " +
                                 thisRoute.meetingTime);
-                            expect(moment("2000-01-01T13:15:00+00").isAfter("2000-01-01T" +
-                                thisRoute.meetingTime)).to.equal(true,
+                            expect(moment("2017-09-08T13:15:00+00").isAfter(thisRoute.meetingTime)).to.equal(true,
                                 "meetingTime is after the route's end time (13:15:00+00). Got " +
                                 thisRoute.meetingTime);
                             expect(thisRoute.meetingPoint).to.eql([0, 1.4]);
@@ -1075,20 +1065,12 @@ describe("MatchMyRoute API", () => {
                             done();
                         });
                     });
-                    it("should not match a route in the wrong direction", done => {
+                    it("should not match an experienced route in the wrong direction", done => {
                         const matchParams = {
-                            days: ["thursday", "friday", "sunday"],
-                            end: {
-                                latitude: 0,
-                                longitude: 1.4,
-                                radius: 500,
-                            },
-                            start: {
-                                latitude: 0,
-                                longitude: 4.6,
-                                radius: 500,
-                            },
-                            time: "13:10:00+00",
+                            arrivalDateTime: "2017-09-08T13:20:00+00",
+                            endPoint: [0, 1.4],
+                            radius: 500,
+                            startPoint: [4.6, 0],
                         };
                         defaultRequest({
                             headers: {
@@ -1096,7 +1078,7 @@ describe("MatchMyRoute API", () => {
                             },
                             json: matchParams,
                             method: "POST",
-                            url: url + "/routes/match",
+                            url: url + "/experiencedRoutes/match",
                         }, (error, response, body) => {
                             expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                                 response.statusCode + ", error given is: " + error);
@@ -1113,20 +1095,12 @@ describe("MatchMyRoute API", () => {
                             done();
                         });
                     });
-                    it("should not match a route when non-matching days are given", done => {
+                    it("should not match an experienced route when non-matching days are given", done => {
                         const matchParams = {
-                            days: ["thursday"],
-                            end: {
-                                latitude: 0,
-                                longitude: 4.6,
-                                radius: 500,
-                            },
-                            start: {
-                                latitude: 0,
-                                longitude: 1.4,
-                                radius: 500,
-                            },
-                            time: "13:10:00+00",
+                            arrivalDateTime: "2017-09-09T13:20:00+00",
+                            endPoint: [0, 4.6],
+                            radius: 500,
+                            startPoint: [0, 1.4],
                         };
                         defaultRequest({
                             headers: {
@@ -1134,7 +1108,7 @@ describe("MatchMyRoute API", () => {
                             },
                             json: matchParams,
                             method: "POST",
-                            url: url + "/routes/match",
+                            url: url + "/experiencedRoutes/match",
                         }, (error, response, body) => {
                             expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                                 response.statusCode + ", error given is: " + error);
@@ -1148,55 +1122,6 @@ describe("MatchMyRoute API", () => {
                             })[0];
                             expect(thisRoute).to.equal(undefined, "Route was matched. Results were " +
                                 JSON.stringify(body.result));
-                            done();
-                        });
-                    });
-                    it("should match a route when neither days nor time is given", done => {
-                        const matchParams = {
-                            end: {
-                                latitude: 0,
-                                longitude: 4.6,
-                                radius: 500,
-                            },
-                            start: {
-                                latitude: 0,
-                                longitude: 1.4,
-                                radius: 500,
-                            },
-                        };
-                        defaultRequest({
-                            headers: {
-                                Authorization: "Bearer " + userJwts[1],
-                            },
-                            json: matchParams,
-                            method: "POST",
-                            url: url + "/routes/match",
-                        }, (error, response, body) => {
-                            expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
-                                response.statusCode + ", error given is: " + error);
-                            if (typeof body === "string") {
-                                body = JSON.parse(body);
-                            }
-                            expect(body.result instanceof Array).to.equal(true, "body.result is not a list of " +
-                                "results, body is: " + JSON.stringify(body));
-                            const thisRoute = body.result.filter((route) => {
-                                return route.id === routeIds[1];
-                            })[0];
-                            expect(thisRoute).to.not.equal(undefined, "Route was not matched. Results were " +
-                                JSON.stringify(body.result));
-                            expect(thisRoute.owner).to.equal(userIds[1]);
-                            // Should be the intersection between the route days and the search days
-                            expect(thisRoute.days).to.eql(["tuesday", "friday", "sunday"]);
-                            expect(moment("2000-01-01T12:15:00+00").isBefore("2000-01-01T" +
-                                thisRoute.meetingTime)).to.equal(true,
-                                "meetingTime is before the route's start time (12:15:00+00). Got " +
-                                thisRoute.meetingTime);
-                            expect(moment("2000-01-01T13:15:00+00").isAfter("2000-01-01T" +
-                                thisRoute.meetingTime)).to.equal(true,
-                                "meetingTime is after the route's end time (13:15:00+00). Got " +
-                                thisRoute.meetingTime);
-                            expect(thisRoute.meetingPoint).to.eql([0, 1.4]);
-                            expect(thisRoute.divorcePoint).to.eql([0, 4.6]);
                             done();
                         });
                     });
@@ -1217,7 +1142,7 @@ describe("MatchMyRoute API", () => {
                         },
                         json: updates,
                         method: "POST",
-                        url: url + "/route",
+                        url: url + "/experiencedRoute",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
@@ -1226,14 +1151,14 @@ describe("MatchMyRoute API", () => {
                                 Authorization: "Bearer " + userJwts[1],
                             },
                             method: "GET",
-                            url: url + "/route?id=" + routeIds[0],
+                            url: url + "/experiencedRoute?id=" + routeIds[0],
                         }, (error2, response2, body2) => {
                             let route;
                             expect(body2.result.length).to.equal(1);
                             try {
-                                route = new RouteDataModel(body2.result[0]);
+                                route = new ExperiencedRoute(body2.result[0]);
                             } catch (err) {
-                                assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
+                                assert.fail(0, 1, "Update resulted in an invalid ExperiencedRoute: " +
                                     err).and.notify(done);
                             }
                             expect(route.days).to.eql(["tuesday"]);
@@ -1255,7 +1180,7 @@ describe("MatchMyRoute API", () => {
                         },
                         json: updates,
                         method: "POST",
-                        url: url + "/route",
+                        url: url + "/experiencedRoute",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
@@ -1264,13 +1189,13 @@ describe("MatchMyRoute API", () => {
                                 Authorization: "Bearer " + userJwts[1],
                             },
                             method: "GET",
-                            url: url + "/route?id=" + routeIds[0],
+                            url: url + "/experiencedRoute?id=" + routeIds[0],
                         }, (error2, response2, body2) => {
                             let route;
                             try {
-                                route = new RouteDataModel(body2.result[0]);
+                                route = new ExperiencedRoute(body2.result[0]);
                             } catch (err) {
-                                assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
+                                assert.fail(0, 1, "Update resulted in an invalid ExperiencedRoute: " +
                                     err).and.notify(done);
                             }
                             expect(route.days).to.eql(["tuesday"]);
@@ -1292,7 +1217,7 @@ describe("MatchMyRoute API", () => {
                         },
                         json: updates,
                         method: "POST",
-                        url: url + "/route",
+                        url: url + "/experiencedRoute",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
@@ -1301,13 +1226,13 @@ describe("MatchMyRoute API", () => {
                                 Authorization: "Bearer " + userJwts[1],
                             },
                             method: "GET",
-                            url: url + "/route?id=" + routeIds[0],
+                            url: url + "/experiencedRoute?id=" + routeIds[0],
                         }, (error2, response2, body2) => {
                             let route;
                             try {
-                                route = new RouteDataModel(body2.result[0]);
+                                route = new ExperiencedRoute(body2.result[0]);
                             } catch (err) {
-                                assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
+                                assert.fail(0, 1, "Update resulted in an invalid ExperiencedRoute: " +
                                     err).and.notify(done);
                             }
                             expect(route.days).to.eql(["tuesday"]);
@@ -1329,7 +1254,7 @@ describe("MatchMyRoute API", () => {
                         },
                         json: updates,
                         method: "POST",
-                        url: url + "/route",
+                        url: url + "/experiencedRoute",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
@@ -1338,13 +1263,13 @@ describe("MatchMyRoute API", () => {
                                 Authorization: "Bearer " + userJwts[1],
                             },
                             method: "GET",
-                            url: url + "/route?id=" + routeIds[0],
+                            url: url + "/experiencedRoute?id=" + routeIds[0],
                         }, (error2, response2, body2) => {
                             let route;
                             try {
-                                route = new RouteDataModel(body2.result[0]);
+                                route = new ExperiencedRoute(body2.result[0]);
                             } catch (err) {
-                                assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
+                                assert.fail(0, 1, "Update resulted in an invalid ExperiencedRoute: " +
                                     err).and.notify(done);
                             }
                             expect(route.days).to.eql(["monday", "sunday"]);
@@ -1366,7 +1291,7 @@ describe("MatchMyRoute API", () => {
                         },
                         json: updates,
                         method: "POST",
-                        url: url + "/route",
+                        url: url + "/experiencedRoute",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
@@ -1375,13 +1300,13 @@ describe("MatchMyRoute API", () => {
                                 Authorization: "Bearer " + userJwts[1],
                             },
                             method: "GET",
-                            url: url + "/route?id=" + routeIds[0],
+                            url: url + "/experiencedRoute?id=" + routeIds[0],
                         }, (error2, response2, body2) => {
                             let route;
                             try {
-                                route = new RouteDataModel(body2.result[0]);
+                                route = new ExperiencedRoute(body2.result[0]);
                             } catch (err) {
-                                assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
+                                assert.fail(0, 1, "Update resulted in an invalid ExperiencedRoute: " +
                                     err).and.notify(done);
                             }
                             expect(route.days).to.eql(["monday", "sunday"]);
@@ -1403,7 +1328,7 @@ describe("MatchMyRoute API", () => {
                         },
                         json: updates,
                         method: "POST",
-                        url: url + "/route",
+                        url: url + "/experiencedRoute",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
@@ -1412,13 +1337,13 @@ describe("MatchMyRoute API", () => {
                                 Authorization: "Bearer " + userJwts[1],
                             },
                             method: "GET",
-                            url: url + "/route?id=" + routeIds[0],
+                            url: url + "/experiencedRoute?id=" + routeIds[0],
                         }, (error2, response2, body2) => {
                             let route;
                             try {
-                                route = new RouteDataModel(body2.result[0]);
+                                route = new ExperiencedRoute(body2.result[0]);
                             } catch (err) {
-                                assert.fail(0, 1, "Update resulted in an invalid RouteDataModel: " +
+                                assert.fail(0, 1, "Update resulted in an invalid ExperiencedRoute: " +
                                     err).and.notify(done);
                             }
                             expect(route.owner).to.equal(userIds[1]);
@@ -1437,7 +1362,7 @@ describe("MatchMyRoute API", () => {
                         },
                         json: updates,
                         method: "POST",
-                        url: url + "/route",
+                        url: url + "/experiencedRoute",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
@@ -1457,7 +1382,7 @@ describe("MatchMyRoute API", () => {
                         },
                         json: updates,
                         method: "POST",
-                        url: url + "/route",
+                        url: url + "/experiencedRoute",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
@@ -1478,7 +1403,7 @@ describe("MatchMyRoute API", () => {
                         },
                         json: updates,
                         method: "POST",
-                        url: url + "/route",
+                        url: url + "/experiencedRoute",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
@@ -1498,12 +1423,12 @@ describe("MatchMyRoute API", () => {
                         },
                         json: updates,
                         method: "POST",
-                        url: url + "/route",
+                        url: url + "/experiencedRoute",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
-                        expect(body.error).to.equal("Coordinates in a Route should only have 2 items in them," +
-                            " [latitude, longitude]");
+                        expect(body.error).to.equal("Coordinates in a ExperiencedRoute should only have 2 " +
+                            "items in them, [latitude, longitude]");
                         expect(body.status).to.equal(400);
                         done();
                     });
@@ -1519,7 +1444,7 @@ describe("MatchMyRoute API", () => {
                         },
                         json: updates,
                         method: "POST",
-                        url: url + "/route",
+                        url: url + "/experiencedRoute",
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
@@ -1544,31 +1469,31 @@ describe("MatchMyRoute API", () => {
                         },
                         json: route,
                         method: "PUT",
-                        url: url + "/route",
+                        url: url + "/experiencedRoute",
                     }, (error, response, body) => {
                         routeIds.push(parseInt(body.result.id, 10));
                         done();
                     });
                 });
-                it("should not delete a route with an invalid id", done => {
+                it("should not delete an experienced route with an invalid id", done => {
                     defaultRequest({
                         headers: {
                             Authorization: "Bearer " + userJwts[1],
                         },
                         method: "DELETE",
-                        url: url + "/route?id=" + -1,
+                        url: url + "/experiencedRoute?id=" + -1,
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(404, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
-                        expect(body.error).to.equal("Route doesn't exist");
+                        expect(body.error).to.equal("ExperiencedRoute doesn't exist");
                         expect(body.status).to.equal(404);
                         done();
                     });
                 });
-                it("should not delete a route with no auth", done => {
+                it("should not delete an experienced route with no auth", done => {
                     defaultRequest({
                         method: "DELETE",
-                        url: url + "/route?id=" + routeIds[0],
+                        url: url + "/experiencedRoute?id=" + routeIds[0],
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
@@ -1583,7 +1508,7 @@ describe("MatchMyRoute API", () => {
                             Authorization: "Bearer " + userJwts[2],
                         },
                         method: "DELETE",
-                        url: url + "/route?id=" + routeIds[0],
+                        url: url + "/experiencedRoute?id=" + routeIds[0],
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(body));
@@ -1592,13 +1517,13 @@ describe("MatchMyRoute API", () => {
                         done();
                     });
                 });
-                it("should delete a route", done => {
+                it("should delete an experienced route", done => {
                     defaultRequest({
                         headers: {
                             Authorization: "Bearer " + userJwts[1],
                         },
                         method: "DELETE",
-                        url: url + "/route?id=" + routeIds[0],
+                        url: url + "/experiencedRoute?id=" + routeIds[0],
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
@@ -1607,7 +1532,7 @@ describe("MatchMyRoute API", () => {
                                 Authorization: "Bearer " + userJwts[1],
                             },
                             method: "GET",
-                            url: url + "/route?id=" + routeIds[0],
+                            url: url + "/experiencedRoute?id=" + routeIds[0],
                         }, (error2, response2, body2) => {
                             expect(response2.statusCode).to.equal(404, "Expected 404 response but got " +
                                 response2.statusCode + ", body returned is: " + JSON.stringify(body2) +
@@ -1632,11 +1557,956 @@ describe("MatchMyRoute API", () => {
                                 Authorization: "Bearer " + userJwts[2],
                             },
                             method: "GET",
-                            url: url + "/route?id=" + routeIds[2],
+                            url: url + "/experiencedRoute?id=" + routeIds[2],
                         }, (error2, response2, body2) => {
                             expect(response2.statusCode).to.equal(403, "Expected 403 response but got " +
                                 response2.statusCode + ", body returned is: " + JSON.stringify(body2) +
                                 ". This means the user was not deleted");
+                            done();
+                        });
+                    });
+                });
+            });
+        });
+        describe("Inexperienced Routes", () => {
+            before(done => {
+                // Create another test user (userIds[3])
+                const user = { email: "test3@example.com", name: "Test User4", password: "test" };
+                defaultRequest({
+                    json: user,
+                    method: "PUT",
+                    url: url + "/user",
+                }, (error, response, body) => {
+                    userIds.push(parseInt(body.result.id, 10));
+                    userJwts.push(body.result.jwt.token);
+                    done();
+                });
+            });
+            describe("Creation", () => {
+                it("should create inexperienced routes", done => {
+                    const inexperiencedRoute = {
+                        arrivalDateTime: "2000-01-01T13:00:00+00",
+                        endPoint: [15, 15],
+                        notifyOwner: false,
+                        radius: 1000,
+                        startPoint: [10, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: inexperiencedRoute,
+                        method: "PUT",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(201, "Expected 201 response but got " +
+                            response.statusCode + ", error given is: " + error + " body is " + JSON.stringify(body));
+                        expect(typeof body).to.equal("object", "Body is of unexpected type. " +
+                            "Expected object, but got a " + typeof body);
+                        expect(parseInt(body.result, 10)).to.not.equal(NaN, "The returned ID is NaN. " +
+                            "Full response body is: " + JSON.stringify(body));
+                        inexperiencedRouteIds.push(parseInt(body.result.id, 10));
+                        done();
+                    });
+                });
+                it("should not create inexperienced route with invalid auth", done => {
+                    const inexperiencedRoute = {
+                        arrivalDateTime: "2000-01-01T13:00:00+00",
+                        endPoint: [15, 15],
+                        notifyOwner: false,
+                        radius: 1000,
+                        startPoint: [10, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer foobar",
+                        },
+                        json: inexperiencedRoute,
+                        method: "PUT",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorization");
+                        expect(body.status).to.equal(403);
+                        done();
+                    });
+                });
+                it("should not create inexperienced route with no auth", done => {
+                    const inexperiencedRoute = {
+                        arrivalDateTime: "2000-01-01T13:00:00+00",
+                        endPoint: [15, 15],
+                        notifyOwner: false,
+                        radius: 1000,
+                        startPoint: [10, 10],
+                    };
+                    defaultRequest({
+                        headers: {},
+                        json: inexperiencedRoute,
+                        method: "PUT",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorization");
+                        expect(body.status).to.equal(403);
+                        done();
+                    });
+                });
+                it("should not create inexperienced route with invalid radius", done => {
+                    const inexperiencedRoute = {
+                        arrivalDateTime: "2000-01-01T13:00:00+00",
+                        endPoint: [15, 15],
+                        notifyOwner: false,
+                        radius: -500,
+                        startPoint: [10, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: inexperiencedRoute,
+                        method: "PUT",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Radius must be positive");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+                it("should not create inexperienced route with invalid startPoint (3D)", done => {
+                    const inexperiencedRoute = {
+                        arrivalDateTime: "2000-01-01T13:00:00+00",
+                        endPoint: [15, 15],
+                        notifyOwner: false,
+                        radius: -500,
+                        startPoint: [10, 10, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: inexperiencedRoute,
+                        method: "PUT",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("InexperiencedRoute requires a 2D start point");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+                it("should not create inexperienced route with invalid startPoint (1D)", done => {
+                    const inexperiencedRoute = {
+                        arrivalDateTime: "2000-01-01T13:00:00+00",
+                        endPoint: [15, 15],
+                        notifyOwner: false,
+                        radius: -500,
+                        startPoint: [10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: inexperiencedRoute,
+                        method: "PUT",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("InexperiencedRoute requires a 2D start point");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+                it("should not create inexperienced route with invalid endPoint (3D)", done => {
+                    const inexperiencedRoute = {
+                        arrivalDateTime: "2000-01-01T13:00:00+00",
+                        endPoint: [15, 15, 15],
+                        notifyOwner: false,
+                        radius: -500,
+                        startPoint: [10, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: inexperiencedRoute,
+                        method: "PUT",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("InexperiencedRoute requires a 2D end point");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+                it("should not create inexperienced route with invalid endPoint (1D)", done => {
+                    const inexperiencedRoute = {
+                        arrivalDateTime: "2000-01-01T13:00:00+00",
+                        endPoint: [15],
+                        notifyOwner: false,
+                        radius: -500,
+                        startPoint: [10, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: inexperiencedRoute,
+                        method: "PUT",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("InexperiencedRoute requires a 2D end point");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+            });
+            describe("Retrieval", () => {
+                it("should get an inexperiencedRoute by a valid id", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        method: "GET",
+                        url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        expect(body.result.length).to.equal(1);
+                        expect(body.result[0].owner).to.equal(userIds[3],
+                            "Inexperienced route belongs to another user." +
+                            "Expected owner to be " + userIds[3] + ", but it was " + body.result.owner +
+                            ". Full response body is: " + JSON.stringify(body));
+                        done();
+                    });
+                });
+                it("should not get an experienced route by an invalid id", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        method: "GET",
+                        url: url + "/inexperiencedRoute?id=-1",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Inexperienced Route doesn't exist");
+                        expect(body.status).to.equal(404);
+                        done();
+                    });
+                });
+                it("should not get an inexperienced route with no auth", done => {
+                    defaultRequest({
+                        headers: {},
+                        method: "GET",
+                        url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorization");
+                        expect(body.status).to.equal(403);
+                        done();
+                    });
+                });
+            });
+            describe("Querying against Routes", () => {
+                let routeId;
+                let shouldMatchId;
+                let shouldNotMatchId;
+                before("set up an experienced route and two inexperienced routes that do and don't match it", done => {
+                    // Set up a long straight route that is easy to reason about
+                    // Then set up an inexperienced route that should match this route,
+                    // and one that shouldn't
+                    const route = new ExperiencedRoute({
+                        arrivalTime: "13:15:00+00",
+                        days: ["tuesday", "friday", "sunday"],
+                        departureTime: "12:15:00+00",
+                        owner: userIds[3],
+                        route: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6]],
+                    });
+                    const matchingInexperiencedRoute = {
+                        arrivalDateTime: "2017-06-02T12:00:00+00",
+                        endPoint: [0, 4.8],
+                        notifyOwner: false,
+                        radius: 1000,
+                        startPoint: [0, 1.3],
+                    };
+                    const nonMatchingInexperiencedRoute = {
+                        arrivalDateTime: "2017-06-02T12:00:00+00",
+                        endPoint: [0, 1.5],
+                        notifyOwner: false,
+                        radius: 1000,
+                        startPoint: [0, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: route,
+                        method: "PUT",
+                        url: url + "/experiencedRoute",
+                    }, (error, response, body) => {
+                        if (response.statusCode !== 201) {
+                            logger.error("Error while setting up the route to test route matching");
+                            throw error || body;
+                        } else {
+                            routeIds.push(body.result.id);
+                            routeId = body.result.id;
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + userJwts[3],
+                                },
+                                json: matchingInexperiencedRoute,
+                                method: "PUT",
+                                url: url + "/inexperiencedRoute",
+                            }, (error2, response2, body2) => {
+                                if (response2.statusCode !== 201) {
+                                    logger.error("Error while setting up the (matching) inexperienced route to " +
+                                        "test route matching");
+                                    throw error2 || body2;
+                                } else {
+                                    shouldMatchId = body2.result.id;
+                                    defaultRequest({
+                                        headers: {
+                                            Authorization: "Bearer " + userJwts[3],
+                                        },
+                                        json: nonMatchingInexperiencedRoute,
+                                        method: "PUT",
+                                        url: url + "/inexperiencedRoute",
+                                    }, (error3, response3, body3) => {
+                                        if (response3.statusCode !== 201) {
+                                            logger.error("Error while setting up the (non-matching) " +
+                                                "inexperienced route to test route matching");
+                                            throw error3 || body3;
+                                        } else {
+                                            shouldNotMatchId = body3.result.id;
+                                            done();
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                });
+                it("should match with a matching inexperienced route", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        method: "GET",
+                        url: url + "/inexperiencedRoute/query?id=" + shouldMatchId,
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        expect(body.result instanceof Array).to.equal(true, "body.result is not a list of " +
+                            "results, body is: " + JSON.stringify(body));
+                        const thisRoute = body.result.filter((route) => {
+                            return route.id === routeId;
+                        })[0];
+                        expect(thisRoute).to.not.equal(undefined, "Route was not matched. Results were " +
+                            JSON.stringify(body.result));
+                        done();
+                    });
+                });
+                it("should give an empty list with a non matching inexperienced route", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        method: "GET",
+                        url: url + "/inexperiencedRoute/query?id=" + shouldNotMatchId,
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        expect(body.result instanceof Array).to.equal(true, "body.result is not a list of " +
+                            "results, body is: " + JSON.stringify(body));
+                        const routes = body.result.filter((route) => {
+                            return route.id === routeId;
+                        });
+                        expect(routes.length).to.equal(0, "Route was matched. Results were " +
+                            JSON.stringify(body.result));
+                        done();
+                    });
+                });
+                it("should err with no auth", done => {
+                    defaultRequest({
+                        headers: {},
+                        method: "GET",
+                        url: url + "/inexperiencedRoute/query?id=" + shouldMatchId,
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorization");
+                        expect(body.status).to.equal(403);
+                        done();
+                    });
+                });
+                it("should err with someone elses inexperienced route", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[2],
+                        },
+                        method: "GET",
+                        url: url + "/inexperiencedRoute/query?id=" + shouldMatchId,
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorization");
+                        expect(body.status).to.equal(403);
+                        done();
+                    });
+                });
+                it("should err with no id", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[2],
+                        },
+                        method: "GET",
+                        url: url + "/inexperiencedRoute/query?id",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid ID");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+            });
+            describe("Updating", () => {
+                it("should handle an empty update", done => {
+                    const updates = {
+                        id: inexperiencedRouteIds[0],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        done();
+                    });
+                });
+                it("should update all properties at once", done => {
+                    const updates = {
+                        arrivalDateTime: "2000-01-01T13:30:00+00",
+                        endPoint: [14, 14],
+                        id: inexperiencedRouteIds[0],
+                        notifyOwner: true,
+                        radius: 1500,
+                        startPoint: [11, 11],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                        }, (error2, response2, body2) => {
+                            let inexperiencedRoute;
+                            expect(body2.result.length).to.equal(1);
+                            try {
+                                inexperiencedRoute = new InexperiencedRoute(body2.result[0]);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid InexperiencedRoute: " +
+                                    err).and.notify(done);
+                            }
+                            expect(
+                                moment(inexperiencedRoute.arrivalDateTime).isSame(updates.arrivalDateTime)
+                            ).to.be.true;
+                            expect(inexperiencedRoute.endPoint).to.eql(updates.endPoint);
+                            expect(inexperiencedRoute.notifyOwner).to.equal(updates.notifyOwner);
+                            expect(inexperiencedRoute.radius).to.equal(updates.radius);
+                            expect(inexperiencedRoute.startPoint).to.eql(updates.startPoint);
+                            done();
+                        });
+                    });
+                });
+                it("should update one property at a time - arrivalDateTime", done => {
+                    const updates = {
+                        arrivalDateTime: "2000-01-01T13:00:00+00",
+                        id: inexperiencedRouteIds[0],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                        }, (error2, response2, body2) => {
+                            let inexperiencedRoute;
+                            expect(body2.result.length).to.equal(1);
+                            try {
+                                inexperiencedRoute = new InexperiencedRoute(body2.result[0]);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid InexperiencedRoute: " +
+                                    err).and.notify(done);
+                            }
+                            expect(
+                                moment(inexperiencedRoute.arrivalDateTime).isSame(updates.arrivalDateTime)
+                            ).to.be.true;
+                            done();
+                        });
+                    });
+                });
+                it("should update one property at a time - radius", done => {
+                    const updates = {
+                        id: inexperiencedRouteIds[0],
+                        radius: 1000,
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                        }, (error2, response2, body2) => {
+                            let inexperiencedRoute;
+                            expect(body2.result.length).to.equal(1);
+                            try {
+                                inexperiencedRoute = new InexperiencedRoute(body2.result[0]);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid InexperiencedRoute: " +
+                                    err).and.notify(done);
+                            }
+                            expect(inexperiencedRoute.radius).to.equal(updates.radius);
+                            done();
+                        });
+                    });
+                });
+                it("should update one property at a time - notifyOwner", done => {
+                    const updates = {
+                        id: inexperiencedRouteIds[0],
+                        notifyOwner: false,
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                        }, (error2, response2, body2) => {
+                            let inexperiencedRoute;
+                            expect(body2.result.length).to.equal(1);
+                            try {
+                                inexperiencedRoute = new InexperiencedRoute(body2.result[0]);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid InexperiencedRoute: " +
+                                    err).and.notify(done);
+                            }
+                            expect(inexperiencedRoute.notifyOwner).to.equal(updates.notifyOwner);
+                            done();
+                        });
+                    });
+                });
+                it("should update one property at a time - endPoint", done => {
+                    const updates = {
+                        endPoint: [15, 15],
+                        id: inexperiencedRouteIds[0],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                        }, (error2, response2, body2) => {
+                            let inexperiencedRoute;
+                            expect(body2.result.length).to.equal(1);
+                            try {
+                                inexperiencedRoute = new InexperiencedRoute(body2.result[0]);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid InexperiencedRoute: " +
+                                    err).and.notify(done);
+                            }
+                            expect(inexperiencedRoute.endPoint).to.eql(updates.endPoint);
+                            done();
+                        });
+                    });
+                });
+                it("should update one property at a time - startPoint", done => {
+                    const updates = {
+                        id: inexperiencedRouteIds[0],
+                        startPoint: [10, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                        }, (error2, response2, body2) => {
+                            let inexperiencedRoute;
+                            expect(body2.result.length).to.equal(1);
+                            try {
+                                inexperiencedRoute = new InexperiencedRoute(body2.result[0]);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid InexperiencedRoute: " +
+                                    err).and.notify(done);
+                            }
+                            expect(inexperiencedRoute.startPoint).to.eql(updates.startPoint);
+                            done();
+                        });
+                    });
+                });
+                it("should not update owner", done => {
+                    const updates = {
+                        id: inexperiencedRouteIds[0],
+                        owner: -10,
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                        }, (error2, response2, body2) => {
+                            let inexperiencedRoute;
+                            expect(body2.result.length).to.equal(1);
+                            try {
+                                inexperiencedRoute = new InexperiencedRoute(body2.result[0]);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid InexperiencedRoute: " +
+                                    err).and.notify(done);
+                            }
+                            expect(inexperiencedRoute.owner).not.to.equal(updates.owner);
+                            done();
+                        });
+                    });
+                });
+                it("should not update with bad auth", done => {
+                    const updates = {
+                        arrivalDateTime: "2000-01-01T13:30:00+00",
+                        endPoint: [14, 14],
+                        id: inexperiencedRouteIds[0],
+                        notifyOwner: true,
+                        radius: 1500,
+                        startPoint: [11, 11],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[1],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                        }, (error2, response2, body2) => {
+                            let inexperiencedRoute;
+                            expect(body2.result.length).to.equal(1);
+                            try {
+                                inexperiencedRoute = new InexperiencedRoute(body2.result[0]);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid InexperiencedRoute: " +
+                                    err).and.notify(done);
+                            }
+                            expect(inexperiencedRoute.arrivalDateTime).not.to.equal(updates.arrivalDateTime);
+                            expect(inexperiencedRoute.endPoint).not.to.eql(updates.endPoint);
+                            expect(inexperiencedRoute.notifyOwner).not.to.equal(updates.notifyOwner);
+                            expect(inexperiencedRoute.radius).not.to.equal(updates.radius);
+                            expect(inexperiencedRoute.startPoint).not.to.eql(updates.startPoint);
+                            done();
+                        });
+                    });
+                });
+                it("should not update with invalid radius", done => {
+                    const updates = {
+                        id: inexperiencedRouteIds[0],
+                        radius: -1500,
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        expect(body.error).to.equal("Radius must be positive");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+                it("should not update with invalid startPoint (3D)", done => {
+                    const updates = {
+                        id: inexperiencedRouteIds[0],
+                        startPoint: [10, 10, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        expect(body.error).to.equal("InexperiencedRoute requires a 2D start point");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+                it("should not update with invalid startPoint (1D)", done => {
+                    const updates = {
+                        id: inexperiencedRouteIds[0],
+                        startPoint: [10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        expect(body.error).to.equal("InexperiencedRoute requires a 2D start point");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+                it("should not update with invalid endPoint (3D)", done => {
+                    const updates = {
+                        endPoint: [10, 10, 10],
+                        id: inexperiencedRouteIds[0],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        expect(body.error).to.equal("InexperiencedRoute requires a 2D end point");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+                it("should not update with invalid endPoint (1D)", done => {
+                    const updates = {
+                        endPoint: [10],
+                        id: inexperiencedRouteIds[0],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        expect(body.error).to.equal("InexperiencedRoute requires a 2D end point");
+                        expect(body.status).to.equal(400);
+                        done();
+                    });
+                });
+            });
+            describe("Deleting", () => {
+                before(done => {
+                    // Make a new inexperienced route (inexperiencedRouteIds[1])
+                    const inexperiencedRoute = {
+                        arrivalTime: "2000-01-01T13:00:00+00",
+                        endPoint: [15, 15],
+                        notifyOwner: false,
+                        radius: 1000,
+                        startPoint: [10, 10],
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        json: inexperiencedRoute,
+                        method: "PUT",
+                        url: url + "/inexperiencedRoute",
+                    }, (error, response, body) => {
+                        inexperiencedRouteIds.push(body.result);
+                        done();
+                    });
+                });
+                it("should not delete an inexperienced route with an invalid id", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        method: "DELETE",
+                        url: url + "/inexperiencedRoute?id=" + -1,
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(404, "Expected 403 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Inexperienced Route doesn't exist");
+                        expect(body.status).to.equal(404);
+                        done();
+                    });
+                });
+                it("should not delete an inexperienced route with no auth", done => {
+                    defaultRequest({
+                        method: "DELETE",
+                        url: url + "/InexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorization");
+                        expect(body.status).to.equal(403);
+                        done();
+                    });
+                });
+                it("should not be able to delete another user's inexperienced route", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[2],
+                        },
+                        method: "DELETE",
+                        url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(403, "Expected 404 response but got " +
+                            response.statusCode + ", body returned is: " + JSON.stringify(body));
+                        expect(body.error).to.equal("Invalid authorization");
+                        expect(body.status).to.equal(403);
+                        done();
+                    });
+                });
+                it("should delete an inexperienced route", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        method: "DELETE",
+                        url: url + "/InexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                        }, (error2, response2, body2) => {
+                            expect(response2.statusCode).to.equal(404, "Expected 404 response but got " +
+                                response2.statusCode + ", body returned is: " + JSON.stringify(body2) +
+                                ". This means the inexperiencedRoute was not deleted");
+                            done();
+                        });
+                    });
+                });
+                it("should delete a user's inexperienced routes when that user is deleted", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[3],
+                        },
+                        method: "DELETE",
+                        url: url + "/user?id=" + userIds[3],
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[3],
+                            },
+                            method: "GET",
+                            url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[1],
+                        }, (error2, response2, body2) => {
+                            expect(response2.statusCode).to.equal(403, "Expected 403 response but got " +
+                                response2.statusCode + ", body returned is: " + JSON.stringify(body2) +
+                                ". This means the inexperiencedRoute was not deleted");
                             done();
                         });
                     });

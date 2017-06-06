@@ -1,4 +1,4 @@
-import { doIfUser } from "../../common/auth";
+import { getIdFromJWT } from "../../common/auth";
 import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 // import * as logger from "winston";
@@ -15,7 +15,7 @@ const operation = {
         consumes: ["application/json"],
         parameters: [
             {
-                description: "The route ID",
+                description: "The inexperienced route ID",
                 in: "query",
                 name: "id",
                 required: true,
@@ -25,7 +25,7 @@ const operation = {
         produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
-                description: "The route was deleted",
+                description: "The inexperienced route was deleted",
             },
             403: {
                 description: "An invalid authorization token was supplied",
@@ -34,7 +34,7 @@ const operation = {
                 },
             },
             404: {
-                description: "The route doesn't exist",
+                description: "The inexperienced route doesn't exist",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
@@ -51,9 +51,9 @@ const operation = {
                 userAuth: [],
             },
         ],
-        summary: "Delete a route",
+        summary: "Delete an inexperienced route",
         tags: [
-            "Routes",
+            "InexperiencedRoutes",
         ],
     },
 };
@@ -63,15 +63,22 @@ const operation = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    const id = parseInt(params.id, 10);
-    return Database.getRouteById(id).then(route => {
-        return doIfUser(params.authorization, route.owner, () => {
-            return Database.deleteRoute(id);
-        });
+    const inexperiencedRouteId = parseInt(params.id, 10);
+    return getIdFromJWT(params.authorization).then(userId => {
+        return Database.getInexperiencedRoutes({userId, id: inexperiencedRouteId});
+    }).then(inexperiencedRoutes => {
+        if (inexperiencedRoutes.length === 1) {
+            return Database.deleteInexperiencedRoute(inexperiencedRouteId);
+        } else if (inexperiencedRoutes.length === 0) {
+            throw new Error("404:InexperiencedRoute doesn't exist");
+        } else {
+            throw new Error("Multiple inexperienced routes exist with the id " + inexperiencedRouteId +
+                "! This needs to be resolved");
+        }
     });
 };
 
 // end point definition
-export const deleteRoute = new MicroserviceEndpoint("delete")
+export const deleteInexperiencedRoute = new MicroserviceEndpoint("deleteInexperiencedRoute")
     .addSwaggerOperation(operation)
     .addService(service);

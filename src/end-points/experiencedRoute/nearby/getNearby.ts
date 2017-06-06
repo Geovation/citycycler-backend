@@ -61,7 +61,7 @@ const operation = {
         },
         summary: "Find routes near a given point",
         tags: [
-            "Routes",
+            "ExperiencedRoutes",
         ],
     },
 };
@@ -95,7 +95,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
 
     logger.debug("Searching for routes within " + radius + "m of (" + lat + "," + lon + ")");
 
-    return Database.getRoutesNearby(parseInt(radius, 10), parseInt(lat, 10), parseInt(lon, 10));
+    return Database.getExperiencedRoutesNearby(parseInt(radius, 10), parseInt(lat, 10), parseInt(lon, 10));
 };
 
 // end point definition

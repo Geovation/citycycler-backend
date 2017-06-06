@@ -1,6 +1,6 @@
-import { getIdFromJWT } from "../../../common/auth";
-import { createRouteQuery as createQuery } from "../../../common/database";
-import { MicroserviceEndpoint } from "../../../microservices-framework/web/services/microservice-endpoint";
+import { getIdFromJWT } from "../../common/auth";
+import * as Database from "../../common/database";
+import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //
@@ -13,7 +13,7 @@ const operation = {
     put: {
         consumes: ["application/json"],
         description: "This endpoint stores an object that can be used to find matching routes - in effect a " +
-        "query object.",
+        "query object. To search for routes created by this endpoint, make a request to inexperiencedRoute/query?{ID}",
         parameters: [
             {
                 description: "The start and end points of the route that this query will match",
@@ -21,16 +21,16 @@ const operation = {
                 name: "queryObj",
                 required: true,
                 schema: {
-                    $ref: "#/definitions/RouteQuery",
+                    $ref: "#/definitions/InexperiencedRoute",
                 },
             },
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
             201: {
-                description: "Created a new route query",
+                description: "Created a new inexperienced route",
                 schema: {
-                    $ref: "#/definitions/CreateRouteQueryResponse",
+                    $ref: "#/definitions/CreateInexperiencedRouteResponse",
                 },
             },
             400: {
@@ -59,7 +59,7 @@ const operation = {
         ],
         summary: "Save an inexperienced route",
         tags: [
-            "Routes",
+            "InexperiencedRoutes",
         ],
     },
 };
@@ -67,12 +67,12 @@ const operation = {
 // DEFINITIONS
 
 const definitions = {
-    CreateRouteQueryResponse: {
+    CreateInexperiencedRouteResponse: {
         properties: {
             result: {
                 properties: {
                     id: {
-                        description: "The route query's id",
+                        description: "The inexperienced route's id",
                         type: "integer",
                     },
                 },
@@ -80,27 +80,24 @@ const definitions = {
         },
         required: ["result"],
     },
-    RouteQuery: {
+    InexperiencedRoute: {
         description: "Information needed to search for a matching route",
         properties: {
-            arrivalTime: {
+            arrivalDateTime: {
                 description: "The time in ISO 8601 extended format that the route owner wants to arrive at <endPoint>",
-                type: "integer",
-            },
-            days: {
-                description: "Which days of the week the user can cycle (a matching route) on",
-                example: ["monday", "wednesday", "friday"],
-                items: {
-                    description: "A day of the week",
-                    enum: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
-                    type: "string",
-                },
-                type: "array",
+                example: new Date().toISOString(),
+                type: "string",
             },
             endPoint: {
                 $ref: "#/definitions/Coordinate",
-                description: "Where the user will finish cycling. Must be within <radius> of a route to be " +
-                "considered a match",
+                description: "Where the user will finish cycling. Must be within <radius> of " +
+                "an experienced route to be considered a match",
+                example:  [ 0, 0] ,
+            },
+            notifyOwner: {
+                description: "Does the user want to be notified of any new experienced cyclists who can help them",
+                example: true,
+                type: "boolean",
             },
             radius: {
                 description: "How far away (in meters) the user is willing to cycle from the start and end point",
@@ -109,11 +106,12 @@ const definitions = {
             },
             startPoint: {
                 $ref: "#/definitions/Coordinate",
-                description: "Where the user will start cycling from. Must be within <radius> of a route to be " +
-                "considered a match",
+                description: "Where the user will start cycling from. Must be within <radius> of " +
+                "an experienced route to be considered a match",
+                example:  [ 0, 0] ,
             },
         },
-        required: ["startPoint", "endPoint", "days"],
+        required: ["arrivalDateTime", "radius", "startPoint", "endPoint", "notifyOwner"],
     },
 };
 
@@ -124,7 +122,7 @@ const definitions = {
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
     return getIdFromJWT(params.authorization).then(userId => {
-        return createQuery(userId, payload).then(id => {
+        return Database.createInexperiencedRoute(userId, payload).then(id => {
             return { id, status: 201 };
         });
     }, err => {
@@ -133,7 +131,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
 };
 
 // end point definition
-export const createRouteQuery = new MicroserviceEndpoint("createRouteQuery")
+export const createInexperiencedRoute = new MicroserviceEndpoint("createInexperiencedRoute")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);

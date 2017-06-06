@@ -1,9 +1,10 @@
 import * as Database from "./database";
-import { RouteDataModel } from "./RouteDataModel";
-import RouteQuery from "./RouteQueryDataModel";
+import ExperiencedRoute from "./ExperiencedRouteDataModel";
+import InexperiencedRoute from "./InexperiencedRouteDataModel";
 import User from "./UserDataModels";
 import * as chai from "chai";
 import * as mocha from "mocha";
+import * as moment from "moment";
 
 // const before = mocha.before;
 // const after = mocha.after;
@@ -47,7 +48,7 @@ describe("Various useful functions", () => {
             expect(Database.coordsToLineString(coords)).to.equal(lineString);
         });
     });
-    describe("RouteDataModel", () => {
+    describe("ExperiencedRoute", () => {
         it("should be constructed correctly", () => {
             const obj = {
                 arrivalTime: "13:00:00+00",
@@ -57,7 +58,7 @@ describe("Various useful functions", () => {
                 owner: 123,
                 route: [[0, 0], [1, 1], [2, 2]],
             };
-            const route = new RouteDataModel(obj);
+            const route = new ExperiencedRoute(obj);
             expect(route.arrivalTime).to.equal("13:00:00+00", "Arrival time is wrong! expected 13:00:00+00, got " +
                 route.arrivalTime);
             expect(route.departureTime).to.equal("12:00:00+00", "Departure time is wrong! expected 12:00:00+00, got " +
@@ -76,8 +77,8 @@ describe("Various useful functions", () => {
                 route: [[0, 0], [1, 1], [2, 2]],
             };
             expect(() => {
-                return new RouteDataModel(obj);
-            }).to.throw("400:Route requires a valid arrival time");
+                return new ExperiencedRoute(obj);
+            }).to.throw("400:ExperiencedRoute requires a valid arrival time");
         });
         it("should throw an error if there is no departure time", () => {
             const obj = {
@@ -88,8 +89,8 @@ describe("Various useful functions", () => {
                 route: [[0, 0], [1, 1], [2, 2]],
             };
             expect(() => {
-                return new RouteDataModel(obj);
-            }).to.throw("400:Route requires a valid departure time");
+                return new ExperiencedRoute(obj);
+            }).to.throw("400:ExperiencedRoute requires a valid departure time");
         });
         it("should throw an error if the arrival is before departure", () => {
             const obj = {
@@ -101,7 +102,7 @@ describe("Various useful functions", () => {
                 route: [[0, 0], [1, 1], [2, 2]],
             };
             expect(() => {
-                return new RouteDataModel(obj);
+                return new ExperiencedRoute(obj);
             }).to.throw("400:Arrival time is before Departure time");
         });
         it("should throw an error if there is only one coordinate passed", () => {
@@ -114,8 +115,8 @@ describe("Various useful functions", () => {
                 route: [[0, 0]],
             };
             expect(() => {
-                return new RouteDataModel(obj);
-            }).to.throw("400:Route requires at least 2 points");
+                return new ExperiencedRoute(obj);
+            }).to.throw("400:ExperiencedRoute requires at least 2 points");
         });
         it("should throw an error if there is a 3D coordinate present", () => {
             const obj = {
@@ -127,8 +128,9 @@ describe("Various useful functions", () => {
                 route: [[0, 0], [1, 1, 1], [2, 2]],
             };
             expect(() => {
-                return new RouteDataModel(obj);
-            }).to.throw("400:Coordinates in a Route should only have 2 items in them, [latitude, longitude]");
+                return new ExperiencedRoute(obj);
+            }).to.throw("400:Coordinates in a ExperiencedRoute should only have 2 items in them, " +
+                "[latitude, longitude]");
         });
         it("should throw an error if there is a 1D coordinate present", () => {
             const obj = {
@@ -140,8 +142,9 @@ describe("Various useful functions", () => {
                 route: [[0, 0], [1], [2, 2]],
             };
             expect(() => {
-                return new RouteDataModel(obj);
-            }).to.throw("400:Coordinates in a Route should have exactly 2 items in them, [latitude, longitude]");
+                return new ExperiencedRoute(obj);
+            }).to.throw("400:Coordinates in a ExperiencedRoute should have exactly 2 items in them, " +
+                "[latitude, longitude]");
         });
         it("should throw an error if there is no owner", () => {
             const obj = {
@@ -152,19 +155,19 @@ describe("Various useful functions", () => {
                 route: [[0, 0], [1, 1], [2, 2]],
             };
             expect(() => {
-                return new RouteDataModel(obj);
-            }).to.throw("400:Route requires an owner");
+                return new ExperiencedRoute(obj);
+            }).to.throw("400:ExperiencedRoute requires an owner");
         });
         it("should be constructed correctly from an SQL row", () => {
             const row = {
                 arrivaltime: "13:00:00+00",
-                days: 66,
+                days: ["tuesday", "sunday"],
                 departuretime: "12:00:00+00",
                 id: 321,
                 owner: 123,
                 route: "LINESTRING(0 0,1 1,2 2)",
             };
-            const route = RouteDataModel.fromSQLRow(row);
+            const route = ExperiencedRoute.fromSQLRow(row);
             expect(route.arrivalTime).to.equal("13:00:00+00", "Arrival time is wrong! expected 13:00:00+00, got " +
                 route.arrivalTime);
             expect(route.departureTime).to.equal("12:00:00+00", "Departure time is wrong! expected 12:00:00+00, got " +
@@ -176,110 +179,104 @@ describe("Various useful functions", () => {
             expect(route.route).to.eql([[0, 0], [1, 1], [2, 2]]);
         });
     });
-    describe("RouteQuery", () => {
+    describe("InexperiencedRoute", () => {
         it("should be constructed correctly", () => {
             const obj = {
-                arrivalTime: "13:00:00+00",
-                days: ["tuesday", "sunday"],
+                arrivalDateTime: "2017-09-08T13:00:00+00",
                 endPoint: [1, 1],
                 id: 321,
-                notifyOwner: true,
+                notifyOwner: false,
                 owner: 123,
                 radius: 200,
                 startPoint: [0, 0],
             };
-            const routeQuery = new RouteQuery(obj);
-            expect(routeQuery.arrivalTime).to.equal(
-                "13:00:00+00",
-                "Arrival time is wrong! expected 13:00:00+00, got " + routeQuery.arrivalTime
-            );
-            expect(routeQuery.id).to.equal(321, "ID is wrong! expected 321, got " + routeQuery.id);
-            expect(routeQuery.owner).to.equal(123, "Owner is wrong! expected 123, got " + routeQuery.owner);
-            expect(routeQuery.radius).to.equal(200, "Radius is wrong! expected 200, got " + routeQuery.radius);
-            expect(routeQuery.days).to.eql(["tuesday", "sunday"], "Days is wrong!");
-            expect(routeQuery.startPoint).to.eql([0, 0]);
-            expect(routeQuery.endPoint).to.eql([1, 1]);
-            expect(routeQuery.notifyOwner).to.equal(true);
+            const inexperiencedRoute = new InexperiencedRoute(obj);
+            expect(moment(inexperiencedRoute.arrivalDateTime).isSame(obj.arrivalDateTime)).to.be.true;
+            expect(inexperiencedRoute.id).to.equal(321, "ID is wrong! expected 321, got " +
+                inexperiencedRoute.id);
+            expect(inexperiencedRoute.owner).to.equal(123, "Owner is wrong! expected 123, got " +
+                inexperiencedRoute.owner);
+            expect(inexperiencedRoute.radius).to.equal(200, "Radius is wrong! expected 200, got " +
+                inexperiencedRoute.radius);
+            expect(inexperiencedRoute.startPoint).to.eql([0, 0]);
+            expect(inexperiencedRoute.endPoint).to.eql([1, 1]);
+            expect(inexperiencedRoute.notifyOwner).to.equal(false);
         });
         it("should throw an error if startPoint is 1D", () => {
             const obj = {
-                arrivalTime: "13:00:00+00",
-                days: ["tuesday", "sunday"],
+                arrivalDateTime: "2017-09-09T13:00:00+00",
                 endPoint: [1, 1],
                 id: 321,
+                notifyOwner: false,
                 owner: 123,
                 radius: 200,
                 startPoint: [0],
             };
             expect(() => {
-                return new RouteQuery(obj);
-            }).to.throw("400:RouteQuery requires a 2D start point");
+                return new InexperiencedRoute(obj);
+            }).to.throw("400:InexperiencedRoute requires a 2D start point");
         });
         it("should throw an error if startPoint is 3D", () => {
             const obj = {
-                arrivalTime: "13:00:00+00",
-                days: ["tuesday", "sunday"],
+                arrivalDateTime: "2017-09-09T13:00:00+00",
                 endPoint: [1, 1],
                 id: 321,
+                notifyOwner: false,
                 owner: 123,
                 radius: 200,
                 startPoint: [0, 0, 0],
             };
             expect(() => {
-                return new RouteQuery(obj);
-            }).to.throw("400:RouteQuery requires a 2D start point");
+                return new InexperiencedRoute(obj);
+            }).to.throw("400:InexperiencedRoute requires a 2D start point");
         });
         it("should throw an error if endPoint is 1D", () => {
             const obj = {
-                arrivalTime: "13:00:00+00",
-                days: ["tuesday", "sunday"],
+                arrivalDateTime: "2017-09-09T13:00:00+00",
                 endPoint: [1],
                 id: 321,
+                notifyOwner: false,
                 owner: 123,
                 radius: 200,
                 startPoint: [0, 0],
             };
             expect(() => {
-                return new RouteQuery(obj);
-            }).to.throw("400:RouteQuery requires a 2D end point");
+                return new InexperiencedRoute(obj);
+            }).to.throw("400:InexperiencedRoute requires a 2D end point");
         });
         it("should throw an error if endPoint is 3D", () => {
             const obj = {
-                arrivalTime: "13:00:00+00",
-                days: ["tuesday", "sunday"],
+                arrivalDateTime: "2017-09-09T13:00:00+00",
                 endPoint: [1, 1, 1],
                 id: 321,
+                notifyOwner: false,
                 owner: 123,
                 radius: 200,
                 startPoint: [0, 0],
             };
             expect(() => {
-                return new RouteQuery(obj);
-            }).to.throw("400:RouteQuery requires a 2D end point");
+                return new InexperiencedRoute(obj);
+            }).to.throw("400:InexperiencedRoute requires a 2D end point");
         });
         it("should be constructed correctly from an SQL row", () => {
             const row = {
-                arrivalTime: "13:00:00+00",
-                days: 21,
-                endPoint: "POINT(1 1)",
+                arrivaldatetime: "2017-09-09T13:00:00+00",
+                endpoint: "POINT(1 1)",
                 id: 321,
-                notifyOwner: true,
+                notifyowner: false,
                 owner: 123,
                 radius: 200,
-                startPoint: "POINT(0 0)",
+                startpoint: "POINT(0 0)",
             };
-            const routeQuery = RouteQuery.fromSQLRow(row);
-            expect(routeQuery.arrivalTime).to.equal(
-                "13:00:00+00",
-                "Arrival time is wrong! expected 13:00:00+00, got " + routeQuery.arrivalTime
-            );
-            expect(routeQuery.id).to.equal(321, "ID is wrong! expected 321, got " + routeQuery.id);
-            expect(routeQuery.owner).to.equal(123, "Owner is wrong! expected 123, got " + routeQuery.owner);
-            expect(routeQuery.days).to.eql(["monday", "wednesday", "friday"], "Days is wrong! expected " +
-                "['monday', 'wednesday', 'friday'], got " + routeQuery.days);
-            expect(routeQuery.startPoint).to.eql([0, 0]);
-            expect(routeQuery.endPoint).to.eql([1, 1]);
-            expect(routeQuery.notifyOwner).to.equal(true);
+            const inexperiencedRoute = InexperiencedRoute.fromSQLRow(row);
+            expect(moment(inexperiencedRoute.arrivalDateTime).isSame(row.arrivaldatetime)).to.be.true;
+            expect(inexperiencedRoute.id).to.equal(321, "ID is wrong! expected 321, got " +
+                inexperiencedRoute.id);
+            expect(inexperiencedRoute.owner).to.equal(123, "Owner is wrong! expected 123, got " +
+                inexperiencedRoute.owner);
+            expect(inexperiencedRoute.startPoint).to.eql([0, 0]);
+            expect(inexperiencedRoute.endPoint).to.eql([1, 1]);
+            expect(inexperiencedRoute.notifyOwner).to.equal(false);
         });
     });
     describe("User", () => {

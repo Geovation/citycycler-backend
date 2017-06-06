@@ -54,6 +54,9 @@ export function getIdFromJWT(authHeader: string, providedClient = null): Promise
         const payload = jwt.decode(token, {
             json: true,
         });
+        if (payload === null || payload.id === null) {
+            reject("403:Invalid authorization");
+        }
         // Get the user, so we can use their secret to verify the JWT
         Database.getUserById(payload.id, providedClient).then(user => {
             try {

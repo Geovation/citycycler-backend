@@ -1,5 +1,6 @@
 import { getIdFromJWT } from "../../common/auth";
 import * as Database from "../../common/database";
+import ExperiencedRoute from "../../common/ExperiencedRouteDataModel";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 // import * as logger from "winston";
 
@@ -11,33 +12,35 @@ import { MicroserviceEndpoint } from "../../microservices-framework/web/services
 // TODO:
 // PATH
 const operation = {
-    get: {
+    put: {
         consumes: ["application/json"],
         parameters: [
             {
-                description: "The route ID (if empty, all routes of the user will be returned)",
-                in: "query",
-                name: "id",
-                required: false,
-                type: "integer",
+                description: "The route and metadata about it",
+                in: "body",
+                name: "route",
+                required: true,
+                schema: {
+                    $ref: "#/definitions/NewRouteData",
+                },
             },
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
-            200: {
-                description: "Route was retrieved",
+            201: {
+                description: "New route was created",
                 schema: {
-                    $ref: "#/definitions/GetResponse",
+                    $ref: "#/definitions/CreateRouteResponse",
                 },
             },
-            403: {
-                description: "An invalid authorisation token was supplied",
+            400: {
+                description: "An invalid route object was supplied, see the error message for an explanation",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
             },
-            404: {
-                description: "Route doesn't exist",
+            403: {
+                description: "An invalid authorization token was supplied",
                 schema: {
                     $ref: "#/definitions/Error",
                 },
@@ -54,28 +57,57 @@ const operation = {
                 userAuth: [],
             },
         ],
-        summary: "Retrieve a route by it's ID. If no ID is provided, all routes " +
-        "of the user are returned",
+        summary: "Create a new route",
         tags: [
-            "Routes",
+            "ExperiencedRoutes",
         ],
     },
 };
 
+// DEFINITIONS
+
 const definitions = {
-    GetResponse: {
+    CoordList: {
+        description: "A list of [lat,long] coordinates that make up the route",
+        example: [[0, 0], [1, 1]],
+        items: {
+            items: {
+                $ref: "#/definitions/Coordinate",
+            },
+            minItems: 2,
+            type: "array",
+        },
+        type: "array",
+    },
+    Coordinate: {
+        items: {
+            maxLength: 2,
+            minLength: 2,
+            type: "integer",
+        },
+        type: "array",
+    },
+    CreateRouteResponse: {
+        description: "The Route's ID",
         properties: {
             result: {
-                $ref: "#/definitions/RouteData",
+                properties: {
+                    id: {
+                        format: "int32",
+                        type: "number",
+                    },
+                },
+                required: ["id"],
             },
         },
         required: ["result"],
     },
-    RouteData: {
+    NewRouteData: {
         properties: {
             arrivalTime: {
-                description: "The time in ISO 8601 extended format that the owner will arrive at their destination",
-                type: "integer",
+                description: "The time in ISO 8106 extended format that the owner arrives at their destination",
+                example: "12:22:00Z",
+                type: "string",
             },
             days: {
                 description: "Which days of the week the owner cycles this route",
@@ -88,29 +120,15 @@ const definitions = {
                 type: "array",
             },
             departureTime: {
-                description: "The time in ISO 8601 extended format that the owner will start their route",
-                type: "integer",
-            },
-            id: {
-                description: "This route's internal id",
-                type: "integer",
-            },
-            owner: {
-                description: "The userId of the user who owns this route",
-                type: "integer",
+                description: "The time in ISO 8106 extended format that the owner will start their route",
+                example: "12:22:00Z",
+                type: "string",
             },
             route: {
                 $ref: "#/definitions/CoordList",
             },
         },
-        required: ["arrivalTime", "departureTime", "owner", "route", "id"],
-    },
-    RouteGetResult: {
-        description: "An array of routes belonging to this user",
-        items: {
-            $ref: "#/definitions/RouteData",
-        },
-        type: "array",
+        required: ["arrivalTime", "departureTime", "owner", "route", "days"],
     },
 };
 
@@ -119,17 +137,17 @@ const definitions = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    let id = parseInt(params.id, 10);
-    if (!id) {
-        id = null;
-    }
-    return getIdFromJWT(params.authorization).then((userId) => {
-        return Database.getRoutes({userId, id});
+    return getIdFromJWT(params.authorization).then(owner => {
+        params.body.owner = owner;
+        let route = new ExperiencedRoute(params.body);
+        return Database.putExperiencedRoute(route);
+    }).then(routeId => {
+        return { id: routeId, status: 201 };
     });
 };
 
 // end point definition
-export const getRoutes = new MicroserviceEndpoint("getRouteById")
+export const createExperiencedRoute = new MicroserviceEndpoint("createExperiencedRoute")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);
