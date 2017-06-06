@@ -11,13 +11,20 @@ export interface IUserSettings {
 
 // Only a User's profile info
 export interface IUserProfile {
-    id: number;
-    email: string;
-    name: string;
     bio: string;
-    photo: string;
+    distance: number;
+    email: string;
+    helpedCount: number;
+    id: number;
+    name: string;
     joined: number;
-    helped: number;
+    photo: string;
+    preferences: {
+        rideDifficulty: string;
+        units: string;
+    };
+    rating: number;
+    usersHelped: number;
 }
 
 // This is a user object
@@ -25,16 +32,23 @@ export default class User implements IUserSettings, IUserProfile {
     public static fromSQLRow(row): User {
         return new User({
             bio: row.profile_bio,
+            distance: row.profile_distance,
             email: row.email,
-            helped: row.profile_helped,
+            helpedCount: row.profile_helped_count,
             id: row.id,
             joined: row.profile_joined,
             jwtSecret: row.jwt_secret,
             name: row.name,
             photo: row.profile_photo,
+            preferences: {
+                rideDifficulty: row.preferences_difficulty,
+                units: row.preferences_units,
+            },
             pwh: row.pwh,
+            rating: row.profile_rating_sum / row.profile_help_count,
             rounds: row.rounds,
             salt: row.salt,
+            usersHelped: row.profile_help_count,
         });
     }
 
@@ -48,7 +62,14 @@ export default class User implements IUserSettings, IUserProfile {
     public bio: string;
     public photo: string;
     public joined: number;
-    public helped: number;
+    public helpedCount: number;
+    public usersHelped: number;
+    public rating: number;
+    public distance: number;
+    public preferences: {
+        rideDifficulty: string;
+        units: string;
+    };
 
     constructor(obj) {
         if (!obj.email.trim().length) {
@@ -74,7 +95,11 @@ export default class User implements IUserSettings, IUserProfile {
         this.bio = obj.bio;
         this.photo = obj.photo;
         this.joined = obj.joined;
-        this.helped = obj.helped;
+        this.distance = obj.distance;
+        this.usersHelped = obj.usersHelped;
+        this.helpedCount = obj.helpedCount;
+        this.rating = obj.rating;
+        this.preferences = obj.preferences;
     }
 
     public asUserSettings(): IUserSettings {
@@ -92,12 +117,16 @@ export default class User implements IUserSettings, IUserProfile {
     public asUserProfile(): IUserProfile {
         return {
             bio: this.bio,
+            distance: this.distance,
             email: this.email,
-            helped: this.helped,
+            helpedCount: this.helpedCount,
             id: this.id,
             joined: this.joined,
             name: this.name,
             photo: this.photo,
+            preferences: this.preferences,
+            rating: this.rating,
+            usersHelped: this.usersHelped,
         } as IUserProfile;
     }
 }

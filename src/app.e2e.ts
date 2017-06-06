@@ -26,6 +26,20 @@ const defaultRequest = request.defaults({
     json: true,
 });
 
+const deleteE2EUsers = (url): Promise<Boolean> => {
+    return new Promise(resolve => {
+        defaultRequest({
+            method: "GET",
+            url: url + "/clearE2EUsers",
+        }, (error, response, body) => {
+            if (error !== null) {
+                logger.error("Got error when trying to delete the e2e test users: " + JSON.stringify(error));
+            }
+            return resolve(true);
+        });
+    });
+};
+
 describe("MatchMyRoute API", () => {
     const startServer = !process.env.URL;
     const url = (process.env.URL || "http://localhost:8080") + "/api/v0";
@@ -46,12 +60,16 @@ describe("MatchMyRoute API", () => {
                 logger.info("Starting server");
                 server = app.listen(process.env.PORT || "8080", () => {
                     logger.debug("App listening on port %s", server.address().port);
-                    done();
+                    deleteE2EUsers(url).then(() => {
+                        done();
+                    });
                 });
             });
         } else {
             senecaReady.then(() => {
-                done();
+                deleteE2EUsers(url).then(() => {
+                    done();
+                });
             });
         }
     });
@@ -59,26 +77,7 @@ describe("MatchMyRoute API", () => {
 
     after(done => {
         logger.info("Cleaning up...");
-        let promises = [];
-        userIds.forEach((id, i) => {
-            const jwt = userJwts[i];
-            promises.push(new Promise((resolve, reject) => {
-                defaultRequest({
-                    headers: {
-                        Authorization: "Bearer " + jwt,
-                    },
-                    method: "DELETE",
-                    url: url + "/user?id=" + id,
-                }, (error, response, body) => {
-                    if (error) {
-                        reject(error);
-                    } else {
-                        resolve(body);
-                    }
-                });
-            }));
-        });
-        Promise.all(promises).then(() => {
+        deleteE2EUsers(url).then(() => {
             if (startServer) {
                 console.log("Shutting down server...");
                 gracefulShutdown();
@@ -129,7 +128,8 @@ describe("MatchMyRoute API", () => {
         describe("Users", () => {
             describe("Creation", () => {
                 it("should create a new user", done => {
-                    const user = { email: "test@example.com", name: "Test User", password: "test" };
+                    const user = { email: "test@e2e-test.matchmyroute-backend.appspot.com",
+                        name: "E2E Test User", password: "test" };
                     defaultRequest({
                         json: user,
                         method: "PUT",
@@ -158,8 +158,8 @@ describe("MatchMyRoute API", () => {
                 });
                 it("should create a second user with different details and a profile photo", done => {
                     const user = {
-                        email: "test1@example.com",
-                        name: "Test User2",
+                        email: "test1@e2e-test.matchmyroute-backend.appspot.com",
+                        name: "E2E Test User2",
                         password: "test",
                         photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21"
                             + "bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
@@ -208,7 +208,8 @@ describe("MatchMyRoute API", () => {
                     });
                 });
                 it("shouldn't create a user with no name", done => {
-                    const user = { email: "test2@example.com", name: "", password: "test" };
+                    const user = { email: "test2@e2e-test.matchmyroute-backend.appspot.com",
+                        name: "", password: "test" };
                     defaultRequest({
                         json: user,
                         method: "PUT",
@@ -222,7 +223,7 @@ describe("MatchMyRoute API", () => {
                     });
                 });
                 it("shouldn't create a user with no email", done => {
-                    const user = { email: "", name: "Test User", password: "test" };
+                    const user = { email: "", name: "E2E Test User", password: "test" };
                     defaultRequest({
                         json: user,
                         method: "PUT",
@@ -236,7 +237,8 @@ describe("MatchMyRoute API", () => {
                     });
                 });
                 it("shouldn't create a user with no password", done => {
-                    const user = { email: "test3@example.com", name: "Test User", password: "" };
+                    const user = { email: "test3@e2e-test.matchmyroute-backend.appspot.com",
+                        name: "E2E Test User", password: "" };
                     defaultRequest({
                         json: user,
                         method: "PUT",
@@ -250,7 +252,8 @@ describe("MatchMyRoute API", () => {
                     });
                 });
                 it("shouldn't create a user with a duplicate email", done => {
-                    const user = { email: "test@example.com", name: "Test User", password: "test" };
+                    const user = { email: "test@e2e-test.matchmyroute-backend.appspot.com",
+                        name: "E2E Test User", password: "test" };
                     defaultRequest({
                         json: user,
                         method: "PUT",
@@ -275,8 +278,8 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
-                        expect(body.result.name).to.equal("Test User",
-                            "Got a different name than expected. Expected: \"Test User\", got \"" +
+                        expect(body.result.name).to.equal("E2E Test User",
+                            "Got a different name than expected. Expected: \"E2E Test User\", got \"" +
                             body.result.name + "\". Full response body is: " + JSON.stringify(body));
                         done();
                     });
@@ -303,8 +306,8 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + error);
-                        expect(body.result.name).to.equal("Test User",
-                            "Expected result name to be \"Test User\", but it got \"" + body.result.name +
+                        expect(body.result.name).to.equal("E2E Test User",
+                            "Expected result name to be \"E2E Test User\", but it got \"" + body.result.name +
                             "\". Full response body is: " + JSON.stringify(body));
                         done();
                     });
@@ -329,7 +332,7 @@ describe("MatchMyRoute API", () => {
                 it("should update a user", done => {
                     const userUpdates = {
                         bio: "Updated bio",
-                        email: "updatedtest@example.com",
+                        email: "updatedtest@e2e-test.matchmyroute-backend.appspot.com",
                         name: "Updated Test User",
                         password: "updatedtest",
                         photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21" +
@@ -354,7 +357,7 @@ describe("MatchMyRoute API", () => {
                         }, (error2, response2, body2) => {
                             let user = body2.result;
                             expect(user.name).to.equal("Updated Test User");
-                            expect(user.email).to.equal("updatedtest@example.com");
+                            expect(user.email).to.equal("updatedtest@e2e-test.matchmyroute-backend.appspot.com");
                             expect(user.bio).to.equal("Updated bio");
                             expect(user.photo).to.equal(CloudStorage.createFilenameForUser(userIds[0]));
                             // Test password change by logging in with the new password
@@ -363,7 +366,7 @@ describe("MatchMyRoute API", () => {
                                     Authorization: "Bearer " + userJwts[0],
                                 },
                                 json: {
-                                    email: "updatedtest@example.com",
+                                    email: "updatedtest@e2e-test.matchmyroute-backend.appspot.com",
                                     password: "updatedtest",
                                 },
                                 method: "POST",
@@ -398,7 +401,7 @@ describe("MatchMyRoute API", () => {
                 });
                 it("should not update a user without auth", done => {
                     const userUpdates = {
-                        email: "updated2test@example.com",
+                        email: "updated2test@e2e-test.matchmyroute-backend.appspot.com",
                         name: "Updated2 Test User", password: "updated2test",
                     };
                     defaultRequest({
@@ -415,7 +418,7 @@ describe("MatchMyRoute API", () => {
                 });
                 it("should not update a user to an extant email", done => {
                     const userUpdates = {
-                        email: "test1@example.com",
+                        email: "test1@e2e-test.matchmyroute-backend.appspot.com",
                         name: "Updated2 Test User", password: "updated2test",
                     };
                     defaultRequest({
@@ -435,7 +438,7 @@ describe("MatchMyRoute API", () => {
                 });
                 it("should update a user's individual properties - name", done => {
                     const userUpdates = {
-                        name: "Test User",
+                        name: "E2E Test User",
                     };
                     defaultRequest({
                         headers: {
@@ -455,14 +458,14 @@ describe("MatchMyRoute API", () => {
                             url: url + "/user/" + userIds[0],
                         }, (error2, response2, body2) => {
                             let user = body2.result;
-                            expect(user.name).to.equal("Test User");
+                            expect(user.name).to.equal("E2E Test User");
                             done();
                         });
                     });
                 });
                 it("should update a user's individual properties - email", done => {
                     const userUpdates = {
-                        email: "test@example.com",
+                        email: "test@e2e-test.matchmyroute-backend.appspot.com",
                     };
                     defaultRequest({
                         headers: {
@@ -482,7 +485,7 @@ describe("MatchMyRoute API", () => {
                             url: url + "/user/" + userIds[0],
                         }, (error2, response2, body2) => {
                             let user = body2.result;
-                            expect(user.email).to.equal("test@example.com");
+                            expect(user.email).to.equal("test@e2e-test.matchmyroute-backend.appspot.com");
                             done();
                         });
                     });
@@ -507,7 +510,7 @@ describe("MatchMyRoute API", () => {
                                 Authorization: "Bearer " + userJwts[0],
                             },
                             json: {
-                                email: "test@example.com",
+                                email: "test@e2e-test.matchmyroute-backend.appspot.com",
                                 password: "test",
                             },
                             method: "POST",
@@ -636,10 +639,92 @@ describe("MatchMyRoute API", () => {
                         // });
                     });
                 });
-                it("should not update help count", done => {
+                it("should update a user's individual properties - preferences", done => {
                     const userUpdates = {
-                        helped: 999,
-                        profile_helped: 999,
+                        preferences: {
+                            rideDifficulty: "fast",
+                            units: "kilometers",
+                        },
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[0],
+                        },
+                        json: userUpdates,
+                        method: "POST",
+                        url: url + "/user",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Got non 200 response: " +
+                             JSON.stringify(response));
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[0],
+                            },
+                            method: "GET",
+                            url: url + "/user/" + userIds[0],
+                        }, (error2, response2, body2) => {
+                            let user = body2.result;
+                            expect(user.preferences.rideDifficulty).to.equal("fast");
+                            expect(user.preferences.units).to.equal("kilometers");
+                            done();
+                        });
+                    });
+                });
+                it("should not update helped count", done => {
+                    const userUpdates = {
+                        helpedCount: 999,
+                        profile_helped_count: 999,
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[0],
+                        },
+                        json: userUpdates,
+                        method: "POST",
+                        url: url + "/user",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Got non 400 response: " + JSON.stringify(response));
+                        done();
+                    });
+                });
+                it("should not update users helped count", done => {
+                    const userUpdates = {
+                        profile_help_count: 999,
+                        usersHelped: 999,
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[0],
+                        },
+                        json: userUpdates,
+                        method: "POST",
+                        url: url + "/user",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Got non 400 response: " + JSON.stringify(response));
+                        done();
+                    });
+                });
+                it("should not update users rating", done => {
+                    const userUpdates = {
+                        profile_rating_sum: 999,
+                        rating: 10,
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[0],
+                        },
+                        json: userUpdates,
+                        method: "POST",
+                        url: url + "/user",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Got non 400 response: " + JSON.stringify(response));
+                        done();
+                    });
+                });
+                it("should not update users distance", done => {
+                    const userUpdates = {
+                        distance: 100000,
+                        profile_distance: 100000,
                     };
                     defaultRequest({
                         headers: {
@@ -749,7 +834,7 @@ describe("MatchMyRoute API", () => {
             describe("Authentication", () => {
                 describe("Initial", () => {
                     it("should provide a JWT", done => {
-                        const auth = { email: "test1@example.com", password: "test" };
+                        const auth = { email: "test1@e2e-test.matchmyroute-backend.appspot.com", password: "test" };
                         defaultRequest({
                             json: auth,
                             method: "POST",
@@ -773,7 +858,7 @@ describe("MatchMyRoute API", () => {
                         });
                     });
                     it("should not provide a JWT if the password is incorrect", done => {
-                        const auth = { email: "test1@example.com", password: "iforgot" };
+                        const auth = { email: "test1@e2e-test.matchmyroute-backend.appspot.com", password: "iforgot" };
                         defaultRequest({
                             json: auth,
                             method: "POST",
@@ -787,7 +872,7 @@ describe("MatchMyRoute API", () => {
                         });
                     });
                     it("should not provide a JWT if the email doesn't exist", done => {
-                        const auth = { email: "test@example.com", password: "test" };
+                        const auth = { email: "test@e2e-test.matchmyroute-backend.appspot.com", password: "test" };
                         defaultRequest({
                             json: auth,
                             method: "POST",
@@ -860,7 +945,8 @@ describe("MatchMyRoute API", () => {
         describe("ExperiencedRoutes", () => {
             before(done => {
                 // Create another test user (userIds[2])
-                const user = { email: "test2@example.com", name: "Test User3", password: "test" };
+                const user = { email: "test2@e2e-test.matchmyroute-backend.appspot.com",
+                    name: "E2E Test User3", password: "test" };
                 defaultRequest({
                     json: user,
                     method: "PUT",

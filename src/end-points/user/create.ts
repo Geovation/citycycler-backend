@@ -177,6 +177,14 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
             .then((newProfileImgUrl) => {
                 profileImgUrl = newProfileImgUrl;
                 return Database.updateUser(createdUser.id, {profile_photo: profileImgUrl}, client);
+            }, err => {
+                // If the image storage errs add a status code and re-throw
+                const errMsg = typeof err === "string" ? err : err.message;
+                if (errMsg.indexOf("URI does not contain") !== -1) {
+                    throw new Error("400:" + errMsg);
+                } else {
+                    throw new Error("500:" + errMsg);
+                }
             });
         } else {
             return true;

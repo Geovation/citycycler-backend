@@ -97,6 +97,9 @@ const definitions = {
                 example: "http://lorempixel.com/400/400/people/",
                 type: "string",
             },
+            preferences: {
+                $ref: "#/definitions/UserPreferences",
+            },
         },
         required: ["id"],
     },
@@ -128,6 +131,15 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         }
         if (payload.name !== undefined && payload.name.trim().length !== 0) {
             updates.name = payload.name;
+        }
+        if (payload.preferences !== undefined) {
+            if (payload.preferences.rideDifficulty !== undefined &&
+                payload.preferences.rideDifficulty.trim().length !== 0) {
+                updates.preferences_difficulty = payload.preferences.rideDifficulty;
+            }
+            if (payload.preferences.units !== undefined && payload.preferences.units.trim().length !== 0) {
+                updates.preferences_units = payload.preferences.units;
+            }
         }
         // delete or replace profile photo
         if (payload.photo === null) {

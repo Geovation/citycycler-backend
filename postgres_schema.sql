@@ -3,10 +3,20 @@ SET time zone 'UTC';    -- Keep the backend working in UTC
 SET intervalstyle = 'iso_8601';   -- Output time intervals in the iso 8601 format
 SET datestyle = 'ISO';      -- Output dates in the iso 8601 format
 
+-- Create enum types
 DO $$
 BEGIN
+    -- A day_of_week type, which must be a day of the week
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'day_of_week') THEN
         CREATE TYPE day_of_week AS ENUM ('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday');
+    END IF;
+    -- A ride difficulty type, which must be quiet, balanced of fast
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ride_difficulty') THEN
+        CREATE TYPE ride_difficulty AS ENUM ('quiet', 'balanced', 'fast');
+    END IF;
+    -- A type for storing the user's distance preference in, miles or km
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'distance_units') THEN
+        CREATE TYPE distance_units AS ENUM ('miles', 'kilometers');
     END IF;
 END$$;
 
@@ -23,8 +33,12 @@ jwt_secret varchar(32) NOT NULL,
 profile_bio text,
 profile_photo varchar(200),
 profile_joined timestamp DEFAULT 'now'::timestamp,
-profile_help_count integer DEFAULT 0,
-profile_rating_sum integer DEFAULT 0    -- Average rating = rating_sum/help_count
+profile_help_count integer DEFAULT 0,   -- How many times this user has helped an inexperienced cyclist
+profile_rating_sum integer DEFAULT 0,    -- Average (star) rating = rating_sum/help_count
+profile_helped_count integer DEFAULT 0, -- How many times this user has been buddied up with an experienced cyclist
+profile_distance double precision DEFAULT 0,      -- Total distance this user has cycled
+preferences_difficulty ride_difficulty DEFAULT 'balanced'::ride_difficulty,    -- This user's preference for ride difficulty
+preferences_units distance_units DEFAULT 'miles'::distance_units    -- This user's prefered unit for distance
 );
 
 -- An experienced cyclist's route
@@ -34,7 +48,8 @@ route geography NOT NULL,		-- The route itself
 departureTime time with time zone NOT NULL,	-- When the owner cycles this route
 arrivalTime time with time zone NOT NULL,	-- When the  user arrives at the destination
 days day_of_week[] DEFAULT ARRAY[]::day_of_week[],	-- An array of the days of the week a user cycles this route
-owner integer REFERENCES users ON DELETE CASCADE	-- User who created this route
+owner integer REFERENCES users ON DELETE CASCADE,	-- User who created this route
+difficulty ride_difficulty DEFAULT 'balanced'::ride_difficulty  -- How hard this route is
 );
 
 -- A inexperienced route
@@ -45,7 +60,9 @@ endPoint geography NOT NULL,        -- Where the user wants to get to
 radius integer DEFAULT 1000,        -- How far from the start and end points to look for matching routes
 owner integer REFERENCES users ON DELETE CASCADE,    -- Who created this query
 arrivalDateTime timestamp with time zone DEFAULT 'now',      -- When the user wants to arrive at their destination
-notifyOwner boolean DEFAULT FALSE   -- If the owner wants to be notified of any new matches
+notifyOwner boolean DEFAULT FALSE,  -- If the owner wants to be notified of any new matches
+difficulty ride_difficulty DEFAULT 'balanced'::ride_difficulty  -- How hard the user wants the route to be
+                                                                -- Will match any rides with dificulty <= this
 );
 
 CREATE INDEX IF NOT EXISTS user_email_index ON users USING btree ( "email" );

@@ -404,16 +404,23 @@ describe("Various useful functions", () => {
         it("should be constructed from full data", () => {
             const data = {
                 bio: "I'm a really fast cyclist",
+                distance: 123321,
                 email: "test@example.com",
-                helped: 21,
+                helpedCount: 13,
                 id: 555,
                 joined: 1234567,
                 jwtSecret: "secret",
                 name: "Test User",
                 photo: "www.example.com/image.jpg",
+                preferences: {
+                    rideDifficulty: "balanced",
+                    units: "miles",
+                },
                 pwh: new Buffer("test"),
+                rating: 7.5,
                 rounds: 5,
                 salt: new Buffer("salt"),
+                usersHelped: 21,
             };
             const user = new User(data);
             expect(user.id).to.equal(555);
@@ -426,7 +433,12 @@ describe("Various useful functions", () => {
             expect(user.bio).to.equal("I'm a really fast cyclist");
             expect(user.photo).to.equal("www.example.com/image.jpg");
             expect(user.joined).to.equal(1234567);
-            expect(user.helped).to.equal(21);
+            expect(user.usersHelped).to.equal(21);
+            expect(user.helpedCount).to.equal(13);
+            expect(user.distance).to.equal(123321);
+            expect(user.rating).to.equal(7.5);
+            expect(user.preferences.rideDifficulty).to.equal("balanced");
+            expect(user.preferences.units).to.equal("miles");
         });
         it("should be constructed from a postgres row(ish) object", () => {
             const row = {
@@ -434,10 +446,15 @@ describe("Various useful functions", () => {
                 id: 555,
                 jwt_secret: "secret",
                 name: "Test User",
+                preferences_difficulty: "quiet",
+                preferences_units: "kilometers",
                 profile_bio: "I'm a really fast cyclist",
-                profile_helped: 21,
+                profile_distance: 5000,
+                profile_help_count: 21,
+                profile_helped_count: 12,
                 profile_joined: 1234567,
                 profile_photo: "www.example.com/image.jpg",
+                profile_rating_sum: 100,
                 pwh: new Buffer("test"),
                 rounds: 5,
                 salt: new Buffer("salt"),
@@ -448,7 +465,12 @@ describe("Various useful functions", () => {
             expect(user.bio).to.equal("I'm a really fast cyclist");
             expect(user.photo).to.equal("www.example.com/image.jpg");
             expect(user.joined).to.equal(1234567);
-            expect(user.helped).to.equal(21);
+            expect(user.usersHelped).to.equal(21);
+            expect(user.helpedCount).to.equal(12);
+            expect(user.distance).to.equal(5000);
+            expect(user.rating).to.equal(100 / 21);
+            expect(user.preferences.rideDifficulty).to.equal("quiet");
+            expect(user.preferences.units).to.equal("kilometers");
         });
         it("should not leak private data when made into a UserProfile", () => {
             const row = {

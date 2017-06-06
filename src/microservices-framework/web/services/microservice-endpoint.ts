@@ -100,7 +100,7 @@ export class MicroserviceEndpoint extends APIEndpoint {
                     },
                 };
             } else {
-                return { ok: false, result: { err: e, status: 500 } };
+                return { ok: false, result: { error: message, status: 500 } };
             }
         };
         this.myService = options => (msg, respond) => {
