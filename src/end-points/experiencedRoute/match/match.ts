@@ -148,6 +148,11 @@ const definitions = {
     },
     StartEndPoints: {
         properties: {
+            arrivalDateTime: {
+                description: "The date and time (in ISO 8601 extended format), the user wants reach their destination",
+                example: new Date().toISOString(),
+                type: "string",
+            },
             endPoint: {
                 $ref: "#/definitions/Coordinate",
             },
@@ -159,11 +164,6 @@ const definitions = {
             },
             startPoint: {
                 $ref: "#/definitions/Coordinate",
-            },
-            arrivalDateTime: {
-                description: "The date and time (in ISO 8601 extended format), the user wants reach their destination",
-                example: new Date().toISOString(),
-                type: "string",
             },
         },
         required: ["start", "end", "radius", "arrivalDateTime"],

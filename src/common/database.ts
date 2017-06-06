@@ -277,7 +277,12 @@ export function getExperiencedRoutesNearby(radius: number, lat: number, lon: num
  * @returns routes - A list of ExperiencedRoutes
  */
 export function matchRoutes(
-    matchParams: InexperiencedRoute,
+    matchParams: {
+        arrivalDateTime: string,
+        endPoint: [number, number],
+        radius: number,
+        startPoint: [number, number],
+    },
     providedClient = null
 ): Promise<{
     id: number,
