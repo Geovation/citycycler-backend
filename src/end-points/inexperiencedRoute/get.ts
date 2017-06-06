@@ -55,7 +55,7 @@ const operation = {
                 userAuth: [],
             },
         ],
-        summary: "Retrieve a inexperienced route by it's ID. If no ID is provided, all inexperienced routes " +
+        summary: "Retrieve an inexperienced route by it's ID. If no ID is provided, all inexperienced routes " +
         "of the user are returned",
         tags: [
             "InexperiencedRoutes",

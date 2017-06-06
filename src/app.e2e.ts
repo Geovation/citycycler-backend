@@ -1770,7 +1770,7 @@ describe("MatchMyRoute API", () => {
                 });
             });
             describe("Retrieval", () => {
-                it("should get a inexperiencedRoute by a valid id", done => {
+                it("should get an inexperiencedRoute by a valid id", done => {
                     defaultRequest({
                         headers: {
                             Authorization: "Bearer " + userJwts[3],
@@ -1803,7 +1803,7 @@ describe("MatchMyRoute API", () => {
                         done();
                     });
                 });
-                it("should not get a inexperienced route with no auth", done => {
+                it("should not get an inexperienced route with no auth", done => {
                     defaultRequest({
                         headers: {},
                         method: "GET",
@@ -1823,7 +1823,7 @@ describe("MatchMyRoute API", () => {
                 let shouldNotMatchId;
                 before("set up an experienced route and two inexperienced routes that do and don't match it", done => {
                     // Set up a long straight route that is easy to reason about
-                    // Then set up a inexperienced route that should match this route,
+                    // Then set up an inexperienced route that should match this route,
                     // and one that shouldn't
                     const route = new ExperiencedRoute({
                         arrivalTime: "13:15:00+00",
@@ -2421,7 +2421,7 @@ describe("MatchMyRoute API", () => {
                         done();
                     });
                 });
-                it("should not delete a inexperienced route with an invalid id", done => {
+                it("should not delete an inexperienced route with an invalid id", done => {
                     defaultRequest({
                         headers: {
                             Authorization: "Bearer " + userJwts[3],
@@ -2436,7 +2436,7 @@ describe("MatchMyRoute API", () => {
                         done();
                     });
                 });
-                it("should not delete a inexperienced route with no auth", done => {
+                it("should not delete an inexperienced route with no auth", done => {
                     defaultRequest({
                         method: "DELETE",
                         url: url + "/InexperiencedRoute?id=" + inexperiencedRouteIds[0],
@@ -2463,7 +2463,7 @@ describe("MatchMyRoute API", () => {
                         done();
                     });
                 });
-                it("should delete a inexperienced route", done => {
+                it("should delete an inexperienced route", done => {
                     defaultRequest({
                         headers: {
                             Authorization: "Bearer " + userJwts[3],

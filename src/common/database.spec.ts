@@ -739,7 +739,7 @@ describe("MatchMyRoute Database Functions", () => {
             });
         });
         describe("Creation", () => {
-            it("should create a inexperienced route", () => {
+            it("should create an inexperienced route", () => {
                 let inexperiencedRouteData: InexperiencedRoute = {
                     arrivalDateTime: "2000-01-01T13:00:00+00",
                     endPoint: [15, 15],
@@ -767,7 +767,7 @@ describe("MatchMyRoute Database Functions", () => {
                     });
                 });
             });
-            it("should not create a inexperienced route with an invalid arrivalTime", done => {
+            it("should not create an inexperienced route with an invalid arrivalTime", done => {
                 let inexperiencedRouteData: InexperiencedRoute = {
                     arrivalDateTime: "I'm a little teapot",
                     endPoint: [15, 15],
@@ -782,7 +782,7 @@ describe("MatchMyRoute Database Functions", () => {
         describe("Retreival", () => {
             let inexperiencedRouteId;
             let spareUserId;
-            beforeEach("Create a inexperienced route to be retreived, and a second user with no inexperienced routes",
+            beforeEach("Create an inexperienced route to be retreived, and a second user with no inexperienced routes",
             done => {
                 Database.createInexperiencedRoute(userId, {
                     arrivalDateTime: "2000-01-01T13:00:00+00",
@@ -808,7 +808,7 @@ describe("MatchMyRoute Database Functions", () => {
                     });
                 });
             });
-            it("should get a inexperienced route by ID", () => {
+            it("should get an inexperienced route by ID", () => {
                 return Database.getInexperiencedRoutes({userId, id: inexperiencedRouteId}, transactionClient)
                 .then(inexperiencedRoutes => {
                     expect(inexperiencedRoutes.filter(inexperiencedRoute => {
@@ -816,7 +816,7 @@ describe("MatchMyRoute Database Functions", () => {
                     }).length).to.equal(1);
                 });
             });
-            it("should not get a inexperienced route by an invalid ID", done => {
+            it("should not get an inexperienced route by an invalid ID", done => {
                 const promise = Database.getInexperiencedRoutes({userId, id: -1}, transactionClient);
                 expect(promise).to.be.rejected.and.notify(done);
             });
@@ -849,7 +849,7 @@ describe("MatchMyRoute Database Functions", () => {
                 radius: 1000,
                 startPoint: [10, 10],
             };
-            beforeEach("Make a inexperiencedRoute to update", done => {
+            beforeEach("Make an inexperiencedRoute to update", done => {
                 Database.createInexperiencedRoute(userId, existingInexperiencedRoute,
                 transactionClient).then(newInexperiencedRouteId => {
                     inexperiencedRouteId = newInexperiencedRouteId;
@@ -927,7 +927,7 @@ describe("MatchMyRoute Database Functions", () => {
                     done();
                 });
             });
-            it("should delete a inexperiencedRoute", () => {
+            it("should delete an inexperiencedRoute", () => {
                 return Database.deleteInexperiencedRoute(inexperiencedRouteId, transactionClient).then(success => {
                     expect(success).to.be.true;
                     return Database.sqlTransaction("SELECT * FROM inexperienced_routes WHERE id=$1;",
@@ -937,7 +937,7 @@ describe("MatchMyRoute Database Functions", () => {
                     });
                 });
             });
-            it("should delete a inexperiencedRoute when it's owner is deleted", () => {
+            it("should delete an inexperiencedRoute when it's owner is deleted", () => {
                 return Database.deleteUser(ownerId, transactionClient).then(success => {
                     expect(success).to.be.true;
                     return Database.sqlTransaction("SELECT * FROM inexperienced_routes WHERE id=$1;",
@@ -947,7 +947,7 @@ describe("MatchMyRoute Database Functions", () => {
                     });
                 });
             });
-            it("should not delete a inexperiencedRoute with an invalid id", done => {
+            it("should not delete an inexperiencedRoute with an invalid id", done => {
                 const promise = Database.deleteInexperiencedRoute(-1, transactionClient);
                 expect(promise).to.be.rejected.and.notify(done);
             });

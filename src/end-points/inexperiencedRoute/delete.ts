@@ -51,7 +51,7 @@ const operation = {
                 userAuth: [],
             },
         ],
-        summary: "Delete a inexperienced route",
+        summary: "Delete an inexperienced route",
         tags: [
             "InexperiencedRoutes",
         ],

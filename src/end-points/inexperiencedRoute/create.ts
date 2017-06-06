@@ -1,5 +1,5 @@
 import { getIdFromJWT } from "../../common/auth";
-import { createInexperiencedRoute as createQuery } from "../../common/database";
+import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 
 // /////////////////////////////////////////////////////////////
@@ -57,7 +57,7 @@ const operation = {
                 userAuth: [],
             },
         ],
-        summary: "Save a inexperienced route",
+        summary: "Save an inexperienced route",
         tags: [
             "InexperiencedRoutes",
         ],
@@ -122,7 +122,7 @@ const definitions = {
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
     return getIdFromJWT(params.authorization).then(userId => {
-        return createQuery(userId, payload).then(id => {
+        return Database.createInexperiencedRoute(userId, payload).then(id => {
             return { id, status: 201 };
         });
     }, err => {

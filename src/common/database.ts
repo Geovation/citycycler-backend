@@ -277,12 +277,7 @@ export function getExperiencedRoutesNearby(radius: number, lat: number, lon: num
  * @returns routes - A list of ExperiencedRoutes
  */
 export function matchRoutes(
-    matchParams: {
-        arrivalDateTime: string,
-        endPoint: [number, number],
-        radius: number,
-        startPoint: [number, number],
-    },
+    matchParams: InexperiencedRoute,
     providedClient = null
 ): Promise<{
     id: number,
@@ -504,7 +499,7 @@ export function deleteInexperiencedRoute(id: number, providedClient = null): Pro
  * @return {boolean} Whether the update succeded
  */
 export function updateInexperiencedRoute(
-    existingRequest: InexperiencedRoute,
+    existingRoute: InexperiencedRoute,
     updates: {
         arrivalDateTime?: string,
         endPoint?: [number, number],
@@ -517,15 +512,15 @@ export function updateInexperiencedRoute(
         // Move the updated properties into the existing model, and validate the new object
         let newInexperiencedRouteObject = <InexperiencedRoute> {};
         newInexperiencedRouteObject.arrivalDateTime = updates.arrivalDateTime !== undefined ?
-            updates.arrivalDateTime : existingRequest.arrivalDateTime;
+            updates.arrivalDateTime : existingRoute.arrivalDateTime;
         newInexperiencedRouteObject.endPoint = updates.endPoint !== undefined ?
-            updates.endPoint : existingRequest.endPoint;
+            updates.endPoint : existingRoute.endPoint;
         newInexperiencedRouteObject.notifyOwner = updates.notifyOwner !== undefined ?
-            updates.notifyOwner : existingRequest.notifyOwner;
+            updates.notifyOwner : existingRoute.notifyOwner;
         newInexperiencedRouteObject.radius = updates.radius !== undefined ?
-            updates.radius : existingRequest.radius;
+            updates.radius : existingRoute.radius;
         newInexperiencedRouteObject.startPoint = updates.startPoint !== undefined ?
-            updates.startPoint : existingRequest.startPoint;
+            updates.startPoint : existingRoute.startPoint;
 
         // By instantating a new object, we run the tests in the constructor to make
         // sure that this is still a valid InexperiencedRoute
@@ -540,7 +535,7 @@ export function updateInexperiencedRoute(
             newInexperiencedRoute.notifyOwner,
             newInexperiencedRoute.radius,
             coordsToPointString(newInexperiencedRoute.startPoint),
-            existingRequest.id];
+            existingRoute.id];
 
         return sqlTransaction(query, sqlParams, providedClient).then(result => {
             return true;
