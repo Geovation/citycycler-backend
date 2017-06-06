@@ -779,10 +779,10 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(promise).to.be.rejected.and.notify(done);
             });
         });
-        describe("Retreival", () => {
+        describe("Retrieval", () => {
             let inexperiencedRouteId;
             let spareUserId;
-            beforeEach("Create an inexperienced route to be retreived, and a second user with no inexperienced routes",
+            beforeEach("Create an inexperienced route to be retrieved, and a second user with no inexperienced routes",
             done => {
                 Database.createInexperiencedRoute(userId, {
                     arrivalDateTime: "2000-01-01T13:00:00+00",
