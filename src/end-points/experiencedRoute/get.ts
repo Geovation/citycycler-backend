@@ -93,9 +93,24 @@ const definitions = {
                 example: "12:22:00Z",
                 type: "string",
             },
+            endPointName: {
+                description: "The english name of where this route ends",
+                example: "23 Richard Road",
+                type: "string",
+            },
             id: {
                 description: "This route's internal id",
                 type: "integer",
+            },
+            length: {
+                description: "This route's length in meters",
+                example: 5000,
+                type: "integer",
+            },
+            name: {
+                description: "The name of this route",
+                example: "Ride to work",
+                type: "string",
             },
             owner: {
                 description: "The userId of the user who owns this route",
@@ -104,8 +119,23 @@ const definitions = {
             route: {
                 $ref: "#/definitions/CoordList",
             },
+            startPointName: {
+                description: "The english name of where this route starts",
+                example: "32 Liam Lane",
+                type: "string",
+            },
         },
-        required: ["arrivalTime", "departureTime", "owner", "route", "id"],
+        required: [
+            "arrivalTime",
+            "departureTime",
+            "endPointName",
+            "length",
+            "owner",
+            "route",
+            "id",
+            "startPointName",
+            "name",
+        ],
     },
     RouteGetResult: {
         description: "An array of routes belonging to this user",

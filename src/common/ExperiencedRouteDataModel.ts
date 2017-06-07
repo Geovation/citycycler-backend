@@ -6,18 +6,26 @@ export default class ExperiencedRoute {
             arrivalTime: row.arrivaltime,
             days: row.days,
             departureTime: row.departuretime,
+            endPointName: row.endpointname,
             id: row.id,
+            length: row.length,
+            name: row.name,
             owner: row.owner,
             route: lineStringToCoords(row.route),
+            startPointName: row.startpointname,
         });
     }
 
     public arrivalTime: string;
     public days: string[];
     public departureTime: string;
+    public endPointName: string;
     public id: number;
+    public length: number;
+    public name: string;
     public owner: number;
     public route: number[][];
+    public startPointName: string;
 
     constructor(obj) {
         if (obj.arrivalTime === undefined) {
@@ -43,15 +51,28 @@ export default class ExperiencedRoute {
                 "[latitude, longitude]");
         } else if (obj.owner === undefined || obj.owner === null) {
             throw new Error("400:ExperiencedRoute requires an owner");
+        } else if (obj.startPointName === undefined || obj.startPointName === null) {
+            throw new Error("400:ExperiencedRoute requires a startPointName");
+        } else if (obj.endPointName === undefined || obj.endPointName === null) {
+            throw new Error("400:ExperiencedRoute requires an endPointName");
+        } else if (obj.length === undefined || obj.length === null) {
+            throw new Error("400:ExperiencedRoute requires a length");
         }
         if (!obj.days) {
             obj.days = [];
         }
+        if (!obj.name) {
+            obj.name = obj.startPointName + " to " + obj.endPointName;
+        }
         this.arrivalTime = obj.arrivalTime;
         this.days = obj.days;
         this.departureTime = obj.departureTime;
+        this.endPointName = obj.endPointName;
         this.id = obj.id;
+        this.length = obj.length;
+        this.name = obj.name;
         this.owner = obj.owner;
         this.route = obj.route;
+        this.startPointName = obj.startPointName;
     }
 }

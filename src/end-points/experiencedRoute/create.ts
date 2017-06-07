@@ -124,11 +124,31 @@ const definitions = {
                 example: "12:22:00Z",
                 type: "string",
             },
+            endPointName: {
+                description: "The english name of where this route ends",
+                example: "23 Richard Road",
+                type: "string",
+            },
+            length: {
+                description: "How long this route is in meters",
+                example: 5000,
+                type: "integer",
+            },
+            name: {
+                description: "A name for this route. Defaults to 'startPointName to endPointName'.",
+                example: "Ride to work",
+                type: "string",
+            },
             route: {
                 $ref: "#/definitions/CoordList",
             },
+            startPointName: {
+                description: "The english name of where this route starts",
+                example: "32 Liam Lane",
+                type: "string",
+            },
         },
-        required: ["arrivalTime", "departureTime", "owner", "route", "days"],
+        required: ["arrivalTime", "departureTime", "days", "endPointName", "owner", "route", "startPointName"],
     },
 };
 

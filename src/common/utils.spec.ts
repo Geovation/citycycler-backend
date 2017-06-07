@@ -49,32 +49,69 @@ describe("Various useful functions", () => {
         });
     });
     describe("ExperiencedRoute", () => {
-        it("should be constructed correctly", () => {
+        it("should be constructed correctly without a name", () => {
             const obj = {
                 arrivalTime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
                 departureTime: "12:00:00+00",
+                endPointName: "33 Stanley Street",
                 id: 321,
+                length: 5000,
                 owner: 123,
                 route: [[0, 0], [1, 1], [2, 2]],
+                startPointName: "112 Rachel Road",
             };
             const route = new ExperiencedRoute(obj);
             expect(route.arrivalTime).to.equal("13:00:00+00", "Arrival time is wrong! expected 13:00:00+00, got " +
                 route.arrivalTime);
             expect(route.departureTime).to.equal("12:00:00+00", "Departure time is wrong! expected 12:00:00+00, got " +
                 route.departureTime);
+            expect(route.endPointName).to.equal("33 Stanley Street");
             expect(route.id).to.equal(321, "ID is wrong! expected 321, got " + route.id);
+            expect(route.length).to.equal(5000);
             expect(route.owner).to.equal(123, "Owner is wrong! expected 123, got " + route.owner);
             expect(route.days).to.eql(["tuesday", "sunday"], "Days is wrong!");
             expect(route.route).to.eql([[0, 0], [1, 1], [2, 2]]);
+            expect(route.startPointName).to.equal("112 Rachel Road");
+            expect(route.name).to.equal("112 Rachel Road to 33 Stanley Street");
+        });
+        it("should be constructed correctly with a name", () => {
+            const obj = {
+                arrivalTime: "13:00:00+00",
+                days: ["tuesday", "sunday"],
+                departureTime: "12:00:00+00",
+                endPointName: "33 Stanley Street",
+                id: 321,
+                length: 2000,
+                name: "Ride to work",
+                owner: 123,
+                route: [[0, 0], [1, 1], [2, 2]],
+                startPointName: "112 Rachel Road",
+            };
+            const route = new ExperiencedRoute(obj);
+            expect(route.arrivalTime).to.equal("13:00:00+00", "Arrival time is wrong! expected 13:00:00+00, got " +
+                route.arrivalTime);
+            expect(route.departureTime).to.equal("12:00:00+00", "Departure time is wrong! expected 12:00:00+00, got " +
+                route.departureTime);
+            expect(route.endPointName).to.equal("33 Stanley Street");
+            expect(route.id).to.equal(321, "ID is wrong! expected 321, got " + route.id);
+            expect(route.length).to.equal(2000);
+            expect(route.owner).to.equal(123, "Owner is wrong! expected 123, got " + route.owner);
+            expect(route.days).to.eql(["tuesday", "sunday"], "Days is wrong!");
+            expect(route.route).to.eql([[0, 0], [1, 1], [2, 2]]);
+            expect(route.startPointName).to.equal("112 Rachel Road");
+            expect(route.name).to.equal("Ride to work");
         });
         it("should throw an error if there is no arrival time", () => {
             const obj = {
                 days: ["tuesday", "sunday"],
                 departureTime: "12:00:00+00",
+                endPointName: "33 Stanley Street",
                 id: 321,
+                length: 5000,
                 owner: 123,
                 route: [[0, 0], [1, 1], [2, 2]],
+                startPointName: "112 Rachel Road",
             };
             expect(() => {
                 return new ExperiencedRoute(obj);
@@ -84,9 +121,12 @@ describe("Various useful functions", () => {
             const obj = {
                 arrivalTime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
+                endPointName: "33 Stanley Street",
                 id: 321,
+                length: 5000,
                 owner: 123,
                 route: [[0, 0], [1, 1], [2, 2]],
+                startPointName: "112 Rachel Road",
             };
             expect(() => {
                 return new ExperiencedRoute(obj);
@@ -97,9 +137,12 @@ describe("Various useful functions", () => {
                 arrivalTime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
                 departureTime: "14:00:00+00",
+                endPointName: "33 Stanley Street",
                 id: 321,
+                length: 5000,
                 owner: 123,
                 route: [[0, 0], [1, 1], [2, 2]],
+                startPointName: "112 Rachel Road",
             };
             expect(() => {
                 return new ExperiencedRoute(obj);
@@ -110,9 +153,12 @@ describe("Various useful functions", () => {
                 arrivalTime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
                 departureTime: "12:00:00+00",
+                endPointName: "33 Stanley Street",
                 id: 321,
+                length: 5000,
                 owner: 123,
                 route: [[0, 0]],
+                startPointName: "112 Rachel Road",
             };
             expect(() => {
                 return new ExperiencedRoute(obj);
@@ -123,9 +169,12 @@ describe("Various useful functions", () => {
                 arrivalTime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
                 departureTime: "12:00:00+00",
+                endPointName: "33 Stanley Street",
                 id: 321,
+                length: 5000,
                 owner: 123,
                 route: [[0, 0], [1, 1, 1], [2, 2]],
+                startPointName: "112 Rachel Road",
             };
             expect(() => {
                 return new ExperiencedRoute(obj);
@@ -137,9 +186,12 @@ describe("Various useful functions", () => {
                 arrivalTime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
                 departureTime: "12:00:00+00",
+                endPointName: "33 Stanley Street",
                 id: 321,
+                length: 5000,
                 owner: 123,
                 route: [[0, 0], [1], [2, 2]],
+                startPointName: "112 Rachel Road",
             };
             expect(() => {
                 return new ExperiencedRoute(obj);
@@ -151,32 +203,74 @@ describe("Various useful functions", () => {
                 arrivalTime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
                 departureTime: "12:00:00+00",
+                endPointName: "33 Stanley Street",
                 id: 321,
+                length: 5000,
                 route: [[0, 0], [1, 1], [2, 2]],
+                startPointName: "112 Rachel Road",
+
             };
             expect(() => {
                 return new ExperiencedRoute(obj);
             }).to.throw("400:ExperiencedRoute requires an owner");
+        });
+        it("should throw an error if there is no startPointName", () => {
+            const obj = {
+                arrivalTime: "13:00:00+00",
+                days: ["tuesday", "sunday"],
+                departureTime: "12:00:00+00",
+                endPointName: "33 Stanley Street",
+                id: 321,
+                length: 5000,
+                owner: 123,
+                route: [[0, 0], [1, 1], [2, 2]],
+            };
+            expect(() => {
+                return new ExperiencedRoute(obj);
+            }).to.throw("400:ExperiencedRoute requires a startPointName");
+        });
+        it("should throw an error if there is no endPointName", () => {
+            const obj = {
+                arrivalTime: "13:00:00+00",
+                days: ["tuesday", "sunday"],
+                departureTime: "12:00:00+00",
+                id: 321,
+                length: 5000,
+                owner: 123,
+                route: [[0, 0], [1, 1], [2, 2]],
+                startPointName: "112 Rachel Road",
+            };
+            expect(() => {
+                return new ExperiencedRoute(obj);
+            }).to.throw("400:ExperiencedRoute requires an endPointName");
         });
         it("should be constructed correctly from an SQL row", () => {
             const row = {
                 arrivaltime: "13:00:00+00",
                 days: ["tuesday", "sunday"],
                 departuretime: "12:00:00+00",
+                endpointname: "33 Stanley Street",
                 id: 321,
+                length: 5000,
+                name: "Ride to work",
                 owner: 123,
                 route: "LINESTRING(0 0,1 1,2 2)",
+                startpointname: "122 Rachel Road",
             };
             const route = ExperiencedRoute.fromSQLRow(row);
             expect(route.arrivalTime).to.equal("13:00:00+00", "Arrival time is wrong! expected 13:00:00+00, got " +
                 route.arrivalTime);
             expect(route.departureTime).to.equal("12:00:00+00", "Departure time is wrong! expected 12:00:00+00, got " +
                 route.departureTime);
+            expect(route.endPointName).to.equal("33 Stanley Street");
             expect(route.id).to.equal(321, "ID is wrong! expected 321, got " + route.id);
             expect(route.owner).to.equal(123, "Owner is wrong! expected 123, got " + route.owner);
             expect(route.days).to.eql(["tuesday", "sunday"], "Days is wrong! expected ['tuesday', 'sunday'], " +
                 "got " + route.days);
             expect(route.route).to.eql([[0, 0], [1, 1], [2, 2]]);
+            expect(route.startPointName).to.equal("122 Rachel Road");
+            expect(route.name).to.equal("Ride to work");
+            expect(route.length).to.equal(5000);
         });
     });
     describe("InexperiencedRoute", () => {
