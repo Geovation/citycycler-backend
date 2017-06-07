@@ -144,11 +144,20 @@ export function resetDatabase() {
 // Put an experienced route in the database, returning the new database ID for the route
 export function putExperiencedRoute(routeData: ExperiencedRoute, providedClient = null) {
     const wkt = coordsToLineString(routeData.route);
-    const query = "INSERT INTO experienced_routes (route, departureTime, arrivalTime, days, owner) " +
-        "VALUES (ST_GeogFromText($1),$2,$3,$4::day_of_week[],$5) " +
+    const query = "INSERT INTO experienced_routes (route, departureTime, arrivalTime, days, owner, " +
+        "startPointName, endPointName, name) " +
+        "VALUES (ST_GeogFromText($1),$2,$3,$4::day_of_week[],$5,$6,$7,$8) " +
         "RETURNING id";
-    const sqlParams = [wkt, routeData.departureTime, routeData.arrivalTime,
-        routeData.days, routeData.owner];
+    const sqlParams = [
+        wkt,
+        routeData.departureTime,
+        routeData.arrivalTime,
+        routeData.days,
+        routeData.owner,
+        routeData.startPointName,
+        routeData.endPointName,
+        routeData.name,
+    ];
     return sqlTransaction(query, sqlParams, providedClient).then(result => {
         if (result.rowCount > 0) {
             return result.rows[0].id;
@@ -158,9 +167,9 @@ export function putExperiencedRoute(routeData: ExperiencedRoute, providedClient 
     });
 }
 
-export function getExperiencedRouteById(id: number, providedClient = null) {
-    const query = "SELECT id, owner, departuretime, arrivalTime, days::text[], ST_AsText(route) AS route " +
-        "FROM experienced_routes where id=$1";
+export function getExperiencedRouteById(id: number, providedClient = null): Promise<ExperiencedRoute> {
+    const query = "SELECT id, owner, departuretime, arrivalTime, days::text[], ST_AsText(route) AS route, " +
+        "startPointName, endPointName, ST_Length(route) as length, name FROM experienced_routes where id=$1";
     return sqlTransaction(query, [id], providedClient).then(result => {
         if (result.rows[0]) {
             return ExperiencedRoute.fromSQLRow(result.rows[0]);
@@ -177,9 +186,10 @@ export function getExperiencedRouteById(id: number, providedClient = null) {
  * @param  {client} providedClient Database client to use for this interaction
  * @return {Object[]} Array of experienced_routes
  */
-export function getExperiencedRoutes(params: {userId: number, id?: number}, providedClient = null) {
-    let query = "SELECT id, owner, departuretime, arrivalTime, days::text[], ST_AsText(route) AS route " +
-    "FROM experienced_routes where owner=$1";
+export function getExperiencedRoutes(params: {userId: number, id?: number}, providedClient = null)
+: Promise<ExperiencedRoute[]> {
+    let query = "SELECT id, owner, departuretime, arrivalTime, days::text[], ST_AsText(route) AS route, " +
+    "startPointName, endPointName, ST_Length(route) as length, name FROM experienced_routes where owner=$1";
     let queryParams = [params.userId];
     if (params.id !== null && typeof params.id !== "undefined") {
         query +=  " AND id=$2";
@@ -236,7 +246,8 @@ export function getExperiencedRoutesNearby(radius: number, lat: number, lon: num
             reject("400:Radius out of bounds");
         });
     }
-    const query = "select id, owner, departuretime, arrivalTime, ST_AsText(route) AS route from experienced_routes " +
+    const query = "select id, owner, departuretime, arrivalTime, ST_AsText(route) AS route, " +
+        "startPointName, endPointName, name from experienced_routes " +
         "where ST_DISTANCE(route, ST_GeogFromText($2) ) < $1";
     const geoJson = "POINT(" + lat + " " + lon + ")";
     return sqlTransaction(query, [radius, geoJson], providedClient).then(result => {
@@ -262,6 +273,7 @@ export function matchRoutes(
     id: number,
     meetingTime: string,
     divorceTime: string,
+    name: string,
     owner: number,
     meetingPoint: [number, number],
     divorcePoint: [number, number],
@@ -281,7 +293,8 @@ export function matchRoutes(
     "    ST_AsText(match2.divorcePoint) AS divorcePoint, " +
     "    match3.*, " +
     "    match4.*, " +
-    "    owner " +
+    "    owner, " +
+    "    name " +
     "FROM experienced_routes, " +
     "    LATERAL ( " +
     "        SELECT " +
@@ -340,6 +353,7 @@ export function matchRoutes(
                 id: row.id,
                 meetingPoint: pointStringToCoords(row.meetingpoint),
                 meetingTime: row.meetingtime,
+                name: row.name,
                 owner: row.owner,
                 timeFromDivorcePoint: row.timeFromdivorcePoint,
                 timeToMeetingPoint: row.timeToMeetingPoint,
@@ -356,7 +370,7 @@ export function updateExperiencedRoute(
         arrivalTime?: string,
         departureTime?: string,
         days?: string[],
-        route?: number[][],
+        name?: string,
     },
     providedClient = null): Promise<boolean> {
 
@@ -366,28 +380,23 @@ export function updateExperiencedRoute(
         existingRoute.departureTime = updates.departureTime !== undefined ?
             updates.departureTime : existingRoute.departureTime;
         existingRoute.days = updates.days !== undefined ? updates.days : existingRoute.days;
-        existingRoute.route = updates.route !== undefined ? updates.route : existingRoute.route;
+        existingRoute.name = updates.name !== undefined ?
+        updates.name : existingRoute.name;
 
-        let error;
         if (existingRoute.arrivalTime < existingRoute.departureTime) {
-            error = "400:Arrival time is before Departure time";
-        } else if (existingRoute.route.length < 2) {
-            error = "400:ExperiencedRoute requires at least 2 points";
-        } else if (Math.max(...existingRoute.route.map(pair => { return pair.length; })) > 2) {
-            error = "400:Coordinates in a ExperiencedRoute should only have 2 items in them, [latitude, longitude]";
-        } else if (Math.min(...existingRoute.route.map(pair => { return pair.length; })) < 2) {
-            error = "400:Coordinates in a ExperiencedRoute should have exactly 2 items in them, [latitude, longitude]";
-        }
-        if (typeof error !== "undefined") {
-            return new Promise((resolve, reject) => { reject(error); } );
+            return Promise.reject("400:Arrival time is before Departure time");
         }
 
         const query = "UPDATE experienced_routes " +
-        "SET route = $1, arrivalTime = $2, departureTime = $3, days = $4::day_of_week[] " +
+        "SET arrivalTime = $1, departureTime = $2, days = $3::day_of_week[], name=$4 " +
         "WHERE id = $5";
-        const sqlParams = [coordsToLineString(existingRoute.route),
-            existingRoute.arrivalTime, existingRoute.departureTime,
-            existingRoute.days, existingRoute.id];
+        const sqlParams = [
+            existingRoute.arrivalTime,
+            existingRoute.departureTime,
+            existingRoute.days,
+            existingRoute.name,
+            existingRoute.id,
+        ];
 
         return sqlTransaction(query, sqlParams, providedClient).then(result => {
             return true;

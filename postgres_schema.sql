@@ -44,7 +44,10 @@ preferences_units distance_units DEFAULT 'miles'::distance_units    -- This user
 -- An experienced cyclist's route
 CREATE TABLE experienced_routes (
 id serial PRIMARY KEY,
+name text NOT NULL,             -- The name of this route
 route geography NOT NULL,		-- The route itself
+startPointName text NOT NULL,   -- The english name of this route's start point
+endPointName text NOT NULL,   -- The english name of this route's end point
 departureTime time with time zone NOT NULL,	-- When the owner cycles this route
 arrivalTime time with time zone NOT NULL,	-- When the  user arrives at the destination
 days day_of_week[] DEFAULT ARRAY[]::day_of_week[],	-- An array of the days of the week a user cycles this route

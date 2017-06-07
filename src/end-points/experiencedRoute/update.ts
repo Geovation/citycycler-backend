@@ -93,8 +93,10 @@ const definitions = {
                 format: "int32",
                 type: "integer",
             },
-            route: {
-                $ref: "#/definitions/CoordList",
+            name: {
+                description: "The name of this route",
+                example: "Ride to work",
+                type: "string",
             },
         },
         required: ["id"],
