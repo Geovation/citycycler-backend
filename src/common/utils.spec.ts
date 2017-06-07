@@ -1,3 +1,4 @@
+import BuddyRequest from "./BuddyRequestDataModel";
 import * as Database from "./database";
 import ExperiencedRoute from "./ExperiencedRouteDataModel";
 import InexperiencedRoute from "./InexperiencedRouteDataModel";
@@ -606,5 +607,109 @@ describe("Various useful functions", () => {
             expect(user).not.to.include.keys("helped");
             expect(user).not.to.include.keys("photo");
         });
+    });
+    describe("BuddyRequest", () => {
+        let buddyRequestObject = {
+            averageSpeed: 5,
+            created: "2017-06-07T10:24:28.684Z",
+            divorcePoint: [1, 1],
+            divorceTime: "2017-06-08T12:00:28.684Z",
+            experiencedRoute: 333,
+            experiencedRouteName: "Ride to work",
+            experiencedUser: 444,
+            id: 111,
+            inexperiencedRoute: 222,
+            meetingPoint: [0, 0],
+            meetingTime: "2017-06-08T11:34:28.684Z",
+            owner: 555,
+            status: "pending",
+            updated: "2017-06-07T10:24:28.684Z",
+        };
+        it("should be constructed correctly", () => {
+            const buddyRequest = new BuddyRequest(buddyRequestObject);
+            expect(buddyRequest.averageSpeed).to.equal(buddyRequestObject.averageSpeed);
+            expect(buddyRequest.created).to.equal(buddyRequestObject.created);
+            expect(buddyRequest.divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+            expect(buddyRequest.divorceTime).to.equal(buddyRequestObject.divorceTime);
+            expect(buddyRequest.experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
+            expect(buddyRequest.experiencedRouteName).to.equal(buddyRequestObject.experiencedRouteName);
+            expect(buddyRequest.experiencedUser).to.equal(buddyRequestObject.experiencedUser);
+            expect(buddyRequest.id).to.equal(buddyRequestObject.id);
+            expect(buddyRequest.inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
+            expect(buddyRequest.meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+            expect(buddyRequest.meetingTime).to.equal(buddyRequestObject.meetingTime);
+            expect(buddyRequest.owner).to.equal(buddyRequestObject.owner);
+            expect(buddyRequest.status).to.equal(buddyRequestObject.status);
+            expect(buddyRequest.updated).to.equal(buddyRequestObject.updated);
+        });
+        it("should throw an error if meetingPoint is 1D", () => {
+            const copy = Object.assign({}, buddyRequestObject);
+            copy.meetingPoint = [0];
+            expect(() => {
+                return new BuddyRequest(copy);
+            }).to.throw("400:BuddyRequest requires a 2D meeting point");
+        });
+        it("should throw an error if meetingPoint is 3D", () => {
+            const copy = Object.assign({}, buddyRequestObject);
+            copy.meetingPoint = [0, 0, 0];
+            expect(() => {
+                return new BuddyRequest(copy);
+            }).to.throw("400:BuddyRequest requires a 2D meeting point");
+        });
+        it("should throw an error if divorcePoint is 1D", () => {
+            const copy = Object.assign({}, buddyRequestObject);
+            copy.divorcePoint = [0];
+            expect(() => {
+                return new BuddyRequest(copy);
+            }).to.throw("400:BuddyRequest requires a 2D divorce point");
+        });
+        it("should throw an error if divorcePoint is 3D", () => {
+            const copy = Object.assign({}, buddyRequestObject);
+            copy.divorcePoint = [0, 0, 0];
+            expect(() => {
+                return new BuddyRequest(copy);
+            }).to.throw("400:BuddyRequest requires a 2D divorce point");
+        });
+        it("should throw an error if there is an invalid meetingTime", () => {
+            const copy = Object.assign({}, buddyRequestObject);
+            copy.meetingTime = "about 10 this afternoon";
+            expect(() => {
+                return new BuddyRequest(copy);
+            }).to.throw("400:BuddyRequest requires a valid meeting time");
+        });
+        it("should throw an error if there is an invalid divorceTime", () => {
+            const copy = Object.assign({}, buddyRequestObject);
+            copy.divorceTime = "about 11 this afternoon";
+            expect(() => {
+                return new BuddyRequest(copy);
+            }).to.throw("400:BuddyRequest requires a valid divorce time");
+        });
+        it("should throw an error if there the divorceTime is before the meetingTime", () => {
+            const copy = Object.assign({}, buddyRequestObject);
+            copy.meetingTime = "2017-06-08T12:00:28.684Z";
+            copy.divorceTime = "2017-06-08T11:34:28.684Z";
+            expect(() => {
+                return new BuddyRequest(copy);
+            }).to.throw("400:Meeting time is before Divorce time");
+        });
+        it("should throw an error if the status is not a valid status", () => {
+            const copy = Object.assign({}, buddyRequestObject);
+            copy.status = "thinking about it";
+            expect(() => {
+                return new BuddyRequest(copy);
+            }).to.throw("400:BuddyRequest requires a status of 'pending', 'accepted', 'rejected' or 'canceled'");
+        });
+        for (let key in buddyRequestObject) {
+            if (true) {
+                const copy = Object.assign({}, buddyRequestObject);
+                copy[key] = undefined;
+                let determiner = "aeiou".indexOf(key[0]) === -1 ? "a" : "an";
+                it("should throw an error when constructed without " + determiner + " " + key, () => {
+                    expect(() => {
+                        return new BuddyRequest(copy);
+                    }).to.throw("400:BuddyRequest requires " + determiner + " " + key);
+                });
+            }
+        }
     });
 });
