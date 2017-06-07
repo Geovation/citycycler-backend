@@ -21,7 +21,7 @@ export default class ExperiencedRoute {
     public departureTime: string;
     public endPointName: string;
     public id: number;
-    public length?: number;
+    public length: number;
     public name: string;
     public owner: number;
     public route: number[][];
@@ -55,6 +55,8 @@ export default class ExperiencedRoute {
             throw new Error("400:ExperiencedRoute requires a startPointName");
         } else if (obj.endPointName === undefined || obj.endPointName === null) {
             throw new Error("400:ExperiencedRoute requires an endPointName");
+        } else if (obj.length === undefined || obj.length === null) {
+            throw new Error("400:ExperiencedRoute requires a length");
         }
         if (!obj.days) {
             obj.days = [];

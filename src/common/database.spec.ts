@@ -261,6 +261,7 @@ describe("MatchMyRoute Database Functions", () => {
             days: ["tuesday", "sunday"],
             departureTime: "13:00:00+00",
             endPointName: "112 Rachel Road",
+            length: 5000,
             owner: -1,
             route: [[0, 0], [1, 0], [1, 1]],
             startPointName: "33 Stanley Street",
@@ -282,6 +283,7 @@ describe("MatchMyRoute Database Functions", () => {
                     days: ["tuesday", "sunday"],
                     departureTime: "13:00:00+00",
                     endPointName: "112 Rachel Road",
+                    length: 5000,
                     name: "Ride to work",
                     owner: thisUserId,
                     route: [[0, 0], [1, 0], [1, 1]],
@@ -311,7 +313,7 @@ describe("MatchMyRoute Database Functions", () => {
                 routeIds.push(routeId);
                 return Database.sqlTransaction(
                     "SELECT arrivalTime, departureTime, owner, days::text[], startPointName, endPointName, " +
-                    "name FROM experienced_routes WHERE id=$1",
+                    "name, length FROM experienced_routes WHERE id=$1",
                     ["" + routeId],
                     transactionClient
                 ).then(result => {
@@ -321,6 +323,7 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(result.rows[0].days).to.eql(routeData.days);
                     expect(result.rows[0].startpointname).to.equal(routeData.startPointName);
                     expect(result.rows[0].endpointname).to.equal(routeData.endPointName);
+                    expect(result.rows[0].length).to.equal(routeData.length);
                     expect(result.rows[0].name).to.equal(routeData.name);
                 });
             });
@@ -331,6 +334,7 @@ describe("MatchMyRoute Database Functions", () => {
                 days: ["tuesday", "sunday"],
                 departureTime: "13:00:00+00",
                 endPointName: "112 Rachel Road",
+                length: 5000,
                 owner: routeData.owner,
                 route: [[0, 0], [1, 0], [1, 1]],
                 startPointName: "33 Stanley Street",
@@ -339,7 +343,7 @@ describe("MatchMyRoute Database Functions", () => {
                 routeIds.push(routeId);
                 return Database.sqlTransaction(
                     "SELECT arrivalTime, departureTime, owner, days::text[], startPointName, endPointName, " +
-                    "name FROM experienced_routes WHERE id=$1",
+                    "name, length FROM experienced_routes WHERE id=$1",
                     ["" + routeId],
                     transactionClient
                 ).then(result => {
@@ -349,6 +353,7 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(result.rows[0].days).to.eql(routeData.days);
                     expect(result.rows[0].startpointname).to.equal(routeData.startPointName);
                     expect(result.rows[0].endpointname).to.equal(routeData.endPointName);
+                    expect(result.rows[0].length).to.equal(routeData.length);
                     expect(result.rows[0].name).to.equal("33 Stanley Street to 112 Rachel Road");
                 });
             });
@@ -378,8 +383,8 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(result[0].days).to.eql(routeData.days);
                     expect(result[0].startPointName).to.equal(routeData.startPointName);
                     expect(result[0].endPointName).to.equal(routeData.endPointName);
-                    expect(result[0].length).to.not.be.undefined;
-                    expect(result[0].name).to.equal("Ride to work");
+                    expect(result[0].length).to.equal(routeData.length);
+                    expect(result[0].name).to.equal(routeData.name);
                 });
             });
             it("should not get an experienced route by an invalid ID", done => {
@@ -401,16 +406,16 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(result[0].days).to.eql(routeData.days);
                     expect(result[0].startPointName).to.equal(routeData.startPointName);
                     expect(result[0].endPointName).to.equal(routeData.endPointName);
-                    expect(result[0].length).to.not.be.undefined;
-                    expect(result[0].name).to.equal("Ride to work");
+                    expect(result[0].length).to.equal(routeData.length);
+                    expect(result[0].name).to.equal(routeData.name);
                     expect(result[1].arrivalTime).to.equal(routeData.arrivalTime);
                     expect(result[1].departureTime).to.equal(routeData.departureTime);
                     expect(result[1].owner).to.equal(routeData.owner);
                     expect(result[1].days).to.eql(routeData.days);
                     expect(result[1].startPointName).to.equal(routeData.startPointName);
                     expect(result[1].endPointName).to.equal(routeData.endPointName);
-                    expect(result[1].length).to.not.be.undefined;
-                    expect(result[1].name).to.equal("Ride to work");
+                    expect(result[1].length).to.equal(routeData.length);
+                    expect(result[1].name).to.equal(routeData.name);
                 });
             });
             it("should not get routes of a user if he didn't create any yet", done => {
@@ -491,6 +496,7 @@ describe("MatchMyRoute Database Functions", () => {
                     days: ["tuesday", "friday", "sunday"],
                     departureTime: "12:45:00+00",
                     endPointName: "33 Stanley Street",
+                    length: 5000,
                     owner: thisUserId,
                     route: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6]],
                     startPointName: "112 Rachel Road",
@@ -599,6 +605,7 @@ describe("MatchMyRoute Database Functions", () => {
                     days: ["tuesday", "sunday"],
                     departureTime: "12:45:00+00",
                     endPointName: "33 Rachel Road",
+                    length: 5000,
                     name: "Ride to work",
                     owner: thisUserId,
                     route: [[0, 0], [1, 0], [1, 1]],
@@ -708,6 +715,20 @@ describe("MatchMyRoute Database Functions", () => {
                 return Database.getExperiencedRouteById(updateExperiencedRouteId, transactionClient);
             }).then(newRoute => {
                 expect(newRoute.owner).to.eql(thisUserId);
+            });
+        });
+        it("should not be able to update length", () => {
+            const updates = {
+                id: updateExperiencedRouteId,
+                length: 200,
+            };
+            return Database.getExperiencedRouteById(updateExperiencedRouteId, transactionClient)
+            .then(originalRoute => {
+                return Database.updateExperiencedRoute(originalRoute, updates, transactionClient);
+            }).then(() => {
+                return Database.getExperiencedRouteById(updateExperiencedRouteId, transactionClient);
+            }).then(newRoute => {
+                expect(newRoute.length).to.eql(routeData.length);
             });
         });
         it("should not be able to update to an invalid departureTime", done => {
@@ -1041,6 +1062,7 @@ describe("Database shutdown", () => {
             days: ["monday"],
             departureTime: "12:00:00+00",
             endPointName: "122 Stanley Street",
+            length: 5000,
             owner: 123,
             route: [[0, 0], [1, 0], [1, 1]],
             startPointName: "33 Rachel Road",

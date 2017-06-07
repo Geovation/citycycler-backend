@@ -145,8 +145,8 @@ export function resetDatabase() {
 export function putExperiencedRoute(routeData: ExperiencedRoute, providedClient = null) {
     const wkt = coordsToLineString(routeData.route);
     const query = "INSERT INTO experienced_routes (route, departureTime, arrivalTime, days, owner, " +
-        "startPointName, endPointName, name) " +
-        "VALUES (ST_GeogFromText($1),$2,$3,$4::day_of_week[],$5,$6,$7,$8) " +
+        "startPointName, endPointName, name, length) " +
+        "VALUES (ST_GeogFromText($1),$2,$3,$4::day_of_week[],$5,$6,$7,$8,$9) " +
         "RETURNING id";
     const sqlParams = [
         wkt,
@@ -157,6 +157,7 @@ export function putExperiencedRoute(routeData: ExperiencedRoute, providedClient 
         routeData.startPointName,
         routeData.endPointName,
         routeData.name,
+        routeData.length,
     ];
     return sqlTransaction(query, sqlParams, providedClient).then(result => {
         if (result.rowCount > 0) {
@@ -169,7 +170,7 @@ export function putExperiencedRoute(routeData: ExperiencedRoute, providedClient 
 
 export function getExperiencedRouteById(id: number, providedClient = null): Promise<ExperiencedRoute> {
     const query = "SELECT id, owner, departuretime, arrivalTime, days::text[], ST_AsText(route) AS route, " +
-        "startPointName, endPointName, ST_Length(route) as length, name FROM experienced_routes where id=$1";
+        "startPointName, endPointName, length, name FROM experienced_routes where id=$1";
     return sqlTransaction(query, [id], providedClient).then(result => {
         if (result.rows[0]) {
             return ExperiencedRoute.fromSQLRow(result.rows[0]);
@@ -189,7 +190,7 @@ export function getExperiencedRouteById(id: number, providedClient = null): Prom
 export function getExperiencedRoutes(params: {userId: number, id?: number}, providedClient = null)
 : Promise<ExperiencedRoute[]> {
     let query = "SELECT id, owner, departuretime, arrivalTime, days::text[], ST_AsText(route) AS route, " +
-    "startPointName, endPointName, ST_Length(route) as length, name FROM experienced_routes where owner=$1";
+    "startPointName, endPointName, length, name FROM experienced_routes where owner=$1";
     let queryParams = [params.userId];
     if (params.id !== null && typeof params.id !== "undefined") {
         query +=  " AND id=$2";
@@ -247,7 +248,7 @@ export function getExperiencedRoutesNearby(radius: number, lat: number, lon: num
         });
     }
     const query = "select id, owner, departuretime, arrivalTime, ST_AsText(route) AS route, " +
-        "startPointName, endPointName, name from experienced_routes " +
+        "startPointName, endPointName, name, length from experienced_routes " +
         "where ST_DISTANCE(route, ST_GeogFromText($2) ) < $1";
     const geoJson = "POINT(" + lat + " " + lon + ")";
     return sqlTransaction(query, [radius, geoJson], providedClient).then(result => {

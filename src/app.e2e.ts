@@ -964,6 +964,7 @@ describe("MatchMyRoute API", () => {
                         days: ["monday"],
                         departureTime: "12:00:00+00",
                         endPointName: "33 Rachel Road",
+                        length: 5000,
                         name: "Ride to work",
                         route: [[0, 0], [1, 0], [1, 1]],
                         startPointName: "122 Stanley Street",
@@ -992,6 +993,7 @@ describe("MatchMyRoute API", () => {
                         days: ["monday"],
                         departureTime: "12:00:00+00",
                         endPointName: "33 Rachel Road",
+                        length: 5000,
                         route: [[0, 0], [1, 0], [1, 1]],
                         startPointName: "122 Stanley Street",
                     };
@@ -1018,6 +1020,7 @@ describe("MatchMyRoute API", () => {
                         days: ["tuesday", "friday", "sunday"],
                         departureTime: "12:00:00+00",
                         endPointName: "33 Rachel Road",
+                        length: 5000,
                         name: "Ride to work",
                         route: [[0, 0], [1, 0], [1, 1]],
                         startPointName: "122 Stanley Street",
@@ -1043,6 +1046,7 @@ describe("MatchMyRoute API", () => {
                         days: ["tuesday", "friday", "sunday"],
                         departureTime: "14:00:00+00",
                         endPointName: "33 Rachel Road",
+                        length: 5000,
                         name: "Ride to work",
                         route: [[0, 0], [1, 0], [1, 1]],
                         startPointName: "122 Stanley Street",
@@ -1068,6 +1072,7 @@ describe("MatchMyRoute API", () => {
                         days: ["tuesday", "friday", "sunday"],
                         departureTime: "12:00:00+00",
                         endPointName: "33 Rachel Road",
+                        length: 5000,
                         name: "Ride to work",
                         route: [[0, 0], [1, 0], [1, 1]],
                         startPointName: "122 Stanley Street",
@@ -1133,6 +1138,7 @@ describe("MatchMyRoute API", () => {
                             days: ["tuesday", "friday", "sunday"],
                             departureTime: "12:15:00+00",
                             endPointName: "33 Rachel Road",
+                            length: 5000,
                             name: "Ride to work",
                             owner: userIds[1],
                             route: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6]],
@@ -1539,7 +1545,7 @@ describe("MatchMyRoute API", () => {
                                 assert.fail(0, 1, "Update resulted in an invalid ExperiencedRoute: " +
                                     err).and.notify(done);
                             }
-                            expect(route.route).not.to.equal(updates.startPointName);
+                            expect(route.startPointName).not.to.equal(updates.startPointName);
                             done();
                         });
                     });
@@ -1573,7 +1579,41 @@ describe("MatchMyRoute API", () => {
                                 assert.fail(0, 1, "Update resulted in an invalid ExperiencedRoute: " +
                                     err).and.notify(done);
                             }
-                            expect(route.route).not.to.equal(updates.endPointName);
+                            expect(route.endPointName).not.to.equal(updates.endPointName);
+                            done();
+                        });
+                    });
+                });
+                it("should not be able to update length", done => {
+                    const updates = {
+                        id: routeIds[0],
+                        length: 2000,
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[1],
+                        },
+                        json: updates,
+                        method: "POST",
+                        url: url + "/experiencedRoute",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + userJwts[1],
+                            },
+                            method: "GET",
+                            url: url + "/experiencedRoute?id=" + routeIds[0],
+                        }, (error2, response2, body2) => {
+                            let route;
+                            try {
+                                route = new ExperiencedRoute(body2.result[0]);
+                            } catch (err) {
+                                assert.fail(0, 1, "Update resulted in an invalid ExperiencedRoute: " +
+                                    err).and.notify(done);
+                            }
+                            expect(route.length).not.to.equal(updates.length);
                             done();
                         });
                     });
@@ -1667,6 +1707,7 @@ describe("MatchMyRoute API", () => {
                         arrivalTime: "14:00:00+00",
                         departureTime: "13:00:00+00",
                         endPointName: "33 Rachel Road",
+                        length: 5000,
                         name: "Ride to work",
                         owner: userIds[2],
                         route: [[0, 0], [1, 0], [1, 1]],
@@ -2039,6 +2080,7 @@ describe("MatchMyRoute API", () => {
                         days: ["tuesday", "friday", "sunday"],
                         departureTime: "12:15:00+00",
                         endPointName: "33 Rachel Road",
+                        length: 5000,
                         name: "Ride to work",
                         owner: userIds[3],
                         route: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6]],

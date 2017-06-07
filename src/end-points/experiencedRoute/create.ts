@@ -129,6 +129,11 @@ const definitions = {
                 example: "23 Richard Road",
                 type: "string",
             },
+            length: {
+                description: "How long this route is in meters",
+                example: 5000,
+                type: "integer",
+            },
             name: {
                 description: "A name for this route. Defaults to 'startPointName to endPointName'.",
                 example: "Ride to work",
