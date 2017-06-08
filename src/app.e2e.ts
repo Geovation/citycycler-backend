@@ -2861,12 +2861,14 @@ describe("MatchMyRoute API", () => {
                                     buddyRequestObject = {
                                         averageSpeed: 5,
                                         divorcePoint: [1, 1],
+                                        divorcePointName: "32 Shelly Street",
                                         divorceTime: "2017-06-08T12:00:28.684Z",
                                         experiencedRoute,
                                         experiencedRouteName: "Ride to work",
                                         experiencedUser: expUserId,
                                         inexperiencedRoute,
                                         meetingPoint: [0, 0],
+                                        meetingPointName: "64 Ryan Road",
                                         meetingTime: "2017-06-08T11:34:28.684Z",
                                         route: [[0, 0], [0.5, 0.5], [1, 1]],
                                     };
@@ -2969,6 +2971,7 @@ describe("MatchMyRoute API", () => {
                             expect(moment(buddyRequests[0].divorceTime)
                                 .isSame(buddyRequestObject.divorceTime)).to.be.true;
                             expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                            expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                             expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
                             expect(buddyRequests[0].experiencedRouteName)
                                 .to.equal(buddyRequestObject.experiencedRouteName);
@@ -2978,6 +2981,7 @@ describe("MatchMyRoute API", () => {
                             expect(moment(buddyRequests[0].meetingTime)
                                 .isSame(buddyRequestObject.meetingTime)).to.be.true;
                             expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                            expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
                             expect(buddyRequests[0].owner).to.equal(inexpUserId);
                             expect(buddyRequests[0].status).to.equal("pending");
                             expect(buddyRequests[0].reason).to.equal("");
@@ -3004,6 +3008,7 @@ describe("MatchMyRoute API", () => {
                             expect(moment(buddyRequests[0].divorceTime)
                                 .isSame(buddyRequestObject.divorceTime)).to.be.true;
                             expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                            expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                             expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
                             expect(buddyRequests[0].experiencedRouteName)
                                 .to.equal(buddyRequestObject.experiencedRouteName);
@@ -3013,6 +3018,7 @@ describe("MatchMyRoute API", () => {
                             expect(moment(buddyRequests[0].meetingTime)
                                 .isSame(buddyRequestObject.meetingTime)).to.be.true;
                             expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                            expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
                             expect(buddyRequests[0].owner).to.equal(inexpUserId);
                             expect(buddyRequests[0].status).to.equal("pending");
                             expect(buddyRequests[0].reason).to.equal("");
@@ -3022,6 +3028,7 @@ describe("MatchMyRoute API", () => {
                             expect(moment(buddyRequests[1].divorceTime)
                                 .isSame(buddyRequestObject.divorceTime)).to.be.true;
                             expect(buddyRequests[1].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                            expect(buddyRequests[1].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                             expect(buddyRequests[1].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
                             expect(buddyRequests[1].experiencedRouteName)
                                 .to.equal(buddyRequestObject.experiencedRouteName);
@@ -3031,6 +3038,7 @@ describe("MatchMyRoute API", () => {
                             expect(moment(buddyRequests[1].meetingTime)
                                 .isSame(buddyRequestObject.meetingTime)).to.be.true;
                             expect(buddyRequests[1].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                            expect(buddyRequests[1].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
                             expect(buddyRequests[1].owner).to.equal(inexpUserId);
                             expect(buddyRequests[1].status).to.equal("pending");
                             expect(buddyRequests[1].reason).to.equal("");
@@ -3096,6 +3104,7 @@ describe("MatchMyRoute API", () => {
                             expect(moment(buddyRequests[0].divorceTime)
                                 .isSame(buddyRequestObject.divorceTime)).to.be.true;
                             expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                            expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                             expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
                             expect(buddyRequests[0].experiencedRouteName)
                                 .to.equal(buddyRequestObject.experiencedRouteName);
@@ -3105,6 +3114,7 @@ describe("MatchMyRoute API", () => {
                             expect(moment(buddyRequests[0].meetingTime)
                                 .isSame(buddyRequestObject.meetingTime)).to.be.true;
                             expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                            expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
                             expect(buddyRequests[0].owner).to.equal(inexpUserId);
                             expect(buddyRequests[0].status).to.equal("pending");
                             expect(buddyRequests[0].reason).to.equal("");
@@ -3131,6 +3141,7 @@ describe("MatchMyRoute API", () => {
                             expect(moment(buddyRequests[0].divorceTime)
                                 .isSame(buddyRequestObject.divorceTime)).to.be.true;
                             expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                            expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                             expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
                             expect(buddyRequests[0].experiencedRouteName)
                                 .to.equal(buddyRequestObject.experiencedRouteName);
@@ -3140,6 +3151,7 @@ describe("MatchMyRoute API", () => {
                             expect(moment(buddyRequests[0].meetingTime)
                                 .isSame(buddyRequestObject.meetingTime)).to.be.true;
                             expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                            expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
                             expect(buddyRequests[0].owner).to.equal(inexpUserId);
                             expect(buddyRequests[0].status).to.equal("pending");
                             expect(buddyRequests[0].reason).to.equal("");
@@ -3149,6 +3161,7 @@ describe("MatchMyRoute API", () => {
                             expect(moment(buddyRequests[1].divorceTime)
                                 .isSame(buddyRequestObject.divorceTime)).to.be.true;
                             expect(buddyRequests[1].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                            expect(buddyRequests[1].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                             expect(buddyRequests[1].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
                             expect(buddyRequests[1].experiencedRouteName)
                                 .to.equal(buddyRequestObject.experiencedRouteName);
@@ -3158,6 +3171,7 @@ describe("MatchMyRoute API", () => {
                             expect(moment(buddyRequests[1].meetingTime)
                                 .isSame(buddyRequestObject.meetingTime)).to.be.true;
                             expect(buddyRequests[1].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                            expect(buddyRequests[1].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
                             expect(buddyRequests[1].owner).to.equal(inexpUserId);
                             expect(buddyRequests[1].status).to.equal("pending");
                             expect(buddyRequests[1].reason).to.equal("");

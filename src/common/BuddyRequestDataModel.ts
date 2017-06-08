@@ -6,6 +6,7 @@ export default class BuddyRequest {
             averageSpeed: row.averagespeed,
             created: row.created,
             divorcePoint: pointStringToCoords(row.divorcepoint),
+            divorcePointName: row.divorcepointname,
             divorceTime: row.divorcetime,
             experiencedRoute: row.experiencedroute,
             experiencedRouteName: row.experiencedroutename,
@@ -13,6 +14,7 @@ export default class BuddyRequest {
             id: row.id,
             inexperiencedRoute: row.inexperiencedroute,
             meetingPoint: pointStringToCoords(row.meetingpoint),
+            meetingPointName: row.meetingpointname,
             meetingTime: row.meetingtime,
             owner: row.owner,
             reason: row.reason,
@@ -32,6 +34,8 @@ export default class BuddyRequest {
     public divorceTime: number;
     public meetingPoint: [number, number];
     public divorcePoint: [number, number];
+    public meetingPointName: string;
+    public divorcePointName: string;
     public route: [number, number][];
     public averageSpeed: number;
     public created: string;
@@ -77,11 +81,15 @@ export default class BuddyRequest {
         } else if ((obj.inexperiencedRoute === undefined || obj.inexperiencedRoute === null)
             && obj.status !== "canceled") {
             throw new Error("400:BuddyRequest requires an inexperiencedRoute");
+        } else if (obj.meetingPointName === undefined || obj.meetingPointName === null) {
+            throw new Error("400:BuddyRequest requires a meetingPointName");
         } else if (obj.meetingPoint === undefined || obj.meetingPoint === null) {
             throw new Error("400:BuddyRequest requires a meetingPoint");
         } else if (obj.meetingPoint.length !== 2 || typeof obj.meetingPoint[0] !== "number" ||
                     typeof obj.meetingPoint[1] !== "number") {
             throw new Error("400:BuddyRequest requires a 2D meeting point");
+        } else if (obj.divorcePointName === undefined || obj.divorcePointName === null) {
+            throw new Error("400:BuddyRequest requires a divorcePointName");
         } else if (obj.divorcePoint === undefined || obj.divorcePoint === null) {
             throw new Error("400:BuddyRequest requires a divorcePoint");
         } else if (obj.divorcePoint.length !== 2 || typeof obj.divorcePoint[0] !== "number" ||
@@ -113,6 +121,7 @@ export default class BuddyRequest {
         this.averageSpeed = obj.averageSpeed;
         this.created = obj.created;
         this.divorcePoint = obj.divorcePoint;
+        this.divorcePointName = obj.divorcePointName;
         this.divorceTime = obj.divorceTime;
         this.experiencedRoute = obj.experiencedRoute;
         this.experiencedRouteName = obj.experiencedRouteName;
@@ -121,6 +130,7 @@ export default class BuddyRequest {
         this.inexperiencedRoute = obj.inexperiencedRoute;
         this.meetingTime = obj.meetingTime;
         this.meetingPoint = obj.meetingPoint;
+        this.meetingPointName = obj.meetingPointName;
         this.owner = obj.owner;
         this.reason = obj.reason;
         this.route = obj.route;

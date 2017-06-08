@@ -81,6 +81,11 @@ const definitions = {
                 description: "Where the users will split up after their ride",
                 example: [-52, 3],
             },
+            divorcePointName: {
+                description: "The name of the place where the users will split up after their ride",
+                example: "32 Derek Drive",
+                type: "string",
+            },
             divorceTime: {
                 description: "The time in ISO 8601 extended at which the users will split up at " +
                     "the end of the ride",
@@ -112,6 +117,11 @@ const definitions = {
                 $ref: "#/definitions/Coordinate",
                 description: "Where the users will meet up before their ride",
                 example: [-51, 3],
+            },
+            meetingPointName: {
+                description: "The name of the place where the users will meet up before their ride",
+                example: "33 Shelly Street",
+                type: "string",
             },
             meetingTime: {
                 description: "The time in ISO 8601 extended at which the users will meet up to " +
@@ -189,8 +199,15 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     if (!id) {
         id = null;
     }
-    return getIdFromJWT(params.authorization).then((userId) => {
-        return Database.getSentBuddyRequests({userId, id});
+    let transactionClient;
+    return Database.createTransactionClient().then(newClient => {
+        transactionClient = newClient;
+        return getIdFromJWT(params.authorization);
+    }).then((userId) => {
+        return Database.getSentBuddyRequests({userId, id}, transactionClient);
+    }).then(results => {
+        Database.commitAndReleaseTransaction(transactionClient);
+        return results;
     });
 };
 

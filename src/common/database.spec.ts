@@ -1101,12 +1101,14 @@ describe("MatchMyRoute Database Functions", () => {
                     averageSpeed: 5,
                     created: "2017-06-07T10:24:28.684Z",
                     divorcePoint: [1, 1],
+                    divorcePointName: "99 Chris Crescent",
                     divorceTime: "2017-06-08T12:00:28.684Z",
                     experiencedRoute,
                     experiencedRouteName: "Ride to work",
                     experiencedUser: expUserId,
                     inexperiencedRoute,
                     meetingPoint: [0, 0],
+                    meetingPointName: "1 Shelly Street",
                     meetingTime: "2017-06-08T11:34:28.684Z",
                     owner: inexpUserId,
                     reason: "",
@@ -1135,6 +1137,8 @@ describe("MatchMyRoute Database Functions", () => {
                         expect(results.rows[0].status).to.equal(buddyRequestObject.status);
                         expect(results.rows[0].reason).to.equal(buddyRequestObject.reason);
                         expect(moment(results.rows[0].updated).isSame(buddyRequestObject.updated)).to.be.true;
+                        expect(results.rows[0].meetingpointname).to.equal(buddyRequestObject.meetingPointName);
+                        expect(results.rows[0].divorcepointname).to.equal(buddyRequestObject.divorcePointName);
                     });
                 });
             });
@@ -1182,6 +1186,8 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[0].reason).to.equal(buddyRequestObject.reason);
                     expect(buddyRequests[0].route).to.eql(buddyRequestObject.route);
                     expect(moment(buddyRequests[0].updated).isSame(buddyRequestObject.updated)).to.be.true;
+                    expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
+                    expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                 });
             });
             it("should get a BuddyRequest by ID for the experienced user", () => {
@@ -1204,6 +1210,8 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[0].reason).to.equal(buddyRequestObject.reason);
                     expect(buddyRequests[0].route).to.eql(buddyRequestObject.route);
                     expect(moment(buddyRequests[0].updated).isSame(buddyRequestObject.updated)).to.be.true;
+                    expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
+                    expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                 });
             });
             it("should get all of an inexperienced user's sent BuddyRequests", () => {
@@ -1225,6 +1233,8 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[0].route).to.eql(buddyRequestObject.route);
                     expect(buddyRequests[0].status).to.equal(buddyRequestObject.status);
                     expect(moment(buddyRequests[0].updated).isSame(buddyRequestObject.updated)).to.be.true;
+                    expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
+                    expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                     expect(buddyRequests[1].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
                     expect(moment(buddyRequests[1].created).isSame(buddyRequestObject.created)).to.be.true;
                     expect(moment(buddyRequests[1].divorceTime).isSame(buddyRequestObject.divorceTime)).to.be.true;
@@ -1240,6 +1250,8 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[1].route).to.eql(buddyRequestObject.route);
                     expect(buddyRequests[1].status).to.equal(buddyRequestObject.status);
                     expect(moment(buddyRequests[1].updated).isSame(buddyRequestObject.updated)).to.be.true;
+                    expect(buddyRequests[1].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
+                    expect(buddyRequests[1].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                 });
             });
             it("should get all of an experienced user's received BuddyRequests", () => {
@@ -1261,6 +1273,8 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[0].route).to.eql(buddyRequestObject.route);
                     expect(buddyRequests[0].status).to.equal(buddyRequestObject.status);
                     expect(moment(buddyRequests[0].updated).isSame(buddyRequestObject.updated)).to.be.true;
+                    expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
+                    expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                     expect(buddyRequests[1].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
                     expect(moment(buddyRequests[1].created).isSame(buddyRequestObject.created)).to.be.true;
                     expect(moment(buddyRequests[1].divorceTime).isSame(buddyRequestObject.divorceTime)).to.be.true;
@@ -1276,6 +1290,8 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[1].route).to.eql(buddyRequestObject.route);
                     expect(buddyRequests[1].status).to.equal(buddyRequestObject.status);
                     expect(moment(buddyRequests[1].updated).isSame(buddyRequestObject.updated)).to.be.true;
+                    expect(buddyRequests[1].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
+                    expect(buddyRequests[1].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                 });
             });
             it("should not get an experienced user's received BuddyRequests when looking for sent ones", done => {
@@ -1321,14 +1337,18 @@ describe("MatchMyRoute Database Functions", () => {
                 {divorceTime: "2017-06-08T12:12:12.684Z"},
                 {meetingPoint: [0.5, 0.5]},
                 {divorcePoint: [0.6, 0.6]},
+                {meetingPointName: "32 Arthur Avenue"},
+                {divorcePointName: "64 Derek Drive"},
                 {averageSpeed: 100},
                 {status: "rejected"},
                 {reason: "Excellent Reason"},
                 {   // All at once
                     averageSpeed: 100,
                     divorcePoint: [0.6, 0.6],
+                    divorcePointName: "64 Derek Drive",
                     divorceTime: "2017-06-08T12:12:12.684Z",
                     meetingPoint: [0.5, 0.5],
+                    meetingPointName: "32 Arthur Avenue",
                     meetingTime: "2017-06-08T10:20:28.684Z",
                     reason: "Excellent Reason",
                     status: "rejected",

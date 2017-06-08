@@ -618,6 +618,7 @@ describe("Various useful functions", () => {
             averageSpeed: 5,
             created: "2017-06-07T10:24:28.684Z",
             divorcePoint: [1, 1],
+            divorcePointName: "99 Chris Crescent",
             divorceTime: "2017-06-08T12:00:28.684Z",
             experiencedRoute: 333,
             experiencedRouteName: "Ride to work",
@@ -625,6 +626,7 @@ describe("Various useful functions", () => {
             id: 111,
             inexperiencedRoute: 222,
             meetingPoint: [0, 0],
+            meetingPointName: "1 Shelly Street",
             meetingTime: "2017-06-08T11:34:28.684Z",
             owner: 555,
             reason: "",
@@ -637,6 +639,7 @@ describe("Various useful functions", () => {
             expect(buddyRequest.averageSpeed).to.equal(buddyRequestObject.averageSpeed);
             expect(buddyRequest.created).to.equal(buddyRequestObject.created);
             expect(buddyRequest.divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+            expect(buddyRequest.divorcePointName).to.eql(buddyRequestObject.divorcePointName);
             expect(buddyRequest.divorceTime).to.equal(buddyRequestObject.divorceTime);
             expect(buddyRequest.experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
             expect(buddyRequest.experiencedRouteName).to.equal(buddyRequestObject.experiencedRouteName);
@@ -644,6 +647,7 @@ describe("Various useful functions", () => {
             expect(buddyRequest.id).to.equal(buddyRequestObject.id);
             expect(buddyRequest.inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
             expect(buddyRequest.meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+            expect(buddyRequest.meetingPointName).to.equal(buddyRequestObject.meetingPointName);
             expect(buddyRequest.meetingTime).to.equal(buddyRequestObject.meetingTime);
             expect(buddyRequest.owner).to.equal(buddyRequestObject.owner);
             expect(buddyRequest.reason).to.equal(buddyRequestObject.reason);

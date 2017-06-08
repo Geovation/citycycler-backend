@@ -80,6 +80,11 @@ const definitions = {
                 description: "Where the users will split up after their ride",
                 example: [-52, 3],
             },
+            divorcePointName: {
+                description: "The name of the place where the users will split up after their ride",
+                example: "32 Derek Drive",
+                type: "string",
+            },
             divorceTime: {
                 description: "The time in ISO 8601 extended at which the users will split up at " +
                     "the end of the ride",
@@ -107,6 +112,11 @@ const definitions = {
                 $ref: "#/definitions/Coordinate",
                 description: "Where the users will meet up before their ride",
                 example: [-51, 3],
+            },
+            meetingPointName: {
+                description: "The name of the place where the users will meet up before their ride",
+                example: "33 Shelly Street",
+                type: "string",
             },
             meetingTime: {
                 description: "The time in ISO 8601 extended at which the users will meet up to " +
@@ -153,17 +163,23 @@ const definitions = {
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
-    return getIdFromJWT(params.authorization).then(userId => {
+    let transactionClient;
+    return Database.createTransactionClient().then(newClient => {
+        transactionClient = newClient;
+        return getIdFromJWT(params.authorization);
+    }).then(userId => {
         const newBuddyRequest = {
             averageSpeed: payload.averageSpeed,
             created: new Date().toISOString(),
             divorcePoint: payload.divorcePoint,
+            divorcePointName: payload.divorcePointName,
             divorceTime: payload.divorceTime,
             experiencedRoute: payload.experiencedRoute,
             experiencedRouteName: payload.experiencedRouteName, // We could get this from the database if we need to...
             experiencedUser: payload.experiencedUser,
             inexperiencedRoute: payload.inexperiencedRoute,
             meetingPoint: payload.meetingPoint,
+            meetingPointName: payload.meetingPointName,
             meetingTime: payload.meetingTime,
             owner: userId,
             reason: "",
@@ -171,11 +187,10 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
             status: "pending",
             updated: new Date().toISOString(),
         };
-        return Database.createBuddyRequest(newBuddyRequest).then(id => {
-            return { id, status: 201 };
-        });
-    }, err => {
-        throw err;
+        return Database.createBuddyRequest(newBuddyRequest, transactionClient);
+    }).then(id => {
+        Database.commitAndReleaseTransaction(transactionClient);
+        return { id, status: 201 };
     });
 };
 
