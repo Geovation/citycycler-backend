@@ -1,4 +1,4 @@
-import BuddyRequest from "./BuddyRequestDataModel";
+    import BuddyRequest from "./BuddyRequestDataModel";
 import * as Database from "./database";
 import ExperiencedRoute from "./ExperiencedRouteDataModel";
 import InexperiencedRoute from "./InexperiencedRouteDataModel";
@@ -622,6 +622,7 @@ describe("Various useful functions", () => {
             meetingPoint: [0, 0],
             meetingTime: "2017-06-08T11:34:28.684Z",
             owner: 555,
+            reason: "",
             status: "pending",
             updated: "2017-06-07T10:24:28.684Z",
         };
@@ -639,6 +640,7 @@ describe("Various useful functions", () => {
             expect(buddyRequest.meetingPoint).to.eql(buddyRequestObject.meetingPoint);
             expect(buddyRequest.meetingTime).to.equal(buddyRequestObject.meetingTime);
             expect(buddyRequest.owner).to.equal(buddyRequestObject.owner);
+            expect(buddyRequest.reason).to.equal(buddyRequestObject.reason);
             expect(buddyRequest.status).to.equal(buddyRequestObject.status);
             expect(buddyRequest.updated).to.equal(buddyRequestObject.updated);
         });
@@ -690,7 +692,7 @@ describe("Various useful functions", () => {
             copy.divorceTime = "2017-06-08T11:34:28.684Z";
             expect(() => {
                 return new BuddyRequest(copy);
-            }).to.throw("400:Meeting time is before Divorce time");
+            }).to.throw("400:Divorce time is before Meeting time");
         });
         it("should throw an error if the status is not a valid status", () => {
             const copy = Object.assign({}, buddyRequestObject);
@@ -700,7 +702,7 @@ describe("Various useful functions", () => {
             }).to.throw("400:BuddyRequest requires a status of 'pending', 'accepted', 'rejected' or 'canceled'");
         });
         for (let key in buddyRequestObject) {
-            if (true) {
+            if (key !== "id" && key !== "reason") {
                 const copy = Object.assign({}, buddyRequestObject);
                 copy[key] = undefined;
                 let determiner = "aeiou".indexOf(key[0]) === -1 ? "a" : "an";
@@ -711,5 +713,16 @@ describe("Various useful functions", () => {
                 });
             }
         }
+        it("should be created without any other entity id if status is 'canceled'", () => {
+            const copy = Object.assign({}, buddyRequestObject);
+            copy.owner = undefined;
+            copy.inexperiencedRoute = undefined;
+            copy.experiencedRoute = undefined;
+            copy.experiencedUser = undefined;
+            copy.status = "canceled";
+            expect(() => {
+                return new BuddyRequest(copy);
+            }).not.to.throw();
+        });
     });
 });

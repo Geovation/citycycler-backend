@@ -77,10 +77,10 @@ difficulty ride_difficulty DEFAULT 'balanced'::ride_difficulty  -- How hard the 
 CREATE TABLE buddy_requests (
 id serial PRIMARY KEY,
 experiencedRouteName text NOT NULL,         -- The name of the experienced route
-experiencedRoute integer REFERENCES experienced_routes ON DELETE CASCADE,   -- The id of the experienced route
-experiencedUser integer REFERENCES users ON DELETE CASCADE,                 -- The id of the experienced user
-owner integer REFERENCES users ON DELETE CASCADE,                           -- The id of the inexperienced user
-inexperiencedRoute integer REFERENCES inexperienced_routes ON DELETE CASCADE, -- The id of the inexperienced route
+experiencedRoute integer REFERENCES experienced_routes ON DELETE SET NULL,   -- The id of the experienced route
+experiencedUser integer REFERENCES users ON DELETE SET NULL,                 -- The id of the experienced user
+owner integer REFERENCES users ON DELETE SET NULL,                           -- The id of the inexperienced user
+inexperiencedRoute integer REFERENCES inexperienced_routes ON DELETE SET NULL, -- The id of the inexperienced route
 meetingTime timestamptz NOT NULL,           -- When the users will meet
 divorceTime timestamptz NOT NULL,           -- When the users will part
 meetingPoint geography NOT NULL,            -- Where the users will meet
@@ -90,7 +90,8 @@ averageSpeed double precision NOT NULL,     -- The average riding speed of this 
 -- By calculating these when requested, updating the meeting/divorce point becomes much easier
 created timestamptz DEFAULT 'now'::timestamptz, -- When this buddy request was created
 updated timestamptz DEFAULT 'now'::timestamptz, -- When this buddy request was last updated
-status buddy_request_status DEFAULT 'pending'::buddy_request_status
+status buddy_request_status DEFAULT 'pending'::buddy_request_status,
+reason text DEFAULT ''  -- A reason for the status
 );
 
 CREATE INDEX IF NOT EXISTS user_email_index ON users USING btree ( "email" );

@@ -1,26 +1,27 @@
-import { lineStringToCoords } from "./database";
+import { pointStringToCoords } from "./database";
 import * as moment from "moment";
 export default class BuddyRequest {
     public static fromSQLRow(row) {
         return new BuddyRequest({
             averageSpeed: row.averagespeed,
             created: row.created,
-            divorcePoint: lineStringToCoords(row.divorcepoint),
+            divorcePoint: pointStringToCoords(row.divorcepoint),
             divorceTime: row.divorcetime,
             experiencedRoute: row.experiencedroute,
             experiencedRouteName: row.experiencedroutename,
             experiencedUser: row.experienceduser,
             id: row.id,
             inexperiencedRoute: row.inexperiencedroute,
-            meetingPoint: lineStringToCoords(row.meetingpoint),
+            meetingPoint: pointStringToCoords(row.meetingpoint),
             meetingTime: row.meetingtime,
             owner: row.owner,
+            reason: row.reason,
             status: row.status,
             updated: row.updated,
         });
     }
 
-    public id: number;
+    public id?: number;
     public experiencedRouteName: string;
     public experiencedRoute: number;
     public experiencedUser: number;
@@ -34,6 +35,7 @@ export default class BuddyRequest {
     public created: string;
     public updated: string;
     public status: string;
+    public reason: string;
 
     constructor(obj) {
         if (!obj.meetingTime) {
@@ -44,7 +46,8 @@ export default class BuddyRequest {
         let meetingTime;
         let divorceTime;
         try {
-            meetingTime = moment(obj.meetingTime);
+            // Pass the date using strict ISO 8601, otherwise invalid dates give a big warning
+            meetingTime = moment(obj.meetingTime, moment.ISO_8601, true);
             if (!meetingTime.isValid()) {
                 throw "Oh no!";
             }
@@ -52,7 +55,7 @@ export default class BuddyRequest {
             throw new Error("400:BuddyRequest requires a valid meeting time");
         }
         try {
-            divorceTime = moment(obj.divorceTime);
+            divorceTime = moment(obj.divorceTime, moment.ISO_8601, true);
             if (!divorceTime.isValid()) {
                 throw "Oh no!";
             }
@@ -60,14 +63,17 @@ export default class BuddyRequest {
             throw new Error("400:BuddyRequest requires a valid divorce time");
         }
         if (divorceTime.isBefore(meetingTime)) {
-            throw new Error("400:Meeting time is before Divorce time");
+            throw new Error("400:Divorce time is before Meeting time");
         } else if (obj.experiencedRouteName === undefined || obj.experiencedRouteName === null) {
             throw new Error("400:BuddyRequest requires an experiencedRouteName");
-        } else if (obj.experiencedRoute === undefined || obj.experiencedRoute === null) {
+        } else if ((obj.experiencedRoute === undefined || obj.experiencedRoute === null)
+            && obj.status !== "canceled") {
             throw new Error("400:BuddyRequest requires an experiencedRoute");
-        } else if (obj.experiencedUser === undefined || obj.experiencedUser === null) {
+        } else if ((obj.experiencedUser === undefined || obj.experiencedUser === null)
+            && obj.status !== "canceled") {
             throw new Error("400:BuddyRequest requires an experiencedUser");
-        } else if (obj.inexperiencedRoute === undefined || obj.inexperiencedRoute === null) {
+        } else if ((obj.inexperiencedRoute === undefined || obj.inexperiencedRoute === null)
+            && obj.status !== "canceled") {
             throw new Error("400:BuddyRequest requires an inexperiencedRoute");
         } else if (obj.meetingPoint === undefined || obj.meetingPoint === null) {
             throw new Error("400:BuddyRequest requires a meetingPoint");
@@ -89,10 +95,10 @@ export default class BuddyRequest {
             throw new Error("400:BuddyRequest requires a status");
         } else if (["accepted", "pending", "canceled", "rejected"].indexOf(obj.status) === -1) {
             throw new Error("400:BuddyRequest requires a status of 'pending', 'accepted', 'rejected' or 'canceled'");
-        } else if (obj.owner === undefined || obj.owner === null) {
+        } else if (obj.reason === undefined || obj.reason === null) {
+            obj.reason = "";
+        } else if ((obj.owner === undefined || obj.owner === null) && obj.status !== "canceled") {
             throw new Error("400:BuddyRequest requires an owner");
-        } else if (obj.id === undefined || obj.id === null) {
-            throw new Error("400:BuddyRequest requires an id");
         }
         this.averageSpeed = obj.averageSpeed;
         this.created = obj.created;
@@ -106,6 +112,7 @@ export default class BuddyRequest {
         this.meetingTime = obj.meetingTime;
         this.meetingPoint = obj.meetingPoint;
         this.owner = obj.owner;
+        this.reason = obj.reason;
         this.status = obj.status;
         this.updated = obj.updated;
     }

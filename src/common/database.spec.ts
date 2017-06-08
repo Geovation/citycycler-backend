@@ -3,6 +3,7 @@ import ExperiencedRoute from "./ExperiencedRouteDataModel";
 import InexperiencedRoute from "./InexperiencedRouteDataModel";
 import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
+import * as _ from "lodash";
 import * as mocha from "mocha";
 import * as moment from "moment";
 // import * as should from "should";
@@ -1039,6 +1040,369 @@ describe("MatchMyRoute Database Functions", () => {
             it("should not delete an inexperiencedRoute with an invalid id", done => {
                 const promise = Database.deleteInexperiencedRoute(-1, transactionClient);
                 expect(promise).to.be.rejected.and.notify(done);
+            });
+        });
+    });
+    describe("Buddy Requests", () => {
+        let expUserId;  // The experienced User id
+        let experiencedRoute;   // The experienced Route
+        let inexpUserId;  // The inexperienced User id
+        let inexperiencedRoute; // The inexperienced Rout
+        let buddyRequestObject; // A BuddyRequest object with the ids all set correctly
+        beforeEach("Create two users to send/receive the Buddy requests, with respective routes", () => {
+            return Database.putUser({
+                email: "experienced@example.com",
+                jwt_secret: "secret",
+                name: "Experienced User",
+                pwh: "pwhash",
+                rounds: 5,
+                salt: "salty",
+            }, transactionClient)
+            .then(newUser => {
+                expUserId = newUser.id;
+            })
+            .then(() => {
+                return Database.putUser({
+                    email: "inexperienced@example.com",
+                    jwt_secret: "secret",
+                    name: "Inexperienced User",
+                    pwh: "pwhash",
+                    rounds: 5,
+                    salt: "salty",
+                },
+                transactionClient);
+            }).then(newUser => {
+                inexpUserId = newUser.id;
+            }).then((): Promise<number> => {
+                return Database.putExperiencedRoute(new ExperiencedRoute({
+                    arrivalTime: "14:00:00+00",
+                    days: ["tuesday", "sunday"],
+                    departureTime: "13:00:00+00",
+                    endPointName: "112 Rachel Road",
+                    length: 5000,
+                    name: "Ride to work",
+                    owner: expUserId,
+                    route: [[0, 0], [1, 0], [1, 1]],
+                    startPointName: "33 Stanley Street",
+                }), transactionClient);
+            }).then(routeId => {
+                experiencedRoute = routeId;
+            }).then(() => {
+                return Database.createInexperiencedRoute(inexpUserId, new InexperiencedRoute({
+                    arrivalDateTime: "2000-01-01T13:00:00+00",
+                    endPoint: [15, 15],
+                    notifyOwner: false,
+                    radius: 1000,
+                    startPoint: [10, 10],
+                }), transactionClient);
+            }).then(routeId => {
+                inexperiencedRoute = routeId;
+                buddyRequestObject = {  // A general buddyRequest Object, which we can copy
+                    averageSpeed: 5,
+                    created: "2017-06-07T10:24:28.684Z",
+                    divorcePoint: [1, 1],
+                    divorceTime: "2017-06-08T12:00:28.684Z",
+                    experiencedRoute,
+                    experiencedRouteName: "Ride to work",
+                    experiencedUser: expUserId,
+                    inexperiencedRoute,
+                    meetingPoint: [0, 0],
+                    meetingTime: "2017-06-08T11:34:28.684Z",
+                    owner: inexpUserId,
+                    reason: "",
+                    status: "pending",
+                    updated: "2017-06-07T10:24:28.684Z",
+                };
+            });
+        });
+        describe("Creation", () => {
+            it("should create a BuddyRequest", () => {
+                return Database.createBuddyRequest(buddyRequestObject, transactionClient).then(buddyRequestId => {
+                    return Database.sqlTransaction("SELECT * FROM buddy_requests where id=$1",
+                        ["" + buddyRequestId], transactionClient)
+                    .then(results => {
+                        expect(results.rows[0]).to.not.be.undefined;
+                        expect(results.rows[0].averagespeed).to.equal(buddyRequestObject.averageSpeed);
+                        expect(moment(results.rows[0].created).isSame(buddyRequestObject.created)).to.be.true;
+                        expect(moment(results.rows[0].divorcetime).isSame(buddyRequestObject.divorceTime)).to.be.true;
+                        expect(results.rows[0].experiencedroute).to.equal(buddyRequestObject.experiencedRoute);
+                        expect(results.rows[0].experiencedroutename).to.equal(buddyRequestObject.experiencedRouteName);
+                        expect(results.rows[0].experienceduser).to.equal(buddyRequestObject.experiencedUser);
+                        expect(results.rows[0].inexperiencedroute).to.equal(buddyRequestObject.inexperiencedRoute);
+                        expect(moment(results.rows[0].meetingtime).isSame(buddyRequestObject.meetingTime)).to.be.true;
+                        expect(results.rows[0].owner).to.equal(buddyRequestObject.owner);
+                        expect(results.rows[0].status).to.equal(buddyRequestObject.status);
+                        expect(results.rows[0].reason).to.equal(buddyRequestObject.reason);
+                        expect(moment(results.rows[0].updated).isSame(buddyRequestObject.updated)).to.be.true;
+                    });
+                });
+            });
+        });
+        describe("Retrieval", () => {
+            let firstBuddyRequestId;
+            let secondBuddyRequestId;
+            let randomOtherId;
+            beforeEach("Create 2 BuddyRequests to get, and a random user", () => {
+                return Database.createBuddyRequest(buddyRequestObject, transactionClient).then(buddyRequestId => {
+                    firstBuddyRequestId = buddyRequestId;
+                }).then(() => {
+                    return Database.createBuddyRequest(buddyRequestObject, transactionClient);
+                }).then(buddyRequestId => {
+                    secondBuddyRequestId = buddyRequestId;
+                }).then(() => {
+                    return Database.putUser({
+                        email: "random@example.com",
+                        jwt_secret: "secret",
+                        name: "Unnattached User",
+                        pwh: "pwhash",
+                        rounds: 5,
+                        salt: "salty",
+                    }, transactionClient);
+                }).then(user => {
+                    randomOtherId = user.id;
+                });
+            });
+            it("should get a BuddyRequest by ID for the inexperienced user", () => {
+                return Database.getBuddyRequests({id: firstBuddyRequestId, userId: inexpUserId}, transactionClient)
+                .then(buddyRequests => {
+                    expect(buddyRequests.length).to.equal(1);
+                    expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
+                    expect(moment(buddyRequests[0].created).isSame(buddyRequestObject.created)).to.be.true;
+                    expect(moment(buddyRequests[0].divorceTime).isSame(buddyRequestObject.divorceTime)).to.be.true;
+                    expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                    expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
+                    expect(buddyRequests[0].experiencedRouteName).to.equal(buddyRequestObject.experiencedRouteName);
+                    expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
+                    expect(buddyRequests[0].inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(moment(buddyRequests[0].meetingTime).isSame(buddyRequestObject.meetingTime)).to.be.true;
+                    expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                    expect(buddyRequests[0].owner).to.equal(buddyRequestObject.owner);
+                    expect(buddyRequests[0].status).to.equal(buddyRequestObject.status);
+                    expect(buddyRequests[0].reason).to.equal(buddyRequestObject.reason);
+                    expect(moment(buddyRequests[0].updated).isSame(buddyRequestObject.updated)).to.be.true;
+                });
+            });
+            it("should get a BuddyRequest by ID for the experienced user", () => {
+                return Database.getBuddyRequests({id: firstBuddyRequestId, userId: expUserId}, transactionClient)
+                .then(buddyRequests => {
+                    expect(buddyRequests.length).to.equal(1);
+                    expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
+                    expect(moment(buddyRequests[0].created).isSame(buddyRequestObject.created)).to.be.true;
+                    expect(moment(buddyRequests[0].divorceTime).isSame(buddyRequestObject.divorceTime)).to.be.true;
+                    expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                    expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
+                    expect(buddyRequests[0].experiencedRouteName).to.equal(buddyRequestObject.experiencedRouteName);
+                    expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
+                    expect(buddyRequests[0].inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(moment(buddyRequests[0].meetingTime).isSame(buddyRequestObject.meetingTime)).to.be.true;
+                    expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                    expect(buddyRequests[0].owner).to.equal(buddyRequestObject.owner);
+                    expect(buddyRequests[0].status).to.equal(buddyRequestObject.status);
+                    expect(buddyRequests[0].reason).to.equal(buddyRequestObject.reason);
+                    expect(moment(buddyRequests[0].updated).isSame(buddyRequestObject.updated)).to.be.true;
+                });
+            });
+            it("should get all of a user's BuddyRequests", () => {
+                return Database.getBuddyRequests({userId: inexpUserId}, transactionClient)
+                .then(buddyRequests => {
+                    expect(buddyRequests.length).to.equal(2);
+                    expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
+                    expect(moment(buddyRequests[0].created).isSame(buddyRequestObject.created)).to.be.true;
+                    expect(moment(buddyRequests[0].divorceTime).isSame(buddyRequestObject.divorceTime)).to.be.true;
+                    expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                    expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
+                    expect(buddyRequests[0].experiencedRouteName).to.equal(buddyRequestObject.experiencedRouteName);
+                    expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
+                    expect(buddyRequests[0].inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(moment(buddyRequests[0].meetingTime).isSame(buddyRequestObject.meetingTime)).to.be.true;
+                    expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                    expect(buddyRequests[0].owner).to.equal(buddyRequestObject.owner);
+                    expect(buddyRequests[0].reason).to.equal(buddyRequestObject.reason);
+                    expect(buddyRequests[0].status).to.equal(buddyRequestObject.status);
+                    expect(moment(buddyRequests[0].updated).isSame(buddyRequestObject.updated)).to.be.true;
+                    expect(buddyRequests[1].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
+                    expect(moment(buddyRequests[1].created).isSame(buddyRequestObject.created)).to.be.true;
+                    expect(moment(buddyRequests[1].divorceTime).isSame(buddyRequestObject.divorceTime)).to.be.true;
+                    expect(buddyRequests[1].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                    expect(buddyRequests[1].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
+                    expect(buddyRequests[1].experiencedRouteName).to.equal(buddyRequestObject.experiencedRouteName);
+                    expect(buddyRequests[1].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
+                    expect(buddyRequests[1].inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(moment(buddyRequests[1].meetingTime).isSame(buddyRequestObject.meetingTime)).to.be.true;
+                    expect(buddyRequests[1].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                    expect(buddyRequests[1].owner).to.equal(buddyRequestObject.owner);
+                    expect(buddyRequests[1].reason).to.equal(buddyRequestObject.reason);
+                    expect(buddyRequests[1].status).to.equal(buddyRequestObject.status);
+                    expect(moment(buddyRequests[1].updated).isSame(buddyRequestObject.updated)).to.be.true;
+                });
+            });
+            it("should not get a BuddyRequest by an invalid ID", done => {
+                const promise = Database.getBuddyRequests({id: -1, userId: inexpUserId}, transactionClient);
+                expect(promise).to.be.rejected.and.notify(done);
+            });
+            it("should not get another user's BuddyRequest", done => {
+                const promise = Database.getBuddyRequests({id: firstBuddyRequestId, userId: randomOtherId},
+                    transactionClient);
+                expect(promise).to.be.rejected.and.notify(done);
+            });
+        });
+        describe("Updating", () => {
+            let buddyRequestId;
+            let existingBuddyRequest;
+            beforeEach("Create a BuddyRequest to update", () => {
+                return Database.createBuddyRequest(buddyRequestObject, transactionClient).then(newBuddyRequestId => {
+                    buddyRequestId = newBuddyRequestId;
+                    existingBuddyRequest = Object.assign({}, buddyRequestObject);
+                    existingBuddyRequest.id = newBuddyRequestId;
+                });
+            });
+            // These two lists are updates objects that should/shouldn't succede
+            let thingsThatCanBeUpdated = [
+                {meetingTime: "2017-06-08T10:20:28.684Z"},
+                {divorceTime: "2017-06-08T12:12:12.684Z"},
+                {meetingPoint: [0.5, 0.5]},
+                {divorcePoint: [0.6, 0.6]},
+                {averageSpeed: 100},
+                {status: "rejected"},
+                {reason: "Excellent Reason"},
+                {   // All at once
+                    averageSpeed: 100,
+                    divorcePoint: [0.6, 0.6],
+                    divorceTime: "2017-06-08T12:12:12.684Z",
+                    meetingPoint: [0.5, 0.5],
+                    meetingTime: "2017-06-08T10:20:28.684Z",
+                    reason: "Excellent Reason",
+                    status: "rejected",
+                },
+            ];
+            // These have a "error" property.
+            // If it is undefined, the update should fail silently, and just not have cahnged anything
+            // If it is a truthy value, expect the update to be rejected
+            let thingsThatCannotBeUpdated: any[] = [
+                {owner: -1},
+                {id: -1},
+                {experiencedUser: -1},
+                {experiencedRoute: -1},
+                {experiencedRouteName: "A silly name!"},
+                {inexperiencedRoute: -1},
+                {created: "2000-01-01T12:00:00.000Z"},
+                {updated: "2000-01-01T12:00:00.000Z"},
+                {
+                    divorceTime: "2017-06-08T10:12:12.684Z",
+                    error: "400:Divorce time is before Meeting time",
+                    meetingTime: "2017-06-08T12:20:28.684Z",
+                },
+            ];
+            let mostRecentlyUpdated = moment();
+            for (let updates of thingsThatCanBeUpdated) {
+                const keys = Object.keys(updates).join(", ");
+                it("should update " + keys, () => {
+                    return Database.updateBuddyRequest(existingBuddyRequest, _.omit(updates, ["error"]),
+                    transactionClient).then(() => {
+                        return Database.getBuddyRequests({id: buddyRequestId, userId: existingBuddyRequest.owner},
+                            transactionClient);
+                    }).then(buddyRequests => {
+                        for (let key in updates) {
+                            if (key.indexOf("Time") !== -1) {
+                                expect(moment(buddyRequests[0][key]).isSame(updates[key])).to.be.true;
+                            } else {
+                                expect(buddyRequests[0][key]).to.eql(updates[key]);
+                            }
+                        }
+                        expect(moment(mostRecentlyUpdated).isBefore(buddyRequests[0].updated)).to.be.true;
+                        mostRecentlyUpdated = moment(buddyRequests[0].updated);
+                    });
+                });
+            }
+            mostRecentlyUpdated = moment();
+            for (let updates of thingsThatCannotBeUpdated) {
+                const keys = Object.keys(updates).join(", ");
+                it("should fail to update " + keys + (updates.error ? ", and throw an error" : ""), () => {
+                    if (updates.error) {
+                        expect(() => {
+                            Database.updateBuddyRequest(existingBuddyRequest, updates,
+                                transactionClient);
+                        }).to.throw(updates.error);
+                    } else {
+                        return Database.updateBuddyRequest(existingBuddyRequest, updates, transactionClient)
+                        .then(() => {
+                            return Database.getBuddyRequests({id: buddyRequestId, userId: existingBuddyRequest.owner},
+                                transactionClient);
+                            }).then(buddyRequests => {
+                                for (let key in updates) {
+                                    if (key.indexOf("Time") !== -1) {
+                                        expect(moment(buddyRequests[0][key]).isSame(updates[key])).to.be.false;
+                                    } else {
+                                        expect(buddyRequests[0][key]).to.not.eql(updates[key]);
+                                    }
+                                }
+                                expect(moment(mostRecentlyUpdated).isBefore(buddyRequests[0].updated)).to.be.true;
+                            });
+                    }
+                });
+            }
+        });
+        describe("Deletion", () => {
+            let buddyRequestId;
+            beforeEach("Create a BuddyRequest to delete", () => {
+                return Database.createBuddyRequest(buddyRequestObject, transactionClient).then(newBuddyRequestId => {
+                    buddyRequestId = newBuddyRequestId;
+                });
+            });
+            it("should delete a BuddyRequest", done => {
+                Database.deleteBuddyRequest(buddyRequestId, transactionClient).then(() => {
+                    const promise = Database.getBuddyRequests({id: buddyRequestId, userId: inexpUserId},
+                        transactionClient);
+                    expect(promise).to.be.rejected.and.notify(done);
+                });
+            });
+            it("should not delete a BuddyRequest with an invalid id", done => {
+                const promise = Database.deleteBuddyRequest(-1, transactionClient);
+                expect(promise).to.be.rejected.and.notify(done);
+            });
+            it("should cancel the buddy request when the experienced user is deleted", () => {
+                return Database.deleteUser(expUserId, transactionClient).then(() => {
+                    return Database.getBuddyRequests({id: buddyRequestId, userId: inexpUserId}, transactionClient);
+                }).then(results => {
+                    expect(results.length).to.equal(1);
+                    expect(results[0].status).to.equal("canceled");
+                    expect(results[0].reason).to.equal("Experienced User has deleted their account");
+                });
+            });
+        });
+        describe("Special status changes", () => {
+            let buddyRequestId;
+            beforeEach("Create a BuddyRequest to affect", () => {
+                return Database.createBuddyRequest(buddyRequestObject, transactionClient).then(newBuddyRequestId => {
+                    buddyRequestId = newBuddyRequestId;
+                });
+            });
+            it("should cancel the buddy request when the inexperienced user is deleted", () => {
+                return Database.deleteUser(inexpUserId, transactionClient).then(() => {
+                    return Database.getBuddyRequests({id: buddyRequestId, userId: expUserId}, transactionClient);
+                }).then(results => {
+                    expect(results.length).to.equal(1);
+                    expect(results[0].status).to.equal("canceled");
+                    expect(results[0].reason).to.equal("Inexperienced User has deleted their account");
+                });
+            });
+            it("should cancel the buddy request when the experienced route is deleted", () => {
+                return Database.deleteExperiencedRoute(experiencedRoute, transactionClient).then(() => {
+                    return Database.getBuddyRequests({id: buddyRequestId, userId: expUserId}, transactionClient);
+                }).then(results => {
+                    expect(results.length).to.equal(1);
+                    expect(results[0].status).to.equal("canceled");
+                    expect(results[0].reason).to.equal("Experienced User has deleted the route \"Ride to work\"");
+                });
+            });
+            it("should cancel the buddy request when the inexperienced route is deleted", () => {
+                return Database.deleteInexperiencedRoute(inexperiencedRoute, transactionClient).then(() => {
+                    return Database.getBuddyRequests({id: buddyRequestId, userId: expUserId}, transactionClient);
+                }).then(results => {
+                    expect(results.length).to.equal(1);
+                    expect(results[0].status).to.equal("canceled");
+                    expect(results[0].reason).to.equal("Inexperienced User no longer needs to buddy up with you");
+                });
             });
         });
     });
