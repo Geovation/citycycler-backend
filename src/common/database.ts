@@ -714,17 +714,45 @@ export function createBuddyRequest(buddyRequest: BuddyRequest, providedClient = 
 }
 
 /**
- * getBuddyRequests - description
+ * getSentBuddyRequests - Get the buddy requests the params.userId has sent
  *
  * @param  {object} params The query parameters, including the id of the buddy request to query and the user id
  * @param  {client} providedClient Database client to use for this interaction
  * @return {Object[]} Array of buddy requests
  */
-export function getBuddyRequests(params: {userId: number, id?: number}, providedClient = null)
+export function getSentBuddyRequests(params: {userId: number, id?: number}, providedClient = null)
 : Promise<BuddyRequest[]> {
     let query = "SELECT id, experiencedRouteName, experiencedRoute, experiencedUser, owner, inexperiencedRoute, " +
     "meetingTime, divorceTime, ST_AsText(meetingPoint) as meetingPoint, ST_AsText(divorcePoint) AS divorcePoint, " +
-    "averageSpeed, created, updated, status, reason FROM buddy_requests WHERE (owner=$1 OR experiencedUser=$1)";
+    "averageSpeed, created, updated, status, reason FROM buddy_requests WHERE owner=$1";
+    let queryParams = [params.userId];
+    if (params.id !== null && typeof params.id !== "undefined") {
+        query +=  " AND id=$2";
+        queryParams.push(params.id);
+    }
+    return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
+        if (result.rowCount > 0) {
+            return result.rows.map((buddyRequest) => {
+                return BuddyRequest.fromSQLRow(buddyRequest);
+            });
+        } else {
+            throw new Error("404:BuddyRequest doesn't exist");
+        }
+    });
+}
+
+/**
+ * getBuddyRequests - Get the buddy requests the params.userId has received
+ *
+ * @param  {object} params The query parameters, including the id of the buddy request to query and the user id
+ * @param  {client} providedClient Database client to use for this interaction
+ * @return {Object[]} Array of buddy requests
+ */
+export function getReceivedBuddyRequests(params: {userId: number, id?: number}, providedClient = null)
+: Promise<BuddyRequest[]> {
+    let query = "SELECT id, experiencedRouteName, experiencedRoute, experiencedUser, owner, inexperiencedRoute, " +
+    "meetingTime, divorceTime, ST_AsText(meetingPoint) as meetingPoint, ST_AsText(divorcePoint) AS divorcePoint, " +
+    "averageSpeed, created, updated, status, reason FROM buddy_requests WHERE experiencedUser=$1";
     let queryParams = [params.userId];
     if (params.id !== null && typeof params.id !== "undefined") {
         query +=  " AND id=$2";
