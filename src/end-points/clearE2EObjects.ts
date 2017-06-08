@@ -16,7 +16,7 @@ const operation = {
         produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
-                description: "All E2E test users have been deleted",
+                description: "All E2E test objects have been deleted",
             },
             default: {
                 description: "unexpected error",
@@ -25,7 +25,7 @@ const operation = {
                 },
             },
         },
-        summary: "Delete any users made during E2E testing",
+        summary: "Delete any objects made during E2E testing",
         tags: [
             "application",
         ],
@@ -40,17 +40,24 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     // All users made during e2e tests have emails with the domain: e2e-test.matchmyroute-backend.appspot.com
     // This means that no real users should ever be able to be deleted, because that domain is never going
     // to have email accounts associated with it
-    const query = "DELETE FROM users WHERE email LIKE '%@e2e-test.matchmyroute-backend.appspot.com';";
-    return Database.sqlTransaction(query).then(result => {
-        return true;
+    const userQuery = "DELETE FROM users WHERE email LIKE '%@e2e-test.matchmyroute-backend.appspot.com';";
+    // When all of the users (and their routes) are deleted, any e2e buddy requests left will have
+    // owner, experiencedUser, experiencedRoute and inexperiencedRoute set to NULL. If there are any
+    // of these from non-e2e tests, they are useless and should be deleted anyway
+    const buddyRequestQuery = "DELETE FROM buddy_requests WHERE owner=NULL AND experiencedUser=NULL AND " +
+        "experiencedRoute=NULL AND inexperiencedRoute=NULL;";
+    return Database.sqlTransaction(userQuery).then(result => {
+        return Database.sqlTransaction(buddyRequestQuery).then(result => {
+            return true;
+        });
     });
 };
 
 // end point definition
-const clearE2EUsers = new MicroserviceEndpoint("clearE2EUsersEndpoint")
+const clearE2EObjects = new MicroserviceEndpoint("clearE2EUsersEndpoint")
     .addSwaggerOperation(operation)
     .addService(service);
 
 // Export a collection, with this endpoint in it
-export const E2EUtils: EndpointCollection = new EndpointCollection("clearE2EUsers");
-E2EUtils.addEndpoint(clearE2EUsers);
+export const E2EUtils: EndpointCollection = new EndpointCollection("clearE2EObjects");
+E2EUtils.addEndpoint(clearE2EObjects);

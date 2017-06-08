@@ -22,6 +22,11 @@ describe("Various useful functions", () => {
             const coords = [[0, 0], [1, 1], [2, 2]];
             expect(Database.lineStringToCoords(lineString)).to.eql(coords);
         });
+        it("should handle decimal numbers", () => {
+            const lineString = "LINESTRING(0 0,0.5 0.5,1 1)";
+            const coords = [[0, 0], [0.5, 0.5], [1, 1]];
+            expect(Database.lineStringToCoords(lineString)).to.eql(coords);
+        });
         it("should not convert an invalid linestring into coords", () => {
             let lineString = "POINT(0 2 5)";
             expect(() => {

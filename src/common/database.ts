@@ -216,8 +216,8 @@ export function lineStringToCoords(lineStr: string): number[][] {
     const coordStr = lineStr.slice(11, lineStr.length - 1);
     coordStr.split(",").forEach((strPair) => {
         coords.push([
-            parseInt(strPair.split(" ")[0], 10),
-            parseInt(strPair.split(" ")[1], 10),
+            parseFloat(strPair.split(" ")[0]),
+            parseFloat(strPair.split(" ")[1]),
         ]);
     });
     return coords;

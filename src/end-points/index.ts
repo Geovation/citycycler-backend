@@ -1,4 +1,4 @@
-import { E2EUtils } from "./clearE2EUsers";
+import { E2EUtils } from "./clearE2EObjects";
 import { experiencedRoute } from "./experiencedRoute";
 import { matchRoute } from "./experiencedRoute/match";
 import { nearby } from "./experiencedRoute/nearby";

@@ -30,7 +30,7 @@ const deleteE2EUsers = (url): Promise<Boolean> => {
     return new Promise(resolve => {
         defaultRequest({
             method: "GET",
-            url: url + "/clearE2EUsers",
+            url: url + "/clearE2EObjects",
         }, (error, response, body) => {
             if (error !== null) {
                 logger.error("Got error when trying to delete the e2e test users: " + JSON.stringify(error));
