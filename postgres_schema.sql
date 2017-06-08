@@ -85,6 +85,7 @@ meetingTime timestamptz NOT NULL,           -- When the users will meet
 divorceTime timestamptz NOT NULL,           -- When the users will part
 meetingPoint geography NOT NULL,            -- Where the users will meet
 divorcePoint geography NOT NULL,            -- Where the users will part
+route geography NOT NULL,                   -- The section of the experienced_route that these users will share
 averageSpeed double precision NOT NULL,     -- The average riding speed of this route
 -- Having the average speed lets us easily calculate the time to/from the meeting/divorce points for both users
 -- By calculating these when requested, updating the meeting/divorce point becomes much easier

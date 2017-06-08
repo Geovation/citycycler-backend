@@ -628,6 +628,7 @@ describe("Various useful functions", () => {
             meetingTime: "2017-06-08T11:34:28.684Z",
             owner: 555,
             reason: "",
+            route: [[0, 0], [0, 1], [0, 2]],
             status: "pending",
             updated: "2017-06-07T10:24:28.684Z",
         };
@@ -646,6 +647,7 @@ describe("Various useful functions", () => {
             expect(buddyRequest.meetingTime).to.equal(buddyRequestObject.meetingTime);
             expect(buddyRequest.owner).to.equal(buddyRequestObject.owner);
             expect(buddyRequest.reason).to.equal(buddyRequestObject.reason);
+            expect(buddyRequest.route).to.equal(buddyRequestObject.route);
             expect(buddyRequest.status).to.equal(buddyRequestObject.status);
             expect(buddyRequest.updated).to.equal(buddyRequestObject.updated);
         });
@@ -676,6 +678,27 @@ describe("Various useful functions", () => {
             expect(() => {
                 return new BuddyRequest(copy);
             }).to.throw("400:BuddyRequest requires a 2D divorce point");
+        });
+        it("should throw an error if a route coordinate is 3D", () => {
+            const copy = Object.assign({}, buddyRequestObject);
+            copy.route = [[0, 0, 0], [0, 1], [0, 2]];
+            expect(() => {
+                return new BuddyRequest(copy);
+            }).to.throw("400:BuddyRequest requires a route of 2D points");
+        });
+        it("should throw an error if a route coordinate is 1D", () => {
+            const copy = Object.assign({}, buddyRequestObject);
+            copy.route = [[0, 0], [0, 1], [2]];
+            expect(() => {
+                return new BuddyRequest(copy);
+            }).to.throw("400:BuddyRequest requires a route of 2D points");
+        });
+        it("should throw an error if the route is only 1 point long", () => {
+            const copy = Object.assign({}, buddyRequestObject);
+            copy.route = [[0, 0]];
+            expect(() => {
+                return new BuddyRequest(copy);
+            }).to.throw("400:BuddyRequest requires a route of at least 2 points");
         });
         it("should throw an error if there is an invalid meetingTime", () => {
             const copy = Object.assign({}, buddyRequestObject);

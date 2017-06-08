@@ -44,10 +44,10 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     // When all of the users (and their routes) are deleted, any e2e buddy requests left will have
     // owner, experiencedUser, experiencedRoute and inexperiencedRoute set to NULL. If there are any
     // of these from non-e2e tests, they are useless and should be deleted anyway
-    const buddyRequestQuery = "DELETE FROM buddy_requests WHERE owner=NULL AND experiencedUser=NULL AND " +
-        "experiencedRoute=NULL AND inexperiencedRoute=NULL;";
-    return Database.sqlTransaction(userQuery).then(result => {
-        return Database.sqlTransaction(buddyRequestQuery).then(result => {
+    const buddyRequestQuery = "DELETE FROM buddy_requests WHERE owner IS NULL AND experiencedUser IS NULL AND " +
+        "experiencedRoute IS NULL AND inexperiencedRoute IS NULL;";
+    return Database.sqlTransaction(userQuery).then(() => {
+        return Database.sqlTransaction(buddyRequestQuery).then(() => {
             return true;
         });
     });

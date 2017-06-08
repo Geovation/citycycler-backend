@@ -1,4 +1,4 @@
-import { pointStringToCoords } from "./database";
+import { lineStringToCoords, pointStringToCoords } from "./database";
 import * as moment from "moment";
 export default class BuddyRequest {
     public static fromSQLRow(row) {
@@ -16,6 +16,7 @@ export default class BuddyRequest {
             meetingTime: row.meetingtime,
             owner: row.owner,
             reason: row.reason,
+            route: lineStringToCoords(row.route),
             status: row.status,
             updated: row.updated,
         });
@@ -31,6 +32,7 @@ export default class BuddyRequest {
     public divorceTime: number;
     public meetingPoint: [number, number];
     public divorcePoint: [number, number];
+    public route: [number, number][];
     public averageSpeed: number;
     public created: string;
     public updated: string;
@@ -85,6 +87,14 @@ export default class BuddyRequest {
         } else if (obj.divorcePoint.length !== 2 || typeof obj.divorcePoint[0] !== "number" ||
                     typeof obj.divorcePoint[1] !== "number") {
             throw new Error("400:BuddyRequest requires a 2D divorce point");
+        } else if (obj.route === undefined || obj.route === null) {
+            throw new Error("400:BuddyRequest requires a route");
+        } else if (obj.route.length < 2) {
+            throw new Error("400:BuddyRequest requires a route of at least 2 points");
+        } else if (Math.max(...obj.route.map((c) => { return c.length; })) !== 2) {
+            throw new Error("400:BuddyRequest requires a route of 2D points");
+        } else if (Math.min(...obj.route.map((c) => { return c.length; })) !== 2) {
+            throw new Error("400:BuddyRequest requires a route of 2D points");
         } else if (obj.averageSpeed === undefined || obj.averageSpeed === null) {
             throw new Error("400:BuddyRequest requires an averageSpeed");
         } else if (obj.created === undefined || obj.created === null) {
@@ -113,6 +123,7 @@ export default class BuddyRequest {
         this.meetingPoint = obj.meetingPoint;
         this.owner = obj.owner;
         this.reason = obj.reason;
+        this.route = obj.route;
         this.status = obj.status;
         this.updated = obj.updated;
     }

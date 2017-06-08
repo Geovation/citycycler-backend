@@ -14,6 +14,7 @@ import * as logger from "winston";
 const expect = chai.expect;
 const assert = chai.assert;
 const before = mocha.before;
+const beforeEach = mocha.beforeEach;
 const after = mocha.after;
 const describe = mocha.describe;
 const it = mocha.it;
@@ -1821,7 +1822,11 @@ describe("MatchMyRoute API", () => {
         describe("Inexperienced Routes", () => {
             before(done => {
                 // Create another test user (userIds[3])
-                const user = { email: "test3@example.com", name: "Test User4", password: "test" };
+                const user = {
+                    email: "test3@e2e-test.matchmyroute-backend.appspot.com",
+                    name: "Test User4",
+                    password: "test",
+                };
                 defaultRequest({
                     json: user,
                     method: "PUT",
@@ -2761,6 +2766,439 @@ describe("MatchMyRoute API", () => {
                             expect(response2.statusCode).to.equal(403, "Expected 403 response but got " +
                                 response2.statusCode + ", body returned is: " + JSON.stringify(body2) +
                                 ". This means the inexperiencedRoute was not deleted");
+                            done();
+                        });
+                    });
+                });
+            });
+        });
+        describe("Buddy Requests", () => {
+            let i = 4;      // We keep track of this to decide what the email address of each user should be. Yuck.
+            let expUserId;  // The experienced User id
+            let expUserJwt;  // The experienced User token
+            let experiencedRoute;   // The experienced Route
+            let inexpUserId;  // The inexperienced User id
+            let inexpUserJwt;  // The inexperienced User token
+            let inexperiencedRoute; // The inexperienced Route
+            let randomUserJwt;  // A token for a user unconnected to these buddy requests
+            let buddyRequestObject; // A BuddyRequest object with the ids all set correctly
+            beforeEach("Create 3 test users with respective routes", done => {
+                // The random user
+                const user1 = {
+                    email: "test" + i + "@e2e-test.matchmyroute-backend.appspot.com",
+                    name: "Random Test User",
+                    password: "test",
+                };
+                defaultRequest({
+                    json: user1,
+                    method: "PUT",
+                    url: url + "/user",
+                }, (error, response, body) => {
+                    randomUserJwt = body.result.jwt.token;
+                    // The inexperienced User
+                    const user2 = {
+                        email: "test" + (i + 1) + "@e2e-test.matchmyroute-backend.appspot.com",
+                        name: "Inexperienced Test User",
+                        password: "test",
+                    };
+                    defaultRequest({
+                        json: user2,
+                        method: "PUT",
+                        url: url + "/user",
+                    }, (error2, response2, body2) => {
+                        inexpUserId = parseInt(body2.result.id, 10);
+                        inexpUserJwt = body2.result.jwt.token;
+                        // The experienced User
+                        const user3 = {
+                            email: "test" + (i + 2) + "@e2e-test.matchmyroute-backend.appspot.com",
+                            name: "Experienced Test User",
+                            password: "test",
+                        };
+                        defaultRequest({
+                            json: user3,
+                            method: "PUT",
+                            url: url + "/user",
+                        }, (error3, response3, body3) => {
+                            expUserId = parseInt(body3.result.id, 10);
+                            expUserJwt = body3.result.jwt.token;
+                            // The inexperienced Route
+                            const route1 = {
+                                arrivalDateTime: "2000-01-01T13:00:00+00",
+                                endPoint: [15, 15],
+                                notifyOwner: false,
+                                radius: 1000,
+                                startPoint: [10, 10],
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                json: route1,
+                                method: "PUT",
+                                url: url + "/inexperiencedRoute",
+                            }, (error4, response4, body4) => {
+                                inexperiencedRoute = parseInt(body4.result.id, 10);
+                                // The experienced Route
+                                const route2 = {
+                                    arrivalTime: "13:00:00+00",
+                                    days: ["monday"],
+                                    departureTime: "12:00:00+00",
+                                    endPointName: "33 Rachel Road",
+                                    length: 5000,
+                                    name: "Ride to work",
+                                    route: [[0, 0], [1, 0], [1, 1]],
+                                    startPointName: "122 Stanley Street",
+                                };
+                                defaultRequest({
+                                    headers: {
+                                        Authorization: "Bearer " + expUserJwt,
+                                    },
+                                    json: route2,
+                                    method: "PUT",
+                                    url: url + "/experiencedRoute",
+                                }, (error5, response5, body5) => {
+                                    experiencedRoute = parseInt(body5.result.id, 10);
+                                    buddyRequestObject = {
+                                        averageSpeed: 5,
+                                        divorcePoint: [1, 1],
+                                        divorceTime: "2017-06-08T12:00:28.684Z",
+                                        experiencedRoute,
+                                        experiencedRouteName: "Ride to work",
+                                        experiencedUser: expUserId,
+                                        inexperiencedRoute,
+                                        meetingPoint: [0, 0],
+                                        meetingTime: "2017-06-08T11:34:28.684Z",
+                                        route: [[0, 0], [0.5, 0.5], [1, 1]],
+                                    };
+                                    i += 3;
+                                    done();
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+            describe("Creation", () => {
+                it("should create a BuddyRequest", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + inexpUserJwt,
+                        },
+                        json: buddyRequestObject,
+                        method: "PUT",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(201, "Expected 201 response but got " +
+                            response.statusCode + ", error given is: " + error + " body is " + body);
+                        expect(typeof body).to.equal("object", "Body is of unexpected type. " +
+                            "Expected object, but got a " + typeof body);
+                        expect(parseInt(body.result, 10)).to.not.equal(NaN, "The returned ID is NaN. " +
+                            "Full response body is: " + JSON.stringify(body));
+                        done();
+                    });
+                });
+                it("should not create a BuddyRequest with no auth", done => {
+                    defaultRequest({
+                        json: buddyRequestObject,
+                        method: "PUT",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                            response.statusCode + ", error given is: " + error + " body is " + body);
+                        done();
+                    });
+                });
+                it("should not create a BuddyRequest with invalid auth", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer monkey",
+                        },
+                        json: buddyRequestObject,
+                        method: "PUT",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                            response.statusCode + ", error given is: " + error + " body is " + body);
+                        done();
+                    });
+                });
+            });
+            describe("Retrieval", () => {
+                let buddyRequest1Id;
+                let buddyRequest2Id;
+                beforeEach("Set up 2 buddy requests from inexp user -> exp user", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + inexpUserJwt,
+                        },
+                        json: buddyRequestObject,
+                        method: "PUT",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        buddyRequest1Id = parseInt(body.result.id, 10);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + inexpUserJwt,
+                            },
+                            json: buddyRequestObject,
+                            method: "PUT",
+                            url: url + "/buddyRequest",
+                        }, (error2, response2, body2) => {
+                            buddyRequest2Id = parseInt(body2.result.id, 10);
+                            done();
+                        });
+                    });
+                });
+                describe("Sent Buddy Requests", () => {
+                    it("should get a user's sent buddy requests", done => {
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + inexpUserJwt,
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest/sent?id=" + buddyRequest1Id,
+                        }, (error, response, body) => {
+                            expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error + " body is " + body);
+                            expect(typeof body).to.equal("object", "Body is of unexpected type. " +
+                            "Expected object, but got a " + typeof body);
+                            let buddyRequests = body.result;
+                            expect(buddyRequests.length).to.equal(1);
+                            expect(buddyRequests[0].id).to.equal(buddyRequest1Id);
+                            expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
+                            expect(moment(buddyRequests[0].divorceTime)
+                                .isSame(buddyRequestObject.divorceTime)).to.be.true;
+                            expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                            expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
+                            expect(buddyRequests[0].experiencedRouteName)
+                                .to.equal(buddyRequestObject.experiencedRouteName);
+                            expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
+                            expect(buddyRequests[0].inexperiencedRoute)
+                                .to.equal(buddyRequestObject.inexperiencedRoute);
+                            expect(moment(buddyRequests[0].meetingTime)
+                                .isSame(buddyRequestObject.meetingTime)).to.be.true;
+                            expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                            expect(buddyRequests[0].owner).to.equal(inexpUserId);
+                            expect(buddyRequests[0].status).to.equal("pending");
+                            expect(buddyRequests[0].reason).to.equal("");
+                            expect(buddyRequests[0].route).to.eql(buddyRequestObject.route);
+                            expect(moment(buddyRequests[0].updated).isSame(buddyRequests[0].created)).to.be.true;
+                            done();
+                        });
+                    });
+                    it("should get all of a user's sent buddy requests when no id is given", done => {
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + inexpUserJwt,
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest/sent",
+                        }, (error, response, body) => {
+                            expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error + " body is " + body);
+                            expect(typeof body).to.equal("object", "Body is of unexpected type. " +
+                            "Expected object, but got a " + typeof body);
+                            let buddyRequests = body.result;
+                            expect(buddyRequests.length).to.equal(2);
+                            expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
+                            expect(moment(buddyRequests[0].divorceTime)
+                                .isSame(buddyRequestObject.divorceTime)).to.be.true;
+                            expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                            expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
+                            expect(buddyRequests[0].experiencedRouteName)
+                                .to.equal(buddyRequestObject.experiencedRouteName);
+                            expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
+                            expect(buddyRequests[0].inexperiencedRoute)
+                                .to.equal(buddyRequestObject.inexperiencedRoute);
+                            expect(moment(buddyRequests[0].meetingTime)
+                                .isSame(buddyRequestObject.meetingTime)).to.be.true;
+                            expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                            expect(buddyRequests[0].owner).to.equal(inexpUserId);
+                            expect(buddyRequests[0].status).to.equal("pending");
+                            expect(buddyRequests[0].reason).to.equal("");
+                            expect(buddyRequests[0].route).to.eql(buddyRequestObject.route);
+                            expect(moment(buddyRequests[0].updated).isSame(buddyRequests[0].created)).to.be.true;
+                            expect(buddyRequests[1].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
+                            expect(moment(buddyRequests[1].divorceTime)
+                                .isSame(buddyRequestObject.divorceTime)).to.be.true;
+                            expect(buddyRequests[1].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                            expect(buddyRequests[1].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
+                            expect(buddyRequests[1].experiencedRouteName)
+                                .to.equal(buddyRequestObject.experiencedRouteName);
+                            expect(buddyRequests[1].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
+                            expect(buddyRequests[1].inexperiencedRoute)
+                                .to.equal(buddyRequestObject.inexperiencedRoute);
+                            expect(moment(buddyRequests[1].meetingTime)
+                                .isSame(buddyRequestObject.meetingTime)).to.be.true;
+                            expect(buddyRequests[1].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                            expect(buddyRequests[1].owner).to.equal(inexpUserId);
+                            expect(buddyRequests[1].status).to.equal("pending");
+                            expect(buddyRequests[1].reason).to.equal("");
+                            expect(buddyRequests[1].route).to.eql(buddyRequestObject.route);
+                            expect(moment(buddyRequests[1].updated).isSame(buddyRequests[1].created)).to.be.true;
+                            done();
+                        });
+                    });
+                    it("should not get a user's received buddy requests from the sent endpoint", done => {
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + expUserJwt,
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest/sent",
+                        }, (error, response, body) => {
+                            expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
+                            response.statusCode + ", error given is: " + error + " body is " + body);
+                            done();
+                        });
+                    });
+                    it("should not get a user's sent buddy requests with no auth", done => {
+                        defaultRequest({
+                            method: "GET",
+                            url: url + "/buddyRequest/sent",
+                        }, (error, response, body) => {
+                            expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                            response.statusCode + ", error given is: " + error + " body is " + body);
+                            done();
+                        });
+                    });
+                    it("should not let a random user access the buddy request", done => {
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + randomUserJwt,
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest/sent",
+                        }, (error, response, body) => {
+                            expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
+                            response.statusCode + ", error given is: " + error + " body is " + body);
+                            done();
+                        });
+                    });
+                });
+                describe("Received Buddy Requests", () => {
+                    it("should get a user's received buddy requests", done => {
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + expUserJwt,
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest/received?id=" + buddyRequest1Id,
+                        }, (error, response, body) => {
+                            expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error + " body is " + body);
+                            expect(typeof body).to.equal("object", "Body is of unexpected type. " +
+                            "Expected object, but got a " + typeof body);
+                            let buddyRequests = body.result;
+                            expect(buddyRequests.length).to.equal(1);
+                            expect(buddyRequests[0].id).to.equal(buddyRequest1Id);
+                            expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
+                            expect(moment(buddyRequests[0].divorceTime)
+                                .isSame(buddyRequestObject.divorceTime)).to.be.true;
+                            expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                            expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
+                            expect(buddyRequests[0].experiencedRouteName)
+                                .to.equal(buddyRequestObject.experiencedRouteName);
+                            expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
+                            expect(buddyRequests[0].inexperiencedRoute)
+                                .to.equal(buddyRequestObject.inexperiencedRoute);
+                            expect(moment(buddyRequests[0].meetingTime)
+                                .isSame(buddyRequestObject.meetingTime)).to.be.true;
+                            expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                            expect(buddyRequests[0].owner).to.equal(inexpUserId);
+                            expect(buddyRequests[0].status).to.equal("pending");
+                            expect(buddyRequests[0].reason).to.equal("");
+                            expect(buddyRequests[0].route).to.eql(buddyRequestObject.route);
+                            expect(moment(buddyRequests[0].updated).isSame(buddyRequests[0].created)).to.be.true;
+                            done();
+                        });
+                    });
+                    it("should get all of a user's received buddy requests when no id is given", done => {
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + expUserJwt,
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest/received",
+                        }, (error, response, body) => {
+                            expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + error + " body is " + body);
+                            expect(typeof body).to.equal("object", "Body is of unexpected type. " +
+                            "Expected object, but got a " + typeof body);
+                            let buddyRequests = body.result;
+                            expect(buddyRequests.length).to.equal(2);
+                            expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
+                            expect(moment(buddyRequests[0].divorceTime)
+                                .isSame(buddyRequestObject.divorceTime)).to.be.true;
+                            expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                            expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
+                            expect(buddyRequests[0].experiencedRouteName)
+                                .to.equal(buddyRequestObject.experiencedRouteName);
+                            expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
+                            expect(buddyRequests[0].inexperiencedRoute)
+                                .to.equal(buddyRequestObject.inexperiencedRoute);
+                            expect(moment(buddyRequests[0].meetingTime)
+                                .isSame(buddyRequestObject.meetingTime)).to.be.true;
+                            expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                            expect(buddyRequests[0].owner).to.equal(inexpUserId);
+                            expect(buddyRequests[0].status).to.equal("pending");
+                            expect(buddyRequests[0].reason).to.equal("");
+                            expect(buddyRequests[0].route).to.eql(buddyRequestObject.route);
+                            expect(moment(buddyRequests[0].updated).isSame(buddyRequests[0].created)).to.be.true;
+                            expect(buddyRequests[1].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
+                            expect(moment(buddyRequests[1].divorceTime)
+                                .isSame(buddyRequestObject.divorceTime)).to.be.true;
+                            expect(buddyRequests[1].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                            expect(buddyRequests[1].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
+                            expect(buddyRequests[1].experiencedRouteName)
+                                .to.equal(buddyRequestObject.experiencedRouteName);
+                            expect(buddyRequests[1].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
+                            expect(buddyRequests[1].inexperiencedRoute)
+                                .to.equal(buddyRequestObject.inexperiencedRoute);
+                            expect(moment(buddyRequests[1].meetingTime)
+                                .isSame(buddyRequestObject.meetingTime)).to.be.true;
+                            expect(buddyRequests[1].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                            expect(buddyRequests[1].owner).to.equal(inexpUserId);
+                            expect(buddyRequests[1].status).to.equal("pending");
+                            expect(buddyRequests[1].reason).to.equal("");
+                            expect(buddyRequests[1].route).to.eql(buddyRequestObject.route);
+                            expect(moment(buddyRequests[1].updated).isSame(buddyRequests[1].created)).to.be.true;
+                            done();
+                        });
+                    });
+                    it("should not get a user's sent buddy requests from the received endpoint", done => {
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + inexpUserJwt,
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest/received",
+                        }, (error, response, body) => {
+                            expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
+                            response.statusCode + ", error given is: " + error + " body is " + body);
+                            done();
+                        });
+                    });
+                    it("should not get a user's sent buddy requests with no auth", done => {
+                        defaultRequest({
+                            method: "GET",
+                            url: url + "/buddyRequest/received",
+                        }, (error, response, body) => {
+                            expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                            response.statusCode + ", error given is: " + error + " body is " + body);
+                            done();
+                        });
+                    });
+                    it("should not let a random user access the buddy request", done => {
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + randomUserJwt,
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest/received",
+                        }, (error, response, body) => {
+                            expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
+                            response.statusCode + ", error given is: " + error + " body is " + body);
                             done();
                         });
                     });

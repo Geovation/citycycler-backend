@@ -689,8 +689,9 @@ export function createBuddyRequest(buddyRequest: BuddyRequest, providedClient = 
     buddyRequest = new BuddyRequest(buddyRequest);
     const query = "INSERT INTO buddy_requests (experiencedRouteName, experiencedRoute, experiencedUser, owner, " +
         "inexperiencedRoute, meetingTime, divorceTime, meetingPoint, divorcePoint, averageSpeed, created, " +
-        "updated, status, reason)" +
-        "VALUES ($1, $2, $3, $4, $5, $6, $7, ST_GeogFromText($8), ST_GeogFromText($9), $10, $11, $12, $13, $14)" +
+        "updated, status, reason, route)" +
+        "VALUES ($1, $2, $3, $4, $5, $6, $7, ST_GeogFromText($8), ST_GeogFromText($9), $10, $11, $12, $13, " +
+        "$14, ST_GeogFromText($15))" +
         "RETURNING id";
     const queryParams = [
         buddyRequest.experiencedRouteName,
@@ -707,6 +708,7 @@ export function createBuddyRequest(buddyRequest: BuddyRequest, providedClient = 
         buddyRequest.updated,
         buddyRequest.status,
         buddyRequest.reason,
+        coordsToLineString(buddyRequest.route),
     ];
     return sqlTransaction(query, queryParams, providedClient).then(result => {
         return result.rows[0].id;
@@ -724,7 +726,7 @@ export function getSentBuddyRequests(params: {userId: number, id?: number}, prov
 : Promise<BuddyRequest[]> {
     let query = "SELECT id, experiencedRouteName, experiencedRoute, experiencedUser, owner, inexperiencedRoute, " +
     "meetingTime, divorceTime, ST_AsText(meetingPoint) as meetingPoint, ST_AsText(divorcePoint) AS divorcePoint, " +
-    "averageSpeed, created, updated, status, reason FROM buddy_requests WHERE owner=$1";
+    "averageSpeed, created, updated, status, reason, ST_AsText(route) as route FROM buddy_requests WHERE owner=$1";
     let queryParams = [params.userId];
     if (params.id !== null && typeof params.id !== "undefined") {
         query +=  " AND id=$2";
@@ -752,7 +754,8 @@ export function getReceivedBuddyRequests(params: {userId: number, id?: number}, 
 : Promise<BuddyRequest[]> {
     let query = "SELECT id, experiencedRouteName, experiencedRoute, experiencedUser, owner, inexperiencedRoute, " +
     "meetingTime, divorceTime, ST_AsText(meetingPoint) as meetingPoint, ST_AsText(divorcePoint) AS divorcePoint, " +
-    "averageSpeed, created, updated, status, reason FROM buddy_requests WHERE experiencedUser=$1";
+    "averageSpeed, created, updated, status, reason, ST_AsText(route) as route " +
+    "FROM buddy_requests WHERE experiencedUser=$1";
     let queryParams = [params.userId];
     if (params.id !== null && typeof params.id !== "undefined") {
         query +=  " AND id=$2";
