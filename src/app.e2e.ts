@@ -2024,7 +2024,7 @@ describe("MatchMyRoute API", () => {
                     });
                 });
             });
-            describe("Retrieval", () => {
+            describe("Retreival", () => {
                 it("should get an inexperiencedRoute by a valid id", done => {
                     defaultRequest({
                         headers: {
@@ -2925,7 +2925,7 @@ describe("MatchMyRoute API", () => {
                     });
                 });
             });
-            describe("Retrieval", () => {
+            describe("Retreival", () => {
                 let buddyRequest1Id;
                 let buddyRequest2Id;
                 before("Set up 2 buddy requests from inexp user -> exp user", done => {
@@ -3395,7 +3395,7 @@ describe("MatchMyRoute API", () => {
                     });
                 }
 
-                it("should not make any updates as an inexerienced user", done => {
+                it("should not make any updates as an inexperienced user", done => {
                     defaultRequest({
                         headers: {
                             Authorization: "Bearer " + inexpUserJwt,
