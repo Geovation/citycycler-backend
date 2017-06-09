@@ -5,6 +5,7 @@ import { app, gracefulShutdown, setupServer } from "./microservices-framework/we
 import { senecaReady } from "./microservices-framework/web/services";
 import * as chai from "chai";
 import * as EventEmitter from "events";
+import * as _ from "lodash";
 import * as mocha from "mocha";
 import * as moment from "moment";
 import * as request from "request";
@@ -14,7 +15,6 @@ import * as logger from "winston";
 const expect = chai.expect;
 const assert = chai.assert;
 const before = mocha.before;
-const beforeEach = mocha.beforeEach;
 const after = mocha.after;
 const describe = mocha.describe;
 const it = mocha.it;
@@ -2782,7 +2782,7 @@ describe("MatchMyRoute API", () => {
             let inexperiencedRoute; // The inexperienced Route
             let randomUserJwt;  // A token for a user unconnected to these buddy requests
             let buddyRequestObject; // A BuddyRequest object with the ids all set correctly
-            beforeEach("Create 3 test users with respective routes", done => {
+            before("Create 3 test users with respective routes", done => {
                 // The random user
                 const user1 = {
                     email: "test" + i + "@e2e-test.matchmyroute-backend.appspot.com",
@@ -2928,7 +2928,7 @@ describe("MatchMyRoute API", () => {
             describe("Retrieval", () => {
                 let buddyRequest1Id;
                 let buddyRequest2Id;
-                beforeEach("Set up 2 buddy requests from inexp user -> exp user", done => {
+                before("Set up 2 buddy requests from inexp user -> exp user", done => {
                     defaultRequest({
                         headers: {
                             Authorization: "Bearer " + inexpUserJwt,
@@ -3003,10 +3003,14 @@ describe("MatchMyRoute API", () => {
                             expect(typeof body).to.equal("object", "Body is of unexpected type. " +
                             "Expected object, but got a " + typeof body);
                             let buddyRequests = body.result;
-                            expect(buddyRequests.length).to.equal(2);
+                            // Should get 2 from before() and 1 from the creation tests
+                            expect(buddyRequests.length).to.equal(3);
                             expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
                             expect(moment(buddyRequests[0].divorceTime)
-                                .isSame(buddyRequestObject.divorceTime)).to.be.true;
+                                .isSame(buddyRequestObject.divorceTime),
+                                "Divorce time is different to expected." +
+                                "\nExpected: " + moment(buddyRequestObject.divorceTime) +
+                                "\nActual: " + moment(buddyRequests[0].divorceTime)).to.be.true;
                             expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
                             expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                             expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
@@ -3016,7 +3020,10 @@ describe("MatchMyRoute API", () => {
                             expect(buddyRequests[0].inexperiencedRoute)
                                 .to.equal(buddyRequestObject.inexperiencedRoute);
                             expect(moment(buddyRequests[0].meetingTime)
-                                .isSame(buddyRequestObject.meetingTime)).to.be.true;
+                                .isSame(buddyRequestObject.meetingTime),
+                                "Meeting time is different to expected." +
+                                "\nExpected: " + moment(buddyRequestObject.meetingTime) +
+                                "\nActual: " + moment(buddyRequests[0].meetingTime)).to.be.true;
                             expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
                             expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
                             expect(buddyRequests[0].owner).to.equal(inexpUserId);
@@ -3026,7 +3033,10 @@ describe("MatchMyRoute API", () => {
                             expect(moment(buddyRequests[0].updated).isSame(buddyRequests[0].created)).to.be.true;
                             expect(buddyRequests[1].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
                             expect(moment(buddyRequests[1].divorceTime)
-                                .isSame(buddyRequestObject.divorceTime)).to.be.true;
+                                .isSame(buddyRequestObject.divorceTime),
+                                "Divorce time is different to expected." +
+                                "\nExpected: " + moment(buddyRequestObject.divorceTime) +
+                                "\nActual: " + moment(buddyRequests[1].divorceTime)).to.be.true;
                             expect(buddyRequests[1].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
                             expect(buddyRequests[1].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                             expect(buddyRequests[1].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
@@ -3036,7 +3046,10 @@ describe("MatchMyRoute API", () => {
                             expect(buddyRequests[1].inexperiencedRoute)
                                 .to.equal(buddyRequestObject.inexperiencedRoute);
                             expect(moment(buddyRequests[1].meetingTime)
-                                .isSame(buddyRequestObject.meetingTime)).to.be.true;
+                                .isSame(buddyRequestObject.meetingTime),
+                                "Meeting time is different to expected." +
+                                "\nExpected: " + moment(buddyRequestObject.meetingTime) +
+                                "\nActual: " + moment(buddyRequests[1].meetingTime)).to.be.true;
                             expect(buddyRequests[1].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
                             expect(buddyRequests[1].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
                             expect(buddyRequests[1].owner).to.equal(inexpUserId);
@@ -3136,10 +3149,14 @@ describe("MatchMyRoute API", () => {
                             expect(typeof body).to.equal("object", "Body is of unexpected type. " +
                             "Expected object, but got a " + typeof body);
                             let buddyRequests = body.result;
-                            expect(buddyRequests.length).to.equal(2);
+                            // Should get 2 from before() and 1 from the creation tests
+                            expect(buddyRequests.length).to.equal(3);
                             expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
                             expect(moment(buddyRequests[0].divorceTime)
-                                .isSame(buddyRequestObject.divorceTime)).to.be.true;
+                                .isSame(buddyRequestObject.divorceTime),
+                                "Divorce time is different to expected." +
+                                "\nExpected: " + moment(buddyRequestObject.divorceTime) +
+                                "\nActual: " + moment(buddyRequests[0].divorceTime)).to.be.true;
                             expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
                             expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                             expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
@@ -3149,7 +3166,10 @@ describe("MatchMyRoute API", () => {
                             expect(buddyRequests[0].inexperiencedRoute)
                                 .to.equal(buddyRequestObject.inexperiencedRoute);
                             expect(moment(buddyRequests[0].meetingTime)
-                                .isSame(buddyRequestObject.meetingTime)).to.be.true;
+                                .isSame(buddyRequestObject.meetingTime),
+                                "Meeting time is different to expected." +
+                                "\nExpected: " + moment(buddyRequestObject.meetingTime) +
+                                "\nActual: " + moment(buddyRequests[0].meetingTime)).to.be.true;
                             expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
                             expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
                             expect(buddyRequests[0].owner).to.equal(inexpUserId);
@@ -3159,7 +3179,10 @@ describe("MatchMyRoute API", () => {
                             expect(moment(buddyRequests[0].updated).isSame(buddyRequests[0].created)).to.be.true;
                             expect(buddyRequests[1].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
                             expect(moment(buddyRequests[1].divorceTime)
-                                .isSame(buddyRequestObject.divorceTime)).to.be.true;
+                                .isSame(buddyRequestObject.divorceTime),
+                                "Divorce time is different to expected." +
+                                "\nExpected: " + moment(buddyRequestObject.divorceTime) +
+                                "\nActual: " + moment(buddyRequests[1].divorceTime)).to.be.true;
                             expect(buddyRequests[1].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
                             expect(buddyRequests[1].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                             expect(buddyRequests[1].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
@@ -3169,7 +3192,10 @@ describe("MatchMyRoute API", () => {
                             expect(buddyRequests[1].inexperiencedRoute)
                                 .to.equal(buddyRequestObject.inexperiencedRoute);
                             expect(moment(buddyRequests[1].meetingTime)
-                                .isSame(buddyRequestObject.meetingTime)).to.be.true;
+                                .isSame(buddyRequestObject.meetingTime),
+                                "Meeting time is different to expected." +
+                                "\nExpected: " + moment(buddyRequestObject.meetingTime) +
+                                "\nActual: " + moment(buddyRequests[1].meetingTime)).to.be.true;
                             expect(buddyRequests[1].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
                             expect(buddyRequests[1].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
                             expect(buddyRequests[1].owner).to.equal(inexpUserId);
@@ -3215,6 +3241,172 @@ describe("MatchMyRoute API", () => {
                             response.statusCode + ", error given is: " + error + " body is " + body);
                             done();
                         });
+                    });
+                });
+            });
+            describe("Updating", () => {
+                let buddyRequestId;
+                let mostRecentlyUpdated;
+                before("Create a buddy request to update", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + inexpUserJwt,
+                        },
+                        json: buddyRequestObject,
+                        method: "PUT",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        buddyRequestId = parseInt(body.result.id, 10);
+                        mostRecentlyUpdated = moment();
+                        done();
+                    });
+                });
+
+                // This is a list of things that should be able to be updated
+                const thingsThatCanBeUpdated = [
+                    {meetingTime: "2017-06-08T10:20:28.684Z"},
+                    {divorceTime: "2017-06-08T12:12:12.684Z"},
+                    {meetingPoint: [0.5, 0.5]},
+                    {divorcePoint: [0.6, 0.6]},
+                    {meetingPointName: "32 Arthur Avenue"},
+                    {divorcePointName: "64 Derek Drive"},
+                    {   // All at once
+                        divorcePoint: [0.7, 0.7],
+                        divorcePointName: "63 Derek Drive",
+                        divorceTime: "2017-07-08T12:12:12.684Z",
+                        meetingPoint: [0.4, 0.4],
+                        meetingPointName: "31 Arthur Avenue",
+                        meetingTime: "2017-07-08T10:20:28.684Z",
+                    },
+                ];
+
+                for (const updates of thingsThatCanBeUpdated) {
+                    const keys = Object.keys(updates).join(", ");
+                    it("should update " + keys, done => {
+                        const updatesWithId = Object.assign({id: buddyRequestId}, updates);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + expUserJwt,
+                            },
+                            json: updatesWithId,
+                            method: "POST",
+                            url: url + "/buddyRequest",
+                        }, (error, response, body) => {
+                            expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                            // Get the buddyRequest we just updated
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                method: "GET",
+                                url: url + "/buddyRequest/sent?id=" + buddyRequestId,
+                            }, (error2, response2, body2) => {
+                                expect(response2.statusCode).to.equal(200, "Expected 200 response  when " +
+                                    "retrieving BuddyRequest but got " + response2.statusCode +
+                                    ", error given is: " + error2 + " body is " + body2);
+                                expect(body2.result.length).to.equal(1, "Got too many BuddyRequests");
+                                let buddyRequest = body2.result[0];
+                                for (const key in updates) {
+                                    if (updates.hasOwnProperty(key)) {
+                                        if (key.indexOf("Time") !== -1) {
+                                            expect(moment(buddyRequest[key]).isSame(updates[key])).to.be.true;
+                                        } else {
+                                            expect(buddyRequest[key]).to.eql(updates[key]);
+                                        }
+                                    }
+                                }
+                                expect(moment(buddyRequest.updated).isAfter(mostRecentlyUpdated)).to.be.true;
+                                mostRecentlyUpdated = moment(buddyRequest.updated);
+                                done();
+                            });
+                        });
+                    });
+                }
+
+                // These should not be able to be updated.
+                // If the error prop is undefined, the update should fail silently, and just not have cahnged anything
+                // If it is a number, expect the response to be rejected with that number response
+                const thingsThatCannotBeUpdated: any[] = [
+                    {owner: -1},
+                    {experiencedUser: -1},
+                    {experiencedRoute: -1},
+                    {experiencedRouteName: "A silly name!"},
+                    {inexperiencedRoute: -1},
+                    {averageSpeed: 200},
+                    {created: "2000-01-01T12:00:00.000Z"},
+                    {updated: "2000-01-01T12:00:00.000Z"},
+                    {route: [[1, 1], [0.5, 0.5], [2, 2]]},
+                    {status: "rejected"},
+                    {reason: "Shoddy Reason"},
+                    {
+                        divorceTime: "2017-06-08T10:12:12.684Z",
+                        error: 400,
+                        meetingTime: "2017-06-08T12:20:28.684Z",
+                    },
+                ];
+
+                for (const updates of thingsThatCannotBeUpdated) {
+                    const updateables = _.omit(updates, ["error"]);
+                    const keys = Object.keys(updateables).join(", ");
+                    it("should not update " + keys, done => {
+                        const updatesWithId = Object.assign({id: buddyRequestId}, updateables);
+                        defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + expUserJwt,
+                            },
+                            json: updatesWithId,
+                            method: "POST",
+                            url: url + "/buddyRequest",
+                        }, (error, response, body) => {
+                            if (updates.error) {
+                                expect(response.statusCode).to.equal(updates.error, "Expected " + updates.error +
+                                " response but got " + response.statusCode +
+                                ", error given is: " + error + " body is " + body);
+                            } else {
+                                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                // Get the buddyRequest we just updated
+                                defaultRequest({
+                                    headers: {
+                                        Authorization: "Bearer " + inexpUserJwt,
+                                    },
+                                    method: "GET",
+                                    url: url + "/buddyRequest/sent?id=" + buddyRequestId,
+                                }, (error2, response2, body2) => {
+                                    expect(response2.statusCode).to.equal(200, "Expected 200 response  when " +
+                                    "retrieving BuddyRequest but got " + response2.statusCode +
+                                    ", error given is: " + error2 + " body is " + body2);
+                                    expect(body2.result.length).to.equal(1, "Got too many BuddyRequests");
+                                    let buddyRequest = body2.result[0];
+                                    for (const key in updateables) {
+                                        if (updates.hasOwnProperty(key)) {
+                                            if (key.indexOf("Time") !== -1) {
+                                                expect(moment(buddyRequest[key]).isSame(updates[key])).to.be.false;
+                                            } else {
+                                                expect(buddyRequest[key]).not.to.eql(updates[key]);
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                            done();
+                        });
+                    });
+                }
+
+                it("should not make any updates as an inexperienced user", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + inexpUserJwt,
+                        },
+                        json: {meetingTime: "2017-06-08T10:20:28.684Z"},
+                        method: "POST",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
+                            response.statusCode + ", error given is: " + error + " body is " + body);
+                        done();
                     });
                 });
             });

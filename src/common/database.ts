@@ -803,10 +803,9 @@ export function deleteBuddyRequest(id: number, providedClient = null): Promise<B
  */
 export function updateBuddyRequest(
     existingRequest: BuddyRequest, updates, providedClient = null): Promise<boolean> {
-        // Make a copy of the existing buddy request
-        let newBuddyRequestObject = Object.assign({}, existingRequest);
         // Move the updated properties into the existing model
-        newBuddyRequestObject = _.extend(newBuddyRequestObject, updates);
+        let newBuddyRequestObject = _.clone(updates);
+        _.defaultsDeep(newBuddyRequestObject, existingRequest);
 
         // Special cases:
         // Make sure that the id doesn't change
@@ -821,11 +820,10 @@ export function updateBuddyRequest(
         const newBuddyRequest = new BuddyRequest(newBuddyRequestObject);
 
         const query = "UPDATE buddy_requests " +
-        "SET averageSpeed=$1, divorcePoint=ST_GeogFromText($2), divorceTime=$3, meetingTime=$4, " +
-        "meetingPoint=ST_GeogFromText($5), status=$6, reason=$7, updated=$8, meetingPointName=$9, " +
-        "divorcePointName=$10 WHERE id = $11";
+        "SET divorcePoint=ST_GeogFromText($1), divorceTime=$2, meetingTime=$3, " +
+        "meetingPoint=ST_GeogFromText($4), status=$5, reason=$6, updated=$7, meetingPointName=$8, " +
+        "divorcePointName=$9 WHERE id = $10";
         const sqlParams = [
-            newBuddyRequest.averageSpeed,
             coordsToPointString(newBuddyRequest.divorcePoint),
             newBuddyRequest.divorceTime,
             newBuddyRequest.meetingTime,

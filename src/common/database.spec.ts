@@ -1332,18 +1332,16 @@ describe("MatchMyRoute Database Functions", () => {
                 });
             });
             // These two lists are updates objects that should/shouldn't succede
-            let thingsThatCanBeUpdated = [
+            const thingsThatCanBeUpdated = [
                 {meetingTime: "2017-06-08T10:20:28.684Z"},
                 {divorceTime: "2017-06-08T12:12:12.684Z"},
                 {meetingPoint: [0.5, 0.5]},
                 {divorcePoint: [0.6, 0.6]},
                 {meetingPointName: "32 Arthur Avenue"},
                 {divorcePointName: "64 Derek Drive"},
-                {averageSpeed: 100},
                 {status: "rejected"},
                 {reason: "Excellent Reason"},
                 {   // All at once
-                    averageSpeed: 100,
                     divorcePoint: [0.6, 0.6],
                     divorcePointName: "64 Derek Drive",
                     divorceTime: "2017-06-08T12:12:12.684Z",
@@ -1357,13 +1355,14 @@ describe("MatchMyRoute Database Functions", () => {
             // These have a "error" property.
             // If it is undefined, the update should fail silently, and just not have cahnged anything
             // If it is a truthy value, expect the update to be rejected
-            let thingsThatCannotBeUpdated: any[] = [
+            const thingsThatCannotBeUpdated: any[] = [
                 {owner: -1},
                 {id: -1},
                 {experiencedUser: -1},
                 {experiencedRoute: -1},
                 {experiencedRouteName: "A silly name!"},
                 {inexperiencedRoute: -1},
+                {averageSpeed: 200},
                 {created: "2000-01-01T12:00:00.000Z"},
                 {updated: "2000-01-01T12:00:00.000Z"},
                 {route: [[1, 1], [0.5, 0.5], [2, 2]]},
@@ -1377,7 +1376,7 @@ describe("MatchMyRoute Database Functions", () => {
             for (let updates of thingsThatCanBeUpdated) {
                 const keys = Object.keys(updates).join(", ");
                 it("should update " + keys, () => {
-                    return Database.updateBuddyRequest(existingBuddyRequest, _.omit(updates, ["error"]),
+                    return Database.updateBuddyRequest(existingBuddyRequest, _.cloneDeep(updates),
                     transactionClient).then(() => {
                         return Database.getSentBuddyRequests({id: buddyRequestId, userId: existingBuddyRequest.owner},
                             transactionClient);
@@ -1396,25 +1395,27 @@ describe("MatchMyRoute Database Functions", () => {
             }
             mostRecentlyUpdated = moment();
             for (let updates of thingsThatCannotBeUpdated) {
-                const keys = Object.keys(updates).join(", ");
+                const updateables = _.omit(updates, ["error"]);
+                const keys = Object.keys(updateables).join(", ");
                 it("should fail to update " + keys + (updates.error ? ", and throw an error" : ""), () => {
                     if (updates.error) {
                         expect(() => {
-                            Database.updateBuddyRequest(existingBuddyRequest, updates,
+                            Database.updateBuddyRequest(existingBuddyRequest, _.cloneDeep(updateables),
                                 transactionClient);
                         }).to.throw(updates.error);
                     } else {
-                        return Database.updateBuddyRequest(existingBuddyRequest, updates, transactionClient)
+                        return Database.updateBuddyRequest(existingBuddyRequest, _.cloneDeep(updateables),
+                            transactionClient)
                         .then(() => {
                             return Database.getSentBuddyRequests(
                                 {id: buddyRequestId, userId: existingBuddyRequest.owner},
                                 transactionClient);
                             }).then(buddyRequests => {
-                                for (let key in updates) {
+                                for (let key in updateables) {
                                     if (key.indexOf("Time") !== -1) {
-                                        expect(moment(buddyRequests[0][key]).isSame(updates[key])).to.be.false;
+                                        expect(moment(buddyRequests[0][key]).isSame(updateables[key])).to.be.false;
                                     } else {
-                                        expect(buddyRequests[0][key]).to.not.eql(updates[key]);
+                                        expect(buddyRequests[0][key]).to.not.eql(updateables[key]);
                                     }
                                 }
                                 expect(moment(mostRecentlyUpdated).isBefore(buddyRequests[0].updated)).to.be.true;

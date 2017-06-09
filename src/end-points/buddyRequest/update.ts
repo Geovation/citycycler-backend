@@ -20,16 +20,16 @@ const operation = {
                 name: "route",
                 required: true,
                 schema: {
-                    $ref: "#/definitions/InexperiencedRouteChanges",
+                    $ref: "#/definitions/BuddyRequestChanges",
                 },
             },
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
             200: {
-                description: "Inexperienced route was updated",
+                description: "BuddyRequest was updated",
                 schema: {
-                    $ref: "#/definitions/UpdateInexperiencedRouteResponse",
+                    $ref: "#/definitions/UpdateBuddyRequestResponse",
                 },
             },
             400: {
@@ -56,9 +56,9 @@ const operation = {
                 userAuth: [],
             },
         ],
-        summary: "Update an existing inexperienced route",
+        summary: "Update an existing BuddyRequest",
         tags: [
-            "InexperiencedRoutes",
+            "BuddyRequests",
         ],
     },
 };
@@ -66,43 +66,48 @@ const operation = {
 // DEFINITIONS
 
 const definitions = {
-    InexperiencedRouteChanges: {
+    BuddyRequestChanges: {
         properties: {
-            arrivalDateTime: {
-                description: "The time in ISO 8601 extended format that the owner wants to arrive at " +
-                "their destination",
+            divorcePoint: {
+                $ref: "#/definitions/Coordinate",
+                description: "Where the users will split up after their ride",
+                example: [-52, 3],
+            },
+            divorcePointName: {
+                description: "The name of the place where the users will split up after their ride",
+                example: "32 Derek Drive",
+                type: "string",
+            },
+            divorceTime: {
+                description: "The time in ISO 8601 extended at which the users will split up at " +
+                    "the end of the ride",
                 example: new Date().toISOString(),
                 type: "string",
             },
-            endPoint: {
-                $ref: "#/definitions/Coordinate",
-                description: "Where the user will finish cycling. Must be within <radius> of " +
-                "an experienced route to be considered a match",
-            },
             id: {
-                description: "The internal id of this inexperienced route",
-                format: "int32",
+                description: "The id for the BuddyRequest to update",
                 type: "integer",
             },
-            notifyOwner: {
-                description: "Does the user want to be notified of any new experienced cyclists who can help them",
-                example: true,
-                type: "boolean",
-            },
-            radius: {
-                 description: "How far away (in meters) the user is willing to cycle from the start and end point",
-                 example: 1000,
-                 type: "integer",
-            },
-            startPoint: {
+            meetingPoint: {
                 $ref: "#/definitions/Coordinate",
-                description: "Where the user will start cycling from. Must be within <radius> of " +
-                "an experienced route to be considered a match",
+                description: "Where the users will meet up before their ride",
+                example: [-51, 3],
+            },
+            meetingPointName: {
+                description: "The name of the place where the users will meet up before their ride",
+                example: "33 Shelly Street",
+                type: "string",
+            },
+            meetingTime: {
+                description: "The time in ISO 8601 extended at which the users will meet up to " +
+                    "start riding together",
+                example: new Date().toISOString(),
+                type: "string",
             },
         },
         required: ["id"],
     },
-    UpdateInexperiencedRouteResponse: {
+    UpdateBuddyRequestResponse: {
         description: "Whether the update succeded",
         properties: {
             result: {
@@ -120,31 +125,52 @@ const definitions = {
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
     let userId;
-    return getIdFromJWT(params.authorization).then(authUserId => {
+    let transactionClient;
+    return Database.createTransactionClient().then(newClient => {
+        transactionClient = newClient;
+        return getIdFromJWT(params.authorization);
+    }).then(authUserId => {
         userId = authUserId;
         if (userId !== undefined) {
-            return Database.getInexperiencedRoutes({userId, id: payload.id});
+            return Database.getReceivedBuddyRequests({userId, id: payload.id});
         } else {
             throw new Error("403:Invalid authorization");
         }
-    }).then(inexperiencedRoutes => {
-        if (inexperiencedRoutes.length === 1) {
-            if (inexperiencedRoutes[0].owner === userId) {
-                return Database.updateInexperiencedRoute(inexperiencedRoutes[0], payload);
-            } else {
-                throw new Error("403:Invalid authorization");
-            }
-        } else if (inexperiencedRoutes.length === 0) {
-            throw new Error("404:Inexperienced route not found");
+    }).then(buddyRequests => {
+        if (buddyRequests.length === 1) {
+            const updates = {
+                divorcePoint: payload.divorcePoint,
+                divorcePointName: payload.divorcePointName,
+                divorceTime: payload.divorceTime,
+                meetingPoint: payload.meetingPoint,
+                meetingPointName: payload.meetingPointName,
+                meetingTime: payload.meetingTime,
+            };
+            return Database.updateBuddyRequest(buddyRequests[0], updates);
+        } else if (buddyRequests.length === 0) {
+            throw new Error("404:BuddyRequest not found");
         } else {
-            throw new Error("Multiple inexperienced routes exist with the id " + payload.id +
-                "! This needs to be resolved");
+            throw new Error("Multiple BuddyRequests exist with the id " + payload.id + "!");
+        }
+    }).then(() => {
+        return Database.commitAndReleaseTransaction(transactionClient);
+    }).then(() => {
+        return true;
+    }).catch(err => {
+        const originalError = typeof err === "string" ? err : err.message;
+        if (typeof transactionClient !== "undefined") {
+            return Database.rollbackAndReleaseTransaction(transactionClient)
+            .then(() => {
+                throw new Error(originalError);
+            });
+        } else {
+            throw new Error(originalError);
         }
     });
 };
 
 // end point definition
-export const updateInexperiencedRoute = new MicroserviceEndpoint("updateInexperiencedRoute")
+export const updateBuddyRequest = new MicroserviceEndpoint("updateBuddyRequest")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);
