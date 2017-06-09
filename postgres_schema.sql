@@ -18,6 +18,10 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'distance_units') THEN
         CREATE TYPE distance_units AS ENUM ('miles', 'kilometers');
     END IF;
+    -- A type for buddy request statuses
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'buddy_request_status') THEN
+        CREATE TYPE buddy_request_status AS ENUM ('pending', 'accepted', 'rejected', 'canceled');
+    END IF;
 END$$;
 
 CREATE TABLE users (
@@ -67,6 +71,30 @@ arrivalDateTime timestamp with time zone DEFAULT 'now',      -- When the user wa
 notifyOwner boolean DEFAULT FALSE,  -- If the owner wants to be notified of any new matches
 difficulty ride_difficulty DEFAULT 'balanced'::ride_difficulty  -- How hard the user wants the route to be
                                                                 -- Will match any rides with dificulty <= this
+);
+
+-- A buddy request
+CREATE TABLE buddy_requests (
+id serial PRIMARY KEY,
+experiencedRouteName text NOT NULL,         -- The name of the experienced route
+experiencedRoute integer REFERENCES experienced_routes ON DELETE SET NULL,   -- The id of the experienced route
+experiencedUser integer REFERENCES users ON DELETE SET NULL,                 -- The id of the experienced user
+owner integer REFERENCES users ON DELETE SET NULL,                           -- The id of the inexperienced user
+inexperiencedRoute integer REFERENCES inexperienced_routes ON DELETE SET NULL, -- The id of the inexperienced route
+meetingTime timestamptz NOT NULL,           -- When the users will meet
+divorceTime timestamptz NOT NULL,           -- When the users will part
+meetingPoint geography NOT NULL,            -- Where the users will meet
+divorcePoint geography NOT NULL,            -- Where the users will part
+meetingPointName text NOT NULL,            -- Where the users will meet as an english string
+divorcePointName text NOT NULL,            -- Where the users will part as an english string
+route geography NOT NULL,                   -- The section of the experienced_route that these users will share
+averageSpeed double precision NOT NULL,     -- The average riding speed of this route
+-- Having the average speed lets us easily calculate the time to/from the meeting/divorce points for both users
+-- By calculating these when requested, updating the meeting/divorce point becomes much easier
+created timestamptz DEFAULT 'now'::timestamptz, -- When this buddy request was created
+updated timestamptz DEFAULT 'now'::timestamptz, -- When this buddy request was last updated
+status buddy_request_status DEFAULT 'pending'::buddy_request_status,
+reason text DEFAULT ''  -- A reason for the status
 );
 
 CREATE INDEX IF NOT EXISTS user_email_index ON users USING btree ( "email" );

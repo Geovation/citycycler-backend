@@ -1,8 +1,9 @@
-// import * as _ from "lodash";
+import BuddyRequest from "./BuddyRequestDataModel";
 import ExperiencedRoute from "./ExperiencedRouteDataModel";
 import InexperiencedRoute from "./InexperiencedRouteDataModel";
 import User from "./UserDataModels";
 import * as fs from "fs";
+import * as _ from "lodash";
 import * as pg from "pg";
 
 // create a config to configure both pooling behavior
@@ -215,8 +216,8 @@ export function lineStringToCoords(lineStr: string): number[][] {
     const coordStr = lineStr.slice(11, lineStr.length - 1);
     coordStr.split(",").forEach((strPair) => {
         coords.push([
-            parseInt(strPair.split(" ")[0], 10),
-            parseInt(strPair.split(" ")[1], 10),
+            parseFloat(strPair.split(" ")[0]),
+            parseFloat(strPair.split(" ")[1]),
         ]);
     });
     return coords;
@@ -405,13 +406,19 @@ export function updateExperiencedRoute(
 }
 
 export function deleteExperiencedRoute(id: number, providedClient = null): Promise<Boolean> {
-    const query = "DELETE FROM experienced_routes WHERE id=$1";
-    return sqlTransaction(query, [id], providedClient).then(result => {
-        if (result.rowCount) {
-            return true;
-        } else {
-            throw new Error("404:ExperiencedRoute doesn't exist");
-        }
+    const query1 = "UPDATE buddy_requests SET status='canceled'::buddy_request_status, reason=" +
+        "(SELECT users.name FROM users, experienced_routes WHERE experienced_routes.id=$1 AND " +
+        "experienced_routes.owner=users.id )::text || ' has deleted the route \"' || (SELECT name " +
+        "FROM experienced_routes WHERE id=$1)::text || '\"';";
+    const query2 = "DELETE FROM experienced_routes WHERE id=$1";
+    return sqlTransaction(query1, [id], providedClient).then(() => {
+        return sqlTransaction(query2, [id], providedClient).then(result => {
+            if (result.rowCount) {
+                return true;
+            } else {
+                throw new Error("404:ExperiencedRoute doesn't exist");
+            }
+        });
     });
 }
 
@@ -470,13 +477,18 @@ export function getInexperiencedRoutes(params: {userId: number, id?: number}, pr
  * @return {boolean} Whether the deletion succeded
  */
 export function deleteInexperiencedRoute(id: number, providedClient = null): Promise<Boolean> {
-    const query = "DELETE FROM inexperienced_routes WHERE id=$1";
-    return sqlTransaction(query, [id], providedClient).then(result => {
-        if (result.rowCount) {
-            return true;
-        } else {
-            throw new Error("404:InexperiencedRoute doesn't exist");
-        }
+    const query1 = "UPDATE buddy_requests SET status='canceled'::buddy_request_status, reason=" +
+        "(SELECT users.name FROM users, inexperienced_routes WHERE inexperienced_routes.id=$1 AND " +
+        "inexperienced_routes.owner=users.id )::text || ' no longer needs to buddy up with you';";
+    const query2 = "DELETE FROM inexperienced_routes WHERE id=$1";
+    return sqlTransaction(query1, [id], providedClient).then(() => {
+        return sqlTransaction(query2, [id], providedClient).then(result => {
+            if (result.rowCount) {
+                return true;
+            } else {
+                throw new Error("404:InexperiencedRoute doesn't exist");
+            }
+        });
     });
 }
 
@@ -649,13 +661,184 @@ export function getUserById(id: number, providedClient = null): Promise<User> {
 }
 
 export function deleteUser(id: number, providedClient = null): Promise<Boolean> {
-    const query = "DELETE FROM users WHERE id=$1";
-    return sqlTransaction(query, [id], providedClient)
-        .then((result) => {
-            if (result.rowCount) {
-                return true;
-            } else {
-                throw new Error("404:User doesn't exist");
-            }
+    // First update any buddy requests, then actually delete the user
+    const query1 = "UPDATE buddy_requests SET status='canceled'::buddy_request_status, reason=" +
+        "(SELECT name from users where id=$1)::text || ' has deleted their account';";
+    const query2 = "DELETE FROM users WHERE id=$1";
+    return sqlTransaction(query1, [id], providedClient)
+        .then(() => {
+            return sqlTransaction(query2, [id], providedClient).then(result => {
+                if (result.rowCount) {
+                    return true;
+                } else {
+                    throw new Error("404:User doesn't exist");
+                }
+            });
+        });
+}
+
+/**
+ * createBuddyRequest - description
+ *
+ * @param  {buddyRequest} buddyRequest The BuddyRequest object to put in the database
+ * @param  {client} providedClient Database client to use for this interaction
+ * @return {number} The id of the created BuddyRequest
+ */
+export function createBuddyRequest(buddyRequest: BuddyRequest, providedClient = null)
+: Promise<Number> {
+    buddyRequest = new BuddyRequest(buddyRequest);
+    const query = "INSERT INTO buddy_requests (experiencedRouteName, experiencedRoute, experiencedUser, owner, " +
+        "inexperiencedRoute, meetingTime, divorceTime, meetingPoint, divorcePoint, averageSpeed, created, " +
+        "updated, status, reason, route, meetingPointName, divorcePointName)" +
+        "VALUES ($1, $2, $3, $4, $5, $6, $7, ST_GeogFromText($8), ST_GeogFromText($9), $10, $11, $12, $13, " +
+        "$14, ST_GeogFromText($15), $16, $17)" +
+        "RETURNING id";
+    const queryParams = [
+        buddyRequest.experiencedRouteName,
+        buddyRequest.experiencedRoute,
+        buddyRequest.experiencedUser,
+        buddyRequest.owner,
+        buddyRequest.inexperiencedRoute,
+        buddyRequest.meetingTime,
+        buddyRequest.divorceTime,
+        coordsToPointString(buddyRequest.meetingPoint),
+        coordsToPointString(buddyRequest.divorcePoint),
+        buddyRequest.averageSpeed,
+        buddyRequest.created,
+        buddyRequest.updated,
+        buddyRequest.status,
+        buddyRequest.reason,
+        coordsToLineString(buddyRequest.route),
+        buddyRequest.meetingPointName,
+        buddyRequest.divorcePointName,
+    ];
+    return sqlTransaction(query, queryParams, providedClient).then(result => {
+        return result.rows[0].id;
+    });
+}
+
+/**
+ * getSentBuddyRequests - Get the buddy requests the params.userId has sent
+ *
+ * @param  {object} params The query parameters, including the id of the buddy request to query and the user id
+ * @param  {client} providedClient Database client to use for this interaction
+ * @return {Object[]} Array of buddy requests
+ */
+export function getSentBuddyRequests(params: {userId: number, id?: number}, providedClient = null)
+: Promise<BuddyRequest[]> {
+    let query = "SELECT id, experiencedRouteName, experiencedRoute, experiencedUser, owner, inexperiencedRoute, " +
+    "meetingTime, divorceTime, ST_AsText(meetingPoint) as meetingPoint, ST_AsText(divorcePoint) AS divorcePoint, " +
+    "averageSpeed, created, updated, status, reason, ST_AsText(route) as route, meetingPointName, divorcePointName " +
+    "FROM buddy_requests WHERE owner=$1";
+    let queryParams = [params.userId];
+    if (params.id !== null && typeof params.id !== "undefined") {
+        query +=  " AND id=$2";
+        queryParams.push(params.id);
+    }
+    return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
+        if (result.rowCount > 0) {
+            return result.rows.map((buddyRequest) => {
+                return BuddyRequest.fromSQLRow(buddyRequest);
+            });
+        } else {
+            throw new Error("404:BuddyRequest doesn't exist");
+        }
+    });
+}
+
+/**
+ * getBuddyRequests - Get the buddy requests the params.userId has received
+ *
+ * @param  {object} params The query parameters, including the id of the buddy request to query and the user id
+ * @param  {client} providedClient Database client to use for this interaction
+ * @return {Object[]} Array of buddy requests
+ */
+export function getReceivedBuddyRequests(params: {userId: number, id?: number}, providedClient = null)
+: Promise<BuddyRequest[]> {
+    let query = "SELECT id, experiencedRouteName, experiencedRoute, experiencedUser, owner, inexperiencedRoute, " +
+    "meetingTime, divorceTime, ST_AsText(meetingPoint) as meetingPoint, ST_AsText(divorcePoint) AS divorcePoint, " +
+    "averageSpeed, created, updated, status, reason, ST_AsText(route) as route, meetingPointName, divorcePointName " +
+    "FROM buddy_requests WHERE experiencedUser=$1";
+    let queryParams = [params.userId];
+    if (params.id !== null && typeof params.id !== "undefined") {
+        query +=  " AND id=$2";
+        queryParams.push(params.id);
+    }
+    return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
+        if (result.rowCount > 0) {
+            return result.rows.map((buddyRequest) => {
+                return BuddyRequest.fromSQLRow(buddyRequest);
+            });
+        } else {
+            throw new Error("404:BuddyRequest doesn't exist");
+        }
+    });
+}
+
+/**
+ * deleteBuddyRequest - description
+ *
+ * @param  {number} id The id of the BuddyRequest to delete
+ * @param  {client} providedClient Database client to use for this interaction
+ * @return {boolean} Whether the deletion succeded
+ */
+export function deleteBuddyRequest(id: number, providedClient = null): Promise<Boolean> {
+    const query = "DELETE FROM buddy_requests WHERE id=$1";
+    return sqlTransaction(query, [id], providedClient).then(result => {
+        if (result.rowCount) {
+            return true;
+        } else {
+            throw new Error("404:BuddyRequest doesn't exist");
+        }
+    });
+}
+
+/**
+ * updateBuddyRequest - description
+ *
+ * @param  {BuddyRequest} existingRequest The old buddyRequest to be updated
+ * @param  {object} updates An object of key:values to update the BuddyRequest with
+ * @param  {client} providedClient Database client to use for this interaction
+ * @return {boolean} Whether the update succeded
+ */
+export function updateBuddyRequest(
+    existingRequest: BuddyRequest, updates, providedClient = null): Promise<boolean> {
+        // Make a copy of the existing buddy request
+        let newBuddyRequestObject = Object.assign({}, existingRequest);
+        // Move the updated properties into the existing model
+        newBuddyRequestObject = _.extend(newBuddyRequestObject, updates);
+
+        // Special cases:
+        // Make sure that the id doesn't change
+        newBuddyRequestObject.id = existingRequest.id;
+        // Update the updated property
+        if (existingRequest !== newBuddyRequestObject) {
+            newBuddyRequestObject.updated = new Date().toISOString();
+        }
+
+        // By instantating a new object, we run the tests in the constructor to make
+        // sure that this is still a valid BuddyRequest
+        const newBuddyRequest = new BuddyRequest(newBuddyRequestObject);
+
+        const query = "UPDATE buddy_requests " +
+        "SET averageSpeed=$1, divorcePoint=ST_GeogFromText($2), divorceTime=$3, meetingTime=$4, " +
+        "meetingPoint=ST_GeogFromText($5), status=$6, reason=$7, updated=$8, meetingPointName=$9, " +
+        "divorcePointName=$10 WHERE id = $11";
+        const sqlParams = [
+            newBuddyRequest.averageSpeed,
+            coordsToPointString(newBuddyRequest.divorcePoint),
+            newBuddyRequest.divorceTime,
+            newBuddyRequest.meetingTime,
+            coordsToPointString(newBuddyRequest.meetingPoint),
+            newBuddyRequest.status,
+            newBuddyRequest.reason,
+            newBuddyRequest.updated,
+            newBuddyRequest.meetingPointName,
+            newBuddyRequest.divorcePointName,
+            newBuddyRequest.id,
+        ];
+
+        return sqlTransaction(query, sqlParams, providedClient).then(result => {
+            return true;
         });
 }
