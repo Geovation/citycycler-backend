@@ -15,6 +15,7 @@ import * as logger from "winston";
 const expect = chai.expect;
 const assert = chai.assert;
 const before = mocha.before;
+const beforeEach = mocha.beforeEach;
 const after = mocha.after;
 const describe = mocha.describe;
 const it = mocha.it;
@@ -3406,6 +3407,915 @@ describe("MatchMyRoute API", () => {
                     }, (error, response, body) => {
                         expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
                             response.statusCode + ", error given is: " + error + " body is " + body);
+                        done();
+                    });
+                });
+            });
+            describe("Updating Status", () => {
+                let buddyRequestId;
+                beforeEach("Create a buddy request to update", done => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + inexpUserJwt,
+                        },
+                        json: buddyRequestObject,
+                        method: "PUT",
+                        url: url + "/buddyRequest",
+                    }, (error, response, body) => {
+                        buddyRequestId = parseInt(body.result.id, 10);
+                        done();
+                    });
+                });
+                describe("An experienced user", () => {
+                    describe("with a 'pending' BuddyRequest", () => {
+                        it("should be able to accept it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "accepted",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                done();
+                            });
+                        });
+                        it("should be able to reject it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                reason: "It's raining today",
+                                status: "rejected",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                done();
+                            });
+                        });
+                        it("should be able to reject it without a reason", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "rejected",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                done();
+                            });
+                        });
+                        it("should not be able to cancel it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                reason: "It's raining today",
+                                status: "canceled",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Can't cancel a pending BuddyRequest. You should reject it instead.");
+                                done();
+                            });
+                        });
+                        it("should not be able to reset it to pending", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "pending",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Can't reset a BuddyRequest's status to 'pending'");
+                                done();
+                            });
+                        });
+                    });
+                    describe("with an 'accepted' BuddyRequest", () => {
+                        beforeEach("Set the status to accepted", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "accepted",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                done();
+                            });
+                        });
+                        it("should be able to accept it (again), updating the reason", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                reason: "Make sure you can keep up!",
+                                status: "accepted",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                done();
+                            });
+                        });
+                        it("should not be able to reject it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "rejected",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Can't reject an accepted BuddyRequest. You should cancel it instead.");
+                                done();
+                            });
+                        });
+                        it("should be able to cancel it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                reason: "I'm lazy", // We should really have a list of unacceptable reasons...
+                                status: "canceled",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                done();
+                            });
+                        });
+                        it("should not be able to cancel it without a reason", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "canceled",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "A reason needs to be given to cancel a BuddyRequest");
+                                done();
+                            });
+                        });
+                        it("should not be able to reset it to pending", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "pending",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Can't reset a BuddyRequest's status to 'pending'");
+                                done();
+                            });
+                        });
+                    });
+                    describe("with a 'rejected' BuddyRequest", () => {
+                        beforeEach("Set the status to rejected", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "rejected",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                done();
+                            });
+                        });
+                        it("should not be able to accept it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "accepted",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Can't accept a rejected BuddyRequest");
+                                done();
+                            });
+                        });
+                        it("should be able to reject it (again), updating the reason", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                reason: "It's raining today",
+                                status: "rejected",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                done();
+                            });
+                        });
+                        it("should be able to cancel it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                reason: "It's raining today",
+                                status: "canceled",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                done();
+                            });
+                        });
+                        it("should not be able to cancel it without a reason", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "canceled",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "A reason needs to be given to cancel a BuddyRequest");
+                                done();
+                            });
+                        });
+                        it("should not be able to reset it to pending", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "pending",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Can't reset a BuddyRequest's status to 'pending'");
+                                done();
+                            });
+                        });
+                    });
+                    describe("with a 'canceled' BuddyRequest", () => {
+                        beforeEach("Set the status to accepted, then canceled", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "accepted",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                const status2 = {
+                                    id: buddyRequestId,
+                                    reason: "Because the sky is falling",
+                                    status: "canceled",
+                                };
+                                defaultRequest({
+                                    headers: {
+                                        Authorization: "Bearer " + expUserJwt,
+                                    },
+                                    json: status2,
+                                    method: "POST",
+                                    url: url + "/buddyRequest/status",
+                                }, (error2, response2, body2) => {
+                                    done();
+                                });
+                            });
+                        });
+                        it("should not be able to accept it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "accepted",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Can't accept a canceled BuddyRequest");
+                                done();
+                            });
+                        });
+                        it("should not be able to reject it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "rejected",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Can't reject a canceled BuddyRequest");
+                                done();
+                            });
+                        });
+                        it("should be able to cancel it (again), updating the reason", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                reason: "It's raining cats and dogs!",
+                                status: "canceled",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                done();
+                            });
+                        });
+                        it("should not be able to reset it to pending", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "pending",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Can't reset a BuddyRequest's status to 'pending'");
+                                done();
+                            });
+                        });
+                    });
+                });
+                describe("As an inexperienced user", () => {
+                    describe("with a 'pending' BuddyRequest", () => {
+                        it("should not be able to accept it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "accepted",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Only the experienced cyclist can accept a BuddyRequest");
+                                done();
+                            });
+                        });
+                        it("should not be able to reject it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "rejected",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Only the experienced cyclist can reject a BuddyRequest");
+                                done();
+                            });
+                        });
+                        it("should be able to cancel it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                reason: "I changed my mind, sorry!",
+                                status: "canceled",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                done();
+                            });
+                        });
+                        it("should not be able to cancel it without a reason", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "canceled",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "A reason needs to be given to cancel a BuddyRequest");
+                                done();
+                            });
+                        });
+                        it("should not be able to reset it to pending", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "pending",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Can't reset a BuddyRequest's status to 'pending'");
+                                done();
+                            });
+                        });
+                    });
+                    describe("with an 'accepted' BuddyRequest", () => {
+                        beforeEach("Set the status to accepted", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "accepted",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                done();
+                            });
+                        });
+                        it("should not be able to accept it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "accepted",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Only the experienced cyclist can accept a BuddyRequest");
+                                done();
+                            });
+                        });
+                        it("should not be able to reject it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "rejected",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Only the experienced cyclist can reject a BuddyRequest");
+                                done();
+                            });
+                        });
+                        it("should be able to cancel it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                reason: "Your profile picture scared me",
+                                status: "canceled",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                done();
+                            });
+                        });
+                        it("should not be able to cancel it without a reason", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "canceled",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "A reason needs to be given to cancel a BuddyRequest");
+                                done();
+                            });
+                        });
+                        it("should not be able to reset it to pending", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "pending",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Can't reset a BuddyRequest's status to 'pending'");
+                                done();
+                            });
+                        });
+                    });
+                    describe("with a 'rejected' BuddyRequest", () => {
+                        beforeEach("Set the status to rejected", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "rejected",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                done();
+                            });
+                        });
+                        it("should not be able to accept it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "accepted",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Only the experienced cyclist can accept a BuddyRequest");
+                                done();
+                            });
+                        });
+                        it("should not be able to reject it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "rejected",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Only the experienced cyclist can reject a BuddyRequest");
+                                done();
+                            });
+                        });
+                        it("should not be able to cancel it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                reason: "I don't like the look of your nose",
+                                status: "canceled",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Can't cancel a rejected BuddyRequest");
+                                done();
+                            });
+                        });
+                        it("should not be able to reset it to pending", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "pending",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Can't reset a BuddyRequest's status to 'pending'");
+                                done();
+                            });
+                        });
+                    });
+                    describe("with a 'canceled' BuddyRequest", () => {
+                        beforeEach("Set the status to accepted, then canceled", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "accepted",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + expUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                const status2 = {
+                                    id: buddyRequestId,
+                                    reason: "Because the sky is falling",
+                                    status: "canceled",
+                                };
+                                defaultRequest({
+                                    headers: {
+                                        Authorization: "Bearer " + expUserJwt,
+                                    },
+                                    json: status2,
+                                    method: "POST",
+                                    url: url + "/buddyRequest/status",
+                                }, (error2, response2, body2) => {
+                                    done();
+                                });
+                            });
+                        });
+                        it("should not be able to accept it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "accepted",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Only the experienced cyclist can accept a BuddyRequest");
+                                done();
+                            });
+                        });
+                        it("should not be able to reject it", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "rejected",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Only the experienced cyclist can reject a BuddyRequest");
+                                done();
+                            });
+                        });
+                        it("should be able to cancel it (again), updating the reason", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                reason: "You ride too fast for me",
+                                status: "canceled",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                done();
+                            });
+                        });
+                        it("should not be able to reset it to pending", done => {
+                            const status = {
+                                id: buddyRequestId,
+                                status: "pending",
+                            };
+                            defaultRequest({
+                                headers: {
+                                    Authorization: "Bearer " + inexpUserJwt,
+                                },
+                                json: status,
+                                method: "POST",
+                                url: url + "/buddyRequest/status",
+                            }, (error, response, body) => {
+                                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                                response.statusCode + ", error given is: " + error + " body is " + body);
+                                expect(body.error).to.be.equal(
+                                    "Can't reset a BuddyRequest's status to 'pending'");
+                                done();
+                            });
+                        });
+                    });
+                });
+                it("should give a hint to anyone who spells 'canceled' the non-US way", done => {
+                    const status = {
+                        id: buddyRequestId,
+                        status: "cancelled",
+                    };
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + expUserJwt,
+                        },
+                        json: status,
+                        method: "POST",
+                        url: url + "/buddyRequest/status",
+                    }, (error, response, body) => {
+                        expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                        response.statusCode + ", error given is: " + error + " body is " + body);
+                        expect(body.error).to.be.equal(
+                            "Invalid status 'cancelled', did you mean 'canceled'?");
                         done();
                     });
                 });

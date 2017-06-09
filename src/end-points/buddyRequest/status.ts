@@ -178,11 +178,17 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
                     if (userIsExperienced && existingStatus === "pending") {
                         throw new Error("400:Can't cancel a pending BuddyRequest. You should reject it instead.");
                     }
+                    // The inexperienced user shouldn't be able to cancel this if it's been rejected
+                    if (!userIsExperienced && existingStatus === "rejected") {
+                        throw new Error("400:Can't cancel a rejected BuddyRequest");
+                    }
                     newReason = payload.reason;
                     break;
                 case "cancelled":
                     // Be friendly to non-US developers :)
                     throw new Error("400:Invalid status 'cancelled', did you mean 'canceled'?");
+                case "pending":
+                    throw new Error("400:Can't reset a BuddyRequest's status to 'pending'");
                 default:
                     throw new Error("400:Invalid status " + newStatus);
             }
