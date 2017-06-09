@@ -195,8 +195,15 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     }).then(() => {
         return { id: newId, status: 201 };
     }).catch(err => {
-        Database.rollbackAndReleaseTransaction(transactionClient);
-        throw err;
+        const originalError = typeof err === "string" ? err : err.message;
+        if (typeof transactionClient !== "undefined") {
+            return Database.rollbackAndReleaseTransaction(transactionClient)
+            .then(() => {
+                throw new Error(originalError);
+            });
+        } else {
+            throw new Error(originalError);
+        }
     });
 };
 
