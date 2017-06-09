@@ -71,15 +71,21 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     if (!id) {
         id = null;
     }
+    let results;
     let transactionClient;
     return Database.createTransactionClient().then(newClient => {
         transactionClient = newClient;
         return getIdFromJWT(params.authorization);
     }).then((userId) => {
         return Database.getReceivedBuddyRequests({userId, id}, transactionClient);
-    }).then(results => {
-        Database.commitAndReleaseTransaction(transactionClient);
+    }).then(buddyRequests => {
+        results = buddyRequests;
+        return Database.commitAndReleaseTransaction(transactionClient);
+    }).then(() => {
         return results;
+    }).catch(err => {
+        Database.rollbackAndReleaseTransaction(transactionClient);
+        throw err;
     });
 };
 

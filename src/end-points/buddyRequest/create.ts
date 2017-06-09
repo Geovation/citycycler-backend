@@ -164,6 +164,7 @@ const definitions = {
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
     let transactionClient;
+    let newId;
     return Database.createTransactionClient().then(newClient => {
         transactionClient = newClient;
         return getIdFromJWT(params.authorization);
@@ -189,8 +190,13 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         };
         return Database.createBuddyRequest(newBuddyRequest, transactionClient);
     }).then(id => {
-        Database.commitAndReleaseTransaction(transactionClient);
-        return { id, status: 201 };
+        newId = id;
+        return Database.commitAndReleaseTransaction(transactionClient);
+    }).then(() => {
+        return { id: newId, status: 201 };
+    }).catch(err => {
+        Database.rollbackAndReleaseTransaction(transactionClient);
+        throw err;
     });
 };
 
