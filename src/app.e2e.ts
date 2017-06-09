@@ -2024,7 +2024,7 @@ describe("MatchMyRoute API", () => {
                     });
                 });
             });
-            describe("Retreival", () => {
+            describe("Retrieval", () => {
                 it("should get an inexperiencedRoute by a valid id", done => {
                     defaultRequest({
                         headers: {
@@ -2925,7 +2925,7 @@ describe("MatchMyRoute API", () => {
                     });
                 });
             });
-            describe("Retreival", () => {
+            describe("Retrieval", () => {
                 let buddyRequest1Id;
                 let buddyRequest2Id;
                 before("Set up 2 buddy requests from inexp user -> exp user", done => {
@@ -3303,7 +3303,7 @@ describe("MatchMyRoute API", () => {
                                 url: url + "/buddyRequest/sent?id=" + buddyRequestId,
                             }, (error2, response2, body2) => {
                                 expect(response2.statusCode).to.equal(200, "Expected 200 response  when " +
-                                    "retreiving BuddyRequest but got " + response2.statusCode +
+                                    "retrieving BuddyRequest but got " + response2.statusCode +
                                     ", error given is: " + error2 + " body is " + body2);
                                 expect(body2.result.length).to.equal(1, "Got too many BuddyRequests");
                                 let buddyRequest = body2.result[0];
@@ -3375,7 +3375,7 @@ describe("MatchMyRoute API", () => {
                                     url: url + "/buddyRequest/sent?id=" + buddyRequestId,
                                 }, (error2, response2, body2) => {
                                     expect(response2.statusCode).to.equal(200, "Expected 200 response  when " +
-                                    "retreiving BuddyRequest but got " + response2.statusCode +
+                                    "retrieving BuddyRequest but got " + response2.statusCode +
                                     ", error given is: " + error2 + " body is " + body2);
                                     expect(body2.result.length).to.equal(1, "Got too many BuddyRequests");
                                     let buddyRequest = body2.result[0];
