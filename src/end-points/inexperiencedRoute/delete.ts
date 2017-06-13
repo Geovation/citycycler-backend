@@ -64,16 +64,34 @@ const operation = {
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const inexperiencedRouteId = parseInt(params.id, 10);
-    return getIdFromJWT(params.authorization).then(userId => {
-        return Database.getInexperiencedRoutes({userId, id: inexperiencedRouteId});
+    let transactionClient;
+    return Database.createTransactionClient().then(newClient => {
+        transactionClient = newClient;
+        return getIdFromJWT(params.authorization, transactionClient);
+    }).then(userId => {
+        return Database.getInexperiencedRoutes({userId, id: inexperiencedRouteId}, transactionClient);
     }).then(inexperiencedRoutes => {
         if (inexperiencedRoutes.length === 1) {
-            return Database.deleteInexperiencedRoute(inexperiencedRouteId);
+            return Database.deleteInexperiencedRoute(inexperiencedRouteId, transactionClient);
         } else if (inexperiencedRoutes.length === 0) {
             throw new Error("404:InexperiencedRoute doesn't exist");
         } else {
             throw new Error("Multiple inexperienced routes exist with the id " + inexperiencedRouteId +
                 "! This needs to be resolved");
+        }
+    }).then(() => {
+        return Database.commitAndReleaseTransaction(transactionClient);
+    }).then(() => {
+        return true;
+    }).catch(err => {
+        const originalError = typeof err === "string" ? err : err.message;
+        if (typeof transactionClient !== "undefined") {
+            return Database.rollbackAndReleaseTransaction(transactionClient)
+            .then(() => {
+                throw new Error(originalError);
+            });
+        } else {
+            throw new Error(originalError);
         }
     });
 };

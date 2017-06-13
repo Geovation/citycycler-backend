@@ -833,15 +833,20 @@ describe("MatchMyRoute Database Functions", () => {
                 let inexperiencedRouteData: InexperiencedRoute = {
                     arrivalDateTime: "2000-01-01T13:00:00+00",
                     endPoint: [15, 15],
+                    endPointName: "44 Simon Street",
+                    length: 1000,
+                    name: "Ride to the park",
                     notifyOwner: false,
                     radius: 1000,
                     startPoint: [10, 10],
+                    startPointName: "1 Denis Drive",
                 };
                 return Database.createInexperiencedRoute(userId, inexperiencedRouteData, transactionClient)
                 .then(inexperiencedRouteId => {
                     return Database.sqlTransaction(
                         "SELECT arrivalDateTime, ST_AsText(endPoint) AS endPoint, notifyOwner, radius, " +
-                        "ST_AsText(startPoint) AS startPoint, owner FROM inexperienced_routes WHERE id=$1",
+                        "ST_AsText(startPoint) AS startPoint, owner, length, name, startPointName, " +
+                        "endPointName FROM inexperienced_routes WHERE id=$1",
                         ["" + inexperiencedRouteId],
                         transactionClient
                     ).then(result => {
@@ -854,6 +859,10 @@ describe("MatchMyRoute Database Functions", () => {
                         expect(result.rows[0].notifyowner).to.equal(inexperiencedRouteData.notifyOwner);
                         expect(result.rows[0].radius).to.equal(inexperiencedRouteData.radius);
                         expect(result.rows[0].owner).to.equal(userId);
+                        expect(result.rows[0].length).to.equal(inexperiencedRouteData.length);
+                        expect(result.rows[0].name).to.equal(inexperiencedRouteData.name);
+                        expect(result.rows[0].startpointname).to.equal(inexperiencedRouteData.startPointName);
+                        expect(result.rows[0].endpointname).to.equal(inexperiencedRouteData.endPointName);
                     });
                 });
             });
@@ -861,9 +870,13 @@ describe("MatchMyRoute Database Functions", () => {
                 let inexperiencedRouteData: InexperiencedRoute = {
                     arrivalDateTime: "I'm a little teapot",
                     endPoint: [15, 15],
+                    endPointName: "44 Simon Street",
+                    length: 1000,
+                    name: "Ride to the park",
                     notifyOwner: false,
                     radius: 1000,
                     startPoint: [10, 10],
+                    startPointName: "1 Denis Drive",
                 };
                 const promise = Database.createInexperiencedRoute(userId, inexperiencedRouteData, transactionClient);
                 expect(promise).to.be.rejected.and.notify(done);
@@ -877,9 +890,13 @@ describe("MatchMyRoute Database Functions", () => {
                 Database.createInexperiencedRoute(userId, {
                     arrivalDateTime: "2000-01-01T13:00:00+00",
                     endPoint: [15, 15],
+                    endPointName: "44 Simon Street",
+                    length: 1000,
+                    name: "Ride to the park",
                     notifyOwner: false,
                     radius: 1000,
                     startPoint: [10, 10],
+                    startPointName: "1 Denis Drive",
                 },
                 transactionClient).then(newInexperiencedRouteId => {
                     inexperiencedRouteId = newInexperiencedRouteId;
@@ -935,9 +952,13 @@ describe("MatchMyRoute Database Functions", () => {
             let existingInexperiencedRoute: InexperiencedRoute = {
                 arrivalDateTime: "2000-01-01T13:00:00+00",
                 endPoint: [15, 15],
+                endPointName: "44 Simon Street",
+                length: 1000,
+                name: "Ride to the park",
                 notifyOwner: false,
                 radius: 1000,
                 startPoint: [10, 10],
+                startPointName: "1 Denis Drive",
             };
             beforeEach("Make an inexperiencedRoute to update", done => {
                 Database.createInexperiencedRoute(userId, existingInexperiencedRoute,
@@ -951,16 +972,14 @@ describe("MatchMyRoute Database Functions", () => {
             // Go through these objects and try to update the inexperiencedRoute with them
             let updateables = [
                 {arrivalDateTime: "2000-01-01T13:35:00+00"},
-                {endPoint: <[number, number]> [2, 4]},
-                {startPoint: <[number, number]> [150, 10]},
+                {name: "My best ride ever"},
                 {notifyOwner: true},
                 {radius: 999},
                 {
                     arrivalDateTime: "2000-01-01T13:30:00+00",
-                    endPoint: <[number, number]> [18, 15],
+                    name: "My best ride ever",
                     notifyOwner: true,
                     radius: 1230,
-                    startPoint: <[number, number]> [19, 10],
                 },
             ];
             for (let i = 0; i < updateables.length; i++) {
@@ -970,7 +989,8 @@ describe("MatchMyRoute Database Functions", () => {
                     return Database.updateInexperiencedRoute(existingInexperiencedRoute, updates, transactionClient)
                     .then(() => {
                         return Database.sqlTransaction("SELECT arrivalDateTime, radius, notifyOwner, " +
-                        "ST_AsText(endPoint) as endPoint, ST_AsText(startPoint) as startPoint " +
+                        "ST_AsText(endPoint) as endPoint, ST_AsText(startPoint) as startPoint, " +
+                        "name, length, startPointName, endPointName " +
                         "FROM inexperienced_routes WHERE id=$1;", ["" + inexperiencedRouteId], transactionClient)
                         .then(result => {
                             return result.rows[0];
@@ -1007,9 +1027,13 @@ describe("MatchMyRoute Database Functions", () => {
                     return Database.createInexperiencedRoute(ownerId, {
                         arrivalDateTime: "2000-01-01T13:00:00+00",
                         endPoint: [15, 15],
+                        endPointName: "44 Simon Street",
+                        length: 1000,
+                        name: "Ride to the park",
                         notifyOwner: false,
                         radius: 1000,
                         startPoint: [10, 10],
+                        startPointName: "1 Denis Drive",
                     },
                     transactionClient);
                 }).then(newInexperiencedRouteId => {
@@ -1091,9 +1115,13 @@ describe("MatchMyRoute Database Functions", () => {
                 return Database.createInexperiencedRoute(inexpUserId, new InexperiencedRoute({
                     arrivalDateTime: "2000-01-01T13:00:00+00",
                     endPoint: [15, 15],
+                    endPointName: "112 Rachel Road",
+                    length: 5100,
+                    name: "Ride home",
                     notifyOwner: false,
                     radius: 1000,
                     startPoint: [10, 10],
+                    startPointName: "33 Stanley Street",
                 }), transactionClient);
             }).then(routeId => {
                 inexperiencedRoute = routeId;

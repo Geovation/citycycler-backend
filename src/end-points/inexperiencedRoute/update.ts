@@ -79,10 +79,25 @@ const definitions = {
                 description: "Where the user will finish cycling. Must be within <radius> of " +
                 "an experienced route to be considered a match",
             },
+            endPointName: {
+                description: "The name of where the user wants to end up",
+                example:  "64 Crawley Crescent",
+                type: "string",
+            },
             id: {
                 description: "The internal id of this inexperienced route",
                 format: "int32",
                 type: "integer",
+            },
+            length: {
+                description: "How long this route is, by the shortest possible route, in meters",
+                example: 6666,
+                type: "number",
+            },
+            name: {
+                description: "The name of this route",
+                example: "Ride to the park",
+                type: "string",
             },
             notifyOwner: {
                 description: "Does the user want to be notified of any new experienced cyclists who can help them",
@@ -98,6 +113,11 @@ const definitions = {
                 $ref: "#/definitions/Coordinate",
                 description: "Where the user will start cycling from. Must be within <radius> of " +
                 "an experienced route to be considered a match",
+            },
+            startPointName: {
+                description: "The name of where the user wants to start",
+                example:  "18 Ryan Road",
+                type: "string",
             },
         },
         required: ["id"],
@@ -120,17 +140,21 @@ const definitions = {
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
     let userId;
-    return getIdFromJWT(params.authorization).then(authUserId => {
+    let transactionClient;
+    return Database.createTransactionClient().then(newClient => {
+        transactionClient = newClient;
+        return getIdFromJWT(params.authorization, transactionClient);
+    }).then(authUserId => {
         userId = authUserId;
         if (userId !== undefined) {
-            return Database.getInexperiencedRoutes({userId, id: payload.id});
+            return Database.getInexperiencedRoutes({userId, id: payload.id}, transactionClient);
         } else {
             throw new Error("403:Invalid authorization");
         }
     }).then(inexperiencedRoutes => {
         if (inexperiencedRoutes.length === 1) {
             if (inexperiencedRoutes[0].owner === userId) {
-                return Database.updateInexperiencedRoute(inexperiencedRoutes[0], payload);
+                return Database.updateInexperiencedRoute(inexperiencedRoutes[0], payload, transactionClient);
             } else {
                 throw new Error("403:Invalid authorization");
             }
@@ -139,6 +163,20 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         } else {
             throw new Error("Multiple inexperienced routes exist with the id " + payload.id +
                 "! This needs to be resolved");
+        }
+    }).then(() => {
+        return Database.commitAndReleaseTransaction(transactionClient);
+    }).then(() => {
+        return true;
+    }).catch(err => {
+        const originalError = typeof err === "string" ? err : err.message;
+        if (typeof transactionClient !== "undefined") {
+            return Database.rollbackAndReleaseTransaction(transactionClient)
+            .then(() => {
+                throw new Error(originalError);
+            });
+        } else {
+            throw new Error(originalError);
         }
     });
 };
