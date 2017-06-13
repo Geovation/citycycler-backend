@@ -14,7 +14,8 @@ import * as crypto from "crypto";
 const operation = {
     post: {
         consumes: ["application/json"],
-        description: "This endpoint accepts a user's email and password, and returns a JWT that expires after 1 week",
+        description: "This endpoint accepts a user's email and password, and returns the user +" +
+            " a JWT that expires after 1 week",
         parameters: [
             {
                 description: "The data needed to authorise this user",
@@ -85,7 +86,11 @@ const definitions = {
                         example: "eyJhbGciOiJI...28ZZEY",
                         type: "string",
                     },
+                    user: {
+                        $ref: "#/definitions/User",
+                    },
                 },
+                required: ["expires", "token", "user"],
             },
         },
         required: ["result"],
@@ -100,7 +105,13 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
     const { email, password } = payload;
     // Check that the password has matches what we have stored.
-    return Database.getUserByEmail(email).then(user => {
+    let transactionClient;
+    let thisUser;
+    return Database.createTransactionClient().then(newClient => {
+        transactionClient = newClient;
+        return Database.getUserByEmail(email, transactionClient);
+    }).then(user => {
+        thisUser = user;
         return new Promise((resolve, reject) => {
             crypto.pbkdf2(password, user.salt, user.rounds, 512, "sha512", (err, key) => {
                 if (err) {
@@ -113,20 +124,35 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
                                 password: newKey,
                                 rounds: minimumHashingRounds,
                             };
+                            // Not using the transactionClient here because this DB task should be asynchronous,
+                            // and the client will probably be released before it's done with this update
                             Database.updateUser(user.id, updates);
                         });
                     }
-                    resolve(generateJWTFor(user));
+                    Database.commitAndReleaseTransaction(transactionClient);
+                    // Add the user to the response
+                    let response = Object.assign(generateJWTFor(user), {
+                        user: thisUser.asUserProfile(),
+                    });
+                    resolve(response);
                 } else {
                     reject("403:Incorrect Password");
                 }
             });
         });
     }).catch(err => {
-        if (err.message === "404:User doesn't exist") {
-            throw "403:Incorrect Password";
+        const originalError = typeof err === "string" ? err : err.message;
+        if (typeof transactionClient !== "undefined") {
+            return Database.rollbackAndReleaseTransaction(transactionClient)
+            .then(() => {
+                if (originalError === "404:User doesn't exist") {
+                    throw new Error("403:Incorrect Password");
+                } else {
+                    throw new Error(originalError);
+                }
+            });
         } else {
-            throw err;
+            throw new Error(originalError);
         }
     });
 };

@@ -278,19 +278,37 @@ describe("MatchMyRoute API", () => {
                             Authorization: "Bearer " + userJwts[0],
                         },
                         method: "GET",
-                        url: url + "/user/" + userIds[0],
+                        url: url + "/user?id=" + userIds[0],
                     }).then(response => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + response.error);
                         expect(response.body.result.name).to.equal("E2E Test User",
                             "Got a different name than expected. Expected: \"E2E Test User\", got \"" +
                             response.body.result.name + "\". Full response body is: " + JSON.stringify(response.body));
+                        expect(response.body.result.preferences).to.not.be.undefined;
+                    });
+                });
+                it("should get the JWT user when called with no id", () => {
+                    defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[0],
+                        },
+                        method: "GET",
+                        url: url + "/user",
+                    }).then(response => {
+                        expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                            response.statusCode + ", error given is: " + response.error);
+                        expect(response.body.result.name).to.equal("E2E Test User",
+                            "Got a different name than expected. Expected: \"E2E Test User\", got \"" +
+                            response.body.result.name + "\". Full response body is: " +
+                            JSON.stringify(response.body));
+                        expect(response.body.result.preferences).to.not.be.undefined;
                     });
                 });
                 it("should not get a user if auth is missing", () => {
                     return defaultRequest({
                         method: "GET",
-                        url: url + "/user/" + userIds[0],
+                        url: url + "/user?id=" + userIds[0],
                     }).then(response => {
                         expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(response.body));
@@ -298,13 +316,13 @@ describe("MatchMyRoute API", () => {
                         expect(response.body.status).to.equal(403);
                     });
                 });
-                it("should get a user if auth is for another user", () => {
+                it("should get a user if auth is for another user, but should not have the preferences", () => {
                     return defaultRequest({
                         headers: {
                             Authorization: "Bearer " + userJwts[1],
                         },
                         method: "GET",
-                        url: url + "/user/" + userIds[0],
+                        url: url + "/user?id=" + userIds[0],
                     }).then(response => {
                         expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                             response.statusCode + ", error given is: " + response.error);
@@ -312,6 +330,7 @@ describe("MatchMyRoute API", () => {
                             "Expected result name to be \"E2E Test User\", but it got \""
                             + response.body.result.name +
                             "\". Full response body is: " + JSON.stringify(response.body));
+                        expect(response.body.result.preferences).to.be.undefined;
                     });
                 });
                 it("should not get a user if the id is invalid", () => {
@@ -320,7 +339,7 @@ describe("MatchMyRoute API", () => {
                             Authorization: "Bearer " + userJwts[0],
                         },
                         method: "GET",
-                        url: url + "/user/" + -1,
+                        url: url + "/user?id=" + -1,
                     }).then(response => {
                         expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
                             response.statusCode + ", body returned is: " + JSON.stringify(response.body));
@@ -355,7 +374,7 @@ describe("MatchMyRoute API", () => {
                                 Authorization: "Bearer " + userJwts[0],
                             },
                             method: "GET",
-                            url: url + "/user/" + userIds[0],
+                            url: url + "/user?id=" + userIds[0],
                         });
                     }).then(response => {
                         let user = response.body.result;
@@ -454,7 +473,7 @@ describe("MatchMyRoute API", () => {
                                 Authorization: "Bearer " + userJwts[0],
                             },
                             method: "GET",
-                            url: url + "/user/" + userIds[0],
+                            url: url + "/user?id=" + userIds[0],
                         });
                     }).then(response => {
                         let user = response.body.result;
@@ -480,7 +499,7 @@ describe("MatchMyRoute API", () => {
                                 Authorization: "Bearer " + userJwts[0],
                             },
                             method: "GET",
-                            url: url + "/user/" + userIds[0],
+                            url: url + "/user?id=" + userIds[0],
                         });
                     }).then(response => {
                         let user = response.body.result;
@@ -537,7 +556,7 @@ describe("MatchMyRoute API", () => {
                                 Authorization: "Bearer " + userJwts[0],
                             },
                             method: "GET",
-                            url: url + "/user/" + userIds[0],
+                            url: url + "/user?id=" + userIds[0],
                         });
                     }).then(response => {
                         let user = response.body.result;
@@ -564,7 +583,7 @@ describe("MatchMyRoute API", () => {
                                 Authorization: "Bearer " + userJwts[0],
                             },
                             method: "GET",
-                            url: url + "/user/" + userIds[0],
+                            url: url + "/user?id=" + userIds[0],
                         });
                     }).then(response => {
                         let user = response.body.result;
@@ -611,7 +630,7 @@ describe("MatchMyRoute API", () => {
                                 Authorization: "Bearer " + userJwts[0],
                             },
                             method: "GET",
-                            url: url + "/user/" + userIds[0],
+                            url: url + "/user?id=" + userIds[0],
                         });
                     }).then(response => {
                         let user = response.body.result;
@@ -654,7 +673,7 @@ describe("MatchMyRoute API", () => {
                                 Authorization: "Bearer " + userJwts[0],
                             },
                             method: "GET",
-                            url: url + "/user/" + userIds[0],
+                            url: url + "/user?id=" + userIds[0],
                         });
                     }).then(response => {
                         let user = response.body.result;
@@ -815,7 +834,7 @@ describe("MatchMyRoute API", () => {
             });
             describe("Authentication", () => {
                 describe("Initial", () => {
-                    it("should provide a JWT", () => {
+                    it("should provide a JWT and the User", () => {
                         const auth = { email: "test1@e2e-test.matchmyroute-backend.appspot.com", password: "test" };
                         return defaultRequest({
                             json: auth,
@@ -834,6 +853,10 @@ describe("MatchMyRoute API", () => {
                                 .that.is.a("number", "JWT expires is not a number, it's a " +
                                 (typeof response.body.result.expires) + ", here is the JWT " +
                                 JSON.stringify(response.body.result));
+                            expect(response.body.result, "Call did not return user: " +
+                                JSON.stringify(response.body.result)).to.have.property("user");
+                            expect(response.body.result.user, "User object does not have id: " +
+                                JSON.stringify(response.body.result)).to.have.property("id");
                         });
                     });
                     it("should not provide a JWT if the password is incorrect", () => {
@@ -847,6 +870,7 @@ describe("MatchMyRoute API", () => {
                                 response.statusCode + ", body returned is: " + JSON.stringify(response.body));
                             expect(response.body.error).to.equal("Incorrect Password");
                             expect(response.body.status).to.equal(403);
+                            expect(response.body.user, "User object was returned").to.be.undefined;
                         });
                     });
                     it("should not provide a JWT if the email doesn't exist", () => {

@@ -1,6 +1,7 @@
 import { getIdFromJWT } from "../../common/auth";
 import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
+import * as _ from "lodash";
 
 // /////////////////////////////////////////////////////////////
 // SWAGGER: start                                             //
@@ -11,14 +12,13 @@ import { MicroserviceEndpoint } from "../../microservices-framework/web/services
 const operation = {
     get: {
         consumes: ["application/json"],
-        description: "Returns a user matching the passed ID. If the user is not present, an empty object will be " +
-        "returned.",
+        description: "Returns a user matching the passed ID. If the id is not given then the currently logged in" +
+            "user will be returned.",
         parameters: [
             {
                 description: "The ID of the user to be returned",
-                in: "path",
+                in: "query",
                 name: "id",
-                required: true,
                 type: "number",
             },
         ],
@@ -129,10 +129,10 @@ const definitions = {
                 type: "integer",
             },
         },
-        required: ["email", "id", "name", "rating", "usersHelped", "preferences", "helpedCount", "distance"],
+        required: ["email", "id", "name", "rating", "usersHelped", "helpedCount", "distance"],
     },
     UserPreferences: {
-        description: "A user's preferences",
+        description: "A user's preferences. Only returned if the user is the currently logged in user",
         properties: {
             rideDifficulty: {
                 description: "The intensity of rides shown to this user",
@@ -156,14 +156,42 @@ const definitions = {
 
 const service = (broadcast: Function, params: any): Promise<any> => {
     const id = parseInt(params.id, 10);
-    return getIdFromJWT(params.authorization).then(() => {
-        return Database.getUserById(id).then(user => {
+    let transactionClient;
+    let currentUserId;
+    return Database.createTransactionClient().then(newClient => {
+        transactionClient = newClient;
+        return getIdFromJWT(params.authorization, transactionClient);
+    }).then(userId => {
+        currentUserId = userId;
+        if (!isNaN(id)) {
+            return Database.getUserById(id, transactionClient);
+        } else {
+            // Return the current user
+            return Database.getUserById(currentUserId, transactionClient);
+        }
+    }).then(user => {
+        Database.commitAndReleaseTransaction(transactionClient);
+        // See if this user is the currently logged in user
+        if (user.id === currentUserId) {
             return user.asUserProfile();
-        });
+        } else {
+            // hide preferences
+            return _.omit(user.asUserProfile(), ["preferences"]);
+        }
+    }).catch(err => {
+        const originalError = typeof err === "string" ? err : err.message;
+        if (typeof transactionClient !== "undefined") {
+            return Database.rollbackAndReleaseTransaction(transactionClient)
+            .then(() => {
+                throw new Error(originalError);
+            });
+        } else {
+            throw new Error(originalError);
+        }
     });
 };
 
-export const getById = new MicroserviceEndpoint("getUser")
+export const get = new MicroserviceEndpoint("getUser")
     .addSwaggerOperation(operation)
     .addSwaggerDefinitions(definitions)
     .addService(service);
