@@ -106,7 +106,7 @@ const definitions = {
     UpdateUserResponse: {
         properties: {
             result: {
-                description: "Whether the update succeded",
+                description: "Whether the update succeeded",
                 type: "boolean",
             },
         },

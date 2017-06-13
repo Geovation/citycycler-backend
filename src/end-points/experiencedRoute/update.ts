@@ -102,7 +102,7 @@ const definitions = {
         required: ["id"],
     },
     UpdateRouteResponse: {
-        description: "Whether the update succeded",
+        description: "Whether the update succeeded",
         properties: {
             result: {
                 type: "boolean",

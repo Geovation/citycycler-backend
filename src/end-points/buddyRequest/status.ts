@@ -87,7 +87,7 @@ const definitions = {
         required: ["status", "reason"],
     },
     UpdateBuddyRequestStatusResponse: {
-        description: "Whether the update succeded",
+        description: "Whether the update succeeded",
         properties: {
             result: {
                 type: "boolean",
@@ -105,36 +105,25 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
     let userId;
     let transactionClient;
-    let userIsExperienced = false;
     return Database.createTransactionClient().then(newClient => {
         transactionClient = newClient;
         return getIdFromJWT(params.authorization);
     }).then(authUserId => {
         userId = authUserId;
         if (userId !== undefined) {
-            // The user may be the experienced or inexperienced user, start by checking if they are the inexperienced
-            return Database.getSentBuddyRequests({userId, id: payload.id});
+            return Database.getBuddyRequests({userId, id: payload.id});
         } else {
             throw new Error("403:Invalid authorization");
         }
     }).then(buddyRequests => {
-        return buddyRequests;
-    }, err => {
-        if (err.message === "404:BuddyRequest doesn't exist") {
-            // Ok, user must be the experienced user
-            userIsExperienced = true;
-            return Database.getReceivedBuddyRequests({userId, id: payload.id});
-        } else {
-            throw err;
-        }
-    }).then(buddyRequests => {
         // Ok! We should have the buddy request now, no matter which user is updating the status!
         if (buddyRequests.length === 1) {
+            const userIsExperienced = buddyRequests[0].experiencedUser === userId;
             const existingStatus = buddyRequests[0].status;
             let newStatus = payload.status;
             let newReason = "";
             // In this switch we look for which cases shouldn't be allowed and throw an error on them
-            // If the whole thing passes, it means that the new status is a vaild update
+            // If the whole thing passes, it means that the new status is a valid update
             switch (newStatus) {
                 case "accepted":
                     // Only the experienced user should be allowed to do this

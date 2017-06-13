@@ -103,7 +103,7 @@ const definitions = {
         required: ["id"],
     },
     UpdateInexperiencedRouteResponse: {
-        description: "Whether the update succeded",
+        description: "Whether the update succeeded",
         properties: {
             result: {
                 type: "boolean",
