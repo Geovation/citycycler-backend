@@ -727,9 +727,13 @@ export function createBuddyRequest(buddyRequest: BuddyRequest, providedClient = 
 export function getSentBuddyRequests(params: {userId: number, id?: number}, providedClient = null)
 : Promise<BuddyRequest[]> {
     return getBuddyRequests(params, providedClient).then(buddyRequests => {
-        return buddyRequests.filter(buddyRequest => {
+        let matchingBuddyRequests = buddyRequests.filter(buddyRequest => {
             return buddyRequest.owner === params.userId;
-        })
+        });
+        if (matchingBuddyRequests.length === 0) {
+            throw new Error("404:BuddyRequest doesn't exist");
+        }
+        return matchingBuddyRequests;
     });
 }
 
@@ -743,9 +747,13 @@ export function getSentBuddyRequests(params: {userId: number, id?: number}, prov
 export function getReceivedBuddyRequests(params: {userId: number, id?: number}, providedClient = null)
 : Promise<BuddyRequest[]> {
     return getBuddyRequests(params, providedClient).then(buddyRequests => {
-        return buddyRequests.filter(buddyRequest => {
+        let matchingBuddyRequests = buddyRequests.filter(buddyRequest => {
             return buddyRequest.experiencedUser === params.userId;
-        })
+        });
+        if (matchingBuddyRequests.length === 0) {
+            throw new Error("404:BuddyRequest doesn't exist");
+        }
+        return matchingBuddyRequests;
     });
 }
 
@@ -761,20 +769,16 @@ export function getBuddyRequests(params: {userId: number, id?: number}, provided
     let query = "SELECT id, experiencedRouteName, experiencedRoute, experiencedUser, owner, inexperiencedRoute, " +
     "meetingTime, divorceTime, ST_AsText(meetingPoint) as meetingPoint, ST_AsText(divorcePoint) AS divorcePoint, " +
     "averageSpeed, created, updated, status, reason, ST_AsText(route) as route, meetingPointName, divorcePointName " +
-    "FROM buddy_requests WHERE owner=$1 OR experiencedUser=$1";
+    "FROM buddy_requests WHERE (owner=$1 OR experiencedUser=$1)";
     let queryParams = [params.userId];
     if (params.id !== null && typeof params.id !== "undefined") {
         query +=  " AND id=$2";
         queryParams.push(params.id);
     }
     return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
-        if (result.rowCount > 0) {
-            return result.rows.map((buddyRequest) => {
-                return BuddyRequest.fromSQLRow(buddyRequest);
-            });
-        } else {
-            throw new Error("404:BuddyRequest doesn't exist");
-        }
+        return result.rows.map((buddyRequest) => {
+            return BuddyRequest.fromSQLRow(buddyRequest);
+        });
     });
 }
 
