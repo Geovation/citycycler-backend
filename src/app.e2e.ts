@@ -834,7 +834,7 @@ describe("MatchMyRoute API", () => {
             });
             describe("Authentication", () => {
                 describe("Initial", () => {
-                    it("should provide a JWT", () => {
+                    it("should provide a JWT and the User", () => {
                         const auth = { email: "test1@e2e-test.matchmyroute-backend.appspot.com", password: "test" };
                         return defaultRequest({
                             json: auth,
@@ -853,6 +853,10 @@ describe("MatchMyRoute API", () => {
                                 .that.is.a("number", "JWT expires is not a number, it's a " +
                                 (typeof response.body.result.expires) + ", here is the JWT " +
                                 JSON.stringify(response.body.result));
+                            expect(response.body.result, "Call did not return user: " +
+                                JSON.stringify(response.body.result)).to.have.property("user");
+                            expect(response.body.result.user, "User object does not have id: " +
+                                JSON.stringify(response.body.result)).to.have.property("id");
                         });
                     });
                     it("should not provide a JWT if the password is incorrect", () => {
@@ -866,6 +870,7 @@ describe("MatchMyRoute API", () => {
                                 response.statusCode + ", body returned is: " + JSON.stringify(response.body));
                             expect(response.body.error).to.equal("Incorrect Password");
                             expect(response.body.status).to.equal(403);
+                            expect(response.body.user, "User object was returned").to.be.undefined;
                         });
                     });
                     it("should not provide a JWT if the email doesn't exist", () => {
