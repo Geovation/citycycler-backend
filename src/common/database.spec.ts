@@ -1107,6 +1107,7 @@ describe("MatchMyRoute Database Functions", () => {
                     experiencedRouteName: "Ride to work",
                     experiencedUser: expUserId,
                     inexperiencedRoute,
+                    length: 5000,
                     meetingPoint: [0, 0],
                     meetingPointName: "1 Shelly Street",
                     meetingTime: "2017-06-08T11:34:28.684Z",
@@ -1134,11 +1135,24 @@ describe("MatchMyRoute Database Functions", () => {
                         expect(results.rows[0].inexperiencedroute).to.equal(buddyRequestObject.inexperiencedRoute);
                         expect(moment(results.rows[0].meetingtime).isSame(buddyRequestObject.meetingTime)).to.be.true;
                         expect(results.rows[0].owner).to.equal(buddyRequestObject.owner);
+                        expect(results.rows[0].length).to.equal(buddyRequestObject.length);
                         expect(results.rows[0].status).to.equal(buddyRequestObject.status);
                         expect(results.rows[0].reason).to.equal(buddyRequestObject.reason);
                         expect(moment(results.rows[0].updated).isSame(buddyRequestObject.updated)).to.be.true;
                         expect(results.rows[0].meetingpointname).to.equal(buddyRequestObject.meetingPointName);
                         expect(results.rows[0].divorcepointname).to.equal(buddyRequestObject.divorcePointName);
+                    });
+                });
+            });
+            it("should not bea ble to create a review when creating a BuddyRequest", () => {
+                let obj = Object.assign({}, buddyRequestObject);
+                obj.review = 1;
+                return Database.createBuddyRequest(obj, transactionClient).then(buddyRequestId => {
+                    return Database.sqlTransaction("SELECT * FROM buddy_requests where id=$1",
+                        ["" + buddyRequestId], transactionClient)
+                    .then(results => {
+                        expect(results.rows[0]).to.not.be.undefined;
+                        expect(results.rows[0].review).to.be.null;
                     });
                 });
             });
@@ -1179,6 +1193,7 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[0].experiencedRouteName).to.equal(buddyRequestObject.experiencedRouteName);
                     expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime).isSame(buddyRequestObject.meetingTime)).to.be.true;
                     expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
                     expect(buddyRequests[0].owner).to.equal(buddyRequestObject.owner);
@@ -1203,6 +1218,7 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[0].experiencedRouteName).to.equal(buddyRequestObject.experiencedRouteName);
                     expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime).isSame(buddyRequestObject.meetingTime)).to.be.true;
                     expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
                     expect(buddyRequests[0].owner).to.equal(buddyRequestObject.owner);
@@ -1226,6 +1242,7 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[0].experiencedRouteName).to.equal(buddyRequestObject.experiencedRouteName);
                     expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime).isSame(buddyRequestObject.meetingTime)).to.be.true;
                     expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
                     expect(buddyRequests[0].owner).to.equal(buddyRequestObject.owner);
@@ -1242,6 +1259,7 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[1].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
                     expect(buddyRequests[1].experiencedRouteName).to.equal(buddyRequestObject.experiencedRouteName);
                     expect(buddyRequests[1].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
+                    expect(buddyRequests[1].length).to.equal(buddyRequestObject.length);
                     expect(buddyRequests[1].inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
                     expect(moment(buddyRequests[1].meetingTime).isSame(buddyRequestObject.meetingTime)).to.be.true;
                     expect(buddyRequests[1].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
@@ -1266,6 +1284,7 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[0].experiencedRouteName).to.equal(buddyRequestObject.experiencedRouteName);
                     expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime).isSame(buddyRequestObject.meetingTime)).to.be.true;
                     expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
                     expect(buddyRequests[0].owner).to.equal(buddyRequestObject.owner);
@@ -1283,6 +1302,7 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[1].experiencedRouteName).to.equal(buddyRequestObject.experiencedRouteName);
                     expect(buddyRequests[1].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[1].inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[1].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[1].meetingTime).isSame(buddyRequestObject.meetingTime)).to.be.true;
                     expect(buddyRequests[1].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
                     expect(buddyRequests[1].owner).to.equal(buddyRequestObject.owner);
@@ -1340,15 +1360,19 @@ describe("MatchMyRoute Database Functions", () => {
                 {meetingPointName: "32 Arthur Avenue"},
                 {divorcePointName: "64 Derek Drive"},
                 {status: "rejected"},
+                {review: 1},
+                {length: 1234},
                 {reason: "Excellent Reason"},
                 {   // All at once
                     divorcePoint: [0.6, 0.6],
                     divorcePointName: "64 Derek Drive",
                     divorceTime: "2017-06-08T12:12:12.684Z",
+                    length: 1234,
                     meetingPoint: [0.5, 0.5],
                     meetingPointName: "32 Arthur Avenue",
                     meetingTime: "2017-06-08T10:20:28.684Z",
                     reason: "Excellent Reason",
+                    review: -1,
                     status: "rejected",
                 },
             ];
@@ -1365,6 +1389,9 @@ describe("MatchMyRoute Database Functions", () => {
                 {averageSpeed: 200},
                 {created: "2000-01-01T12:00:00.000Z"},
                 {updated: "2000-01-01T12:00:00.000Z"},
+                {review: 2, error: "400:BuddyRequest review must be +/- 1"},
+                {review: -2, error: "400:BuddyRequest review must be +/- 1"},
+                {review: 0, error: "400:BuddyRequest review must be +/- 1"},
                 {route: [[1, 1], [0.5, 0.5], [2, 2]]},
                 {
                     divorceTime: "2017-06-08T10:12:12.684Z",

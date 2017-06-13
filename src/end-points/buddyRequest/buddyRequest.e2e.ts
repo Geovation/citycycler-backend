@@ -126,6 +126,7 @@ describe("BuddyRequest endpoint", () => {
                 experiencedRouteName: "Ride to work",
                 experiencedUser: expUserId,
                 inexperiencedRoute,
+                length: 1000,
                 meetingPoint: [0, 0],
                 meetingPointName: "64 Ryan Road",
                 meetingTime: "2017-06-08T11:34:28.684Z",
@@ -222,7 +223,7 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[0].id).to.equal(buddyRequest1Id);
                     expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
                     expect(moment(buddyRequests[0].divorceTime)
-                        .isSame(buddyRequestObject.divorceTime)).to.be.true;
+                        .isSame(buddyRequestObject.divorceTime, "second")).to.be.true;
                     expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
                     expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                     expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
@@ -231,15 +232,16 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute)
                         .to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime)
-                        .isSame(buddyRequestObject.meetingTime)).to.be.true;
+                        .isSame(buddyRequestObject.meetingTime, "second")).to.be.true;
                     expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
                     expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
                     expect(buddyRequests[0].owner).to.equal(inexpUserId);
                     expect(buddyRequests[0].status).to.equal("pending");
                     expect(buddyRequests[0].reason).to.equal("");
                     expect(buddyRequests[0].route).to.eql(buddyRequestObject.route);
-                    expect(moment(buddyRequests[0].updated).isSame(buddyRequests[0].created)).to.be.true;
+                    expect(moment(buddyRequests[0].updated).isSame(buddyRequests[0].created, "second")).to.be.true;
                 });
             });
             it("should get all of a user's sent buddy requests when no id is given", () => {
@@ -260,7 +262,7 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests.length).to.equal(3);
                     expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
                     expect(moment(buddyRequests[0].divorceTime)
-                        .isSame(buddyRequestObject.divorceTime),
+                        .isSame(buddyRequestObject.divorceTime, "second"),
                         "Divorce time is different to expected." +
                         "\nExpected: " + moment(buddyRequestObject.divorceTime) +
                         "\nActual: " + moment(buddyRequests[0].divorceTime)).to.be.true;
@@ -272,8 +274,9 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute)
                         .to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime)
-                        .isSame(buddyRequestObject.meetingTime),
+                        .isSame(buddyRequestObject.meetingTime, "second"),
                         "Meeting time is different to expected." +
                         "\nExpected: " + moment(buddyRequestObject.meetingTime) +
                         "\nActual: " + moment(buddyRequests[0].meetingTime)).to.be.true;
@@ -283,10 +286,10 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[0].status).to.equal("pending");
                     expect(buddyRequests[0].reason).to.equal("");
                     expect(buddyRequests[0].route).to.eql(buddyRequestObject.route);
-                    expect(moment(buddyRequests[0].updated).isSame(buddyRequests[0].created)).to.be.true;
+                    expect(moment(buddyRequests[0].updated).isSame(buddyRequests[0].created, "second")).to.be.true;
                     expect(buddyRequests[1].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
                     expect(moment(buddyRequests[1].divorceTime)
-                        .isSame(buddyRequestObject.divorceTime),
+                        .isSame(buddyRequestObject.divorceTime, "second"),
                         "Divorce time is different to expected." +
                         "\nExpected: " + moment(buddyRequestObject.divorceTime) +
                         "\nActual: " + moment(buddyRequests[1].divorceTime)).to.be.true;
@@ -298,8 +301,9 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[1].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[1].inexperiencedRoute)
                         .to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[1].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[1].meetingTime)
-                        .isSame(buddyRequestObject.meetingTime),
+                        .isSame(buddyRequestObject.meetingTime, "second"),
                         "Meeting time is different to expected." +
                         "\nExpected: " + moment(buddyRequestObject.meetingTime) +
                         "\nActual: " + moment(buddyRequests[1].meetingTime)).to.be.true;
@@ -309,7 +313,7 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[1].status).to.equal("pending");
                     expect(buddyRequests[1].reason).to.equal("");
                     expect(buddyRequests[1].route).to.eql(buddyRequestObject.route);
-                    expect(moment(buddyRequests[1].updated).isSame(buddyRequests[1].created)).to.be.true;
+                    expect(moment(buddyRequests[1].updated).isSame(buddyRequests[1].created, "second")).to.be.true;
                 });
             });
             it("should not get a user's received buddy requests from the sent endpoint", () => {
@@ -368,7 +372,7 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[0].id).to.equal(buddyRequest1Id);
                     expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
                     expect(moment(buddyRequests[0].divorceTime)
-                        .isSame(buddyRequestObject.divorceTime)).to.be.true;
+                        .isSame(buddyRequestObject.divorceTime, "second")).to.be.true;
                     expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
                     expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                     expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
@@ -377,15 +381,16 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute)
                         .to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime)
-                        .isSame(buddyRequestObject.meetingTime)).to.be.true;
+                        .isSame(buddyRequestObject.meetingTime, "second")).to.be.true;
                     expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
                     expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
                     expect(buddyRequests[0].owner).to.equal(inexpUserId);
                     expect(buddyRequests[0].status).to.equal("pending");
                     expect(buddyRequests[0].reason).to.equal("");
                     expect(buddyRequests[0].route).to.eql(buddyRequestObject.route);
-                    expect(moment(buddyRequests[0].updated).isSame(buddyRequests[0].created)).to.be.true;
+                    expect(moment(buddyRequests[0].updated).isSame(buddyRequests[0].created, "second")).to.be.true;
                 });
             });
             it("should get all of a user's received buddy requests when no id is given", () => {
@@ -406,7 +411,7 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests.length).to.equal(3);
                     expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
                     expect(moment(buddyRequests[0].divorceTime)
-                        .isSame(buddyRequestObject.divorceTime),
+                        .isSame(buddyRequestObject.divorceTime, "second"),
                         "Divorce time is different to expected." +
                         "\nExpected: " + moment(buddyRequestObject.divorceTime) +
                         "\nActual: " + moment(buddyRequests[0].divorceTime)).to.be.true;
@@ -418,8 +423,9 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute)
                         .to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime)
-                        .isSame(buddyRequestObject.meetingTime),
+                        .isSame(buddyRequestObject.meetingTime, "second"),
                         "Meeting time is different to expected." +
                         "\nExpected: " + moment(buddyRequestObject.meetingTime) +
                         "\nActual: " + moment(buddyRequests[0].meetingTime)).to.be.true;
@@ -429,10 +435,10 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[0].status).to.equal("pending");
                     expect(buddyRequests[0].reason).to.equal("");
                     expect(buddyRequests[0].route).to.eql(buddyRequestObject.route);
-                    expect(moment(buddyRequests[0].updated).isSame(buddyRequests[0].created)).to.be.true;
+                    expect(moment(buddyRequests[0].updated).isSame(buddyRequests[0].created, "second")).to.be.true;
                     expect(buddyRequests[1].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
                     expect(moment(buddyRequests[1].divorceTime)
-                        .isSame(buddyRequestObject.divorceTime),
+                        .isSame(buddyRequestObject.divorceTime, "second"),
                         "Divorce time is different to expected." +
                         "\nExpected: " + moment(buddyRequestObject.divorceTime) +
                         "\nActual: " + moment(buddyRequests[1].divorceTime)).to.be.true;
@@ -444,8 +450,9 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[1].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[1].inexperiencedRoute)
                         .to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[1].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[1].meetingTime)
-                        .isSame(buddyRequestObject.meetingTime),
+                        .isSame(buddyRequestObject.meetingTime, "second"),
                         "Meeting time is different to expected." +
                         "\nExpected: " + moment(buddyRequestObject.meetingTime) +
                         "\nActual: " + moment(buddyRequests[1].meetingTime)).to.be.true;
@@ -455,7 +462,7 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[1].status).to.equal("pending");
                     expect(buddyRequests[1].reason).to.equal("");
                     expect(buddyRequests[1].route).to.eql(buddyRequestObject.route);
-                    expect(moment(buddyRequests[1].updated).isSame(buddyRequests[1].created)).to.be.true;
+                    expect(moment(buddyRequests[1].updated).isSame(buddyRequests[1].created, "second")).to.be.true;
                 });
             });
             it("should not get a user's sent buddy requests from the received endpoint", () => {
@@ -1536,6 +1543,27 @@ describe("BuddyRequest endpoint", () => {
                 });
             });
         });
+        it("should not let you mark it as completed", () => {
+            const status = {
+                id: buddyRequestId,
+                status: "completed",
+            };
+            return defaultRequest({
+                headers: {
+                    Authorization: "Bearer " + expUserJwt,
+                },
+                json: status,
+                method: "POST",
+                url: url + "/buddyRequest/status",
+            }).then(response => {
+                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                    response.statusCode + ", error given is: " + response.error +
+                    " body is " + response.body);
+                expect(response.body.error).to.be.equal(
+                    "Can't set a BuddyRequest's status to 'completed'. This only " +
+                    "happens when a user submits a review.");
+            });
+        });
         it("should give a hint to anyone who spells 'canceled' the non-US way", () => {
             const status = {
                 id: buddyRequestId,
@@ -1557,4 +1585,279 @@ describe("BuddyRequest endpoint", () => {
             });
         });
     });
+    describe("Reviewing", () => {
+                let buddyRequestId;
+                let counter = 0;
+                beforeEach("Make a BuddyRequest to review", () => {
+                    return defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + inexpUserJwt,
+                        },
+                        json: buddyRequestObject,
+                        method: "PUT",
+                        url: url + "/buddyRequest",
+                    }).then(response => {
+                        buddyRequestId = parseInt(response.body.result.id, 10);
+                        const status = {
+                            id: buddyRequestId,
+                            status: "accepted",
+                        };
+                        return defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + expUserJwt,
+                            },
+                            json: status,
+                            method: "POST",
+                            url: url + "/buddyRequest/status",
+                        })
+                    });
+                });
+                it("Should let a user review a buddyRequest positively", () => {
+                    counter++;
+                    return defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + inexpUserJwt,
+                        },
+                        json: {
+                            buddyRequest: buddyRequestId,
+                            score: 1,
+                        },
+                        method: "POST",
+                        url: url + "/buddyRequest/review",
+                    }).then(response => {
+                        expect(response.statusCode).to.equal(200);
+                        return defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + inexpUserJwt,
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest/sent?id=" + buddyRequestId,
+                        });
+                    }).then(response => {
+                        let buddyRequest = response.body.result[0];
+                        expect(buddyRequest.review).to.equal(1, "Review was not set");
+                        expect(buddyRequest.status).to.equal("completed", "Status was not set");
+                        return defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + inexpUserJwt,
+                            },
+                            method: "GET",
+                            url: url + "/user?id=" + inexpUserId,
+                        });
+                    }).then(response => {
+                        let user = response.body.result;
+                        expect(user.helpedCount).to.equal(counter, "Inexperienced User helpedCount was not updated");
+                        expect(user.distance).to.equal(counter * 1000, "Inexperienced User distance was not updated");
+                        return defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + expUserJwt,
+                            },
+                            method: "GET",
+                            url: url + "/user?id=" + expUserId,
+                        });
+                    }).then(response => {
+                        let user = response.body.result;
+                        expect(user.usersHelped).to.equal(counter, "Experienced User usersHelped was not updated");
+                        expect(user.distance).to.equal(counter * 1000, "Experienced User distance was not updated");
+                        expect(user.rating).to.equal(1, "Experienced User rating was not updated");
+                    });
+                });
+                it("Should let a user review a buddyRequest negatively", () => {
+                    counter++;
+                    return defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + inexpUserJwt,
+                        },
+                        json: {
+                            buddyRequest: buddyRequestId,
+                            score: -1,
+                        },
+                        method: "POST",
+                        url: url + "/buddyRequest/review",
+                    }).then(response => {
+                        expect(response.statusCode).to.equal(200);
+                        return defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + inexpUserJwt,
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest/sent?id=" + buddyRequestId,
+                        });
+                    }).then(response => {
+                        let buddyRequest = response.body.result[0];
+                        expect(buddyRequest.review).to.equal(-1, "Review was not set");
+                        expect(buddyRequest.status).to.equal("completed", "Status was not set");
+                        return defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + inexpUserJwt,
+                            },
+                            method: "GET",
+                            url: url + "/user?id=" + inexpUserId,
+                        });
+                    }).then(response => {
+                        let user = response.body.result;
+                        expect(user.helpedCount).to.equal(counter, "Inexperienced User helpedCount was not updated");
+                        expect(user.distance).to.equal(counter * 1000, "Inexperienced User distance was not updated");
+                        return defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + expUserJwt,
+                            },
+                            method: "GET",
+                            url: url + "/user?id=" + expUserId,
+                        });
+                    }).then(response => {
+                        let user = response.body.result;
+                        expect(user.usersHelped).to.equal(counter, "Experienced User usersHelped was not updated");
+                        expect(user.distance).to.equal(counter * 1000, "Experienced User distance was not updated");
+                        expect(user.rating).to.equal(0, "Experienced User rating was not updated");
+                    });
+                });
+                it("Should not let an experiencedUser review a buddyRequest", () => {
+                    return defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + expUserJwt,
+                        },
+                        json: {
+                            buddyRequest: buddyRequestId,
+                            score: 1,
+                        },
+                        method: "POST",
+                        url: url + "/buddyRequest/review",
+                    }).then(response => {
+                        expect(response.statusCode).to.equal(404);
+                        expect(response.body.status).to.equal(404);
+                        expect(response.body.error).to.equal("BuddyRequest doesn't exist");
+                    });
+                });
+                it("Should not let a user review a buddyRequest as a 2", () => {
+                    return defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + inexpUserJwt,
+                        },
+                        json: {
+                            buddyRequest: buddyRequestId,
+                            score: 2,
+                        },
+                        method: "POST",
+                        url: url + "/buddyRequest/review",
+                    }).then(response => {
+                        expect(response.statusCode).to.equal(400);
+                        expect(response.body.status).to.equal(400);
+                        expect(response.body.error).to.equal("BuddyRequest review must be +/- 1");
+                    });
+                });
+                it("Should not let a user review a buddyRequest as a -2", () => {
+                    return defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + inexpUserJwt,
+                        },
+                        json: {
+                            buddyRequest: buddyRequestId,
+                            score: -2,
+                        },
+                        method: "POST",
+                        url: url + "/buddyRequest/review",
+                    }).then(response => {
+                        expect(response.statusCode).to.equal(400);
+                        expect(response.body.status).to.equal(400);
+                        expect(response.body.error).to.equal("BuddyRequest review must be +/- 1");
+                    });
+                });
+                it("Should not let a user review a buddyRequest as a 0", () => {
+                    return defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + inexpUserJwt,
+                        },
+                        json: {
+                            buddyRequest: buddyRequestId,
+                            score: 0,
+                        },
+                        method: "POST",
+                        url: url + "/buddyRequest/review",
+                    }).then(response => {
+                        expect(response.statusCode).to.equal(400);
+                        expect(response.body.status).to.equal(400);
+                        expect(response.body.error).to.equal("BuddyRequest review must be +/- 1");
+                    });
+                });
+                it("Should let a user update a review", () => {
+                    counter++;
+                    return defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + inexpUserJwt,
+                        },
+                        json: {
+                            buddyRequest: buddyRequestId,
+                            score: 1,
+                        },
+                        method: "POST",
+                        url: url + "/buddyRequest/review",
+                    }).then(response => {
+                        return defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + inexpUserJwt,
+                            },
+                            json: {
+                                buddyRequest: buddyRequestId,
+                                score: -1,
+                            },
+                            method: "POST",
+                            url: url + "/buddyRequest/review",
+                        });
+                    }).then(response => {
+                        expect(response.statusCode).to.equal(200);
+                        return defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + inexpUserJwt,
+                            },
+                            method: "GET",
+                            url: url + "/buddyRequest/sent?id=" + buddyRequestId,
+                        });
+                    }).then(response => {
+                        let buddyRequest = response.body.result[0];
+                        expect(buddyRequest.review).to.equal(-1, "Review was not updated");
+                        return defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + inexpUserJwt,
+                            },
+                            method: "GET",
+                            url: url + "/user?id=" + inexpUserId,
+                        });
+                    }).then(response => {
+                        let user = response.body.result;
+                        expect(user.helpedCount).to.equal(counter, "Inexperienced User helpedCount was updated " +
+                            "but shouldn't have been");
+                        expect(user.distance).to.equal(counter * 1000, "Inexperienced User distance was updated " +
+                            "but shouldn't have been");
+                        return defaultRequest({
+                            headers: {
+                                Authorization: "Bearer " + expUserJwt,
+                            },
+                            method: "GET",
+                            url: url + "/user?id=" + expUserId,
+                        });
+                    }).then(response => {
+                        let user = response.body.result;
+                        expect(user.usersHelped).to.equal(counter, "Experienced User usersHelped was updated " +
+                            "but shouldn't have been");
+                        expect(user.distance).to.equal(counter * 1000, "Experienced User distance was updated " +
+                            "but shouldn't have been");
+                        expect(user.rating).to.equal((-1/3), "Experienced User rating was not updated");
+                    });
+                });
+                it("Should not let a user review with no auth", () => {
+                    return defaultRequest({
+                        json: {
+                            buddyRequest: buddyRequestId,
+                            score: 1,
+                        },
+                        method: "POST",
+                        url: url + "/buddyRequest/review",
+                    }).then(response => {
+                        expect(response.statusCode).to.equal(403);
+                        expect(response.body.status).to.equal(403);
+                        expect(response.body.error).to.equal("Invalid authorization");
+                    });
+                });
+            });
 });

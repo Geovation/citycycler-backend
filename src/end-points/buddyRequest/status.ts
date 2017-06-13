@@ -178,6 +178,9 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
                     throw new Error("400:Invalid status 'cancelled', did you mean 'canceled'?");
                 case "pending":
                     throw new Error("400:Can't reset a BuddyRequest's status to 'pending'");
+                case "completed":
+                    throw new Error("400:Can't set a BuddyRequest's status to 'completed'. This only " +
+                        "happens when a user submits a review.");
                 default:
                     throw new Error("400:Invalid status " + newStatus);
             }

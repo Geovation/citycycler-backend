@@ -625,11 +625,13 @@ describe("Various useful functions", () => {
             experiencedUser: 444,
             id: 111,
             inexperiencedRoute: 222,
+            length: 101,
             meetingPoint: [0, 0],
             meetingPointName: "1 Shelly Street",
             meetingTime: "2017-06-08T11:34:28.684Z",
             owner: 555,
             reason: "",
+            review: undefined,
             route: [[0, 0], [0, 1], [0, 2]],
             status: "pending",
             updated: "2017-06-07T10:24:28.684Z",
@@ -646,11 +648,13 @@ describe("Various useful functions", () => {
             expect(buddyRequest.experiencedUser).to.equal(buddyRequestObject.experiencedUser);
             expect(buddyRequest.id).to.equal(buddyRequestObject.id);
             expect(buddyRequest.inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
+            expect(buddyRequest.length).to.equal(buddyRequestObject.length);
             expect(buddyRequest.meetingPoint).to.eql(buddyRequestObject.meetingPoint);
             expect(buddyRequest.meetingPointName).to.equal(buddyRequestObject.meetingPointName);
             expect(buddyRequest.meetingTime).to.equal(buddyRequestObject.meetingTime);
             expect(buddyRequest.owner).to.equal(buddyRequestObject.owner);
             expect(buddyRequest.reason).to.equal(buddyRequestObject.reason);
+            expect(buddyRequest.review).to.equal(buddyRequestObject.review);
             expect(buddyRequest.route).to.equal(buddyRequestObject.route);
             expect(buddyRequest.status).to.equal(buddyRequestObject.status);
             expect(buddyRequest.updated).to.equal(buddyRequestObject.updated);
@@ -731,10 +735,25 @@ describe("Various useful functions", () => {
             copy.status = "thinking about it";
             expect(() => {
                 return new BuddyRequest(copy);
-            }).to.throw("400:BuddyRequest requires a status of 'pending', 'accepted', 'rejected' or 'canceled'");
+            }).to.throw("400:BuddyRequest requires a status of 'pending', 'accepted', 'rejected', " +
+                "'canceled' or 'completed'");
+        });
+        it("should throw an error if the review is 2", () => {
+            const copy = Object.assign({}, buddyRequestObject);
+            copy.review = 2;
+            expect(() => {
+                return new BuddyRequest(copy);
+            }).to.throw("400:BuddyRequest review must be +/- 1");
+        });
+        it("should throw an error if the review is -2", () => {
+            const copy = Object.assign({}, buddyRequestObject);
+            copy.review = -2;
+            expect(() => {
+                return new BuddyRequest(copy);
+            }).to.throw("400:BuddyRequest review must be +/- 1");
         });
         for (let key in buddyRequestObject) {
-            if (key !== "id" && key !== "reason") {
+            if (key !== "id" && key !== "reason" && key !== "review") {
                 const copy = Object.assign({}, buddyRequestObject);
                 copy[key] = undefined;
                 let determiner = "aeiou".indexOf(key[0]) === -1 ? "a" : "an";

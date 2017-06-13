@@ -13,11 +13,13 @@ export default class BuddyRequest {
             experiencedUser: row.experienceduser,
             id: row.id,
             inexperiencedRoute: row.inexperiencedroute,
+            length: row.length,
             meetingPoint: pointStringToCoords(row.meetingpoint),
             meetingPointName: row.meetingpointname,
             meetingTime: row.meetingtime,
             owner: row.owner,
             reason: row.reason,
+            review: row.review,
             route: lineStringToCoords(row.route),
             status: row.status,
             updated: row.updated,
@@ -42,6 +44,8 @@ export default class BuddyRequest {
     public updated: string;
     public status: string;
     public reason: string;
+    public review?: number;
+    public length: number;
 
     constructor(obj) {
         if (!obj.meetingTime) {
@@ -70,6 +74,8 @@ export default class BuddyRequest {
         }
         if (divorceTime.isBefore(meetingTime)) {
             throw new Error("400:Divorce time is before Meeting time");
+        } else if (obj.length === undefined || obj.length === null) {
+            throw new Error("400:BuddyRequest requires a length");
         } else if (obj.experiencedRouteName === undefined || obj.experiencedRouteName === null) {
             throw new Error("400:BuddyRequest requires an experiencedRouteName");
         } else if ((obj.experiencedRoute === undefined || obj.experiencedRoute === null)
@@ -112,11 +118,14 @@ export default class BuddyRequest {
         } else if (obj.status === undefined || obj.status === null) {
             throw new Error("400:BuddyRequest requires a status");
         } else if (["accepted", "pending", "canceled", "rejected"].indexOf(obj.status) === -1) {
-            throw new Error("400:BuddyRequest requires a status of 'pending', 'accepted', 'rejected' or 'canceled'");
+            throw new Error("400:BuddyRequest requires a status of 'pending', 'accepted', 'rejected', " +
+                "'canceled' or 'completed'");
         } else if (obj.reason === undefined || obj.reason === null) {
             obj.reason = "";
         } else if ((obj.owner === undefined || obj.owner === null) && obj.status !== "canceled") {
             throw new Error("400:BuddyRequest requires an owner");
+        } else if (obj.review !== undefined && obj.review !== null && obj.review !== 1 && obj.review !== -1) {
+            throw new Error("400:BuddyRequest review must be +/- 1");
         }
         this.averageSpeed = obj.averageSpeed;
         this.created = obj.created;
@@ -136,5 +145,7 @@ export default class BuddyRequest {
         this.route = obj.route;
         this.status = obj.status;
         this.updated = obj.updated;
+        this.review = obj.review;
+        this.length = obj.length;
     }
 }
