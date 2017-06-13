@@ -51,6 +51,7 @@
     "qs": "6.4.0",
     "ramda": "0.23.0",
     "request": "2.79.0",
+    "request-promise-native": "1.0.4",
     "seneca": "3.2.2",
     "seneca-web": "2.0.0",
     "seneca-web-adapter-koa1": "1.0.3",
