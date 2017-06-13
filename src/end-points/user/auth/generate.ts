@@ -142,7 +142,6 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         });
     }).catch(err => {
         const originalError = typeof err === "string" ? err : err.message;
-        console.log("Caught error: " + originalError);
         if (typeof transactionClient !== "undefined") {
             return Database.rollbackAndReleaseTransaction(transactionClient)
             .then(() => {
