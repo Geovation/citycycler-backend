@@ -200,11 +200,11 @@ describe("MatchMyRoute API", () => {
                             .that.is.a("number", "JWT expires is not a number, it's a " +
                             (typeof response.body.result.jwt.expires) + ", here is the JWT " +
                             JSON.stringify(response.body.result.jwt));
-                        expect(response.body.result.profileImage).to.be.a.string;
+                        expect(response.body.result.user.photo).to.be.a.string;
 
                         userIds.push(parseInt(response.body.result.user.id, 10));
                         userJwts.push(response.body.result.jwt.token);
-                        return response.body.result.profileImage;
+                        return response.body.result.user.photo;
                     }).then(imgUrl => {
                         // check if photo exists in cloud storage
                         retryRequest({
