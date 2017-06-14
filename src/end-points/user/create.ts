@@ -1,6 +1,7 @@
 import { generateJWTFor, minimumHashingRounds } from "../../common/auth";
 import * as CloudStorage from "../../common/cloudstorage";
 import * as Database from "../../common/database";
+import User from "../../common/UserDataModels";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 import * as crypto from "crypto";
 // import * as logger from "winston";
@@ -98,11 +99,6 @@ const definitions = {
     },
     NewUserResult: {
         properties: {
-            id: {
-                description: "The new user's ID",
-                format: "int32",
-                type: "number",
-            },
             jwt: {
                 properties: {
                     expires: {
@@ -118,6 +114,9 @@ const definitions = {
             profileImage: {
                 description: "The public URL of the profileImage (null if no image was provided)",
                 type: "string",
+            },
+            user: {
+                $ref: "#/definitions/User",
             },
         },
         required: ["id", "jwt"],
@@ -136,7 +135,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     const rounds = minimumHashingRounds;
     const salt = crypto.randomBytes(128);
     const jwtSecret = crypto.randomBytes(20).toString("base64");
-    let createdUser;
+    let createdUser: User;
     let pwh;
     let client;
     let profileImgUrl;
@@ -196,10 +195,10 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     // return information to client
     .then(() => {
         let returnValues = {
-            id: createdUser.id,
             jwt: generateJWTFor(createdUser),
             profileImage: null,
             status: 201,
+            user: createdUser.asUserProfile(),
         };
         if (typeof profileImgUrl !== "undefined") {
             returnValues.profileImage =
