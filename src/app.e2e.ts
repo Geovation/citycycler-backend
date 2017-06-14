@@ -149,7 +149,10 @@ describe("MatchMyRoute API", () => {
                         expect(typeof response.body).to.equal("object", "Body is of unexpected type");
                         expect(typeof response.body.result).to.equal("object", "Result is of unexpected type. Got " +
                             JSON.stringify(response.body));
-                        expect(parseInt(response.body.result.id, 10)).to.not.be.NaN;
+                        expect(response.body.result, "Creation did not yield a user. Got: " +
+                            JSON.stringify(response.body.result)).to.have.property("user");
+                        expect(parseInt(response.body.result.user.id, 10), "User returned has invalid id: " +
+                            JSON.stringify(response.body.result.user.id)).to.not.be.NaN;
                         expect(response.body.result.jwt, "JWT has no token: "
                             + JSON.stringify(response.body.result)).to.have.property("token")
                             .that.is.a("string", "JWT token is not a string, it's a " +
@@ -161,7 +164,7 @@ describe("MatchMyRoute API", () => {
                             (typeof response.body.result.jwt.expires) + ", here is the JWT " +
                             JSON.stringify(response.body.result.jwt));
 
-                        userIds.push(parseInt(response.body.result.id, 10));
+                        userIds.push(parseInt(response.body.result.user.id, 10));
                         userJwts.push(response.body.result.jwt.token);
                     });
                 });
@@ -183,7 +186,10 @@ describe("MatchMyRoute API", () => {
                         expect(typeof response.body).to.equal("object", "Body is of unexpected type");
                         expect(typeof response.body.result).to.equal("object", "Result is of unexpected type. Got " +
                             JSON.stringify(response.body));
-                        expect(parseInt(response.body.result.id, 10)).to.not.be.NaN;
+                        expect(response.body.result, "Creation did not yield a user. Got: " +
+                            JSON.stringify(response.body.result)).to.have.property("user");
+                        expect(parseInt(response.body.result.user.id, 10), "User returned has invalid id: " +
+                            JSON.stringify(response.body.result.user.id)).to.not.be.NaN;
                         expect(response.body.result.jwt, "JWT has no token: "
                             + JSON.stringify(response.body.result)).to.have.property("token")
                             .that.is.a("string", "JWT token is not a string, it's a " +
@@ -196,7 +202,7 @@ describe("MatchMyRoute API", () => {
                             JSON.stringify(response.body.result.jwt));
                         expect(response.body.result.profileImage).to.be.a.string;
 
-                        userIds.push(parseInt(response.body.result.id, 10));
+                        userIds.push(parseInt(response.body.result.user.id, 10));
                         userJwts.push(response.body.result.jwt.token);
                         return response.body.result.profileImage;
                     }).then(imgUrl => {
@@ -948,7 +954,7 @@ describe("MatchMyRoute API", () => {
                     method: "PUT",
                     url: url + "/user",
                 }).then(response => {
-                    userIds.push(parseInt(response.body.result.id, 10));
+                    userIds.push(parseInt(response.body.result.user.id, 10));
                     userJwts.push(response.body.result.jwt.token);
                 });
             });
@@ -1793,7 +1799,7 @@ describe("MatchMyRoute API", () => {
                     method: "PUT",
                     url: url + "/user",
                 }).then(response => {
-                    userIds.push(parseInt(response.body.result.id, 10));
+                    userIds.push(parseInt(response.body.result.user.id, 10));
                     userJwts.push(response.body.result.jwt.token);
                 });
             });
@@ -2731,7 +2737,7 @@ describe("MatchMyRoute API", () => {
                         url: url + "/user",
                     });
                 }).then(response => {
-                    inexpUserId = parseInt(response.body.result.id, 10);
+                    inexpUserId = parseInt(response.body.result.user.id, 10);
                     inexpUserJwt = response.body.result.jwt.token;
                     // The experienced User
                     const user3 = {
@@ -2745,7 +2751,7 @@ describe("MatchMyRoute API", () => {
                         url: url + "/user",
                         });
                 }).then(response => {
-                    expUserId = parseInt(response.body.result.id, 10);
+                    expUserId = parseInt(response.body.result.user.id, 10);
                     expUserJwt = response.body.result.jwt.token;
                     // The inexperienced Route
                     const route1 = {
