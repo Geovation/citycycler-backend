@@ -173,8 +173,9 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         createdUser = user;
         if (typeof photo !== "undefined") {
             return CloudStorage.storeProfileImage(payload.photo, user.id)
-            .then((newProfileImgUrl) => {
-                profileImgUrl = newProfileImgUrl;
+            .then((newProfileImgName) => {
+                profileImgUrl = process.env.STORAGE_BASE_URL + "/" +
+                    process.env.STORAGE_BUCKET + "/" + newProfileImgName;
                 return Database.updateUser(createdUser.id, {profile_photo: profileImgUrl}, client);
             }, err => {
                 // If the image storage errs add a status code and re-throw
@@ -196,14 +197,10 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     .then(() => {
         let returnValues = {
             jwt: generateJWTFor(createdUser),
-            profileImage: null,
+            profileImage: profileImgUrl? profileImgUrl : null,
             status: 201,
             user: createdUser.asUserProfile(),
         };
-        if (typeof profileImgUrl !== "undefined") {
-            returnValues.profileImage =
-                process.env.STORAGE_BASE_URL + "/" + process.env.STORAGE_BUCKET + "/" + profileImgUrl;
-        }
         return returnValues;
     })
     // handle all errors and roll back if transaction already started
