@@ -138,7 +138,6 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     let createdUser: User;
     let pwh;
     let client;
-    let profileImgUrl;
     return new Promise((resolve, reject) => {
         if (typeof email === "undefined" || email.trim().length === 0) {
             reject("400:Email Required");
@@ -174,7 +173,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         if (typeof photo !== "undefined") {
             return CloudStorage.storeProfileImage(payload.photo, user.id)
             .then((newProfileImgName) => {
-                profileImgUrl = process.env.STORAGE_BASE_URL + "/" +
+                let profileImgUrl = process.env.STORAGE_BASE_URL + "/" +
                     process.env.STORAGE_BUCKET + "/" + newProfileImgName;
                 return Database.updateUser(createdUser.id, {profile_photo: profileImgUrl}, client);
             }, err => {
@@ -197,7 +196,6 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     .then(() => {
         let returnValues = {
             jwt: generateJWTFor(createdUser),
-            profileImage: profileImgUrl? profileImgUrl : null,
             status: 201,
             user: createdUser.asUserProfile(),
         };
