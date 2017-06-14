@@ -201,7 +201,7 @@ gulp.task("unittest", ["pre-test"], () => {
 });
 
 gulp.task("e2etest", ["pre-test"], () => {
-  return gulp.src("build/*.e2e.js")
+  return gulp.src("build/**/*.e2e.js")
     .pipe(mocha({
       verbose: true,
       includeStackTrace: true,
