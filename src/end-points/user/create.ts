@@ -175,6 +175,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
             .then((newProfileImgName) => {
                 let profileImgUrl = process.env.STORAGE_BASE_URL + "/" +
                     process.env.STORAGE_BUCKET + "/" + newProfileImgName;
+                createdUser.photo = profileImgUrl;
                 return Database.updateUser(createdUser.id, {profile_photo: profileImgUrl}, client);
             }, err => {
                 // If the image storage errs add a status code and re-throw
