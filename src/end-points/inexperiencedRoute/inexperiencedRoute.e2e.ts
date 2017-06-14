@@ -723,7 +723,7 @@ describe("InexperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[3],
+                    Authorization: "Bearer " + userJwts[0],
                 },
                 json: updates,
                 method: "POST",
@@ -733,7 +733,7 @@ describe("InexperiencedRoute endpoint", () => {
                     response.statusCode + ", error given is: " + response.error);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[3],
+                        Authorization: "Bearer " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
@@ -757,7 +757,7 @@ describe("InexperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[3],
+                    Authorization: "Bearer " + userJwts[0],
                 },
                 json: updates,
                 method: "POST",
@@ -767,7 +767,7 @@ describe("InexperiencedRoute endpoint", () => {
                     response.statusCode + ", error given is: " + response.error);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[3],
+                        Authorization: "Bearer " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
@@ -791,7 +791,7 @@ describe("InexperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[3],
+                    Authorization: "Bearer " + userJwts[0],
                 },
                 json: updates,
                 method: "POST",
@@ -801,7 +801,7 @@ describe("InexperiencedRoute endpoint", () => {
                     response.statusCode + ", error given is: " + response.error);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[3],
+                        Authorization: "Bearer " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
@@ -825,7 +825,7 @@ describe("InexperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[3],
+                    Authorization: "Bearer " + userJwts[0],
                 },
                 json: updates,
                 method: "POST",
@@ -835,7 +835,7 @@ describe("InexperiencedRoute endpoint", () => {
                     response.statusCode + ", error given is: " + response.error);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[3],
+                        Authorization: "Bearer " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
@@ -910,82 +910,6 @@ describe("InexperiencedRoute endpoint", () => {
                 expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
                     response.statusCode + ", error given is: " + response.error);
                 expect(response.body.error).to.equal("Radius must be positive");
-                expect(response.body.status).to.equal(400);
-            });
-        });
-        it("should not update with invalid startPoint (3D)", () => {
-            const updates = {
-                id: inexperiencedRouteIds[0],
-                startPoint: [10, 10, 10],
-            };
-            return defaultRequest({
-                headers: {
-                    Authorization: "Bearer " + userJwts[0],
-                },
-                json: updates,
-                method: "POST",
-                url: url + "/inexperiencedRoute",
-            }).then(response => {
-                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
-                    response.statusCode + ", error given is: " + response.error);
-                expect(response.body.error).to.equal("InexperiencedRoute requires a 2D start point");
-                expect(response.body.status).to.equal(400);
-            });
-        });
-        it("should not update with invalid startPoint (1D)", () => {
-            const updates = {
-                id: inexperiencedRouteIds[0],
-                startPoint: [10],
-            };
-            return defaultRequest({
-                headers: {
-                    Authorization: "Bearer " + userJwts[0],
-                },
-                json: updates,
-                method: "POST",
-                url: url + "/inexperiencedRoute",
-            }).then(response => {
-                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
-                    response.statusCode + ", error given is: " + response.error);
-                expect(response.body.error).to.equal("InexperiencedRoute requires a 2D start point");
-                expect(response.body.status).to.equal(400);
-            });
-        });
-        it("should not update with invalid endPoint (3D)", () => {
-            const updates = {
-                endPoint: [10, 10, 10],
-                id: inexperiencedRouteIds[0],
-            };
-            return defaultRequest({
-                headers: {
-                    Authorization: "Bearer " + userJwts[0],
-                },
-                json: updates,
-                method: "POST",
-                url: url + "/inexperiencedRoute",
-            }).then(response => {
-                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
-                    response.statusCode + ", error given is: " + response.error);
-                expect(response.body.error).to.equal("InexperiencedRoute requires a 2D end point");
-                expect(response.body.status).to.equal(400);
-            });
-        });
-        it("should not update with invalid endPoint (1D)", () => {
-            const updates = {
-                endPoint: [10],
-                id: inexperiencedRouteIds[0],
-            };
-            return defaultRequest({
-                headers: {
-                    Authorization: "Bearer " + userJwts[0],
-                },
-                json: updates,
-                method: "POST",
-                url: url + "/inexperiencedRoute",
-            }).then(response => {
-                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
-                    response.statusCode + ", error given is: " + response.error);
-                expect(response.body.error).to.equal("InexperiencedRoute requires a 2D end point");
                 expect(response.body.status).to.equal(400);
             });
         });

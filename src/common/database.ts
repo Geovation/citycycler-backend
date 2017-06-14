@@ -513,14 +513,9 @@ export function updateInexperiencedRoute(
     existingRoute: InexperiencedRoute,
     updates: {
         arrivalDateTime?: string,
-        endPoint?: [number, number],
-        endPoinNamet?: string,
-        length?: number,
         name?: string,
         notifyOwner?: boolean,
         radius?: number,
-        startPoint?: [number, number],
-        startPoinNamet?: string,
     },
     providedClient = null): Promise<boolean> {
         // Move the updated properties into the existing model
