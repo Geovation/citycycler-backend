@@ -148,7 +148,7 @@ const definitions = {
                 type: "string",
             },
         },
-        required: ["arrivalTime", "departureTime", "days", "endPointName", "owner", "route", "startPointName"],
+        required: ["arrivalTime", "departureTime", "days", "endPointName", "route", "startPointName"],
     },
 };
 

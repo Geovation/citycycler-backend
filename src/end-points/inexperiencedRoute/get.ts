@@ -109,7 +109,7 @@ const definitions = {
                 "an experienced route to be considered a match",
             },
         },
-        required: ["arrivalDateTime", "departureTime", "startPoint", "endPoint", "owner", "radius", "route", "id"],
+        required: ["arrivalDateTime", "startPoint", "endPoint", "owner", "notifyOwner", "radius", "id"],
     },
     InexperiencedRouteGetResult: {
         description: "An array of inexperienced routes belonging to this user",

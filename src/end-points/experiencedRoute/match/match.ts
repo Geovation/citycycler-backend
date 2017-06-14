@@ -141,7 +141,19 @@ const definitions = {
                 type: "string",
             },
         },
-        required: ["meetingPoint", "divorcePoint", "meetingTime", "owner", "days", "id"],
+        required: [
+            "meetingPoint",
+            "meetingTime",
+            "distanceToMeetingPoint",
+            "timeToMeetingPoint",
+            "divorcePoint",
+            "divorceTime",
+            "distanceFromDivorcePoint",
+            "timeFromDivorcePoint",
+            "route",
+            "owner",
+            "id",
+        ],
     },
     RouteSearchResult: {
         description: "A list of Routes that were found near the given point",
@@ -170,7 +182,7 @@ const definitions = {
                 $ref: "#/definitions/Coordinate",
             },
         },
-        required: ["start", "end", "radius", "arrivalDateTime"],
+        required: ["startPoint", "endPoint", "radius", "arrivalDateTime"],
     },
 };
 
