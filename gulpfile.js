@@ -191,8 +191,6 @@ gulp.task("unittest", ["pre-test"], () => {
     .on('error', (err) => {
       console.log("error: ", err);
       if (process.argv[2] !== 'serve') {
-        console.log("In unit-test");
-        console.error('Unit tests failed');
         process.exit(1);
       }
     })
