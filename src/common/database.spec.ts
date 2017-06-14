@@ -523,7 +523,6 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(thisRoute).to.not.equal(undefined, "Route was not matched. Results were " +
                     JSON.stringify(routes));
                 expect(thisRoute.owner).to.equal(thisUserId);
-                console.log(JSON.stringify(moment(thisRoute.meetingTime)));
                 expect(moment("2017-09-08T12:45:00+00").isBefore(thisRoute.meetingTime)).to.equal(true,
                     "meetingTime is before the route's start time (2017-09-08T12:45:00+00). Got " +
                     thisRoute.meetingTime);
@@ -533,6 +532,7 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(thisRoute.meetingPoint).to.eql([0, 1.4]);
                 expect(thisRoute.divorcePoint).to.eql([0, 4.6]);
                 expect(thisRoute.name).to.equal("112 Rachel Road to 33 Stanley Street");
+                expect(thisRoute.route).to.eql([[0, 1.4], [0, 2], [0, 3], [0, 4], [0, 4.6]]);
             });
         });
         it("should not match an experienced route if the radius is too big", done => {

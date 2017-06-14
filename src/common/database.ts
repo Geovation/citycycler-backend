@@ -283,6 +283,7 @@ export function matchRoutes(
     timeFromDivorcePoint: string,
     distanceToMeetingPoint: number,
     distanceFromDivorcePoint: number
+    route: [number, number][],
 }[]> {
     if (matchParams.radius > 2000 || matchParams.radius < 1) {
         return Promise.reject("400:Radius out of bounds. Must be between 1m and 2km");
@@ -291,6 +292,7 @@ export function matchRoutes(
     "SELECT id, " +
     "    match2.meetingTime, " +
     "    match2.divorceTime, " +
+    "    match2.matchedRoute as route, " +
     "    ST_AsText(match2.meetingPoint) AS meetingPoint, " +
     "    ST_AsText(match2.divorcePoint) AS divorcePoint, " +
     "    match3.*, " +
@@ -318,6 +320,7 @@ export function matchRoutes(
     "               AS meetingTime, " +
     "            requiredDate + departureTime::timetz + distFromEnd*(arrivalTime::time - departureTime::time) " +
     "               AS divorceTime, " +
+    "            ST_AsText(ST_Line_Substring(route::geometry, distFromStart, distFromEnd)) AS matchedRoute, " +
     "            ST_LineInterpolatePoint(route::geometry, distFromStart) AS meetingPoint, " +
     "            ST_LineInterpolatePoint(route::geometry, distFromEnd) AS divorcePoint " +
     "    ) AS match2, " +
@@ -357,6 +360,7 @@ export function matchRoutes(
                 meetingTime: row.meetingtime,
                 name: row.name,
                 owner: row.owner,
+                route: lineStringToCoords(row.route),
                 timeFromDivorcePoint: row.timeFromdivorcePoint,
                 timeToMeetingPoint: row.timeToMeetingPoint,
             };
