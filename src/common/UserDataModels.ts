@@ -30,6 +30,10 @@ export interface IUserProfile {
 // This is a user object
 export default class User implements IUserSettings, IUserProfile {
     public static fromSQLRow(row): User {
+        let rating = row.profile_rating_sum / row.profile_help_count;
+        if (row.profile_rating_sum === 0 && row.profile_help_count === 0) {
+            rating = 0;
+        }
         return new User({
             bio: row.profile_bio,
             distance: row.profile_distance,
@@ -45,7 +49,7 @@ export default class User implements IUserSettings, IUserProfile {
                 units: row.preferences_units,
             },
             pwh: row.pwh,
-            rating: row.profile_rating_sum / row.profile_help_count,
+            rating,
             rounds: row.rounds,
             salt: row.salt,
             usersHelped: row.profile_help_count,

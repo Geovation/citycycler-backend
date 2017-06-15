@@ -145,7 +145,7 @@ const definitions = {
             },
             review: {
                 description: "The review left by the inexperiencedUser",
-                enum: [1, -1, undefined],
+                enum: [1, 0, -1],
                 example: 1,
                 type: "number",
             },

@@ -96,7 +96,7 @@ created timestamptz DEFAULT 'now'::timestamptz, -- When this buddy request was c
 updated timestamptz DEFAULT 'now'::timestamptz, -- When this buddy request was last updated
 status buddy_request_status DEFAULT 'pending'::buddy_request_status,
 reason text DEFAULT '',  -- A reason for the status
-review integer           -- The score (+1,-1) given to this ride by the inexperiencedUser
+review integer DEFAULT 0 -- The score (+1,-1) given to this ride by the inexperiencedUser
 );
 
 CREATE INDEX IF NOT EXISTS user_email_index ON users USING btree ( "email" );

@@ -44,7 +44,7 @@ export default class BuddyRequest {
     public updated: string;
     public status: string;
     public reason: string;
-    public review?: number;
+    public review: number;
     public length: number;
 
     constructor(obj) {
@@ -117,14 +117,16 @@ export default class BuddyRequest {
             throw new Error("400:BuddyRequest requires an updated");
         } else if (obj.status === undefined || obj.status === null) {
             throw new Error("400:BuddyRequest requires a status");
-        } else if (["accepted", "pending", "canceled", "rejected"].indexOf(obj.status) === -1) {
+        } else if (["accepted", "pending", "canceled", "rejected", "completed"].indexOf(obj.status) === -1) {
             throw new Error("400:BuddyRequest requires a status of 'pending', 'accepted', 'rejected', " +
                 "'canceled' or 'completed'");
         } else if (obj.reason === undefined || obj.reason === null) {
             obj.reason = "";
         } else if ((obj.owner === undefined || obj.owner === null) && obj.status !== "canceled") {
             throw new Error("400:BuddyRequest requires an owner");
-        } else if (obj.review !== undefined && obj.review !== null && obj.review !== 1 && obj.review !== -1) {
+        } else if (obj.review === undefined || obj.review === null) {
+            obj.review = 0;
+        } else if (obj.review !== 0 && obj.review !== 1 && obj.review !== -1) {
             throw new Error("400:BuddyRequest review must be +/- 1");
         }
         this.averageSpeed = obj.averageSpeed;

@@ -191,6 +191,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
             meetingTime: payload.meetingTime,
             owner: userId,
             reason: "",
+            review: 0,
             route: payload.route,
             status: "pending",
             updated: new Date().toISOString(),

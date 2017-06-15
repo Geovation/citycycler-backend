@@ -856,3 +856,59 @@ export function updateBuddyRequest(
             return true;
         });
 }
+
+/**
+ * updateBuddyRequestReview - Sets or updates the review on a BuddyRequest
+ *
+ * @param  {BuddyRequest} existingRequest The old buddyRequest to be updated
+ * @param  {object} updates An object of key:values to update the BuddyRequest with
+ * @param  {client} providedClient Database client to use for this interaction
+ * @return {boolean} Whether the update succeeded
+ */
+export function updateBuddyRequestReview(
+    owner: number, buddyRequestId: number, score: number, providedClient = null): Promise<boolean> {
+        if (score === 0) {
+            throw new Error("400:BuddyRequest review must be +/- 1");
+        }
+        let buddyRequest;
+        // First up, get the buddyRequest
+        return getSentBuddyRequests({id: buddyRequestId, userId: owner}, providedClient).then(requests => {
+            buddyRequest = requests[0];
+            if (buddyRequest.status !== "accepted" && buddyRequest.status !== "completed") {
+                throw new Error("400:Can't review a " + buddyRequest.status + " BuddyRequest");
+            }
+            // Update the inexperiencedUser
+            if (buddyRequest.status !== "completed") {
+                return getUserById(buddyRequest.owner, providedClient).then(user => {
+                    let updates = {
+                        profile_distance: user.distance + buddyRequest.length,
+                        profile_helped_count: user.helpedCount + 1,
+                    };
+                    return updateUser(buddyRequest.owner, updates, providedClient);
+                });
+            } else {
+                return true;
+            }
+        }).then(() => {
+            // Update the experiencedUser
+            return getUserById(buddyRequest.experiencedUser, providedClient).then(user => {
+                let updates: any = {
+                    // Subtract old review and add new one
+                    profile_rating_sum: (user.rating * user.usersHelped) + score
+                        - buddyRequest.review,
+                };
+                if (buddyRequest.status !== "completed") {
+                    updates.profile_distance = user.distance + buddyRequest.length;
+                    updates.profile_help_count = user.usersHelped + 1;
+                }
+                return updateUser(buddyRequest.experiencedUser, updates, providedClient);
+            });
+        }).then(() => {
+            // Update the buddyRequest
+            let updates = {
+                review: score,
+                status: "completed",
+            };
+            return updateBuddyRequest(buddyRequest, updates, providedClient);
+        });
+}

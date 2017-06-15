@@ -654,7 +654,7 @@ describe("Various useful functions", () => {
             expect(buddyRequest.meetingTime).to.equal(buddyRequestObject.meetingTime);
             expect(buddyRequest.owner).to.equal(buddyRequestObject.owner);
             expect(buddyRequest.reason).to.equal(buddyRequestObject.reason);
-            expect(buddyRequest.review).to.equal(buddyRequestObject.review);
+            expect(buddyRequest.review).to.equal(0);
             expect(buddyRequest.route).to.equal(buddyRequestObject.route);
             expect(buddyRequest.status).to.equal(buddyRequestObject.status);
             expect(buddyRequest.updated).to.equal(buddyRequestObject.updated);

@@ -1609,7 +1609,7 @@ describe("BuddyRequest endpoint", () => {
                             json: status,
                             method: "POST",
                             url: url + "/buddyRequest/status",
-                        })
+                        });
                     });
                 });
                 it("Should let a user review a buddyRequest positively", () => {
@@ -1842,7 +1842,7 @@ describe("BuddyRequest endpoint", () => {
                             "but shouldn't have been");
                         expect(user.distance).to.equal(counter * 1000, "Experienced User distance was updated " +
                             "but shouldn't have been");
-                        expect(user.rating).to.equal((-1/3), "Experienced User rating was not updated");
+                        expect(user.rating).to.equal((-1 / 3), "Experienced User rating was not updated");
                     });
                 });
                 it("Should not let a user review with no auth", () => {

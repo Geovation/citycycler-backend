@@ -2,6 +2,7 @@ import { buddyRequest,
         buddyRequestStatus,
         receivedBuddyRequest,
         sentBuddyRequest } from "./buddyRequest";
+import { buddyRequestReview } from "./buddyRequest/review";
 import { E2EUtils } from "./clearE2EObjects";
 import { experiencedRoute } from "./experiencedRoute";
 import { matchRoute } from "./experiencedRoute/match";
@@ -14,6 +15,7 @@ import { auth as authUser } from "./user/auth";
 export const endpoints = [
     buddyRequest,
     buddyRequestStatus,
+    buddyRequestReview,
     sentBuddyRequest,
     receivedBuddyRequest,
     experiencedRoute,
