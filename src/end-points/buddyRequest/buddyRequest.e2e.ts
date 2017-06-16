@@ -327,6 +327,24 @@ describe("BuddyRequest endpoint", () => {
                     expect(moment(buddyRequests[1].updated).isSame(buddyRequests[1].created, "second")).to.be.true;
                 });
             });
+            it("should set otherUser correctly to the experiencedUser", () => {
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Bearer " + inexpUserJwt,
+                    },
+                    method: "GET",
+                    url: url + "/buddyRequest/sent?id=" + buddyRequest1Id,
+                }).then(response => {
+                    expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + response.error +
+                        " body is " + response.body);
+                    expect(typeof response.body).to.equal("object", "Body is of unexpected type. " +
+                    "Expected object, but got a " + typeof response.body);
+                    let buddyRequests = response.body.result;
+                    expect(buddyRequests.length).to.equal(1);
+                    expect(buddyRequests[0].otherUser.id).to.equal(expUserId);
+                });
+            });
             it("should not get a user's received buddy requests from the sent endpoint", () => {
                 return defaultRequest({
                     headers: {
@@ -480,6 +498,24 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[1].reason).to.equal("");
                     expect(buddyRequests[1].route).to.eql(buddyRequestObject.route);
                     expect(moment(buddyRequests[1].updated).isSame(buddyRequests[1].created, "second")).to.be.true;
+                });
+            });
+            it("should set otherUser correctly to the inexperiencedUser", () => {
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Bearer " + expUserJwt,
+                    },
+                    method: "GET",
+                    url: url + "/buddyRequest/received?id=" + buddyRequest1Id,
+                }).then(response => {
+                    expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + response.error +
+                        " body is " + response.body);
+                    expect(typeof response.body).to.equal("object", "Body is of unexpected type. " +
+                    "Expected object, but got a " + typeof response.body);
+                    let buddyRequests = response.body.result;
+                    expect(buddyRequests.length).to.equal(1);
+                    expect(buddyRequests[0].otherUser.id).to.equal(inexpUserId);
                 });
             });
             it("should not get a user's sent buddy requests from the received endpoint", () => {

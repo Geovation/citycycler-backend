@@ -727,7 +727,7 @@ export function createBuddyRequest(buddyRequest: BuddyRequest, providedClient = 
  * @return {Object[]} Array of buddy requests
  */
 export function getSentBuddyRequests(params: {userId: number, id?: number}, providedClient = null)
-: Promise<BuddyRequest[]> {
+: Promise<(BuddyRequest & {otherUser?: User})[]> {
     return getBuddyRequests(params, providedClient).then(buddyRequests => {
         let matchingBuddyRequests = buddyRequests.filter(buddyRequest => {
             return buddyRequest.owner === params.userId;
@@ -735,7 +735,21 @@ export function getSentBuddyRequests(params: {userId: number, id?: number}, prov
         if (matchingBuddyRequests.length === 0) {
             throw new Error("404:BuddyRequest doesn't exist");
         }
-        return matchingBuddyRequests;
+        // Add the otherUser
+        return Promise.all(matchingBuddyRequests.map(buddyRequest => {
+            let userId = buddyRequest.experiencedUser;
+            return getUserById(userId, providedClient).then(user => {
+                return Object.assign(buddyRequest, {otherUser: user.asUserProfile()});
+            }, err => {
+                if (err.message.slice(0, 3) === "404") {
+                    return buddyRequest;
+                } else {
+                    throw err;
+                }
+            });
+        }));
+    }).then(buddyRequests => {
+        return buddyRequests;
     });
 }
 
@@ -747,7 +761,7 @@ export function getSentBuddyRequests(params: {userId: number, id?: number}, prov
  * @return {Object[]} Array of buddy requests
  */
 export function getReceivedBuddyRequests(params: {userId: number, id?: number}, providedClient = null)
-: Promise<BuddyRequest[]> {
+: Promise<(BuddyRequest & {otherUser?: User})[]> {
     return getBuddyRequests(params, providedClient).then(buddyRequests => {
         let matchingBuddyRequests = buddyRequests.filter(buddyRequest => {
             return buddyRequest.experiencedUser === params.userId;
@@ -755,7 +769,21 @@ export function getReceivedBuddyRequests(params: {userId: number, id?: number}, 
         if (matchingBuddyRequests.length === 0) {
             throw new Error("404:BuddyRequest doesn't exist");
         }
-        return matchingBuddyRequests;
+        // Add the otherUser
+        return Promise.all(matchingBuddyRequests.map(buddyRequest => {
+            let userId = buddyRequest.owner;
+            return getUserById(userId, providedClient).then(user => {
+                return Object.assign(buddyRequest, {otherUser: user.asUserProfile()});
+            }, err => {
+                if (err.message.slice(0, 3) === "404") {
+                    return buddyRequest;
+                } else {
+                    throw err;
+                }
+            });
+        }));
+    }).then(buddyRequests => {
+        return buddyRequests;
     });
 }
 

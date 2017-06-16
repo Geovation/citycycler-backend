@@ -139,6 +139,10 @@ const definitions = {
                 example: new Date().toISOString(),
                 type: "string",
             },
+            otherUser: {
+                $ref: "#/description/User",
+                description: "The other user's profile",
+            },
             owner: {
                 description: "The ID of the inexperienced user",
                 type: "integer",

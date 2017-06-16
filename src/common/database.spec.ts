@@ -1364,6 +1364,19 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[1].review).to.equal(0);
                 });
             });
+            it("should set the otherUser to the experiencedUser when the inexperiencedUser gets it", () => {
+                return Database.getSentBuddyRequests({id: firstBuddyRequestId, userId: inexpUserId}, transactionClient)
+                .then(buddyRequests => {
+                    expect(buddyRequests[0].otherUser.id).to.equal(expUserId);
+                });
+            });
+            it("should set the otherUser to the inexperiencedUser when the experiencedUser gets it", () => {
+                return Database.getReceivedBuddyRequests({id: firstBuddyRequestId, userId: expUserId},
+                    transactionClient)
+                .then(buddyRequests => {
+                    expect(buddyRequests[0].otherUser.id).to.equal(inexpUserId);
+                });
+            });
             it("should not get an experienced user's received BuddyRequests when looking for sent ones", done => {
                 const promise = Database.getSentBuddyRequests({userId: expUserId}, transactionClient);
                 expect(promise).to.be.rejectedWith("404:BuddyRequest doesn't exist").and.notify(done);
