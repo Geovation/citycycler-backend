@@ -291,6 +291,7 @@ describe("ExperiencedRoute endpoint", () => {
                     expect(thisRoute.divorcePoint).to.eql([0, 4.6]);
                     expect(thisRoute.name).to.equal("Ride to work");
                     expect(thisRoute.route).to.eql([[0, 1.4], [0, 2], [0, 3], [0, 4], [0, 4.6]]);
+                    expect(thisRoute.length).to.equal(3.2);
                 });
             });
             it("should not match an experienced route in the wrong direction", () => {

@@ -277,6 +277,7 @@ export function matchRoutes(
     divorceTime: string,
     name: string,
     owner: number,
+    length: number,
     meetingPoint: [number, number],
     divorcePoint: [number, number],
     timeToMeetingPoint: string,
@@ -292,7 +293,8 @@ export function matchRoutes(
     "SELECT id, " +
     "    match2.meetingTime, " +
     "    match2.divorceTime, " +
-    "    match2.matchedRoute as route, " +
+    "    match2.matchedRoute AS route, " +
+    "    ST_Length(match2.matchedRoute) AS length, " +
     "    ST_AsText(match2.meetingPoint) AS meetingPoint, " +
     "    ST_AsText(match2.divorcePoint) AS divorcePoint, " +
     "    match3.*, " +
@@ -357,6 +359,7 @@ export function matchRoutes(
                 divorcePoint: pointStringToCoords(row.divorcepoint),
                 divorceTime: row.divorcetime,
                 id: row.id,
+                length: row.length,
                 meetingPoint: pointStringToCoords(row.meetingpoint),
                 meetingTime: row.meetingtime,
                 name: row.name,

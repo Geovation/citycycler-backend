@@ -533,6 +533,7 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(thisRoute.divorcePoint).to.eql([0, 4.6]);
                 expect(thisRoute.name).to.equal("112 Rachel Road to 33 Stanley Street");
                 expect(thisRoute.route).to.eql([[0, 1.4], [0, 2], [0, 3], [0, 4], [0, 4.6]]);
+                expect(thisRoute.length).to.equal(3.2);
             });
         });
         it("should not match an experienced route if the radius is too big", done => {
@@ -1560,14 +1561,13 @@ describe("MatchMyRoute Database Functions", () => {
                     });
                 } catch (err) {
                     expect(err.message).to.equal("400:BuddyRequest review must be +/- 1");
-                } finally {
-                    return Database.getSentBuddyRequests({id: buddyRequestId, userId: inexpUserId}, transactionClient)
-                    .then(requests => {
-                        let buddyRequest = requests[0];
-                        expect(buddyRequest.status).to.equal("accepted",
-                            "Status was set. Should still be 'accpeted' but got " + buddyRequest.status);
-                    });
                 }
+                return Database.getSentBuddyRequests({id: buddyRequestId, userId: inexpUserId}, transactionClient)
+                .then(requests => {
+                    let buddyRequest = requests[0];
+                    expect(buddyRequest.status).to.equal("accepted",
+                        "Status was set. Should still be 'accpeted' but got " + buddyRequest.status);
+                });
             });
             it("Should not let the experiencedUser review it", () => {
                 return Database.updateBuddyRequestReview(expUserId, buddyRequestId, 1, transactionClient)

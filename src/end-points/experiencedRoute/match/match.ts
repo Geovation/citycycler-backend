@@ -104,6 +104,11 @@ const definitions = {
                 description: "This route's internal id",
                 type: "integer",
             },
+            length: {
+                description: "How long the matched section of the route is in meters",
+                example: 1234,
+                type: "integer",
+            },
             meetingPoint: {
                 description: "The closest point for the user to meet the owner on their route from their startpoint",
                 items: {
