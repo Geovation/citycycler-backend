@@ -130,6 +130,7 @@ describe("BuddyRequest endpoint", () => {
                 experiencedRouteName: "Ride to work",
                 experiencedUser: expUserId,
                 inexperiencedRoute,
+                inexperiencedRouteName: "Ride to my friend Jerry's",
                 length: 1000,
                 meetingPoint: [0, 0],
                 meetingPointName: "64 Ryan Road",
@@ -236,6 +237,8 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute)
                         .to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[0].inexperiencedRouteName)
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
                     expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime)
                         .isSame(buddyRequestObject.meetingTime, "second")).to.be.true;
@@ -279,6 +282,8 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[0].inexperiencedRoute)
                         .to.equal(buddyRequestObject.inexperiencedRoute);
                     expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
+                    expect(buddyRequests[0].inexperiencedRouteName)
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
                     expect(moment(buddyRequests[0].meetingTime)
                         .isSame(buddyRequestObject.meetingTime, "second"),
                         "Meeting time is different to expected." +
@@ -305,6 +310,8 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[1].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[1].inexperiencedRoute)
                         .to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[1].inexperiencedRouteName)
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
                     expect(buddyRequests[1].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[1].meetingTime)
                         .isSame(buddyRequestObject.meetingTime, "second"),
@@ -385,6 +392,8 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute)
                         .to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[0].inexperiencedRouteName)
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
                     expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime)
                         .isSame(buddyRequestObject.meetingTime, "second")).to.be.true;
@@ -427,6 +436,8 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute)
                         .to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[0].inexperiencedRouteName)
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
                     expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime)
                         .isSame(buddyRequestObject.meetingTime, "second"),
@@ -454,6 +465,8 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[1].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[1].inexperiencedRoute)
                         .to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[1].inexperiencedRouteName)
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
                     expect(buddyRequests[1].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[1].meetingTime)
                         .isSame(buddyRequestObject.meetingTime, "second"),

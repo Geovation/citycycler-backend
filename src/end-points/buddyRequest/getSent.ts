@@ -113,6 +113,11 @@ const definitions = {
                 description: "The ID of the inexperienced user's route",
                 type: "integer",
             },
+            inexperiencedRouteName: {
+                description: "The name of the inexperienced user's route",
+                example: "My ride to the cinema",
+                type: "string",
+            },
             length: {
                 description: "How long the shared section of route is in meters",
                 example: 1000,

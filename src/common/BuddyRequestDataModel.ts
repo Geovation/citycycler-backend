@@ -13,6 +13,7 @@ export default class BuddyRequest {
             experiencedUser: row.experienceduser,
             id: row.id,
             inexperiencedRoute: row.inexperiencedroute,
+            inexperiencedRouteName: row.inexperiencedroutename,
             length: row.length,
             meetingPoint: pointStringToCoords(row.meetingpoint),
             meetingPointName: row.meetingpointname,
@@ -32,6 +33,7 @@ export default class BuddyRequest {
     public experiencedUser: number;
     public owner: number;
     public inexperiencedRoute: number;
+    public inexperiencedRouteName: string;
     public meetingTime: string;
     public divorceTime: number;
     public meetingPoint: [number, number];
@@ -87,6 +89,8 @@ export default class BuddyRequest {
         } else if ((obj.inexperiencedRoute === undefined || obj.inexperiencedRoute === null)
             && obj.status !== "canceled") {
             throw new Error("400:BuddyRequest requires an inexperiencedRoute");
+        } else if (obj.inexperiencedRouteName === undefined || obj.inexperiencedRouteName === null) {
+            throw new Error("400:BuddyRequest requires an inexperiencedRouteName");
         } else if (obj.meetingPointName === undefined || obj.meetingPointName === null) {
             throw new Error("400:BuddyRequest requires a meetingPointName");
         } else if (obj.meetingPoint === undefined || obj.meetingPoint === null) {
@@ -139,6 +143,7 @@ export default class BuddyRequest {
         this.experiencedUser = obj.experiencedUser;
         this.id = obj.id;
         this.inexperiencedRoute = obj.inexperiencedRoute;
+        this.inexperiencedRouteName = obj.inexperiencedRouteName;
         this.meetingTime = obj.meetingTime;
         this.meetingPoint = obj.meetingPoint;
         this.meetingPointName = obj.meetingPointName;

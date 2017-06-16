@@ -1136,6 +1136,7 @@ describe("MatchMyRoute Database Functions", () => {
                     experiencedRouteName: "Ride to work",
                     experiencedUser: expUserId,
                     inexperiencedRoute,
+                    inexperiencedRouteName: "My First Ride",
                     length: 5000,
                     meetingPoint: [0, 0],
                     meetingPointName: "1 Shelly Street",
@@ -1162,6 +1163,8 @@ describe("MatchMyRoute Database Functions", () => {
                         expect(results.rows[0].experiencedroutename).to.equal(buddyRequestObject.experiencedRouteName);
                         expect(results.rows[0].experienceduser).to.equal(buddyRequestObject.experiencedUser);
                         expect(results.rows[0].inexperiencedroute).to.equal(buddyRequestObject.inexperiencedRoute);
+                        expect(results.rows[0].inexperiencedroutename)
+                            .to.equal(buddyRequestObject.inexperiencedRouteName);
                         expect(moment(results.rows[0].meetingtime).isSame(buddyRequestObject.meetingTime)).to.be.true;
                         expect(results.rows[0].owner).to.equal(buddyRequestObject.owner);
                         expect(results.rows[0].length).to.equal(buddyRequestObject.length);
@@ -1222,6 +1225,8 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[0].experiencedRouteName).to.equal(buddyRequestObject.experiencedRouteName);
                     expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[0].inexperiencedRouteName)
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
                     expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime).isSame(buddyRequestObject.meetingTime)).to.be.true;
                     expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
@@ -1248,6 +1253,8 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[0].experiencedRouteName).to.equal(buddyRequestObject.experiencedRouteName);
                     expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[0].inexperiencedRouteName)
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
                     expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime).isSame(buddyRequestObject.meetingTime)).to.be.true;
                     expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
@@ -1273,6 +1280,8 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[0].experiencedRouteName).to.equal(buddyRequestObject.experiencedRouteName);
                     expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[0].inexperiencedRouteName)
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
                     expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime).isSame(buddyRequestObject.meetingTime)).to.be.true;
                     expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
@@ -1293,6 +1302,8 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[1].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[1].length).to.equal(buddyRequestObject.length);
                     expect(buddyRequests[1].inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[1].inexperiencedRouteName)
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
                     expect(moment(buddyRequests[1].meetingTime).isSame(buddyRequestObject.meetingTime)).to.be.true;
                     expect(buddyRequests[1].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
                     expect(buddyRequests[1].owner).to.equal(buddyRequestObject.owner);
@@ -1318,6 +1329,8 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
                     expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
+                    expect(buddyRequests[0].inexperiencedRouteName)
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
                     expect(moment(buddyRequests[0].meetingTime).isSame(buddyRequestObject.meetingTime)).to.be.true;
                     expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
                     expect(buddyRequests[0].owner).to.equal(buddyRequestObject.owner);
@@ -1336,6 +1349,8 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[1].experiencedRouteName).to.equal(buddyRequestObject.experiencedRouteName);
                     expect(buddyRequests[1].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[1].inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[1].inexperiencedRouteName)
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
                     expect(buddyRequests[1].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[1].meetingTime).isSame(buddyRequestObject.meetingTime)).to.be.true;
                     expect(buddyRequests[1].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
@@ -1423,6 +1438,7 @@ describe("MatchMyRoute Database Functions", () => {
                 {experiencedRoute: -1},
                 {experiencedRouteName: "A silly name!"},
                 {inexperiencedRoute: -1},
+                {inexperiencedRouteName: "An even sillier name!"},
                 {averageSpeed: 200},
                 {created: "2000-01-01T12:00:00.000Z"},
                 {updated: "2000-01-01T12:00:00.000Z"},

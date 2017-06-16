@@ -724,6 +724,7 @@ describe("Various useful functions", () => {
             experiencedUser: 444,
             id: 111,
             inexperiencedRoute: 222,
+            inexperiencedRouteName: "My First Ride",
             length: 101,
             meetingPoint: [0, 0],
             meetingPointName: "1 Shelly Street",
@@ -747,6 +748,7 @@ describe("Various useful functions", () => {
             expect(buddyRequest.experiencedUser).to.equal(buddyRequestObject.experiencedUser);
             expect(buddyRequest.id).to.equal(buddyRequestObject.id);
             expect(buddyRequest.inexperiencedRoute).to.equal(buddyRequestObject.inexperiencedRoute);
+            expect(buddyRequest.inexperiencedRouteName).to.equal(buddyRequestObject.inexperiencedRouteName);
             expect(buddyRequest.length).to.equal(buddyRequestObject.length);
             expect(buddyRequest.meetingPoint).to.eql(buddyRequestObject.meetingPoint);
             expect(buddyRequest.meetingPointName).to.equal(buddyRequestObject.meetingPointName);

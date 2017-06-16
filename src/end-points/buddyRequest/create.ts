@@ -108,6 +108,11 @@ const definitions = {
                 description: "The ID of the inexperienced user's route",
                 type: "integer",
             },
+            inexperiencedRouteName: {
+                description: "The name of the experienced user's route. Used for display purposes",
+                example: "My ride to the cinema",
+                type: "string",
+            },
             length: {
                 description: "How long the shared part of the route is in meters",
                 example: 1000,
@@ -142,6 +147,7 @@ const definitions = {
             "experiencedRouteName",
             "experiencedUser",
             "inexperiencedRoute",
+            "inexperiencedRouteName",
             "length",
             "meetingPoint",
             "meetingTime",
@@ -185,6 +191,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
             experiencedRouteName: payload.experiencedRouteName, // We could get this from the database if we need to...
             experiencedUser: payload.experiencedUser,
             inexperiencedRoute: payload.inexperiencedRoute,
+            inexperiencedRouteName: payload.inexperiencedRouteName,
             length: payload.length,
             meetingPoint: payload.meetingPoint,
             meetingPointName: payload.meetingPointName,
