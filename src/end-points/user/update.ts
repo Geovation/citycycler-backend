@@ -83,6 +83,10 @@ const definitions = {
                 example: "joe@blogs.com",
                 type: "string",
             },
+            id: {
+                description: "The user's internal id",
+                type: "integer",
+            },
             name: {
                 description: "The user's new full name",
                 example: "Joe Blogs",

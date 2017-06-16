@@ -66,7 +66,7 @@ const definitions = {
     GetRouteResponse: {
         properties: {
             result: {
-                $ref: "#/definitions/RouteData",
+                $ref: "#/definitions/RouteGetResult",
             },
         },
         required: ["result"],

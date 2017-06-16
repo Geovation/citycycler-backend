@@ -122,6 +122,10 @@ const definitions = {
                 description: "The userId of the user who owns this route",
                 type: "integer",
             },
+            route: {
+                $ref: "#/definitions/CoordList",
+                description: "The segment of the route that the cyclists will be riding together",
+            },
             timeFromDivorcePoint : {
                 description: "A time interval in ISO 8601 format that it is " +
                 "estimated to take the user to cycle from the divorce point " +
@@ -137,7 +141,19 @@ const definitions = {
                 type: "string",
             },
         },
-        required: ["meetingPoint", "divorcePoint", "meetingTime", "owner", "days", "id"],
+        required: [
+            "meetingPoint",
+            "meetingTime",
+            "distanceToMeetingPoint",
+            "timeToMeetingPoint",
+            "divorcePoint",
+            "divorceTime",
+            "distanceFromDivorcePoint",
+            "timeFromDivorcePoint",
+            "route",
+            "owner",
+            "id",
+        ],
     },
     RouteSearchResult: {
         description: "A list of Routes that were found near the given point",
@@ -166,7 +182,7 @@ const definitions = {
                 $ref: "#/definitions/Coordinate",
             },
         },
-        required: ["start", "end", "radius", "arrivalDateTime"],
+        required: ["startPoint", "endPoint", "radius", "arrivalDateTime"],
     },
 };
 
