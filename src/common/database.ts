@@ -727,7 +727,7 @@ export function createBuddyRequest(buddyRequest: BuddyRequest, providedClient = 
  * @return {Object[]} Array of buddy requests
  */
 export function getSentBuddyRequests(params: {userId: number, id?: number}, providedClient = null)
-: Promise<(BuddyRequest & {otherUser?: User})[]> {
+: Promise<(BuddyRequest & {otherUser?: User, myRoute?: [number, number][]})[]> {
     return getBuddyRequests(params, providedClient).then(buddyRequests => {
         let matchingBuddyRequests = buddyRequests.filter(buddyRequest => {
             return buddyRequest.owner === params.userId;
@@ -735,14 +735,28 @@ export function getSentBuddyRequests(params: {userId: number, id?: number}, prov
         if (matchingBuddyRequests.length === 0) {
             throw new Error("404:BuddyRequest doesn't exist");
         }
-        // Add the otherUser
+        // Add the otherUser and myRoute
         return Promise.all(matchingBuddyRequests.map(buddyRequest => {
-            let userId = buddyRequest.experiencedUser;
-            return getUserById(userId, providedClient).then(user => {
-                return Object.assign(buddyRequest, {otherUser: user.asUserProfile()});
+            const otherUserId = buddyRequest.experiencedUser;
+            const thisUserId = buddyRequest.owner;
+            const routeId = buddyRequest.inexperiencedRoute;
+            let otherUser;
+            return getUserById(otherUserId, providedClient).then(user => {
+                otherUser = user.asUserProfile();
+                return getInexperiencedRoutes({id: routeId, userId: thisUserId}, providedClient);
             }, err => {
                 if (err.message.slice(0, 3) === "404") {
-                    return buddyRequest;
+                    // User not found, so leave otherUser undefined
+                    return getInexperiencedRoutes({id: routeId, userId: thisUserId}, providedClient);
+                } else {
+                    throw err;
+                }
+            }).then(route => {
+                return Object.assign(buddyRequest, {otherUser, myRoute: [route[0].startPoint, route[0].endPoint]});
+            }, err => {
+                if (err.message.slice(0, 3) === "404") {
+                    // Route not found, so leave myRoute undefined
+                    return Object.assign(buddyRequest, {otherUser});
                 } else {
                     throw err;
                 }
@@ -754,14 +768,14 @@ export function getSentBuddyRequests(params: {userId: number, id?: number}, prov
 }
 
 /**
- * getBuddyRequests - Get the buddy requests the params.userId has received
+ * getReceivedBuddyRequests - Get the buddy requests the params.userId has received
  *
  * @param  {object} params The query parameters, including the id of the buddy request to query and the user id
  * @param  {client} providedClient Database client to use for this interaction
  * @return {Object[]} Array of buddy requests
  */
 export function getReceivedBuddyRequests(params: {userId: number, id?: number}, providedClient = null)
-: Promise<(BuddyRequest & {otherUser?: User})[]> {
+: Promise<(BuddyRequest & {otherUser?: User, myRoute?: [number, number][]})[]> {
     return getBuddyRequests(params, providedClient).then(buddyRequests => {
         let matchingBuddyRequests = buddyRequests.filter(buddyRequest => {
             return buddyRequest.experiencedUser === params.userId;
@@ -769,14 +783,28 @@ export function getReceivedBuddyRequests(params: {userId: number, id?: number}, 
         if (matchingBuddyRequests.length === 0) {
             throw new Error("404:BuddyRequest doesn't exist");
         }
-        // Add the otherUser
+        // Add the otherUser and myRoute
         return Promise.all(matchingBuddyRequests.map(buddyRequest => {
-            let userId = buddyRequest.owner;
-            return getUserById(userId, providedClient).then(user => {
-                return Object.assign(buddyRequest, {otherUser: user.asUserProfile()});
+            const otherUserId = buddyRequest.owner;
+            const thisUserId = buddyRequest.experiencedUser;
+            const routeId = buddyRequest.experiencedRoute;
+            let otherUser;
+            return getUserById(otherUserId, providedClient).then(user => {
+                otherUser = user.asUserProfile();
+                return getExperiencedRoutes({id: routeId, userId: thisUserId}, providedClient);
             }, err => {
                 if (err.message.slice(0, 3) === "404") {
-                    return buddyRequest;
+                    // User not found, so leave otherUser undefined
+                    return getExperiencedRoutes({id: routeId, userId: thisUserId}, providedClient);
+                } else {
+                    throw err;
+                }
+            }).then(routes => {
+                return Object.assign(buddyRequest, {otherUser, myRoute: routes[0].route});
+            }, err => {
+                if (err.message.slice(0, 3) === "404") {
+                    // Route not found, so leave myRoute undefined
+                    return Object.assign(buddyRequest, {otherUser});
                 } else {
                     throw err;
                 }

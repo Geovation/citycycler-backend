@@ -139,6 +139,13 @@ const definitions = {
                 example: new Date().toISOString(),
                 type: "string",
             },
+            myRoute: {
+                $ref: "#/definitions/CoordList",
+                description: "The requesting user's route. If it is an ExperiencedRoute, it will have the" +
+                    "whole route, while if it is an inexperiencedRoute, it will only have the start/end points",
+                example: [[0, 0], [1, 1]],
+                type: "array",
+            },
             otherUser: {
                 $ref: "#/description/User",
                 description: "The other user's profile",

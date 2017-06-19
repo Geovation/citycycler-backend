@@ -1236,6 +1236,7 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[0].route).to.eql(buddyRequestObject.route);
                     expect(moment(buddyRequests[0].updated).isSame(buddyRequestObject.updated)).to.be.true;
                     expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
+                    expect(buddyRequests[0].myRoute).to.eql([[10, 10], [15, 15]]);
                     expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                     expect(buddyRequests[0].review).to.equal(0);
                 });
@@ -1258,6 +1259,7 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime).isSame(buddyRequestObject.meetingTime)).to.be.true;
                     expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                    expect(buddyRequests[0].myRoute).to.eql([[0, 0], [1, 0], [1, 1]]);
                     expect(buddyRequests[0].owner).to.equal(buddyRequestObject.owner);
                     expect(buddyRequests[0].status).to.equal(buddyRequestObject.status);
                     expect(buddyRequests[0].reason).to.equal(buddyRequestObject.reason);
@@ -1292,6 +1294,7 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[0].review).to.equal(0);
                     expect(moment(buddyRequests[0].updated).isSame(buddyRequestObject.updated)).to.be.true;
                     expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
+                    expect(buddyRequests[0].myRoute).to.eql([[10, 10], [15, 15]]);
                     expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                     expect(buddyRequests[1].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
                     expect(moment(buddyRequests[1].created).isSame(buddyRequestObject.created)).to.be.true;
@@ -1312,6 +1315,7 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[1].status).to.equal(buddyRequestObject.status);
                     expect(moment(buddyRequests[1].updated).isSame(buddyRequestObject.updated)).to.be.true;
                     expect(buddyRequests[1].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
+                    expect(buddyRequests[1].myRoute).to.eql([[10, 10], [15, 15]]);
                     expect(buddyRequests[1].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                     expect(buddyRequests[1].review).to.equal(0);
                 });
@@ -1339,6 +1343,7 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[0].status).to.equal(buddyRequestObject.status);
                     expect(moment(buddyRequests[0].updated).isSame(buddyRequestObject.updated)).to.be.true;
                     expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
+                    expect(buddyRequests[0].myRoute).to.eql([[0, 0], [1, 0], [1, 1]]);
                     expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                     expect(buddyRequests[0].review).to.equal(0);
                     expect(buddyRequests[1].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
@@ -1360,6 +1365,7 @@ describe("MatchMyRoute Database Functions", () => {
                     expect(buddyRequests[1].status).to.equal(buddyRequestObject.status);
                     expect(moment(buddyRequests[1].updated).isSame(buddyRequestObject.updated)).to.be.true;
                     expect(buddyRequests[1].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
+                    expect(buddyRequests[1].myRoute).to.eql([[0, 0], [1, 0], [1, 1]]);
                     expect(buddyRequests[1].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
                     expect(buddyRequests[1].review).to.equal(0);
                 });
