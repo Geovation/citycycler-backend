@@ -147,7 +147,7 @@ const definitions = {
                 type: "array",
             },
             otherUser: {
-                $ref: "#/description/User",
+                $ref: "#/definitions/User",
                 description: "The other user's profile",
             },
             owner: {

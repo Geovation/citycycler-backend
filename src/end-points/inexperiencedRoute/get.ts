@@ -137,7 +137,6 @@ const definitions = {
             "endPointName",
             "owner",
             "radius",
-            "route",
             "length",
             "name",
             "id",
