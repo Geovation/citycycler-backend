@@ -84,6 +84,7 @@ experiencedRouteName text NOT NULL,         -- The name of the experienced route
 experiencedRoute integer REFERENCES experienced_routes ON DELETE SET NULL,   -- The id of the experienced route
 experiencedUser integer REFERENCES users ON DELETE SET NULL,                 -- The id of the experienced user
 owner integer REFERENCES users ON DELETE SET NULL,                           -- The id of the inexperienced user
+inexperiencedRouteName text NOT NULL,       -- The name of the inexperienced route
 inexperiencedRoute integer REFERENCES inexperienced_routes ON DELETE SET NULL, -- The id of the inexperienced route
 meetingTime timestamptz NOT NULL,           -- When the users will meet
 divorceTime timestamptz NOT NULL,           -- When the users will part

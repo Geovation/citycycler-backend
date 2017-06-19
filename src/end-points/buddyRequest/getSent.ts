@@ -113,6 +113,11 @@ const definitions = {
                 description: "The ID of the inexperienced user's route",
                 type: "integer",
             },
+            inexperiencedRouteName: {
+                description: "The name of the inexperienced user's route",
+                example: "My ride to the cinema",
+                type: "string",
+            },
             length: {
                 description: "How long the shared section of route is in meters",
                 example: 1000,
@@ -133,6 +138,17 @@ const definitions = {
                     "start riding together",
                 example: new Date().toISOString(),
                 type: "string",
+            },
+            myRoute: {
+                $ref: "#/definitions/CoordList",
+                description: "The requesting user's route. If it is an ExperiencedRoute, it will have the" +
+                    "whole route, while if it is an inexperiencedRoute, it will only have the start/end points",
+                example: [[0, 0], [1, 1]],
+                type: "array",
+            },
+            otherUser: {
+                $ref: "#/definitions/User",
+                description: "The other user's profile",
             },
             owner: {
                 description: "The ID of the inexperienced user",

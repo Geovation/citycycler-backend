@@ -16,19 +16,13 @@ const operation = {
         "It will update the experiencedUser's rating, and if this is a new review, both user's distances.",
         parameters: [
             {
-                description: "The ID of the BuddyRequest being reviewed",
+                description: "The details needed to review a BuddyRequest",
                 in: "body",
-                name: "buddyRequest",
+                name: "detailss",
                 required: true,
-                type: "integer",
-            },
-            {
-                description: "The review score",
-                enum: [1, -1],
-                in: "body",
-                name: "score",
-                required: true,
-                type: "integer",
+                schema: {
+                    $ref: "#/definitions/SetStatusDetails",
+                },
             },
         ],
         produces: ["application/json; charset=utf-8"],
@@ -82,6 +76,21 @@ const definitions = {
             },
         },
         required: ["result"],
+    },
+    SetStatusDetails: {
+        properties: {
+            id: {
+                description: "The id of the buddyRequest to review",
+                type: "integer",
+            },
+            score: {
+                description: "The review score",
+                enum: [1, -1],
+                example: 1,
+                type: "integer",
+            },
+        },
+        required: ["id", "score"],
     },
 };
 

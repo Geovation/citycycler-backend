@@ -689,9 +689,9 @@ export function createBuddyRequest(buddyRequest: BuddyRequest, providedClient = 
     buddyRequest = new BuddyRequest(buddyRequest);
     const query = "INSERT INTO buddy_requests (experiencedRouteName, experiencedRoute, experiencedUser, owner, " +
         "inexperiencedRoute, meetingTime, divorceTime, meetingPoint, divorcePoint, averageSpeed, created, " +
-        "updated, status, reason, route, meetingPointName, divorcePointName, length)" +
+        "updated, status, reason, route, meetingPointName, divorcePointName, length, inexperiencedRouteName)" +
         "VALUES ($1, $2, $3, $4, $5, $6, $7, ST_GeogFromText($8), ST_GeogFromText($9), $10, $11, $12, $13, " +
-        "$14, ST_GeogFromText($15), $16, $17, $18)" +
+        "$14, ST_GeogFromText($15), $16, $17, $18, $19)" +
         "RETURNING id";
     const queryParams = [
         buddyRequest.experiencedRouteName,
@@ -712,6 +712,7 @@ export function createBuddyRequest(buddyRequest: BuddyRequest, providedClient = 
         buddyRequest.meetingPointName,
         buddyRequest.divorcePointName,
         buddyRequest.length,
+        buddyRequest.inexperiencedRouteName,
     ];
     return sqlTransaction(query, queryParams, providedClient).then(result => {
         return result.rows[0].id;
@@ -726,7 +727,7 @@ export function createBuddyRequest(buddyRequest: BuddyRequest, providedClient = 
  * @return {Object[]} Array of buddy requests
  */
 export function getSentBuddyRequests(params: {userId: number, id?: number}, providedClient = null)
-: Promise<BuddyRequest[]> {
+: Promise<(BuddyRequest & {otherUser?: User, myRoute?: [number, number][]})[]> {
     return getBuddyRequests(params, providedClient).then(buddyRequests => {
         let matchingBuddyRequests = buddyRequests.filter(buddyRequest => {
             return buddyRequest.owner === params.userId;
@@ -734,19 +735,47 @@ export function getSentBuddyRequests(params: {userId: number, id?: number}, prov
         if (matchingBuddyRequests.length === 0) {
             throw new Error("404:BuddyRequest doesn't exist");
         }
-        return matchingBuddyRequests;
+        // Add the otherUser and myRoute
+        return Promise.all(matchingBuddyRequests.map(buddyRequest => {
+            const otherUserId = buddyRequest.experiencedUser;
+            const thisUserId = buddyRequest.owner;
+            const routeId = buddyRequest.inexperiencedRoute;
+            let otherUser;
+            return getUserById(otherUserId, providedClient).then(user => {
+                otherUser = user.asUserProfile();
+                return getInexperiencedRoutes({id: routeId, userId: thisUserId}, providedClient);
+            }, err => {
+                if (err.message.slice(0, 3) === "404") {
+                    // User not found, so leave otherUser undefined
+                    return getInexperiencedRoutes({id: routeId, userId: thisUserId}, providedClient);
+                } else {
+                    throw err;
+                }
+            }).then(route => {
+                return Object.assign(buddyRequest, {otherUser, myRoute: [route[0].startPoint, route[0].endPoint]});
+            }, err => {
+                if (err.message.slice(0, 3) === "404") {
+                    // Route not found, so leave myRoute undefined
+                    return Object.assign(buddyRequest, {otherUser});
+                } else {
+                    throw err;
+                }
+            });
+        }));
+    }).then(buddyRequests => {
+        return buddyRequests;
     });
 }
 
 /**
- * getBuddyRequests - Get the buddy requests the params.userId has received
+ * getReceivedBuddyRequests - Get the buddy requests the params.userId has received
  *
  * @param  {object} params The query parameters, including the id of the buddy request to query and the user id
  * @param  {client} providedClient Database client to use for this interaction
  * @return {Object[]} Array of buddy requests
  */
 export function getReceivedBuddyRequests(params: {userId: number, id?: number}, providedClient = null)
-: Promise<BuddyRequest[]> {
+: Promise<(BuddyRequest & {otherUser?: User, myRoute?: [number, number][]})[]> {
     return getBuddyRequests(params, providedClient).then(buddyRequests => {
         let matchingBuddyRequests = buddyRequests.filter(buddyRequest => {
             return buddyRequest.experiencedUser === params.userId;
@@ -754,7 +783,35 @@ export function getReceivedBuddyRequests(params: {userId: number, id?: number}, 
         if (matchingBuddyRequests.length === 0) {
             throw new Error("404:BuddyRequest doesn't exist");
         }
-        return matchingBuddyRequests;
+        // Add the otherUser and myRoute
+        return Promise.all(matchingBuddyRequests.map(buddyRequest => {
+            const otherUserId = buddyRequest.owner;
+            const thisUserId = buddyRequest.experiencedUser;
+            const routeId = buddyRequest.experiencedRoute;
+            let otherUser;
+            return getUserById(otherUserId, providedClient).then(user => {
+                otherUser = user.asUserProfile();
+                return getExperiencedRoutes({id: routeId, userId: thisUserId}, providedClient);
+            }, err => {
+                if (err.message.slice(0, 3) === "404") {
+                    // User not found, so leave otherUser undefined
+                    return getExperiencedRoutes({id: routeId, userId: thisUserId}, providedClient);
+                } else {
+                    throw err;
+                }
+            }).then(routes => {
+                return Object.assign(buddyRequest, {otherUser, myRoute: routes[0].route});
+            }, err => {
+                if (err.message.slice(0, 3) === "404") {
+                    // Route not found, so leave myRoute undefined
+                    return Object.assign(buddyRequest, {otherUser});
+                } else {
+                    throw err;
+                }
+            });
+        }));
+    }).then(buddyRequests => {
+        return buddyRequests;
     });
 }
 
@@ -770,7 +827,7 @@ export function getBuddyRequests(params: {userId: number, id?: number}, provided
     let query = "SELECT id, experiencedRouteName, experiencedRoute, experiencedUser, owner, inexperiencedRoute, " +
     "meetingTime, divorceTime, ST_AsText(meetingPoint) as meetingPoint, ST_AsText(divorcePoint) AS divorcePoint, " +
     "averageSpeed, created, updated, reason, ST_AsText(route) as route, meetingPointName, divorcePointName, " +
-    "length, status, review " +
+    "length, status, review, inexperiencedroutename " +
     "FROM buddy_requests WHERE (owner=$1 OR experiencedUser=$1)";
     let queryParams = [params.userId];
     if (params.id !== null && typeof params.id !== "undefined") {

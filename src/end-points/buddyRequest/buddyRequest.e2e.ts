@@ -130,6 +130,7 @@ describe("BuddyRequest endpoint", () => {
                 experiencedRouteName: "Ride to work",
                 experiencedUser: expUserId,
                 inexperiencedRoute,
+                inexperiencedRouteName: "Ride to my friend Jerry's",
                 length: 1000,
                 meetingPoint: [0, 0],
                 meetingPointName: "64 Ryan Road",
@@ -236,11 +237,14 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute)
                         .to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[0].inexperiencedRouteName)
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
                     expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime)
                         .isSame(buddyRequestObject.meetingTime, "second")).to.be.true;
                     expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
                     expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
+                    expect(buddyRequests[0].myRoute).to.eql([[10, 10], [15, 15]]);
                     expect(buddyRequests[0].owner).to.equal(inexpUserId);
                     expect(buddyRequests[0].status).to.equal("pending");
                     expect(buddyRequests[0].reason).to.equal("");
@@ -279,6 +283,8 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[0].inexperiencedRoute)
                         .to.equal(buddyRequestObject.inexperiencedRoute);
                     expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
+                    expect(buddyRequests[0].inexperiencedRouteName)
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
                     expect(moment(buddyRequests[0].meetingTime)
                         .isSame(buddyRequestObject.meetingTime, "second"),
                         "Meeting time is different to expected." +
@@ -286,6 +292,7 @@ describe("BuddyRequest endpoint", () => {
                         "\nActual: " + moment(buddyRequests[0].meetingTime)).to.be.true;
                     expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
                     expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
+                    expect(buddyRequests[0].myRoute).to.eql([[10, 10], [15, 15]]);
                     expect(buddyRequests[0].owner).to.equal(inexpUserId);
                     expect(buddyRequests[0].status).to.equal("pending");
                     expect(buddyRequests[0].reason).to.equal("");
@@ -305,6 +312,8 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[1].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[1].inexperiencedRoute)
                         .to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[1].inexperiencedRouteName)
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
                     expect(buddyRequests[1].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[1].meetingTime)
                         .isSame(buddyRequestObject.meetingTime, "second"),
@@ -313,11 +322,30 @@ describe("BuddyRequest endpoint", () => {
                         "\nActual: " + moment(buddyRequests[1].meetingTime)).to.be.true;
                     expect(buddyRequests[1].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
                     expect(buddyRequests[1].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
+                    expect(buddyRequests[1].myRoute).to.eql([[10, 10], [15, 15]]);
                     expect(buddyRequests[1].owner).to.equal(inexpUserId);
                     expect(buddyRequests[1].status).to.equal("pending");
                     expect(buddyRequests[1].reason).to.equal("");
                     expect(buddyRequests[1].route).to.eql(buddyRequestObject.route);
                     expect(moment(buddyRequests[1].updated).isSame(buddyRequests[1].created, "second")).to.be.true;
+                });
+            });
+            it("should set otherUser correctly to the experiencedUser", () => {
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Bearer " + inexpUserJwt,
+                    },
+                    method: "GET",
+                    url: url + "/buddyRequest/sent?id=" + buddyRequest1Id,
+                }).then(response => {
+                    expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + response.error +
+                        " body is " + response.body);
+                    expect(typeof response.body).to.equal("object", "Body is of unexpected type. " +
+                    "Expected object, but got a " + typeof response.body);
+                    let buddyRequests = response.body.result;
+                    expect(buddyRequests.length).to.equal(1);
+                    expect(buddyRequests[0].otherUser.id).to.equal(expUserId);
                 });
             });
             it("should not get a user's received buddy requests from the sent endpoint", () => {
@@ -385,11 +413,14 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute)
                         .to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[0].inexperiencedRouteName)
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
                     expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime)
                         .isSame(buddyRequestObject.meetingTime, "second")).to.be.true;
                     expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
                     expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
+                    expect(buddyRequests[0].myRoute).to.eql([[0, 0], [1, 0], [1, 1]]);
                     expect(buddyRequests[0].owner).to.equal(inexpUserId);
                     expect(buddyRequests[0].status).to.equal("pending");
                     expect(buddyRequests[0].reason).to.equal("");
@@ -427,6 +458,8 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute)
                         .to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[0].inexperiencedRouteName)
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
                     expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime)
                         .isSame(buddyRequestObject.meetingTime, "second"),
@@ -435,6 +468,7 @@ describe("BuddyRequest endpoint", () => {
                         "\nActual: " + moment(buddyRequests[0].meetingTime)).to.be.true;
                     expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
                     expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
+                    expect(buddyRequests[0].myRoute).to.eql([[0, 0], [1, 0], [1, 1]]);
                     expect(buddyRequests[0].owner).to.equal(inexpUserId);
                     expect(buddyRequests[0].status).to.equal("pending");
                     expect(buddyRequests[0].reason).to.equal("");
@@ -454,6 +488,8 @@ describe("BuddyRequest endpoint", () => {
                     expect(buddyRequests[1].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[1].inexperiencedRoute)
                         .to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[1].inexperiencedRouteName)
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
                     expect(buddyRequests[1].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[1].meetingTime)
                         .isSame(buddyRequestObject.meetingTime, "second"),
@@ -462,11 +498,30 @@ describe("BuddyRequest endpoint", () => {
                         "\nActual: " + moment(buddyRequests[1].meetingTime)).to.be.true;
                     expect(buddyRequests[1].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
                     expect(buddyRequests[1].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
+                    expect(buddyRequests[1].myRoute).to.eql([[0, 0], [1, 0], [1, 1]]);
                     expect(buddyRequests[1].owner).to.equal(inexpUserId);
                     expect(buddyRequests[1].status).to.equal("pending");
                     expect(buddyRequests[1].reason).to.equal("");
                     expect(buddyRequests[1].route).to.eql(buddyRequestObject.route);
                     expect(moment(buddyRequests[1].updated).isSame(buddyRequests[1].created, "second")).to.be.true;
+                });
+            });
+            it("should set otherUser correctly to the inexperiencedUser", () => {
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Bearer " + expUserJwt,
+                    },
+                    method: "GET",
+                    url: url + "/buddyRequest/received?id=" + buddyRequest1Id,
+                }).then(response => {
+                    expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + response.error +
+                        " body is " + response.body);
+                    expect(typeof response.body).to.equal("object", "Body is of unexpected type. " +
+                    "Expected object, but got a " + typeof response.body);
+                    let buddyRequests = response.body.result;
+                    expect(buddyRequests.length).to.equal(1);
+                    expect(buddyRequests[0].otherUser.id).to.equal(inexpUserId);
                 });
             });
             it("should not get a user's sent buddy requests from the received endpoint", () => {

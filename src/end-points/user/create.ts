@@ -119,7 +119,7 @@ const definitions = {
                 $ref: "#/definitions/User",
             },
         },
-        required: ["id", "jwt"],
+        required: ["jwt", "user"],
     },
 };
 
