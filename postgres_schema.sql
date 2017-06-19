@@ -57,20 +57,24 @@ arrivalTime time with time zone NOT NULL,	-- When the  user arrives at the desti
 days day_of_week[] DEFAULT ARRAY[]::day_of_week[],	-- An array of the days of the week a user cycles this route
 owner integer REFERENCES users ON DELETE CASCADE,	-- User who created this route
 difficulty ride_difficulty DEFAULT 'balanced'::ride_difficulty,  -- How hard this route is
-length integer NOT NULL         -- How long the route is
+length integer NOT NULL         -- How long the route is in meters
 );
 
 -- A inexperienced route
 CREATE TABLE inexperienced_routes (
 id serial PRIMARY KEY,
+name text NOT NULL,                 -- The name of this route
 startPoint geography NOT NULL,      -- Where the user wants to leave from
+startPointName text NOT NULL,       -- The english name of where the user wants to leave from
 endPoint geography NOT NULL,        -- Where the user wants to get to
+endPointName text NOT NULL,         -- The english name of where the user wants to get to
 radius integer DEFAULT 1000,        -- How far from the start and end points to look for matching routes
 owner integer REFERENCES users ON DELETE CASCADE,    -- Who created this query
 arrivalDateTime timestamp with time zone DEFAULT 'now',      -- When the user wants to arrive at their destination
 notifyOwner boolean DEFAULT FALSE,  -- If the owner wants to be notified of any new matches
-difficulty ride_difficulty DEFAULT 'balanced'::ride_difficulty  -- How hard the user wants the route to be
+difficulty ride_difficulty DEFAULT 'balanced'::ride_difficulty, -- How hard the user wants the route to be
                                                                 -- Will match any rides with dificulty <= this
+length integer NOT NULL             -- How long the route is in meters
 );
 
 -- A buddy request

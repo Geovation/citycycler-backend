@@ -94,6 +94,21 @@ const definitions = {
                 "an experienced route to be considered a match",
                 example:  [ 0, 0] ,
             },
+            endPointName: {
+                description: "The name of where the user wants to end up",
+                example:  "64 Crawley Crescent",
+                type: "string",
+            },
+            length: {
+                description: "How long this route is, by the shortest possible route, in meters",
+                example: 6666,
+                type: "number",
+            },
+            name: {
+                description: "The name of this route",
+                example: "Ride to the park",
+                type: "string",
+            },
             notifyOwner: {
                 description: "Does the user want to be notified of any new experienced cyclists who can help them",
                 example: true,
@@ -110,8 +125,22 @@ const definitions = {
                 "an experienced route to be considered a match",
                 example:  [ 0, 0] ,
             },
+            startPointName: {
+                description: "The name of where the user wants to start",
+                example:  "18 Ryan Road",
+                type: "string",
+            },
         },
-        required: ["arrivalDateTime", "radius", "startPoint", "endPoint", "notifyOwner"],
+        required: [
+            "arrivalDateTime",
+            "radius",
+            "startPoint",
+            "startPointName",
+            "endPoint",
+            "endPointName",
+            "length",
+            "notifyOwner",
+        ],
     },
 };
 
@@ -121,12 +150,28 @@ const definitions = {
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
-    return getIdFromJWT(params.authorization).then(userId => {
-        return Database.createInexperiencedRoute(userId, payload).then(id => {
-            return { id, status: 201 };
-        });
-    }, err => {
-        throw err;
+    let transactionClient;
+    let newId;
+    return Database.createTransactionClient().then(newClient => {
+        transactionClient = newClient;
+        return getIdFromJWT(params.authorization, transactionClient);
+    }).then(userId => {
+        return Database.createInexperiencedRoute(userId, payload, transactionClient);
+    }).then(id => {
+        newId = id;
+        return Database.commitAndReleaseTransaction(transactionClient);
+    }).then(() => {
+        return { id: newId, status: 201 };
+    }).catch(err => {
+        const originalError = typeof err === "string" ? err : err.message;
+        if (typeof transactionClient !== "undefined") {
+            return Database.rollbackAndReleaseTransaction(transactionClient)
+            .then(() => {
+                throw new Error(originalError);
+            });
+        } else {
+            throw new Error(originalError);
+        }
     });
 };
 

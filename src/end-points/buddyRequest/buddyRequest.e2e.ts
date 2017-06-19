@@ -82,9 +82,13 @@ describe("BuddyRequest endpoint", () => {
             const route1 = {
                 arrivalDateTime: "2000-01-01T13:00:00+00",
                 endPoint: [15, 15],
+                endPointName: "18 Penny Promenade",
+                length: 1222,
+                name: "Ride home",
                 notifyOwner: false,
                 radius: 1000,
                 startPoint: [10, 10],
+                startPointName: "16 Lenny Lane",
             };
             return defaultRequest({
                 headers: {

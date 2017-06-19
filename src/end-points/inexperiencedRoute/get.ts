@@ -85,9 +85,24 @@ const definitions = {
                 description: "Where the user will finish cycling. Must be within <radius> of " +
                 "an experienced route to be considered a match",
             },
+            endPointName: {
+                description: "The name of where the user wants to end up",
+                example:  "64 Crawley Crescent",
+                type: "string",
+            },
             id: {
                 description: "This inexperienced route's internal id",
                 type: "integer",
+            },
+            length: {
+                description: "How long this route is, by the shortest possible route, in meters",
+                example: 6666,
+                type: "number",
+            },
+            name: {
+                description: "The name of this route",
+                example: "Ride to the park",
+                type: "string",
             },
             notifyOwner: {
                 description: "Does the user want to be notified of any new experienced cyclists who can help them",
@@ -108,8 +123,25 @@ const definitions = {
                 description: "Where the user will start cycling from. Must be within <radius> of " +
                 "an experienced route to be considered a match",
             },
+            startPointName: {
+                description: "The name of where the user wants to start",
+                example:  "18 Ryan Road",
+                type: "string",
+            },
         },
-        required: ["arrivalDateTime", "startPoint", "endPoint", "owner", "notifyOwner", "radius", "id"],
+        required: [
+            "arrivalDateTime",
+            "startPoint",
+            "startPointName",
+            "endPoint",
+            "endPointName",
+            "owner",
+            "radius",
+            "route",
+            "length",
+            "name",
+            "id",
+        ],
     },
     InexperiencedRouteGetResult: {
         description: "An array of inexperienced routes belonging to this user",
@@ -129,8 +161,28 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     if (!id) {
         id = null;
     }
-    return getIdFromJWT(params.authorization).then((userId) => {
-        return Database.getInexperiencedRoutes({userId, id});
+    let transactionClient;
+    let results;
+    return Database.createTransactionClient().then(newClient => {
+        transactionClient = newClient;
+        return getIdFromJWT(params.authorization, transactionClient);
+    }).then((userId) => {
+        return Database.getInexperiencedRoutes({userId, id}, transactionClient);
+    }).then(theResults => {
+        results = theResults;
+        return Database.commitAndReleaseTransaction(transactionClient);
+    }).then(() => {
+        return results;
+    }).catch(err => {
+        const originalError = typeof err === "string" ? err : err.message;
+        if (typeof transactionClient !== "undefined") {
+            return Database.rollbackAndReleaseTransaction(transactionClient)
+            .then(() => {
+                throw new Error(originalError);
+            });
+        } else {
+            throw new Error(originalError);
+        }
     });
 };
 

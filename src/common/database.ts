@@ -430,14 +430,18 @@ export function deleteExperiencedRoute(id: number, providedClient = null): Promi
 export function createInexperiencedRoute(owner: number, inexperiencedRoute: InexperiencedRoute, providedClient = null)
 : Promise<Number> {
     inexperiencedRoute = new InexperiencedRoute(inexperiencedRoute);
-    const query = "INSERT INTO inexperienced_routes (startPoint, endPoint, radius" +
-        ", notifyOwner, arrivalDateTime, owner)" +
-        "VALUES (ST_GeogFromText($1), ST_GeogFromText($2), $3, $4, $5, $6)" +
+    const query = "INSERT INTO inexperienced_routes (startPoint, startPointName, endPoint, endPointName, radius, " +
+        "length, name, notifyOwner, arrivalDateTime, owner)" +
+        "VALUES (ST_GeogFromText($1), $2, ST_GeogFromText($3), $4, $5, $6, $7, $8, $9, $10)" +
         "RETURNING id";
     const queryParams = [
         coordsToPointString(inexperiencedRoute.startPoint),
+        inexperiencedRoute.startPointName,
         coordsToPointString(inexperiencedRoute.endPoint),
+        inexperiencedRoute.endPointName,
         inexperiencedRoute.radius,
+        inexperiencedRoute.length,
+        inexperiencedRoute.name,
         inexperiencedRoute.notifyOwner,
         inexperiencedRoute.arrivalDateTime,
         owner,
@@ -457,7 +461,8 @@ export function createInexperiencedRoute(owner: number, inexperiencedRoute: Inex
 export function getInexperiencedRoutes(params: {userId: number, id?: number}, providedClient = null)
 : Promise<InexperiencedRoute[]> {
     let query = "SELECT id, owner, radius, notifyOwner, arrivalDateTime, ST_AsText(startPoint) AS startPoint, " +
-    "ST_AsText(endPoint) AS endPoint FROM inexperienced_routes where owner=$1";
+        "startPointName, ST_AsText(endPoint) AS endPoint, endPointName, length, name " +
+        " FROM inexperienced_routes where owner=$1";
     let queryParams = [params.userId];
     if (params.id !== null && typeof params.id !== "undefined") {
         query +=  " AND id=$2";
@@ -475,7 +480,7 @@ export function getInexperiencedRoutes(params: {userId: number, id?: number}, pr
 }
 
 /**
- * deleteInexperiencedRoute - description
+ * updateInexperiencedRoute - description
  *
  * @param  {number} id The id of the inexperiencedRoute to delete
  * @param  {client} providedClient Database client to use for this interaction
@@ -508,39 +513,26 @@ export function updateInexperiencedRoute(
     existingRoute: InexperiencedRoute,
     updates: {
         arrivalDateTime?: string,
-        endPoint?: [number, number],
+        name?: string,
         notifyOwner?: boolean,
         radius?: number,
-        startPoint?: [number, number],
     },
     providedClient = null): Promise<boolean> {
-
-        // Move the updated properties into the existing model, and validate the new object
-        let newInexperiencedRouteObject = <InexperiencedRoute> {};
-        newInexperiencedRouteObject.arrivalDateTime = updates.arrivalDateTime !== undefined ?
-            updates.arrivalDateTime : existingRoute.arrivalDateTime;
-        newInexperiencedRouteObject.endPoint = updates.endPoint !== undefined ?
-            updates.endPoint : existingRoute.endPoint;
-        newInexperiencedRouteObject.notifyOwner = updates.notifyOwner !== undefined ?
-            updates.notifyOwner : existingRoute.notifyOwner;
-        newInexperiencedRouteObject.radius = updates.radius !== undefined ?
-            updates.radius : existingRoute.radius;
-        newInexperiencedRouteObject.startPoint = updates.startPoint !== undefined ?
-            updates.startPoint : existingRoute.startPoint;
+        // Move the updated properties into the existing model
+        let newInexperiencedRouteObject = _.clone(updates);
+        _.defaultsDeep(newInexperiencedRouteObject, existingRoute);
 
         // By instantating a new object, we run the tests in the constructor to make
         // sure that this is still a valid InexperiencedRoute
-        let newInexperiencedRoute = new InexperiencedRoute(newInexperiencedRouteObject);
+        const newInexperiencedRoute = new InexperiencedRoute(newInexperiencedRouteObject);
 
         const query = "UPDATE inexperienced_routes " +
-        "SET arrivalDateTime = $1, endPoint = ST_GeogFromText($2), notifyOwner = $3, radius = $4, " +
-        "startPoint = ST_GeogFromText($5) " +
-        "WHERE id = $6";
+        "SET arrivalDateTime = $1, notifyOwner = $2, radius = $3, " +
+        "name=$4 WHERE id = $5";
         const sqlParams = [newInexperiencedRoute.arrivalDateTime,
-            coordsToPointString(newInexperiencedRoute.endPoint),
             newInexperiencedRoute.notifyOwner,
             newInexperiencedRoute.radius,
-            coordsToPointString(newInexperiencedRoute.startPoint),
+            newInexperiencedRoute.name,
             existingRoute.id];
 
         return sqlTransaction(query, sqlParams, providedClient).then(result => {

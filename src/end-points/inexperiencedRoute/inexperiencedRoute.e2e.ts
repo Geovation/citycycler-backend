@@ -64,9 +64,13 @@ describe("InexperiencedRoute endpoint", () => {
             const inexperiencedRoute = {
                 arrivalDateTime: "2000-01-01T13:00:00+00",
                 endPoint: [15, 15],
+                endPointName: "18 Penny Promenade",
+                length: 1222,
+                name: "Ride home",
                 notifyOwner: false,
                 radius: 1000,
                 startPoint: [10, 10],
+                startPointName: "33 Stanley Street",
             };
             return defaultRequest({
                 headers: {
@@ -90,9 +94,13 @@ describe("InexperiencedRoute endpoint", () => {
             const inexperiencedRoute = {
                 arrivalDateTime: "2000-01-01T13:00:00+00",
                 endPoint: [15, 15],
+                endPointName: "18 Penny Promenade",
+                length: 1222,
+                name: "Ride home",
                 notifyOwner: false,
                 radius: 1000,
                 startPoint: [10, 10],
+                startPointName: "33 Stanley Street",
             };
             return defaultRequest({
                 headers: {
@@ -112,9 +120,13 @@ describe("InexperiencedRoute endpoint", () => {
             const inexperiencedRoute = {
                 arrivalDateTime: "2000-01-01T13:00:00+00",
                 endPoint: [15, 15],
+                endPointName: "18 Penny Promenade",
+                length: 1222,
+                name: "Ride home",
                 notifyOwner: false,
                 radius: 1000,
                 startPoint: [10, 10],
+                startPointName: "33 Stanley Street",
             };
             return defaultRequest({
                 headers: {},
@@ -132,9 +144,13 @@ describe("InexperiencedRoute endpoint", () => {
             const inexperiencedRoute = {
                 arrivalDateTime: "2000-01-01T13:00:00+00",
                 endPoint: [15, 15],
+                endPointName: "18 Penny Promenade",
+                length: 1222,
+                name: "Ride home",
                 notifyOwner: false,
                 radius: -500,
                 startPoint: [10, 10],
+                startPointName: "33 Stanley Street",
             };
             return defaultRequest({
                 headers: {
@@ -154,9 +170,13 @@ describe("InexperiencedRoute endpoint", () => {
             const inexperiencedRoute = {
                 arrivalDateTime: "2000-01-01T13:00:00+00",
                 endPoint: [15, 15],
+                endPointName: "18 Penny Promenade",
+                length: 1222,
+                name: "Ride home",
                 notifyOwner: false,
-                radius: -500,
+                radius: 1000,
                 startPoint: [10, 10, 10],
+                startPointName: "33 Stanley Street",
             };
             return defaultRequest({
                 headers: {
@@ -176,9 +196,13 @@ describe("InexperiencedRoute endpoint", () => {
             const inexperiencedRoute = {
                 arrivalDateTime: "2000-01-01T13:00:00+00",
                 endPoint: [15, 15],
+                endPointName: "18 Penny Promenade",
+                length: 1222,
+                name: "Ride home",
                 notifyOwner: false,
-                radius: -500,
+                radius: 1000,
                 startPoint: [10],
+                startPointName: "33 Stanley Street",
             };
             return defaultRequest({
                 headers: {
@@ -198,9 +222,13 @@ describe("InexperiencedRoute endpoint", () => {
             const inexperiencedRoute = {
                 arrivalDateTime: "2000-01-01T13:00:00+00",
                 endPoint: [15, 15, 15],
+                endPointName: "18 Penny Promenade",
+                length: 1222,
+                name: "Ride home",
                 notifyOwner: false,
-                radius: -500,
+                radius: 1000,
                 startPoint: [10, 10],
+                startPointName: "33 Stanley Street",
             };
             return defaultRequest({
                 headers: {
@@ -220,9 +248,13 @@ describe("InexperiencedRoute endpoint", () => {
             const inexperiencedRoute = {
                 arrivalDateTime: "2000-01-01T13:00:00+00",
                 endPoint: [15],
+                endPointName: "18 Penny Promenade",
+                length: 1222,
+                name: "Ride home",
                 notifyOwner: false,
-                radius: -500,
+                radius: 1000,
                 startPoint: [10, 10],
+                startPointName: "33 Stanley Street",
             };
             return defaultRequest({
                 headers: {
@@ -306,16 +338,24 @@ describe("InexperiencedRoute endpoint", () => {
             const matchingInexperiencedRoute = {
                 arrivalDateTime: "2017-06-02T12:00:00+00",
                 endPoint: [0, 4.8],
+                endPointName: "18 Penny Promenade",
+                length: 1222,
+                name: "Ride home",
                 notifyOwner: false,
                 radius: 1000,
                 startPoint: [0, 1.3],
+                startPointName: "33 Stanley Street",
             };
             const nonMatchingInexperiencedRoute = {
                 arrivalDateTime: "2017-06-02T12:00:00+00",
                 endPoint: [0, 1.5],
+                endPointName: "18 Penny Promenade",
+                length: 1222,
+                name: "Ride home",
                 notifyOwner: false,
                 radius: 1000,
                 startPoint: [0, 10],
+                startPointName: "33 Stanley Street",
             };
             return defaultRequest({
                 headers: {
@@ -465,11 +505,10 @@ describe("InexperiencedRoute endpoint", () => {
         it("should update all properties at once", () => {
             const updates = {
                 arrivalDateTime: "2000-01-01T13:30:00+00",
-                endPoint: [14, 14],
                 id: inexperiencedRouteIds[0],
+                name: "Ride to the cinema",
                 notifyOwner: true,
                 radius: 1500,
-                startPoint: [11, 11],
             };
             return defaultRequest({
                 headers: {
@@ -500,10 +539,9 @@ describe("InexperiencedRoute endpoint", () => {
                 expect(
                     moment(inexperiencedRoute.arrivalDateTime).isSame(updates.arrivalDateTime)
                 ).to.be.true;
-                expect(inexperiencedRoute.endPoint).to.eql(updates.endPoint);
                 expect(inexperiencedRoute.notifyOwner).to.equal(updates.notifyOwner);
                 expect(inexperiencedRoute.radius).to.equal(updates.radius);
-                expect(inexperiencedRoute.startPoint).to.eql(updates.startPoint);
+                expect(inexperiencedRoute.name).to.eql(updates.name);
             });
         });
         it("should update one property at a time - arrivalDateTime", () => {
@@ -610,10 +648,10 @@ describe("InexperiencedRoute endpoint", () => {
                 expect(inexperiencedRoute.notifyOwner).to.equal(updates.notifyOwner);
             });
         });
-        it("should update one property at a time - endPoint", () => {
+        it("should update one property at a time - name", () => {
             const updates = {
-                endPoint: [15, 15],
                 id: inexperiencedRouteIds[0],
+                name: "Ride to the park",
             };
             return defaultRequest({
                 headers: {
@@ -641,41 +679,7 @@ describe("InexperiencedRoute endpoint", () => {
                     assert.fail(0, 1, "Update resulted in an invalid InexperiencedRoute: " +
                     err);
                 }
-                expect(inexperiencedRoute.endPoint).to.eql(updates.endPoint);
-            });
-        });
-        it("should update one property at a time - startPoint", () => {
-            const updates = {
-                id: inexperiencedRouteIds[0],
-                startPoint: [10, 10],
-            };
-            return defaultRequest({
-                headers: {
-                    Authorization: "Bearer " + userJwts[0],
-                },
-                json: updates,
-                method: "POST",
-                url: url + "/inexperiencedRoute",
-            }).then(response => {
-                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
-                    response.statusCode + ", error given is: " + response.error);
-                return defaultRequest({
-                    headers: {
-                        Authorization: "Bearer " + userJwts[0],
-                    },
-                    method: "GET",
-                    url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
-                });
-            }).then(response => {
-                let inexperiencedRoute;
-                expect(response.body.result.length).to.equal(1);
-                try {
-                    inexperiencedRoute = new InexperiencedRoute(response.body.result[0]);
-                } catch (err) {
-                    assert.fail(0, 1, "Update resulted in an invalid InexperiencedRoute: " +
-                    err);
-                }
-                expect(inexperiencedRoute.startPoint).to.eql(updates.startPoint);
+                expect(inexperiencedRoute.name).to.equal(updates.name);
             });
         });
         it("should not update owner", () => {
@@ -710,6 +714,142 @@ describe("InexperiencedRoute endpoint", () => {
                     err);
                 }
                 expect(inexperiencedRoute.owner).not.to.equal(updates.owner);
+            });
+        });
+        it("should not update startPoint", () => {
+            const updates = {
+                id: inexperiencedRouteIds[0],
+                startPoint: [22, 22],
+            };
+            return defaultRequest({
+                headers: {
+                    Authorization: "Bearer " + userJwts[0],
+                },
+                json: updates,
+                method: "POST",
+                url: url + "/inexperiencedRoute",
+            }).then(response => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + response.error);
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Bearer " + userJwts[0],
+                    },
+                    method: "GET",
+                    url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                });
+            }).then(response => {
+                let inexperiencedRoute;
+                expect(response.body.result.length).to.equal(1);
+                try {
+                    inexperiencedRoute = new InexperiencedRoute(response.body.result[0]);
+                } catch (err) {
+                    assert.fail(0, 1, "Update resulted in an invalid InexperiencedRoute: " +
+                    err);
+                }
+                expect(inexperiencedRoute.startPoint).not.to.eql(updates.startPoint);
+            });
+        });
+        it("should not update endPoint", () => {
+            const updates = {
+                endPoint: [0.5, 0.5],
+                id: inexperiencedRouteIds[0],
+            };
+            return defaultRequest({
+                headers: {
+                    Authorization: "Bearer " + userJwts[0],
+                },
+                json: updates,
+                method: "POST",
+                url: url + "/inexperiencedRoute",
+            }).then(response => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + response.error);
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Bearer " + userJwts[0],
+                    },
+                    method: "GET",
+                    url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                });
+            }).then(response => {
+                let inexperiencedRoute;
+                expect(response.body.result.length).to.equal(1);
+                try {
+                    inexperiencedRoute = new InexperiencedRoute(response.body.result[0]);
+                } catch (err) {
+                    assert.fail(0, 1, "Update resulted in an invalid InexperiencedRoute: " +
+                    err);
+                }
+                expect(inexperiencedRoute.endPoint).not.to.equal(updates.endPoint);
+            });
+        });
+        it("should not update startPointName", () => {
+            const updates = {
+                id: inexperiencedRouteIds[0],
+                startPointName: "Silly Name",
+            };
+            return defaultRequest({
+                headers: {
+                    Authorization: "Bearer " + userJwts[0],
+                },
+                json: updates,
+                method: "POST",
+                url: url + "/inexperiencedRoute",
+            }).then(response => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + response.error);
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Bearer " + userJwts[0],
+                    },
+                    method: "GET",
+                    url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                });
+            }).then(response => {
+                let inexperiencedRoute;
+                expect(response.body.result.length).to.equal(1);
+                try {
+                    inexperiencedRoute = new InexperiencedRoute(response.body.result[0]);
+                } catch (err) {
+                    assert.fail(0, 1, "Update resulted in an invalid InexperiencedRoute: " +
+                    err);
+                }
+                expect(inexperiencedRoute.startPointName).not.to.eql(updates.startPointName);
+            });
+        });
+        it("should not update endPointName", () => {
+            const updates = {
+                endPointName: "Outrageous Name",
+                id: inexperiencedRouteIds[0],
+            };
+            return defaultRequest({
+                headers: {
+                    Authorization: "Bearer " + userJwts[0],
+                },
+                json: updates,
+                method: "POST",
+                url: url + "/inexperiencedRoute",
+            }).then(response => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + response.error);
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Bearer " + userJwts[0],
+                    },
+                    method: "GET",
+                    url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                });
+            }).then(response => {
+                let inexperiencedRoute;
+                expect(response.body.result.length).to.equal(1);
+                try {
+                    inexperiencedRoute = new InexperiencedRoute(response.body.result[0]);
+                } catch (err) {
+                    assert.fail(0, 1, "Update resulted in an invalid InexperiencedRoute: " +
+                    err);
+                }
+                expect(inexperiencedRoute.endPointName).not.to.equal(updates.endPointName);
             });
         });
         it("should not update with bad auth", () => {
@@ -770,82 +910,6 @@ describe("InexperiencedRoute endpoint", () => {
                 expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
                     response.statusCode + ", error given is: " + response.error);
                 expect(response.body.error).to.equal("Radius must be positive");
-                expect(response.body.status).to.equal(400);
-            });
-        });
-        it("should not update with invalid startPoint (3D)", () => {
-            const updates = {
-                id: inexperiencedRouteIds[0],
-                startPoint: [10, 10, 10],
-            };
-            return defaultRequest({
-                headers: {
-                    Authorization: "Bearer " + userJwts[0],
-                },
-                json: updates,
-                method: "POST",
-                url: url + "/inexperiencedRoute",
-            }).then(response => {
-                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
-                    response.statusCode + ", error given is: " + response.error);
-                expect(response.body.error).to.equal("InexperiencedRoute requires a 2D start point");
-                expect(response.body.status).to.equal(400);
-            });
-        });
-        it("should not update with invalid startPoint (1D)", () => {
-            const updates = {
-                id: inexperiencedRouteIds[0],
-                startPoint: [10],
-            };
-            return defaultRequest({
-                headers: {
-                    Authorization: "Bearer " + userJwts[0],
-                },
-                json: updates,
-                method: "POST",
-                url: url + "/inexperiencedRoute",
-            }).then(response => {
-                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
-                    response.statusCode + ", error given is: " + response.error);
-                expect(response.body.error).to.equal("InexperiencedRoute requires a 2D start point");
-                expect(response.body.status).to.equal(400);
-            });
-        });
-        it("should not update with invalid endPoint (3D)", () => {
-            const updates = {
-                endPoint: [10, 10, 10],
-                id: inexperiencedRouteIds[0],
-            };
-            return defaultRequest({
-                headers: {
-                    Authorization: "Bearer " + userJwts[0],
-                },
-                json: updates,
-                method: "POST",
-                url: url + "/inexperiencedRoute",
-            }).then(response => {
-                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
-                    response.statusCode + ", error given is: " + response.error);
-                expect(response.body.error).to.equal("InexperiencedRoute requires a 2D end point");
-                expect(response.body.status).to.equal(400);
-            });
-        });
-        it("should not update with invalid endPoint (1D)", () => {
-            const updates = {
-                endPoint: [10],
-                id: inexperiencedRouteIds[0],
-            };
-            return defaultRequest({
-                headers: {
-                    Authorization: "Bearer " + userJwts[0],
-                },
-                json: updates,
-                method: "POST",
-                url: url + "/inexperiencedRoute",
-            }).then(response => {
-                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
-                    response.statusCode + ", error given is: " + response.error);
-                expect(response.body.error).to.equal("InexperiencedRoute requires a 2D end point");
                 expect(response.body.status).to.equal(400);
             });
         });

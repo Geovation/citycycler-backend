@@ -284,11 +284,15 @@ describe("Various useful functions", () => {
             const obj = {
                 arrivalDateTime: "2017-09-08T13:00:00+00",
                 endPoint: [1, 1],
+                endPointName: "66 Devil Drive",
                 id: 321,
+                length: 100,
+                name: "The hill from hell",
                 notifyOwner: false,
                 owner: 123,
                 radius: 200,
                 startPoint: [0, 0],
+                startPointName: "33 Angel Ave",
             };
             const inexperiencedRoute = new InexperiencedRoute(obj);
             expect(moment(inexperiencedRoute.arrivalDateTime).isSame(obj.arrivalDateTime)).to.be.true;
@@ -301,16 +305,24 @@ describe("Various useful functions", () => {
             expect(inexperiencedRoute.startPoint).to.eql([0, 0]);
             expect(inexperiencedRoute.endPoint).to.eql([1, 1]);
             expect(inexperiencedRoute.notifyOwner).to.equal(false);
+            expect(inexperiencedRoute.startPointName).to.equal(obj.startPointName);
+            expect(inexperiencedRoute.endPointName).to.equal(obj.endPointName);
+            expect(inexperiencedRoute.name).to.equal(obj.name);
+            expect(inexperiencedRoute.length).to.equal(obj.length);
         });
         it("should throw an error if startPoint is 1D", () => {
             const obj = {
-                arrivalDateTime: "2017-09-09T13:00:00+00",
+                arrivalDateTime: "2017-09-08T13:00:00+00",
                 endPoint: [1, 1],
+                endPointName: "66 Devil Drive",
                 id: 321,
+                length: 100,
+                name: "The hill from hell",
                 notifyOwner: false,
                 owner: 123,
                 radius: 200,
                 startPoint: [0],
+                startPointName: "33 Angel Ave",
             };
             expect(() => {
                 return new InexperiencedRoute(obj);
@@ -318,13 +330,17 @@ describe("Various useful functions", () => {
         });
         it("should throw an error if startPoint is 3D", () => {
             const obj = {
-                arrivalDateTime: "2017-09-09T13:00:00+00",
+                arrivalDateTime: "2017-09-08T13:00:00+00",
                 endPoint: [1, 1],
+                endPointName: "66 Devil Drive",
                 id: 321,
+                length: 100,
+                name: "The hill from hell",
                 notifyOwner: false,
                 owner: 123,
                 radius: 200,
                 startPoint: [0, 0, 0],
+                startPointName: "33 Angel Ave",
             };
             expect(() => {
                 return new InexperiencedRoute(obj);
@@ -332,13 +348,17 @@ describe("Various useful functions", () => {
         });
         it("should throw an error if endPoint is 1D", () => {
             const obj = {
-                arrivalDateTime: "2017-09-09T13:00:00+00",
+                arrivalDateTime: "2017-09-08T13:00:00+00",
                 endPoint: [1],
+                endPointName: "66 Devil Drive",
                 id: 321,
+                length: 100,
+                name: "The hill from hell",
                 notifyOwner: false,
                 owner: 123,
                 radius: 200,
                 startPoint: [0, 0],
+                startPointName: "33 Angel Ave",
             };
             expect(() => {
                 return new InexperiencedRoute(obj);
@@ -346,9 +366,63 @@ describe("Various useful functions", () => {
         });
         it("should throw an error if endPoint is 3D", () => {
             const obj = {
-                arrivalDateTime: "2017-09-09T13:00:00+00",
+                arrivalDateTime: "2017-09-08T13:00:00+00",
                 endPoint: [1, 1, 1],
+                endPointName: "66 Devil Drive",
                 id: 321,
+                length: 100,
+                name: "The hill from hell",
+                notifyOwner: false,
+                owner: 123,
+                radius: 200,
+                startPoint: [0, 0],
+                startPointName: "33 Angel Ave",
+            };
+            expect(() => {
+                return new InexperiencedRoute(obj);
+            }).to.throw("400:InexperiencedRoute requires a 2D end point");
+        });
+        it("should make a sensible name if none is given", () => {
+            const obj = {
+                arrivalDateTime: "2017-09-08T13:00:00+00",
+                endPoint: [1, 1],
+                endPointName: "66 Devil Drive",
+                id: 321,
+                length: 100,
+                notifyOwner: false,
+                owner: 123,
+                radius: 200,
+                startPoint: [0, 0],
+                startPointName: "33 Angel Ave",
+            };
+            const inexperiencedRoute = new InexperiencedRoute(obj);
+            expect(inexperiencedRoute.name).to.equal("33 Angel Ave to 66 Devil Drive");
+        });
+        it("should throw an error if there is no length", () => {
+            const obj = {
+                arrivalDateTime: "2017-09-08T13:00:00+00",
+                endPoint: [1, 1],
+                endPointName: "66 Devil Drive",
+                id: 321,
+                name: "The hill from hell",
+                notifyOwner: false,
+                owner: 123,
+                radius: 200,
+                startPoint: [0, 0],
+                startPointName: "33 Angel Ave",
+            };
+            expect(() => {
+                return new InexperiencedRoute(obj);
+            }).to.throw("400:InexperiencedRoute requires a length");
+        });
+        it("should throw an error if there is no startPointName", () => {
+            const obj = {
+                arrivalDateTime: "2017-09-08T13:00:00+00",
+                endPoint: [1, 1],
+                endPointName: "66 Devil Drive",
+                id: 321,
+                length: 1000,
+                name: "The hill from hell",
                 notifyOwner: false,
                 owner: 123,
                 radius: 200,
@@ -356,17 +430,38 @@ describe("Various useful functions", () => {
             };
             expect(() => {
                 return new InexperiencedRoute(obj);
-            }).to.throw("400:InexperiencedRoute requires a 2D end point");
+            }).to.throw("400:InexperiencedRoute requires a startPointName");
+        });
+        it("should throw an error if there is no endPointName", () => {
+            const obj = {
+                arrivalDateTime: "2017-09-08T13:00:00+00",
+                endPoint: [1, 1],
+                id: 321,
+                length: 1000,
+                name: "The hill from hell",
+                notifyOwner: false,
+                owner: 123,
+                radius: 200,
+                startPoint: [0, 0],
+                startPointName: "33 Angel Ave",
+            };
+            expect(() => {
+                return new InexperiencedRoute(obj);
+            }).to.throw("400:InexperiencedRoute requires an endPointName");
         });
         it("should be constructed correctly from an SQL row", () => {
             const row = {
                 arrivaldatetime: "2017-09-09T13:00:00+00",
                 endpoint: "POINT(1 1)",
+                endpointname: "36 Angus Avenue",
                 id: 321,
+                length: 1234,
+                name: "Ride to work",
                 notifyowner: false,
                 owner: 123,
                 radius: 200,
                 startpoint: "POINT(0 0)",
+                startpointname: "92 Riley Road",
             };
             const inexperiencedRoute = InexperiencedRoute.fromSQLRow(row);
             expect(moment(inexperiencedRoute.arrivalDateTime).isSame(row.arrivaldatetime)).to.be.true;
@@ -377,6 +472,10 @@ describe("Various useful functions", () => {
             expect(inexperiencedRoute.startPoint).to.eql([0, 0]);
             expect(inexperiencedRoute.endPoint).to.eql([1, 1]);
             expect(inexperiencedRoute.notifyOwner).to.equal(false);
+            expect(inexperiencedRoute.name).to.equal("Ride to work");
+            expect(inexperiencedRoute.length).to.equal(1234);
+            expect(inexperiencedRoute.startPointName).to.equal("92 Riley Road");
+            expect(inexperiencedRoute.endPointName).to.equal("36 Angus Avenue");
         });
     });
     describe("User", () => {
