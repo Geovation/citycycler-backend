@@ -20,7 +20,7 @@ BEGIN
     END IF;
     -- A type for buddy request statuses
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'buddy_request_status') THEN
-        CREATE TYPE buddy_request_status AS ENUM ('pending', 'accepted', 'rejected', 'canceled');
+        CREATE TYPE buddy_request_status AS ENUM ('pending', 'accepted', 'rejected', 'canceled', 'completed');
     END IF;
 END$$;
 
@@ -38,7 +38,7 @@ profile_bio text,
 profile_photo varchar(200),             -- The url to the user's profile photo
 profile_joined timestamp DEFAULT 'now'::timestamp,
 profile_help_count integer DEFAULT 0,   -- How many times this user has helped an inexperienced cyclist
-profile_rating_sum integer DEFAULT 0,   -- Average (star) rating = rating_sum/help_count
+profile_rating_sum integer DEFAULT 0,   -- Average rating = rating_sum/help_count
 profile_helped_count integer DEFAULT 0, -- How many times this user has been buddied up with an experienced cyclist
 profile_distance double precision DEFAULT 0,      -- Total distance this user has cycled
 preferences_difficulty ride_difficulty DEFAULT 'balanced'::ride_difficulty,    -- This user's preference for ride difficulty
@@ -89,16 +89,18 @@ meetingTime timestamptz NOT NULL,           -- When the users will meet
 divorceTime timestamptz NOT NULL,           -- When the users will part
 meetingPoint geography NOT NULL,            -- Where the users will meet
 divorcePoint geography NOT NULL,            -- Where the users will part
-meetingPointName text NOT NULL,            -- Where the users will meet as an english string
-divorcePointName text NOT NULL,            -- Where the users will part as an english string
+meetingPointName text NOT NULL,             -- Where the users will meet as an english string
+divorcePointName text NOT NULL,             -- Where the users will part as an english string
 route geography NOT NULL,                   -- The section of the experienced_route that these users will share
+length integer NOT NULL,                    -- How long the shared section of route is in meters
 averageSpeed double precision NOT NULL,     -- The average riding speed of this route
 -- Having the average speed lets us easily calculate the time to/from the meeting/divorce points for both users
 -- By calculating these when requested, updating the meeting/divorce point becomes much easier
 created timestamptz DEFAULT 'now'::timestamptz, -- When this buddy request was created
 updated timestamptz DEFAULT 'now'::timestamptz, -- When this buddy request was last updated
 status buddy_request_status DEFAULT 'pending'::buddy_request_status,
-reason text DEFAULT ''  -- A reason for the status
+reason text DEFAULT '',  -- A reason for the status
+review integer DEFAULT 0 -- The score (+1,-1) given to this ride by the inexperiencedUser
 );
 
 CREATE INDEX IF NOT EXISTS user_email_index ON users USING btree ( "email" );

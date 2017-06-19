@@ -277,6 +277,7 @@ export function matchRoutes(
     divorceTime: string,
     name: string,
     owner: number,
+    length: number,
     meetingPoint: [number, number],
     divorcePoint: [number, number],
     timeToMeetingPoint: string,
@@ -292,7 +293,8 @@ export function matchRoutes(
     "SELECT id, " +
     "    match2.meetingTime, " +
     "    match2.divorceTime, " +
-    "    match2.matchedRoute as route, " +
+    "    match2.matchedRoute AS route, " +
+    "    ST_Length(match2.matchedRoute) AS length, " +
     "    ST_AsText(match2.meetingPoint) AS meetingPoint, " +
     "    ST_AsText(match2.divorcePoint) AS divorcePoint, " +
     "    match3.*, " +
@@ -357,6 +359,7 @@ export function matchRoutes(
                 divorcePoint: pointStringToCoords(row.divorcepoint),
                 divorceTime: row.divorcetime,
                 id: row.id,
+                length: row.length,
                 meetingPoint: pointStringToCoords(row.meetingpoint),
                 meetingTime: row.meetingtime,
                 name: row.name,
@@ -686,9 +689,9 @@ export function createBuddyRequest(buddyRequest: BuddyRequest, providedClient = 
     buddyRequest = new BuddyRequest(buddyRequest);
     const query = "INSERT INTO buddy_requests (experiencedRouteName, experiencedRoute, experiencedUser, owner, " +
         "inexperiencedRoute, meetingTime, divorceTime, meetingPoint, divorcePoint, averageSpeed, created, " +
-        "updated, status, reason, route, meetingPointName, divorcePointName)" +
+        "updated, status, reason, route, meetingPointName, divorcePointName, length)" +
         "VALUES ($1, $2, $3, $4, $5, $6, $7, ST_GeogFromText($8), ST_GeogFromText($9), $10, $11, $12, $13, " +
-        "$14, ST_GeogFromText($15), $16, $17)" +
+        "$14, ST_GeogFromText($15), $16, $17, $18)" +
         "RETURNING id";
     const queryParams = [
         buddyRequest.experiencedRouteName,
@@ -708,6 +711,7 @@ export function createBuddyRequest(buddyRequest: BuddyRequest, providedClient = 
         coordsToLineString(buddyRequest.route),
         buddyRequest.meetingPointName,
         buddyRequest.divorcePointName,
+        buddyRequest.length,
     ];
     return sqlTransaction(query, queryParams, providedClient).then(result => {
         return result.rows[0].id;
@@ -765,7 +769,8 @@ export function getBuddyRequests(params: {userId: number, id?: number}, provided
 : Promise<BuddyRequest[]> {
     let query = "SELECT id, experiencedRouteName, experiencedRoute, experiencedUser, owner, inexperiencedRoute, " +
     "meetingTime, divorceTime, ST_AsText(meetingPoint) as meetingPoint, ST_AsText(divorcePoint) AS divorcePoint, " +
-    "averageSpeed, created, updated, status, reason, ST_AsText(route) as route, meetingPointName, divorcePointName " +
+    "averageSpeed, created, updated, reason, ST_AsText(route) as route, meetingPointName, divorcePointName, " +
+    "length, status, review " +
     "FROM buddy_requests WHERE (owner=$1 OR experiencedUser=$1)";
     let queryParams = [params.userId];
     if (params.id !== null && typeof params.id !== "undefined") {
@@ -826,7 +831,7 @@ export function updateBuddyRequest(
         const query = "UPDATE buddy_requests " +
         "SET divorcePoint=ST_GeogFromText($1), divorceTime=$2, meetingTime=$3, " +
         "meetingPoint=ST_GeogFromText($4), status=$5, reason=$6, updated=$7, meetingPointName=$8, " +
-        "divorcePointName=$9 WHERE id = $10";
+        "divorcePointName=$9, review=$10, length=$11 WHERE id = $12";
         const sqlParams = [
             coordsToPointString(newBuddyRequest.divorcePoint),
             newBuddyRequest.divorceTime,
@@ -837,10 +842,68 @@ export function updateBuddyRequest(
             newBuddyRequest.updated,
             newBuddyRequest.meetingPointName,
             newBuddyRequest.divorcePointName,
+            newBuddyRequest.review,
+            newBuddyRequest.length,
             newBuddyRequest.id,
         ];
 
         return sqlTransaction(query, sqlParams, providedClient).then(result => {
             return true;
+        });
+}
+
+/**
+ * updateBuddyRequestReview - Sets or updates the review on a BuddyRequest
+ *
+ * @param  {BuddyRequest} existingRequest The old buddyRequest to be updated
+ * @param  {object} updates An object of key:values to update the BuddyRequest with
+ * @param  {client} providedClient Database client to use for this interaction
+ * @return {boolean} Whether the update succeeded
+ */
+export function updateBuddyRequestReview(
+    owner: number, buddyRequestId: number, score: number, providedClient = null): Promise<boolean> {
+        if (score === 0) {
+            throw new Error("400:BuddyRequest review must be +/- 1");
+        }
+        let buddyRequest;
+        // First up, get the buddyRequest
+        return getSentBuddyRequests({id: buddyRequestId, userId: owner}, providedClient).then(requests => {
+            buddyRequest = requests[0];
+            if (buddyRequest.status !== "accepted" && buddyRequest.status !== "completed") {
+                throw new Error("400:Can't review a " + buddyRequest.status + " BuddyRequest");
+            }
+            // Update the inexperiencedUser
+            if (buddyRequest.status !== "completed") {
+                return getUserById(buddyRequest.owner, providedClient).then(user => {
+                    let updates = {
+                        profile_distance: user.distance + buddyRequest.length,
+                        profile_helped_count: user.helpedCount + 1,
+                    };
+                    return updateUser(buddyRequest.owner, updates, providedClient);
+                });
+            } else {
+                return true;
+            }
+        }).then(() => {
+            // Update the experiencedUser
+            return getUserById(buddyRequest.experiencedUser, providedClient).then(user => {
+                let updates: any = {
+                    // Subtract old review and add new one
+                    profile_rating_sum: (user.rating * user.usersHelped) + score
+                        - buddyRequest.review,
+                };
+                if (buddyRequest.status !== "completed") {
+                    updates.profile_distance = user.distance + buddyRequest.length;
+                    updates.profile_help_count = user.usersHelped + 1;
+                }
+                return updateUser(buddyRequest.experiencedUser, updates, providedClient);
+            });
+        }).then(() => {
+            // Update the buddyRequest
+            let updates = {
+                review: score,
+                status: "completed",
+            };
+            return updateBuddyRequest(buddyRequest, updates, providedClient);
         });
 }

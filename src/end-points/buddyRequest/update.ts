@@ -88,6 +88,11 @@ const definitions = {
                 description: "The id for the BuddyRequest to update",
                 type: "integer",
             },
+            length: {
+                description: "How long the shared section of route is in meters",
+                example: 1000,
+                type: "number",
+            },
             meetingPoint: {
                 $ref: "#/definitions/Coordinate",
                 description: "Where the users will meet up before their ride",
@@ -142,6 +147,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
                 divorcePoint: payload.divorcePoint,
                 divorcePointName: payload.divorcePointName,
                 divorceTime: payload.divorceTime,
+                length: payload.length,
                 meetingPoint: payload.meetingPoint,
                 meetingPointName: payload.meetingPointName,
                 meetingTime: payload.meetingTime,
