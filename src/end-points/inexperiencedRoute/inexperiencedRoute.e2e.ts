@@ -289,7 +289,7 @@ describe("InexperiencedRoute endpoint", () => {
                     ". Full response body is: " + JSON.stringify(response.body));
             });
         });
-        it("should not get an experienced route by an invalid id", () => {
+        it("should not get an inexperienced route by an invalid id", () => {
             return defaultRequest({
                 headers: {
                     Authorization: "Bearer " + userJwts[0],
@@ -299,7 +299,7 @@ describe("InexperiencedRoute endpoint", () => {
             }).then(response => {
                 expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
                     response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                expect(response.body.error).to.equal("Inexperienced Route doesn't exist");
+                expect(response.body.error).to.equal("InexperiencedRoute does not exist");
                 expect(response.body.status).to.equal(404);
             });
         });
@@ -466,7 +466,7 @@ describe("InexperiencedRoute endpoint", () => {
             }).then(response => {
                 expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
                     response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                expect(response.body.error).to.equal("Inexperienced Route doesn't exist");
+                expect(response.body.error).to.equal("InexperiencedRoute does not exist");
                 expect(response.body.status).to.equal(404);
             });
         });
@@ -945,7 +945,7 @@ describe("InexperiencedRoute endpoint", () => {
             }).then(response => {
                 expect(response.statusCode).to.equal(404, "Expected 403 response but got " +
                     response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                expect(response.body.error).to.equal("Inexperienced Route doesn't exist");
+                expect(response.body.error).to.equal("InexperiencedRoute does not exist");
                 expect(response.body.status).to.equal(404);
             });
         });
@@ -970,7 +970,7 @@ describe("InexperiencedRoute endpoint", () => {
             }).then(response => {
                 expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
                     response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                expect(response.body.error).to.equal("Inexperienced Route doesn't exist");
+                expect(response.body.error).to.equal("InexperiencedRoute does not exist");
                 expect(response.body.status).to.equal(404);
             });
         });

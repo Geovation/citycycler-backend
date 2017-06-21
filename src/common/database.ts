@@ -198,13 +198,12 @@ export function getExperiencedRoutes(params: {userId: number, id?: number}, prov
         queryParams.push(params.id);
     }
     return sqlTransaction(query, queryParams, providedClient).then(result => {
-        if (result.rowCount > 0) {
-            return result.rows.map((route) => {
-                return ExperiencedRoute.fromSQLRow(route);
-            });
-        } else {
-            throw new Error("404:ExperiencedRoute doesn't exist");
+        if (params.id !== undefined && result.rows.length === 0) {
+            throw new Error("404:ExperiencedRoute does not exist");
         }
+        return result.rows.map((route) => {
+            return ExperiencedRoute.fromSQLRow(route);
+        });
     });
 }
 
@@ -472,13 +471,12 @@ export function getInexperiencedRoutes(params: {userId: number, id?: number}, pr
         queryParams.push(params.id);
     }
     return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
-        if (result.rowCount > 0) {
-            return result.rows.map((inexperiencedRoute) => {
-                return InexperiencedRoute.fromSQLRow(inexperiencedRoute);
-            });
-        } else {
-            throw new Error("404:Inexperienced Route doesn't exist");
+        if (params.id !== undefined && result.rows.length === 0) {
+            throw new Error("404:InexperiencedRoute does not exist");
         }
+        return result.rows.map((inexperiencedRoute) => {
+            return InexperiencedRoute.fromSQLRow(inexperiencedRoute);
+        });
     });
 }
 
@@ -732,8 +730,8 @@ export function getSentBuddyRequests(params: {userId: number, id?: number}, prov
         let matchingBuddyRequests = buddyRequests.filter(buddyRequest => {
             return buddyRequest.owner === params.userId;
         });
-        if (matchingBuddyRequests.length === 0) {
-            throw new Error("404:BuddyRequest doesn't exist");
+        if (params.id !== undefined && params.id !== null && matchingBuddyRequests.length === 0) {
+            throw new Error("404:BuddyRequest does not exist");
         }
         // Add the otherUser and myRoute
         return Promise.all(matchingBuddyRequests.map(buddyRequest => {
@@ -751,14 +749,13 @@ export function getSentBuddyRequests(params: {userId: number, id?: number}, prov
                 } else {
                     throw err;
                 }
-            }).then(route => {
-                return Object.assign(buddyRequest, {otherUser, myRoute: [route[0].startPoint, route[0].endPoint]});
-            }, err => {
-                if (err.message.slice(0, 3) === "404") {
+            }).then(routes => {
+                if (routes.length) {
+                    return Object.assign(buddyRequest,
+                        {otherUser, myRoute: [routes[0].startPoint, routes[0].endPoint]});
+                } else  {
                     // Route not found, so leave myRoute undefined
                     return Object.assign(buddyRequest, {otherUser});
-                } else {
-                    throw err;
                 }
             });
         }));
@@ -780,8 +777,8 @@ export function getReceivedBuddyRequests(params: {userId: number, id?: number}, 
         let matchingBuddyRequests = buddyRequests.filter(buddyRequest => {
             return buddyRequest.experiencedUser === params.userId;
         });
-        if (matchingBuddyRequests.length === 0) {
-            throw new Error("404:BuddyRequest doesn't exist");
+        if (params.id !== undefined && params.id !== null && matchingBuddyRequests.length === 0) {
+            throw new Error("404:BuddyRequest does not exist");
         }
         // Add the otherUser and myRoute
         return Promise.all(matchingBuddyRequests.map(buddyRequest => {
@@ -800,13 +797,11 @@ export function getReceivedBuddyRequests(params: {userId: number, id?: number}, 
                     throw err;
                 }
             }).then(routes => {
-                return Object.assign(buddyRequest, {otherUser, myRoute: routes[0].route});
-            }, err => {
-                if (err.message.slice(0, 3) === "404") {
+                if (routes.length) {
+                    return Object.assign(buddyRequest, {otherUser, myRoute: routes[0].route});
+                } else  {
                     // Route not found, so leave myRoute undefined
                     return Object.assign(buddyRequest, {otherUser});
-                } else {
-                    throw err;
                 }
             });
         }));

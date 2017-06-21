@@ -356,9 +356,11 @@ describe("BuddyRequest endpoint", () => {
                     method: "GET",
                     url: url + "/buddyRequest/sent",
                 }).then(response => {
-                    expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
+                    expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                     response.statusCode + ", error given is: " + response.error +
                         " body is " + response.body);
+                    let buddyRequests = response.body.result;
+                    expect(buddyRequests.length).to.equal(0);
                 });
             });
             it("should not get a user's sent buddy requests with no auth", () => {
@@ -377,7 +379,7 @@ describe("BuddyRequest endpoint", () => {
                         Authorization: "Bearer " + randomUserJwt,
                     },
                     method: "GET",
-                    url: url + "/buddyRequest/sent",
+                    url: url + "/buddyRequest/sent?id=" + buddyRequest1Id,
                 }).then(response => {
                     expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
                     response.statusCode + ", error given is: " + response.error +
@@ -532,9 +534,11 @@ describe("BuddyRequest endpoint", () => {
                     method: "GET",
                     url: url + "/buddyRequest/received",
                 }).then(response => {
-                    expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
+                    expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                     response.statusCode + ", error given is: " + response.error +
                         " body is " + response.body);
+                    let buddyRequests = response.body.result;
+                    expect(buddyRequests.length).to.equal(0);
                 });
             });
             it("should not get a user's sent buddy requests with no auth", () => {
@@ -553,7 +557,7 @@ describe("BuddyRequest endpoint", () => {
                         Authorization: "Bearer " + randomUserJwt,
                     },
                     method: "GET",
-                    url: url + "/buddyRequest/received",
+                    url: url + "/buddyRequest/received?id=" + buddyRequest1Id,
                 }).then(response => {
                     expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
                     response.statusCode + ", error given is: " + response.error +
@@ -1785,7 +1789,7 @@ describe("BuddyRequest endpoint", () => {
                     }).then(response => {
                         expect(response.statusCode).to.equal(404);
                         expect(response.body.status).to.equal(404);
-                        expect(response.body.error).to.equal("BuddyRequest doesn't exist");
+                        expect(response.body.error).to.equal("BuddyRequest does not exist");
                     });
                 });
                 it("Should not let a user review a buddyRequest as a 2", () => {
