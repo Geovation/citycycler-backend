@@ -198,7 +198,7 @@ export function getExperiencedRoutes(params: {userId: number, id?: number}, prov
         queryParams.push(params.id);
     }
     return sqlTransaction(query, queryParams, providedClient).then(result => {
-        if (params.id !== undefined && result.rows.length === 0) {
+        if (params.id !== undefined && params.id !== null && result.rows.length === 0) {
             throw new Error("404:ExperiencedRoute does not exist");
         }
         return result.rows.map((route) => {
@@ -471,7 +471,7 @@ export function getInexperiencedRoutes(params: {userId: number, id?: number}, pr
         queryParams.push(params.id);
     }
     return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
-        if (params.id !== undefined && result.rows.length === 0) {
+        if (params.id !== undefined && params.id !== null && result.rows.length === 0) {
             throw new Error("404:InexperiencedRoute does not exist");
         }
         return result.rows.map((inexperiencedRoute) => {
