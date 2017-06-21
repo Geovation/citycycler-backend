@@ -35,9 +35,11 @@ npm run build
 This will run the linter, remove the current `build` directory and convert the
 TypeScript files in `src` to JavaScript files in `build`.
 
-## Test
 
-Testing is done with Jasmine. Any `.spec.ts` files in `src` get converted to
+## Test
+
+
+Testing is done with mocha. Any `.spec.ts` files in `src` get converted to
 `.spec.js` files in `build` by the build process. When Jasmine is run, it looks
 for and runs these `.spec.js` files from the `build` directory.
 
@@ -58,8 +60,9 @@ The unit tests don't require a server, the end to end tests automatically start
 and stop one if it is needed. You can configure which URL the tests are run
 against using the `NODE_ENV` environment variable descirbed next.
 
-All end to end tests must be specified in `.e2e.ts` files in the `src` directory
-(these will be converted to `.e2e.js` files in the `build` directory).
+All end to end tests must be specified in `.e2e.ts` files any `src` directory
+or subdirectory (these will be converted to `.e2e.js` files in the `build`
+directory).
 
 WARNING: As part of the continuous delivery process, the end to end tests are
 also run against the live deployed site so they shouldn't make breaking
@@ -72,7 +75,9 @@ in which the server must run:
 
  - `development` - Also the default when `NODE_ENV` is undefined, this will run
  all tests against localhost, and will attempt to access a database at
- `localhost:5432`.
+ `localhost:5432`. It will also expect the following two environment variables:
+     - `PGUSER` - The username with which to access the database
+     - `PGPASSWORD` - The password with which to access the database
  - `staging` - The server will act like `production`, except it will connect
  through the [google cloud SQL proxy](https://cloud.google.com/sql/docs/postgres/connect-external-app)
  (see step 2 onwards). This is set in `circle.yml` which is used by CircleCI,
@@ -104,7 +109,7 @@ To be able to deploy there are three steps:
    gcloud auth activate-service-account --key-file conf/key-file.json
    ```
 
-### Performing a Deploy
+### Performing a Deploy
 
 From this point on you can deploy like this:
 
@@ -113,6 +118,15 @@ npm run deploy
 ```
 
 The `predeploy` step currently just runs a build (and lint) and the tests.
+
+### Accessing the production database
+
+This is running on google's cloud SQL, and the easiest way to access it is
+running google's cloud proxy. You can run this with `npm run dbproxy`,
+which will allow you to connect to the database on `localhost:3307`.
+You will also need the password, which is `aUZw[:Gw38H&>Jf2hUwd`.
+*When it comes time to open source this repo we should definitley change
+it, because this one is also floating round in our gulpfile*
 
 ### Advanced
 
