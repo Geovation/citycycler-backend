@@ -124,8 +124,7 @@ const definitions = {
                 type: "string",
             },
             owner: {
-                description: "The userId of the user who owns this route",
-                type: "integer",
+                $ref: "#/definitions/User",
             },
             route: {
                 $ref: "#/definitions/CoordList",

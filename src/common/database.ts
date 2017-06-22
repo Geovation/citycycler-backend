@@ -275,7 +275,7 @@ export function matchRoutes(
     meetingTime: string,
     divorceTime: string,
     name: string,
-    owner: number,
+    owner: User,
     length: number,
     meetingPoint: [number, number],
     divorcePoint: [number, number],
@@ -351,23 +351,25 @@ export function matchRoutes(
     let queryParams = [startPoint, endPoint, matchParams.radius, matchParams.arrivalDateTime];
 
     return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
-        return result.rows.map((row) => {
-            return {
-                distanceFromDivorcePoint: row.distanceFromDivorcePoint,
-                distanceToMeetingPoint: row.distanceToMeetingPoint,
-                divorcePoint: pointStringToCoords(row.divorcepoint),
-                divorceTime: row.divorcetime,
-                id: row.id,
-                length: row.length,
-                meetingPoint: pointStringToCoords(row.meetingpoint),
-                meetingTime: row.meetingtime,
-                name: row.name,
-                owner: row.owner,
-                route: lineStringToCoords(row.route),
-                timeFromDivorcePoint: row.timeFromdivorcePoint,
-                timeToMeetingPoint: row.timeToMeetingPoint,
-            };
-        });
+        return Promise.all(result.rows.map((row) => {
+            return getUserById(row.owner, providedClient).then(user => {
+                return {
+                    distanceFromDivorcePoint: row.distanceFromDivorcePoint,
+                    distanceToMeetingPoint: row.distanceToMeetingPoint,
+                    divorcePoint: pointStringToCoords(row.divorcepoint),
+                    divorceTime: row.divorcetime,
+                    id: row.id,
+                    length: row.length,
+                    meetingPoint: pointStringToCoords(row.meetingpoint),
+                    meetingTime: row.meetingtime,
+                    name: row.name,
+                    owner: user,
+                    route: lineStringToCoords(row.route),
+                    timeFromDivorcePoint: row.timeFromdivorcePoint,
+                    timeToMeetingPoint: row.timeToMeetingPoint,
+                };
+            });
+        }));
     });
 
 }
