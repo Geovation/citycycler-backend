@@ -523,7 +523,9 @@ describe("MatchMyRoute Database Functions", () => {
                 })[0];
                 expect(thisRoute).to.not.equal(undefined, "Route was not matched. Results were " +
                     JSON.stringify(routes));
-                expect(thisRoute.owner).to.equal(thisUserId);
+                expect(thisRoute, "Returned match doesn't have owner").to.have.property("owner");
+                expect(thisRoute.owner, "Returned owner doesn't id").to.have.property("id");
+                expect(thisRoute.owner.id).to.equal(thisUserId, "Owner is not what was expected");
                 expect(moment("2017-09-08T12:45:00+00").isBefore(thisRoute.meetingTime)).to.equal(true,
                     "meetingTime is before the route's start time (2017-09-08T12:45:00+00). Got " +
                     thisRoute.meetingTime);
