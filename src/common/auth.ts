@@ -10,10 +10,9 @@ export const minimumHashingRounds = 30000;
 initFirebase();
 
 function initFirebase() {
-    const serviceAccount = require("conf/matchmyroute-backend-581da-firebase-adminsdk-xue84-6a2d8cdd8f.json");
     firebaseAdmin.initializeApp({
-        credential: firebaseAdmin.credential.cert(serviceAccount),
-        databaseURL: "https://matchmyroute-backend-581da.firebaseio.com",
+        credential: firebaseAdmin.credential.applicationDefault(),
+        databaseURL: "https://matchmyroute-backend.firebaseio.com/",
     });
 }
 
