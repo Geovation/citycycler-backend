@@ -1,10 +1,21 @@
 import * as Database from "./database";
 import { IUserSettings } from "./UserDataModels";
+import * as firebaseAdmin from "firebase-admin";
 import * as jwt from "jsonwebtoken";
 
 // The minimum number of hashing rounds required for passwords to be considered secure
 // Updating this will cause any user who logs in or updates their password to have a new, more secure password generated
 export const minimumHashingRounds = 30000;
+
+initFirebase();
+
+function initFirebase() {
+    const serviceAccount = require("conf/matchmyroute-backend-581da-firebase-adminsdk-xue84-6a2d8cdd8f.json");
+    firebaseAdmin.initializeApp({
+        credential: firebaseAdmin.credential.cert(serviceAccount),
+        databaseURL: "https://matchmyroute-backend-581da.firebaseio.com",
+    });
+}
 
 /**
  * check if the header was authorsed by the given user
@@ -79,6 +90,11 @@ export function getIdFromJWT(authHeader: string, providedClient = null): Promise
  * @param user
  */
 export const generateJWTFor = (user: IUserSettings): { token: string; expires: number } => {
+    firebaseAdmin.auth().createCustomToken(user.id + "")
+        .then(customToken => {
+            console.log("Firebase custom token was generated for user" + customToken);
+        });
+
     return {
         expires: Math.trunc((new Date()).getTime() / 1000) + 1209600,
         token: jwt.sign({ id: user.id }, user.jwtSecret, {

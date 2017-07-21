@@ -92,6 +92,7 @@ function getDevelopmentEnvVars() {
         NODE_ENV: "development",
         GOOGLE_APPLICATION_CREDENTIALS: "conf/storage-keyfile.json",
         STORAGE_BUCKET: "matchmyroute-dev",
+        FIREBASE_CREDENTIALS: "conf/matchmyroute-backend-581da-firebase-adminsdk-xue84-6a2d8cdd8f.json",
     });
 };
 
