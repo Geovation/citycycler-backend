@@ -118,9 +118,11 @@ describe("MatchMyRoute Auth Functions", () => {
     describe("generateJWTFor", () => {
         it("should create a reversible token", () => {
             return Database.getUserById(uid, transactionClient).then(user => {
-                const token = Auth.generateJWTFor(user).token;
+                return Auth.generateJWTFor(user);
+            })
+            .then(tokenObject => {
                 const decodeFunction = () => {
-                    return jwt.verify(token, secret, {
+                    return jwt.verify(tokenObject.token, secret, {
                         algorithms: ["HS256"],
                         issuer: "MatchMyRoute Backend",
                     }).id;

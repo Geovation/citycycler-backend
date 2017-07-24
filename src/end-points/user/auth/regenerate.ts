@@ -53,11 +53,14 @@ const operation = {
 // SWAGGER: END //
 // ///////////////
 
-export const service = (broadcast: Function, params: any): Promise<{ token: string; expires: number; }> => {
+export const service = (broadcast: Function, params: any):
+Promise<{ token: string; expires: number; firebaseToken: string }> => {
     return getIdFromJWT(params.authorization).then(userid => {
         return Database.getUserById(userid);
     }).then(user => {
         return generateJWTFor(user);
+    }).then(tokenObject => {
+        return tokenObject;
     }).catch(err => {
         throw err;
     });
