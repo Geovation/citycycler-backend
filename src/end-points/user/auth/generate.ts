@@ -82,6 +82,10 @@ const definitions = {
                         example: 123456789,
                         type: "integer",
                     },
+                    firebaseToken: {
+                        example: "eyJhbGciOiJI...28ZZEY",
+                        type: "string",
+                    },
                     token: {
                         example: "eyJhbGciOiJI...28ZZEY",
                         type: "string",
@@ -130,17 +134,24 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
                         });
                     }
                     Database.commitAndReleaseTransaction(transactionClient);
-                    // Add the user to the response
-                    let response = Object.assign(generateJWTFor(user), {
-                        user: thisUser.asUserProfile(),
-                    });
-                    resolve(response);
+                    resolve(user);
                 } else {
                     reject("403:Incorrect Password");
                 }
             });
         });
-    }).catch(err => {
+    })
+    .then(user => {
+        return generateJWTFor(user);
+    })
+    .then(tokenResponse => {
+        // Add the user to the response
+        let response = Object.assign(tokenResponse, {
+            user: thisUser.asUserProfile(),
+        });
+        return response;
+    })
+    .catch(err => {
         const originalError = typeof err === "string" ? err : err.message;
         if (typeof transactionClient !== "undefined") {
             return Database.rollbackAndReleaseTransaction(transactionClient)

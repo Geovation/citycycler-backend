@@ -105,6 +105,10 @@ const definitions = {
                         example: 123456789,
                         type: "integer",
                     },
+                    firebaseToken: {
+                        example: "eyJhbGciOiJI...28ZZEY",
+                        type: "string",
+                    },
                     token: {
                         example: "eyJhbGciOiJI...28ZZEY",
                         type: "string",
@@ -193,10 +197,13 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     .then(() => {
         return Database.commitAndReleaseTransaction(client);
     })
-    // return information to client
     .then(() => {
+        return generateJWTFor(createdUser);
+    })
+    // return information to client
+    .then(tokenObject => {
         let returnValues = {
-            jwt: generateJWTFor(createdUser),
+            jwt: tokenObject,
             status: 201,
             user: createdUser.asUserProfile(),
         };
