@@ -1,5 +1,6 @@
 import { getIdFromJWT } from "../../common/auth";
 import * as Database from "../../common/database";
+import * as FcmNotifications from "../../common/fcmNotifications";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 
 // /////////////////////////////////////////////////////////////
@@ -177,10 +178,12 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
     let transactionClient;
     let newId;
+    let ownerUserId;
     return Database.createTransactionClient().then(newClient => {
         transactionClient = newClient;
         return getIdFromJWT(params.authorization);
     }).then(userId => {
+        ownerUserId = userId;
         const newBuddyRequest = {
             averageSpeed: payload.averageSpeed,
             created: new Date().toISOString(),
@@ -207,7 +210,25 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     }).then(id => {
         newId = id;
         return Database.commitAndReleaseTransaction(transactionClient);
-    }).then(() => {
+    }).then(
+        () => {
+            FcmNotifications.notify(payload.experiencedUser, {
+                data: {
+                    buddyRequestId: newId.toString(),
+                    experiencedRouteName: payload.experiencedRouteName,
+                    meetingTime: payload.meetingTime,
+                    sender: ownerUserId.toString(),
+                    type: "buddyrequest_received",
+                },
+                notification: {
+                    body: "For route '" +
+                        payload.experiencedRouteName + "' to meet " + payload.meetingTime,
+                    title: "MatchMyRoute: New buddy request",
+                },
+            });
+        }
+    )
+    .then(() => {
         return { id: newId, status: 201 };
     }).catch(err => {
         const originalError = typeof err === "string" ? err : err.message;

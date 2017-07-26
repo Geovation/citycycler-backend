@@ -1,5 +1,6 @@
 import { getIdFromJWT } from "../../common/auth";
 import * as Database from "../../common/database";
+import * as FcmNotifications from "../../common/fcmNotifications";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 // import * as logger from "winston";
 
@@ -131,6 +132,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
     let userId;
     let transactionClient;
+    let targetBuddyRequest;
     return Database.createTransactionClient().then(newClient => {
         transactionClient = newClient;
         return getIdFromJWT(params.authorization);
@@ -143,6 +145,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         }
     }).then(buddyRequests => {
         if (buddyRequests.length === 1) {
+            targetBuddyRequest = buddyRequests[0];
             const updates = {
                 divorcePoint: payload.divorcePoint,
                 divorcePointName: payload.divorcePointName,
@@ -160,6 +163,43 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         }
     }).then(() => {
         return Database.commitAndReleaseTransaction(transactionClient);
+    }).then(() => {
+        // send notification to affected user (recipient or sender of buddy request)
+        let notificationTargetUser;
+        let notificationType;
+        let message;
+        if (targetBuddyRequest.owner === userId) {
+            notificationType = "buddyrequest_recipient_detailschange";
+            notificationTargetUser = targetBuddyRequest.experiencedUser;
+            message = "The details of the buddy request for your route " +
+                targetBuddyRequest.experiencedRouteName + " have been changed.";
+        } else {
+            notificationType = "buddyrequest_sender_detailschange";
+            notificationTargetUser = targetBuddyRequest.owner;
+            message = "The details of your buddy request for your route '" +
+                targetBuddyRequest.inexperiencedRouteName + "', meeting at " +
+                (payload.meetingTime ? payload.meetingTime : targetBuddyRequest.meetingTime) +
+                 "have been updated";
+        }
+        // notify correct person
+        FcmNotifications.notify(
+            notificationTargetUser,
+            {
+                data: {
+                    buddyRequestId: payload.id.toString(),
+                    experiencedRouteName: targetBuddyRequest.experiencedRouteName,
+                    inexperiencedRouteName: targetBuddyRequest.inexperiencedRouteName,
+                    meetingPointName: targetBuddyRequest.meetingPointName,
+                    meetingTime: targetBuddyRequest.meetingTime.toString(),
+                    type: notificationType,
+                    updates: JSON.stringify(payload),
+                },
+                notification: {
+                    body: message,
+                    title: "MatchMyRoute: Buddy request details changed",
+                },
+            }
+        );
     }).then(() => {
         return true;
     }).catch(err => {
