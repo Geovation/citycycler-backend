@@ -1,5 +1,12 @@
 import * as firebaseAdmin from "firebase-admin";
 
+/**
+ * notify - notify the provided user with the provided data and message payload
+ *
+ * @param {integer} userId: number The id of the user to notify
+ * @param {firebaseAdmin.messaging.MessagingPayload} messagePayload: data payload
+ * and native message payload as per Firebase Cloud Messaging syntax
+ */
 export function notify(
     userId: number,
     messagePayload: firebaseAdmin.messaging.MessagingPayload) {
@@ -16,6 +23,14 @@ export function notify(
     );
 }
 
+/**
+ * getRegistrationTokensForUser - gets all current registration tokens for the
+ * user from firebase
+ *
+ * @param  {integer} userId: number The userId of the user that should receive
+ * the notification
+ * @return {string[]} Array of registration tokens for the user
+ */
 function getRegistrationTokensForUser(userId: number) {
     const database = firebaseAdmin.database();
     const deviceTokenRef = database.ref("deviceTokens");
