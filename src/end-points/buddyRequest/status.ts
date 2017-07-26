@@ -1,5 +1,6 @@
 import { getIdFromJWT } from "../../common/auth";
 import * as Database from "../../common/database";
+import * as FcmNotifications from "../../common/fcmNotifications";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
 // import * as logger from "winston";
 
@@ -105,6 +106,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
     let userId;
     let transactionClient;
+    let targetBuddyRequest;
     return Database.createTransactionClient().then(newClient => {
         transactionClient = newClient;
         return getIdFromJWT(params.authorization);
@@ -118,6 +120,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     }).then(buddyRequests => {
         // Ok! We should have the buddy request now, no matter which user is updating the status!
         if (buddyRequests.length === 1) {
+            targetBuddyRequest = buddyRequests[0];
             const userIsExperienced = buddyRequests[0].experiencedUser === userId;
             const existingStatus = buddyRequests[0].status;
             let newStatus = payload.status;
@@ -196,7 +199,44 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         }
     }).then(() => {
         return Database.commitAndReleaseTransaction(transactionClient);
-    }).then(() => {
+    }).then(
+        () => {
+            let notificationTargetUser;
+            let notificationType;
+            let message;
+            if (targetBuddyRequest.owner === userId) {
+                notificationType = "buddyrequest_recipient_statuschange";
+                notificationTargetUser = targetBuddyRequest.experiencedUser;
+                message = "The request of for your route '" +
+                    targetBuddyRequest.experiencedRouteName + "' was cancelled";
+            } else {
+                notificationType = "buddyrequest_sender_statuschange";
+                notificationTargetUser = targetBuddyRequest.owner;
+                message = "The request for your route '" + targetBuddyRequest.inexperiencedRouteName +
+                    "', meeting at " + targetBuddyRequest.meetingTime + "was " + payload.status;
+            }
+            // notify correct person
+            FcmNotifications.notify(
+                notificationTargetUser,
+                {
+                    data: {
+                        buddyRequestId: payload.id.toString(),
+                        experiencedRouteName: targetBuddyRequest.experiencedRouteName,
+                        inexperiencedRouteName: targetBuddyRequest.inexperiencedRouteName,
+                        meetingPointName: targetBuddyRequest.meetingPointName,
+                        meetingTime: targetBuddyRequest.meetingTime.toString(),
+                        reason: payload.reason,
+                        status: payload.status,
+                        type: notificationType,
+                    },
+                    notification: {
+                        body: message,
+                        title: "MatchMyRoute: Buddy request " + payload.status,
+                    },
+                }
+            );
+        }
+    ).then(() => {
         return true;
     }).catch(err => {
         const originalError = typeof err === "string" ? err : err.message;

@@ -3,7 +3,7 @@ import * as firebaseAdmin from "firebase-admin";
 export function notify(
     userId: number,
     messagePayload: firebaseAdmin.messaging.MessagingPayload) {
-    console.log("user is notified");
+    console.log("user " + userId + "is notified");
     getRegistrationTokensForUser(userId).then(
         registrationTokens => {
             // send notification
