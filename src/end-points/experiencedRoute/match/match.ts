@@ -123,6 +123,11 @@ const definitions = {
                 example: new Date().toISOString(),
                 type: "string",
             },
+            name: {
+                description: "The name of this route",
+                example: "Ride to work",
+                type: "string",
+            },
             owner: {
                 $ref: "#/definitions/User",
             },
@@ -157,6 +162,8 @@ const definitions = {
             "route",
             "owner",
             "id",
+            "length",
+            "name",
         ],
     },
     RouteSearchResult: {
