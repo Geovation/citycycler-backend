@@ -143,6 +143,7 @@ const definitions = {
         required: [
             "averageSpeed",
             "divorcePoint",
+            "divorcePointName",
             "divorceTime",
             "experiencedRoute",
             "experiencedRouteName",
@@ -151,6 +152,7 @@ const definitions = {
             "inexperiencedRouteName",
             "length",
             "meetingPoint",
+            "meetingPointName",
             "meetingTime",
             "route",
         ],
