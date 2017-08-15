@@ -353,6 +353,11 @@ export function matchRoutes(
     return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
         return Promise.all(result.rows.map((row) => {
             return getUserById(row.owner, providedClient).then(user => {
+                const userObj = Object.assign({}, user);
+                delete userObj.pwh;
+                delete userObj.salt;
+                delete userObj.rounds;
+                delete userObj.jwtSecret;
                 return {
                     distanceFromDivorcePoint: row.distanceFromDivorcePoint,
                     distanceToMeetingPoint: row.distanceToMeetingPoint,
@@ -363,7 +368,7 @@ export function matchRoutes(
                     meetingPoint: pointStringToCoords(row.meetingpoint),
                     meetingTime: row.meetingtime,
                     name: row.name,
-                    owner: user,
+                    owner: userObj,
                     route: lineStringToCoords(row.route),
                     timeFromDivorcePoint: row.timeFromdivorcePoint,
                     timeToMeetingPoint: row.timeToMeetingPoint,
