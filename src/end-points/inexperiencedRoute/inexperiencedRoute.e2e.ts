@@ -425,6 +425,20 @@ describe("InexperiencedRoute endpoint", () => {
                     JSON.stringify(response.body.result));
             });
         });
+        it("should not return sensitive information for the matching inexperienced route", () => {
+            return defaultRequest({
+                headers: {
+                    Authorization: "Bearer " + userJwts[1],
+                },
+                method: "GET",
+                url: url + "/inexperiencedRoute/query?id=" + shouldMatchId,
+            }).then(response => {
+                expect(response.body.result[0].pwh).to.equal(undefined, "Pwh should not be included");
+                expect(response.body.result[0].salt).to.equal(undefined, "Salt should not be included");
+                expect(response.body.result[0].rounds).to.equal(undefined, "Rounds should not be included");
+                expect(response.body.result[0].jwtSecret).to.equal(undefined, "jwtSecret should not be included");
+            });
+        });
         it("should give an empty list with a non matching inexperienced route", () => {
             return defaultRequest({
                 headers: {
