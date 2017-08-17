@@ -221,7 +221,9 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
                 {
                     data: {
                         buddyRequestId: payload.id.toString(),
+                        experiencedRoute: targetBuddyRequest.experiencedRoute.toString(),
                         experiencedRouteName: targetBuddyRequest.experiencedRouteName,
+                        inexperiencedRoute: targetBuddyRequest.inexperiencedRoute.toString(),
                         inexperiencedRouteName: targetBuddyRequest.inexperiencedRouteName,
                         meetingPointName: targetBuddyRequest.meetingPointName,
                         meetingTime: targetBuddyRequest.meetingTime.toString(),
