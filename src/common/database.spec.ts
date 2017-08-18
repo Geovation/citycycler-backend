@@ -536,7 +536,7 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(thisRoute.divorcePoint).to.eql([0, 4.6]);
                 expect(thisRoute.name).to.equal("112 Rachel Road to 33 Stanley Street");
                 expect(thisRoute.route).to.eql([[0, 1.4], [0, 2], [0, 3], [0, 4], [0, 4.6]]);
-                expect(thisRoute.length).to.equal(3.2);
+                expect(thisRoute.length).to.equal(353848);
             });
         });
         it("should not match an experienced route if the radius is too big", done => {

@@ -293,7 +293,7 @@ export function matchRoutes(
     "    match2.meetingTime, " +
     "    match2.divorceTime, " +
     "    match2.matchedRoute AS route, " +
-    "    ST_Length(match2.matchedRoute) AS length, " +
+    "    round(ST_Length(match2.matchedRoute::geography)) AS length, " +
     "    ST_AsText(match2.meetingPoint) AS meetingPoint, " +
     "    ST_AsText(match2.divorcePoint) AS divorcePoint, " +
     "    match3.*, " +
