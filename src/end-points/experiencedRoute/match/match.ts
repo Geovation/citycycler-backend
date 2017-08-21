@@ -76,6 +76,12 @@ const definitions = {
     RouteSearchData: {
         description: "Information about a matching route",
         properties: {
+            averageSpeed: {
+                description: "The average speed of the experienced cyclist on this route in m/s. " +
+                    "This is used to calculate time to/from the meeting and divorce points",
+                example: 3.3,
+                type: "number",
+            },
             distanceFromDivorcePoint: {
                 description: "How far in meters the user will have to cycle from the divorce point to their " +
                 "destination",
@@ -151,6 +157,7 @@ const definitions = {
             },
         },
         required: [
+            "averageSpeed",
             "meetingPoint",
             "meetingTime",
             "distanceToMeetingPoint",
