@@ -272,6 +272,7 @@ export function matchRoutes(
     providedClient = null
 ): Promise<{
     id: number,
+    averageSpeed: number,
     meetingTime: string,
     divorceTime: string,
     name: string,
@@ -290,6 +291,7 @@ export function matchRoutes(
     }
     let query = "" +
     "SELECT id, " +
+    "    CAST(round(match1.averageSpeed::numeric, 1) AS DOUBLE PRECISION) AS averageSpeed, " +
     "    match2.meetingTime, " +
     "    match2.divorceTime, " +
     "    match2.matchedRoute AS route, " +
@@ -314,7 +316,8 @@ export function matchRoutes(
     "                AND pg_type.typname='day_of_week') AS requiredDay, " +
     "            $4::timestamptz::date AS requiredDate, " +
     //          Get the average speed in m/s
-    "	        ST_Length(route) / EXTRACT(EPOCH FROM (arrivalTime::time - departureTime::time)) AS averageSpeed " +
+    "	        ST_Length(route::geography) / EXTRACT(EPOCH FROM (arrivalTime::time - departureTime::time)) " +
+    "                AS averageSpeed " +
     "    ) AS match1, " +
     "    LATERAL ( " +
     "        SELECT " +
@@ -359,6 +362,7 @@ export function matchRoutes(
                 delete userObj.rounds;
                 delete userObj.jwtSecret;
                 return {
+                    averageSpeed: row.averagespeed,
                     distanceFromDivorcePoint: row.distanceFromDivorcePoint,
                     distanceToMeetingPoint: row.distanceToMeetingPoint,
                     divorcePoint: pointStringToCoords(row.divorcepoint),
