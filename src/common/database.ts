@@ -15,7 +15,7 @@ const config = {
     // host: "35.190.143.196", // Server hosting the postgres database
     host: process.env.DB_CONNECTION_PATH, // Server hosting the postgres database
     idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed
-    max: 10, // max number of clients in the pool
+    max: 20, // max number of clients in the pool
     // user: "postgres", // env var: PGUSER
 };
 
@@ -61,13 +61,13 @@ export function rollbackAndReleaseTransaction(client, source = "") {
     return client.query("ROLLBACK").
     then(() => {
         // console.log("rolled back successfully");
-        return client.release();
+        return client.release(true);
     });
 }
 
 export function commitAndReleaseTransaction(client) {
     return client.query("COMMIT").then(e => {
-        client.release();
+        client.release(true);
     });
 }
 
@@ -79,11 +79,10 @@ export function sqlTransaction(query: string, params: Array<any> = [], providedC
         return client.query(query, params);
     }).then(response => {
         if (providedClient === null) {
-            // console.log("releasing new client");
             // TODO: This should not automatically COMMIT, but instead the endpoint
             // should decide what to do and in case of failure roll back the transaction
             client.query("COMMIT").then(e => {
-              client.release();
+                client.release(true);
           });
         }
         return response;
