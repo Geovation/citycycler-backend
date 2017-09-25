@@ -319,6 +319,8 @@ describe("InexperiencedRoute endpoint", () => {
     describe("Querying against Routes", () => {
         let routeId;
         let shouldMatchId;
+        let shouldMatchTuesdayId;
+        let shouldMatchSundayId;
         let shouldNotMatchId;
         before("set up an experienced route and two inexperienced routes that do and don't match it", () => {
             // Set up a long straight route that is easy to reason about
@@ -337,6 +339,28 @@ describe("InexperiencedRoute endpoint", () => {
             });
             const matchingInexperiencedRoute = {
                 arrivalDateTime: "2017-06-02T12:00:00+00",
+                endPoint: [0, 4.8],
+                endPointName: "18 Penny Promenade",
+                length: 1222,
+                name: "Ride home",
+                notifyOwner: false,
+                radius: 1000,
+                startPoint: [0, 1.3],
+                startPointName: "33 Stanley Street",
+            };
+            const matchingTuesdayInexperiencedRoute = {
+                arrivalDateTime: "2017-09-26T12:00:00+00",
+                endPoint: [0, 4.8],
+                endPointName: "18 Penny Promenade",
+                length: 1222,
+                name: "Ride home",
+                notifyOwner: false,
+                radius: 1000,
+                startPoint: [0, 1.3],
+                startPointName: "33 Stanley Street",
+            };
+            const matchingSundayInexperiencedRoute = {
+                arrivalDateTime: "2017-10-01T12:00:00+00",
                 endPoint: [0, 4.8],
                 endPointName: "18 Penny Promenade",
                 length: 1222,
@@ -391,6 +415,38 @@ describe("InexperiencedRoute endpoint", () => {
                         headers: {
                             Authorization: "Bearer " + userJwts[1],
                         },
+                        json: matchingTuesdayInexperiencedRoute,
+                        method: "PUT",
+                        url: url + "/inexperiencedRoute",
+                    });
+                }
+            }).then(response => {
+                if (response.statusCode !== 201) {
+                    logger.error("Error while setting up the (matching) Tuesday inexperienced route to " +
+                        "test route matching");
+                    throw response.error || response.body;
+                } else {
+                    shouldMatchTuesdayId = response.body.result.id;
+                    return defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[1],
+                        },
+                        json: matchingSundayInexperiencedRoute,
+                        method: "PUT",
+                        url: url + "/inexperiencedRoute",
+                    });
+                }
+            }).then(response => {
+                if (response.statusCode !== 201) {
+                    logger.error("Error while setting up the (matching) Sunday inexperienced route to " +
+                        "test route matching");
+                    throw response.error || response.body;
+                } else {
+                    shouldMatchSundayId = response.body.result.id;
+                    return defaultRequest({
+                        headers: {
+                            Authorization: "Bearer " + userJwts[1],
+                        },
                         json: nonMatchingInexperiencedRoute,
                         method: "PUT",
                         url: url + "/inexperiencedRoute",
@@ -413,6 +469,44 @@ describe("InexperiencedRoute endpoint", () => {
                 },
                 method: "GET",
                 url: url + "/inexperiencedRoute/query?id=" + shouldMatchId,
+            }).then(response => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + response.error);
+                expect(response.body.result instanceof Array).to.equal(true, "body.result is not a list of " +
+                    "results, body is: " + JSON.stringify(response.body));
+                const thisRoute = response.body.result.filter((route) => {
+                    return route.id === routeId;
+                })[0];
+                expect(thisRoute).to.not.equal(undefined, "Route was not matched. Results were " +
+                    JSON.stringify(response.body.result));
+            });
+        });
+        it("should match with a matching inexperienced route on Tuesday", () => {
+            return defaultRequest({
+                headers: {
+                    Authorization: "Bearer " + userJwts[1],
+                },
+                method: "GET",
+                url: url + "/inexperiencedRoute/query?id=" + shouldMatchTuesdayId,
+            }).then(response => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + response.error);
+                expect(response.body.result instanceof Array).to.equal(true, "body.result is not a list of " +
+                    "results, body is: " + JSON.stringify(response.body));
+                const thisRoute = response.body.result.filter((route) => {
+                    return route.id === routeId;
+                })[0];
+                expect(thisRoute).to.not.equal(undefined, "Route was not matched. Results were " +
+                    JSON.stringify(response.body.result));
+            });
+        });
+        it("should match with a matching inexperienced route on Sunday", () => {
+            return defaultRequest({
+                headers: {
+                    Authorization: "Bearer " + userJwts[1],
+                },
+                method: "GET",
+                url: url + "/inexperiencedRoute/query?id=" + shouldMatchSundayId,
             }).then(response => {
                 expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                     response.statusCode + ", error given is: " + response.error);
