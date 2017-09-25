@@ -311,7 +311,7 @@ export function matchRoutes(
     //           Get the day of the week as a day_of_week
     "            (SELECT pg_enum.enumlabel::day_of_week " +
     "                FROM pg_enum JOIN pg_type ON (pg_enum.enumtypid=pg_type.oid) " +
-    "                WHERE pg_enum.enumsortorder = extract(dow from $4::timestamp) " +
+    "                WHERE pg_enum.enumsortorder = extract(isodow from $4::timestamp) " +
     "                AND pg_type.typname='day_of_week') AS requiredDay, " +
     "            $4::timestamptz::date AS requiredDate, " +
     //          Get the average speed in m/s
