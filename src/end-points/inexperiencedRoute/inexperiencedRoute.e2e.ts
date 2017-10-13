@@ -328,7 +328,7 @@ describe("InexperiencedRoute endpoint", () => {
             // and one that shouldn't
             const route = new ExperiencedRoute({
                 arrivalTime: "13:15:00+00",
-                days: ["tuesday", "friday", "sunday"],
+                days: ["tuesday", "friday", "saturday", "sunday"],
                 departureTime: "12:15:00+00",
                 endPointName: "33 Rachel Road",
                 length: 5000,
@@ -338,7 +338,7 @@ describe("InexperiencedRoute endpoint", () => {
                 startPointName: "112 Stanley Street",
             });
             const matchingInexperiencedRoute = {
-                arrivalDateTime: "2017-06-02T12:00:00+00",
+                arrivalDateTime: "2017-06-02T12:00:00+00", // On Friday
                 endPoint: [0, 4.8],
                 endPointName: "18 Penny Promenade",
                 length: 1222,
@@ -467,8 +467,34 @@ describe("InexperiencedRoute endpoint", () => {
                 headers: {
                     Authorization: "Bearer " + userJwts[1],
                 },
-                method: "GET",
-                url: url + "/inexperiencedRoute/query?id=" + shouldMatchId,
+                json: {
+                    id: shouldMatchId,
+                },
+                method: "POST",
+                url: url + "/inexperiencedRoute/query",
+            }).then(response => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + response.error);
+                expect(response.body.result instanceof Array).to.equal(true, "body.result is not a list of " +
+                    "results, body is: " + JSON.stringify(response.body));
+                const thisRoute = response.body.result.filter((route) => {
+                    return route.id === routeId;
+                })[0];
+                expect(thisRoute).to.not.equal(undefined, "Route was not matched. Results were " +
+                    JSON.stringify(response.body.result));
+            });
+        });
+        it("should match with a matching inexperienced route on the next day", () => {
+            return defaultRequest({
+                headers: {
+                    Authorization: "Bearer " + userJwts[1],
+                },
+                json: {
+                    id: shouldMatchId,
+                    newArrivalDateTime: "2017-06-03T12:00:00+00", // On Saturday
+                },
+                method: "POST",
+                url: url + "/inexperiencedRoute/query",
             }).then(response => {
                 expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                     response.statusCode + ", error given is: " + response.error);
@@ -486,8 +512,11 @@ describe("InexperiencedRoute endpoint", () => {
                 headers: {
                     Authorization: "Bearer " + userJwts[1],
                 },
-                method: "GET",
-                url: url + "/inexperiencedRoute/query?id=" + shouldMatchTuesdayId,
+                json: {
+                    id: shouldMatchTuesdayId,
+                },
+                method: "POST",
+                url: url + "/inexperiencedRoute/query",
             }).then(response => {
                 expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                     response.statusCode + ", error given is: " + response.error);
@@ -505,8 +534,11 @@ describe("InexperiencedRoute endpoint", () => {
                 headers: {
                     Authorization: "Bearer " + userJwts[1],
                 },
-                method: "GET",
-                url: url + "/inexperiencedRoute/query?id=" + shouldMatchSundayId,
+                json: {
+                    id: shouldMatchSundayId,
+                },
+                method: "POST",
+                url: url + "/inexperiencedRoute/query",
             }).then(response => {
                 expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                     response.statusCode + ", error given is: " + response.error);
@@ -524,8 +556,11 @@ describe("InexperiencedRoute endpoint", () => {
                 headers: {
                     Authorization: "Bearer " + userJwts[1],
                 },
-                method: "GET",
-                url: url + "/inexperiencedRoute/query?id=" + shouldMatchId,
+                json: {
+                    id: shouldMatchId,
+                },
+                method: "POST",
+                url: url + "/inexperiencedRoute/query",
             }).then(response => {
                 expect(response.body.result[0].pwh).to.equal(undefined, "Pwh should not be included");
                 expect(response.body.result[0].salt).to.equal(undefined, "Salt should not be included");
@@ -538,8 +573,11 @@ describe("InexperiencedRoute endpoint", () => {
                 headers: {
                     Authorization: "Bearer " + userJwts[1],
                 },
-                method: "GET",
-                url: url + "/inexperiencedRoute/query?id=" + shouldNotMatchId,
+                json: {
+                    id: shouldNotMatchId,
+                },
+                method: "POST",
+                url: url + "/inexperiencedRoute/query",
             }).then(response => {
                 expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                     response.statusCode + ", error given is: " + response.error);
@@ -555,8 +593,11 @@ describe("InexperiencedRoute endpoint", () => {
         it("should err with no auth", () => {
             return defaultRequest({
                 headers: {},
-                method: "GET",
-                url: url + "/inexperiencedRoute/query?id=" + shouldMatchId,
+                json: {
+                    id: shouldMatchId,
+                },
+                method: "POST",
+                url: url + "/inexperiencedRoute/query",
             }).then(response => {
                 expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
                     response.statusCode + ", body returned is: " + JSON.stringify(response.body));
@@ -569,8 +610,11 @@ describe("InexperiencedRoute endpoint", () => {
                 headers: {
                     Authorization: "Bearer " + userJwts[0],
                 },
-                method: "GET",
-                url: url + "/inexperiencedRoute/query?id=" + shouldMatchId,
+                json: {
+                    id: shouldMatchId,
+                },
+                method: "POST",
+                url: url + "/inexperiencedRoute/query",
             }).then(response => {
                 expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
                     response.statusCode + ", body returned is: " + JSON.stringify(response.body));
@@ -583,8 +627,11 @@ describe("InexperiencedRoute endpoint", () => {
                 headers: {
                     Authorization: "Bearer " + userJwts[1],
                 },
-                method: "GET",
-                url: url + "/inexperiencedRoute/query?id",
+                json: {
+                    id: null,
+                },
+                method: "POST",
+                url: url + "/inexperiencedRoute/query",
             }).then(response => {
                 expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
                     response.statusCode + ", body returned is: " + JSON.stringify(response.body));

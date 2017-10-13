@@ -10,15 +10,19 @@ import { MicroserviceEndpoint } from "../../../microservices-framework/web/servi
 // TODO:
 // PATH
 const operation = {
-    get: {
+    post: {
         consumes: ["application/json"],
+        description: "This endpoint accepts id of the inexperienced route with new optional arrival datetime " +
+        "and returns the matched experienced routes",
         parameters: [
             {
-                description: "The id of the inexperiencedRoute to use as a query",
-                in: "query",
-                name: "id",
+                description: "The data needed to find the matched route",
+                in: "body",
+                name: "query",
                 required: true,
-                type: "integer",
+                schema: {
+                    $ref: "#/definitions/QueryInfo",
+                },
             },
         ],
         produces: ["application/json; charset=utf-8"],
@@ -54,12 +58,33 @@ const operation = {
     },
 };
 
+// DEFINITIONS
+
+const definitions = {
+    QueryInfo: {
+        description: "Information needed to search for matched route",
+        properties: {
+            id: {
+                description: "The id of the inexperienced route to use as a query",
+                type: "number",
+            },
+            newArrivalDateTime: {
+                description: "The new arrival datetime of this route in ISO 8601 extended format",
+                example: new Date().toISOString(),
+                type: "string",
+            },
+        },
+        required: ["id"],
+    },
+};
+
 // ///////////////
 // SWAGGER: END //
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    const inexperiencedRouteId = parseInt(params.id, 10);
+    const inexperiencedRouteId = parseInt(params.body.id, 10);
+    const newArrivalDateTime = params.body.newArrivalDateTime ? params.body.newArrivalDateTime : null;
     if (isNaN(inexperiencedRouteId) || inexperiencedRouteId < 0) {
         throw new Error("400:Invalid ID");
     }
@@ -70,7 +95,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     }).then(inexperiencedRoutes => {
         if (inexperiencedRoutes.length === 1) {
             if (inexperiencedRoutes[0].owner === userId) {
-                return Database.matchRoutes(inexperiencedRoutes[0]);
+                return Database.matchRoutes(inexperiencedRoutes[0], newArrivalDateTime);
             } else {
                 throw new Error("403:Invalid authorization");
             }
@@ -85,4 +110,5 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
 // end point definition
 export const inexperiencedRouteQuery = new MicroserviceEndpoint("inexperiencedRouteQuery")
     .addSwaggerOperation(operation)
+    .addSwaggerDefinitions(definitions)
     .addService(service);

@@ -12,8 +12,8 @@ import { MicroserviceEndpoint } from "../../microservices-framework/web/services
 const operation = {
     put: {
         consumes: ["application/json"],
-        description: "This endpoint stores an object that can be used to find matching routes - in effect a " +
-        "query object. To search for routes created by this endpoint, make a request to inexperiencedRoute/query?{ID}",
+        description: "This endpoint stores a query object that can be used to find the matched routes." +
+        "To search for routes created by this endpoint, make a request to inexperiencedRoute/query with the route id",
         parameters: [
             {
                 description: "The start and end points of the route that this query will match",

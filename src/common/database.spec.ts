@@ -481,6 +481,7 @@ describe("MatchMyRoute Database Functions", () => {
         let thisUserId;
         let thisRouteId;
         let routeData;
+        const newArrivalDateTime = null;
         beforeEach("Create user and route to test against", done => {
             Database.putUser({
                 email: "test@example.com",
@@ -517,7 +518,7 @@ describe("MatchMyRoute Database Functions", () => {
                 radius: 500,
                 startPoint: <[number, number]> [0, 1.4],
             };
-            return Database.matchRoutes(matchParams, transactionClient).then(routes => {
+            return Database.matchRoutes(matchParams, newArrivalDateTime, transactionClient).then(routes => {
                 const thisRoute = routes.filter((route) => {
                     return route.id === thisRouteId;
                 })[0];
@@ -547,7 +548,7 @@ describe("MatchMyRoute Database Functions", () => {
                 radius: 5000,
                 startPoint: <[number, number]> [0, 1.4],
             };
-            const promise = Database.matchRoutes(matchParams, transactionClient);
+            const promise = Database.matchRoutes(matchParams, newArrivalDateTime, transactionClient);
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not match an experienced route if the radius is too small", done => {
@@ -557,7 +558,7 @@ describe("MatchMyRoute Database Functions", () => {
                 radius: 0.5,
                 startPoint: <[number, number]> [0, 1.4],
             };
-            const promise = Database.matchRoutes(matchParams, transactionClient);
+            const promise = Database.matchRoutes(matchParams, newArrivalDateTime, transactionClient);
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not match an experienced route in the wrong direction", () => {
@@ -567,7 +568,7 @@ describe("MatchMyRoute Database Functions", () => {
                 radius: 500,
                 startPoint: <[number, number]> [0, 4.6],
             };
-            return Database.matchRoutes(matchParams, transactionClient).then(routes => {
+            return Database.matchRoutes(matchParams, newArrivalDateTime, transactionClient).then(routes => {
                 const thisRoute = routes.filter((route) => {
                     return route.id === thisRouteId;
                 })[0];
@@ -581,7 +582,7 @@ describe("MatchMyRoute Database Functions", () => {
                 radius: 500,
                 startPoint: <[number, number]> [0, 1.4],
             };
-            return Database.matchRoutes(matchParams, transactionClient).then(routes => {
+            return Database.matchRoutes(matchParams, newArrivalDateTime, transactionClient).then(routes => {
                 const thisRoute = routes.filter((route) => {
                     return route.id === thisRouteId;
                 })[0];
