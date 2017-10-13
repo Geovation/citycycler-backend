@@ -268,6 +268,7 @@ export function matchRoutes(
         radius: number,
         startPoint: [number, number],
     },
+    newArrivalDateTime = null,
     providedClient = null
 ): Promise<{
     id: number,
@@ -350,8 +351,12 @@ export function matchRoutes(
     "   divorceTime::time + timeFromDivorcePoint - $4::timestamptz::time ";
     const startPoint = "POINT(" + matchParams.startPoint[0] + " " + matchParams.startPoint[1] + ")";
     const endPoint = "POINT(" + matchParams.endPoint[0] + " " + matchParams.endPoint[1] + ")";
-    let queryParams = [startPoint, endPoint, matchParams.radius, matchParams.arrivalDateTime];
-
+    let queryParams = [
+        startPoint,
+        endPoint,
+        matchParams.radius,
+        newArrivalDateTime ? newArrivalDateTime : matchParams.arrivalDateTime,
+    ];
     return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
         return Promise.all(result.rows.map((row) => {
             return getUserById(row.owner, providedClient).then(user => {
