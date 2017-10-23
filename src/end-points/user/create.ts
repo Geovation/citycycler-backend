@@ -1,4 +1,5 @@
 // import { generateJWTFor } from "../../common/auth";
+import { getIdFromJWT } from "../../common/auth";
 import * as CloudStorage from "../../common/cloudstorage";
 import * as Database from "../../common/database";
 import User from "../../common/UserDataModels";
@@ -34,6 +35,12 @@ const operation = {
                     $ref: "#/definitions/CreateResponse",
                 },
             },
+            403: {
+                description: "An invalid or non-existant authorization token was supplied",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
             409: {
                 description: "A user already exists with this email address",
                 schema: {
@@ -47,6 +54,11 @@ const operation = {
                 },
             },
         },
+        security: [
+            {
+                userAuth: [],
+            },
+        ],
         summary: "Create a new user",
         tags: [
             "Users",
@@ -134,7 +146,8 @@ const definitions = {
 export const service = (broadcast: Function, params: any): Promise<any> => {
     console.log("will try to create user");
     const payload = params.body;
-    const { id, email, name, bio, photo } = payload;
+    const { email, name, bio, photo } = payload;
+    let id;
 
     let createdUser: User;
     let client;
@@ -149,6 +162,10 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         resolve();
     })
     .then(() => {
+        return getIdFromJWT(params.authorization);
+    })
+    .then((uid) => {
+        id = uid;
         return Database.createTransactionClient();
     })
     // create user

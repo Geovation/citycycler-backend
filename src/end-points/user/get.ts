@@ -155,7 +155,7 @@ const definitions = {
 // ///////////////
 
 const service = (broadcast: Function, params: any): Promise<any> => {
-    const id = parseInt(params.id, 10);
+    const id = params.id;
     let transactionClient;
     let currentUserId;
     return Database.createTransactionClient().then(newClient => {

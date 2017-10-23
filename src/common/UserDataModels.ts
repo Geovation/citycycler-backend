@@ -1,6 +1,6 @@
 // Only a User's settings
 export interface IUserSettings {
-    id: number;
+    id: string;
     email: string;
     name: string;
     pwh: Buffer;
@@ -15,7 +15,7 @@ export interface IUserProfile {
     distance: number;
     email: string;
     helpedCount: number;
-    id: number;
+    id: string;
     name: string;
     joined: number;
     photo: string;
@@ -56,7 +56,7 @@ export default class User implements IUserSettings, IUserProfile {
         });
     }
 
-    public id: number;
+    public id: string;
     public email: string;
     public name: string;
     public pwh: Buffer;

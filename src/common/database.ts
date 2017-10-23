@@ -187,11 +187,12 @@ export function getExperiencedRouteById(id: number, providedClient = null): Prom
  * @param  {client} providedClient Database client to use for this interaction
  * @return {Object[]} Array of experienced_routes
  */
-export function getExperiencedRoutes(params: {userId: number, id?: number}, providedClient = null)
+export function getExperiencedRoutes(params: {userId: string, id?: number}, providedClient = null)
 : Promise<ExperiencedRoute[]> {
     let query = "SELECT id, owner, departuretime, arrivalTime, days::text[], ST_AsText(route) AS route, " +
     "startPointName, endPointName, length, name FROM experienced_routes where owner=$1";
-    let queryParams = [params.userId];
+    let queryParams = new Array<any>();
+    queryParams.push(params.userId);
     if (params.id !== null && typeof params.id !== "undefined") {
         query +=  " AND id=$2";
         queryParams.push(params.id);
@@ -444,7 +445,7 @@ export function deleteExperiencedRoute(id: number, providedClient = null): Promi
     });
 }
 
-export function createInexperiencedRoute(owner: number, inexperiencedRoute: InexperiencedRoute, providedClient = null)
+export function createInexperiencedRoute(owner: string, inexperiencedRoute: InexperiencedRoute, providedClient = null)
 : Promise<Number> {
     inexperiencedRoute = new InexperiencedRoute(inexperiencedRoute);
     const query = "INSERT INTO inexperienced_routes (startPoint, startPointName, endPoint, endPointName, radius, " +
@@ -475,12 +476,13 @@ export function createInexperiencedRoute(owner: number, inexperiencedRoute: Inex
  * @param  {client} providedClient Database client to use for this interaction
  * @return {Object[]} Array of inexperienced routes
  */
-export function getInexperiencedRoutes(params: {userId: number, id?: number}, providedClient = null)
+export function getInexperiencedRoutes(params: {userId: string, id?: number}, providedClient = null)
 : Promise<InexperiencedRoute[]> {
     let query = "SELECT id, owner, radius, notifyOwner, arrivalDateTime, ST_AsText(startPoint) AS startPoint, " +
         "startPointName, ST_AsText(endPoint) AS endPoint, endPointName, length, name " +
         " FROM inexperienced_routes where owner=$1";
-    let queryParams = [params.userId];
+    let queryParams = new Array<any>();
+    queryParams.push(params.userId);
     if (params.id !== null && typeof params.id !== "undefined") {
         query +=  " AND id=$2";
         queryParams.push(params.id);
@@ -662,7 +664,7 @@ export function getUserByEmail(email: string, providedClient = null): Promise<Us
  *
  * @returns A User object of the specified type
  */
-export function getUserById(id: number, providedClient = null): Promise<User> {
+export function getUserById(id: string, providedClient = null): Promise<User> {
     const query = "SELECT * FROM users WHERE id=$1";
     return sqlTransaction(query, [id], providedClient).then(result => {
         if (result.rowCount > 0) {
@@ -673,7 +675,7 @@ export function getUserById(id: number, providedClient = null): Promise<User> {
     });
 }
 
-export function deleteUser(id: number, providedClient = null): Promise<Boolean> {
+export function deleteUser(id: string, providedClient = null): Promise<Boolean> {
     // First update any buddy requests, then actually delete the user
     const query1 = "UPDATE buddy_requests SET status='canceled'::buddy_request_status, reason=" +
         "(SELECT name from users where id=$1)::text || ' has deleted their account';";
@@ -739,7 +741,7 @@ export function createBuddyRequest(buddyRequest: BuddyRequest, providedClient = 
  * @param  {client} providedClient Database client to use for this interaction
  * @return {Object[]} Array of buddy requests
  */
-export function getSentBuddyRequests(params: {userId: number, id?: number}, providedClient = null)
+export function getSentBuddyRequests(params: {userId: string, id?: number}, providedClient = null)
 : Promise<(BuddyRequest & {otherUser?: User, myRoute?: [number, number][]})[]> {
     return getBuddyRequests(params, providedClient).then(buddyRequests => {
         let matchingBuddyRequests = buddyRequests.filter(buddyRequest => {
@@ -786,7 +788,7 @@ export function getSentBuddyRequests(params: {userId: number, id?: number}, prov
  * @param  {client} providedClient Database client to use for this interaction
  * @return {Object[]} Array of buddy requests
  */
-export function getReceivedBuddyRequests(params: {userId: number, id?: number}, providedClient = null)
+export function getReceivedBuddyRequests(params: {userId: string, id?: number}, providedClient = null)
 : Promise<(BuddyRequest & {otherUser?: User, myRoute?: [number, number][]})[]> {
     return getBuddyRequests(params, providedClient).then(buddyRequests => {
         let matchingBuddyRequests = buddyRequests.filter(buddyRequest => {
@@ -832,14 +834,15 @@ export function getReceivedBuddyRequests(params: {userId: number, id?: number}, 
  * @param  {client} providedClient Database client to use for this interaction
  * @return {Object[]} Array of buddy requests
  */
-export function getBuddyRequests(params: {userId: number, id?: number}, providedClient = null)
+export function getBuddyRequests(params: {userId: string, id?: number}, providedClient = null)
 : Promise<BuddyRequest[]> {
     let query = "SELECT id, experiencedRouteName, experiencedRoute, experiencedUser, owner, inexperiencedRoute, " +
     "meetingTime, divorceTime, ST_AsText(meetingPoint) as meetingPoint, ST_AsText(divorcePoint) AS divorcePoint, " +
     "averageSpeed, created, updated, reason, ST_AsText(route) as route, meetingPointName, divorcePointName, " +
     "length, status, review, inexperiencedroutename " +
     "FROM buddy_requests WHERE (owner=$1 OR experiencedUser=$1)";
-    let queryParams = [params.userId];
+    let queryParams = new Array<any>();
+    queryParams.push(params.userId);
     if (params.id !== null && typeof params.id !== "undefined") {
         query +=  " AND id=$2";
         queryParams.push(params.id);
@@ -928,7 +931,7 @@ export function updateBuddyRequest(
  * @return {boolean} Whether the update succeeded
  */
 export function updateBuddyRequestReview(
-    owner: number, buddyRequestId: number, score: number, providedClient = null): Promise<boolean> {
+    owner: string, buddyRequestId: number, score: number, providedClient = null): Promise<boolean> {
         if (score === 0) {
             throw new Error("400:BuddyRequest review must be +/- 1");
         }

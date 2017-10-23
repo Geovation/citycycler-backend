@@ -30,8 +30,8 @@ export default class BuddyRequest {
     public id?: number;
     public experiencedRouteName: string;
     public experiencedRoute: number;
-    public experiencedUser: number;
-    public owner: number;
+    public experiencedUser: string;
+    public owner: string;
     public inexperiencedRoute: number;
     public inexperiencedRouteName: string;
     public meetingTime: string;

@@ -23,7 +23,7 @@ function initFirebase() {
  * @param authHeader
  * @param uid
  */
-export function isUser(authHeader: string, uid: number, providedClient = null): Promise<boolean> {
+export function isUser(authHeader: string, uid: string, providedClient = null): Promise<boolean> {
     return getIdFromJWT(authHeader, providedClient)
         .then(id => {
             return id === uid;
@@ -38,7 +38,7 @@ export function isUser(authHeader: string, uid: number, providedClient = null): 
  * @param uid
  * @param onAuth
  */
-export function doIfUser(authHeader: string, uid: number, onAuth: Function, providedClient = null): Promise<any> {
+export function doIfUser(authHeader: string, uid: string, onAuth: Function, providedClient = null): Promise<any> {
     return new Promise((resolve, reject) => {
         isUser(authHeader, uid, providedClient).then(valid => {
             if (valid) {
@@ -54,7 +54,7 @@ export function doIfUser(authHeader: string, uid: number, onAuth: Function, prov
  * Return the user ID from a given token, after verifying that this is the correct user
  * @param authHeader
  */
-export function getIdFromJWT(authHeader: string, providedClient = null): Promise<number> {
+export function getIdFromJWT(authHeader: string, providedClient = null): Promise<string> {
     return new Promise((resolve, reject) => {
         if (authHeader === undefined) {
             reject("403:Invalid authorization");

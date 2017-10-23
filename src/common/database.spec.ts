@@ -155,7 +155,7 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(promise).to.be.rejected.and.notify(done);
             });
             it("should not delete any users with an invalid id", done => {
-                const promise = Database.deleteUser(-1, transactionClient);
+                const promise = Database.deleteUser("abcd", transactionClient);
                 expect(promise).to.be.rejected.and.notify(done);
             });
             it("should get a user by id", () => {
@@ -165,7 +165,7 @@ describe("MatchMyRoute Database Functions", () => {
                 });
             });
             it("should not get a user by an invalid ID", done => {
-                const promise = Database.getUserById(-1, transactionClient);
+                const promise = Database.getUserById("abcd", transactionClient);
                 expect(promise).to.be.rejected.and.notify(done);
             });
             it("should get a user by email", () => {
@@ -819,7 +819,7 @@ describe("MatchMyRoute Database Functions", () => {
         });
     });
     describe("General Inexperienced Route functions", () => {
-        let userId: number;
+        let userId: string;
         beforeEach("Create user to own inexperiencedRoutes", done => {
             Database.putUser({
                 email: "test@example.com",
@@ -1806,7 +1806,7 @@ describe("MatchMyRoute Database Functions", () => {
 });
 describe("Database shutdown", () => {
     let routeId = 1;
-    let userId = 1;
+    let userId = "abcd";
     it("should shut down the database", () => {
         // expect(Database.shutDownPool()).to.eventually.equal(true).and.notify(done);
         Database.shutDownPool().then(response => {
