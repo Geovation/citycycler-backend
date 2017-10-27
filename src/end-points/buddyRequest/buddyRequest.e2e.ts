@@ -48,21 +48,18 @@ describe.only("BuddyRequest endpoint", () => {
         // The random user
         const user1 = {
             email: "buddyReqestTest@e2e-test.matchmyroute-backend.appspot.com",
-            name: "Random Test User",
-            // password: "test", // create a random password here
+            name: "Random Test User"
         };
         // The inexperienced User
         const user2 = {
             email: "buddyReqestTest2@e2e-test.matchmyroute-backend.appspot.com",
-            name: "Inexperienced Test User",
-            // password: "test",
+            name: "Inexperienced Test User"
         };
 
         // The experienced User
         const user3 = {
             email: "buddyReqestTest3@e2e-test.matchmyroute-backend.appspot.com",
-            name: "Experienced Test User",
-            // password: "test",
+            name: "Experienced Test User"
         };
 
         return FirebaseUtils.createFirebaseUser(user1.email)
