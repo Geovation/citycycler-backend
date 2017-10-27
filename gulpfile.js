@@ -255,7 +255,7 @@ gulp.task('debug', ["build"], () => {
   }
 
   nodemon({
-    exec: 'node --inspect --debug-brk',
+    exec: 'node --inspect-brk',
     ext: 'ts',
     script: getOption('script'),
     verbose: true,
