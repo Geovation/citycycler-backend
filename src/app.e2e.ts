@@ -2,6 +2,7 @@ import { app, gracefulShutdown, setupServer } from "./microservices-framework/we
 import { senecaReady } from "./microservices-framework/web/services";
 import * as chai from "chai";
 import * as EventEmitter from "events";
+import * as firebase from 'firebase';
 import * as _ from "lodash";
 import * as mocha from "mocha";
 import * as rp from "request-promise-native";
@@ -40,6 +41,23 @@ const deleteE2EUsers = (url): Promise<Boolean> => {
         return true;
     });
 };
+
+// initialize firebase client library to be able to sign in and get JWT
+
+initFirebaseClient();
+
+function initFirebaseClient() {
+    const config = {
+      apiKey: "AIzaSyBZGqBeXHwe8g4PH2d5xMe2s4GpZSMAdpQ",
+      authDomain: "matchmyroute-backend.firebaseapp.com",
+      databaseURL: "https://matchmyroute-backend.firebaseio.com",
+      projectId: "matchmyroute-backend",
+      storageBucket: "matchmyroute-backend.appspot.com",
+      messagingSenderId: "858623040089"
+    };
+    firebase.initializeApp(config);
+
+}
 
 const startServer = !process.env.URL;
 const url = (process.env.URL || "http://localhost:8080") + "/api/v0";

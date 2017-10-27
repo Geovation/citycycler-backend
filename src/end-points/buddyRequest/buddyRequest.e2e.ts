@@ -5,6 +5,7 @@ import * as _ from "lodash";
 import * as mocha from "mocha";
 import * as moment from "moment";
 import * as rp from "request-promise-native";
+import * as FirebaseUtils from "../../common/firebaseUtils";
 
 const expect = chai.expect;
 const before = mocha.before;
@@ -31,56 +32,6 @@ const defaultRequest = (options): Promise<any> => {
         });
     return rp(options);
 };
-
-const createFirebaseUser = (email: string): Promise<any> => {
-    let newUser;
-    return firebaseAdmin.auth().createUser({
-        email,
-        emailVerified: true,
-        password: "O$5t96L1PP0YKXsDo7",
-    }).then(user => {
-        newUser = user;
-        return firebaseAdmin.auth().createCustomToken(newUser.uid);
-    }).then(customToken => {
-        return {
-            customToken,
-            user: newUser,
-        };
-    });
-};
-
-const getJwtForUser = (customToken: string): Promise<any> => {
-    return firebase.auth().signInWithCustomToken(customToken)
-        .then(user => {
-            return user.getIdToken();
-        });
-}
-
-const deleteFirebaseUsers = (uids: string[]): Promise<any> => {
-    let deletePromises = [];
-    uids.forEach(uid => {
-        deletePromises.push(
-            firebaseAdmin.auth().deleteUser(uid)
-        )
-    })
-
-    return Promise.all(deletePromises);
-};
-
-initFirebaseClient();
-
-function initFirebaseClient() {
-    const config = {
-      apiKey: "AIzaSyBZGqBeXHwe8g4PH2d5xMe2s4GpZSMAdpQ",
-      authDomain: "matchmyroute-backend.firebaseapp.com",
-      databaseURL: "https://matchmyroute-backend.firebaseio.com",
-      projectId: "matchmyroute-backend",
-      storageBucket: "matchmyroute-backend.appspot.com",
-      messagingSenderId: "858623040089"
-    };
-    firebase.initializeApp(config);
-
-}
 
 describe.only("BuddyRequest endpoint", () => {
     let uids = [];
@@ -114,11 +65,11 @@ describe.only("BuddyRequest endpoint", () => {
             // password: "test",
         };
 
-        return createFirebaseUser(user1.email)
+        return FirebaseUtils.createFirebaseUser(user1.email)
         .then(createResponse => {
             randomUserId = createResponse.user.uid;
             uids.push(randomUserId);
-            return getJwtForUser(createResponse.customToken);
+            return FirebaseUtils.getJwtForUser(createResponse.customToken);
         }).then(jwt => {
             randomUserJwt = jwt;
             return defaultRequest({
@@ -130,11 +81,11 @@ describe.only("BuddyRequest endpoint", () => {
                 url: url + "/user",
             });
         }).then(() => {
-            return createFirebaseUser(user2.email);
+            return FirebaseUtils.createFirebaseUser(user2.email);
         }).then(createResponse => {
             inexpUserId = createResponse.user.uid;
             uids.push(inexpUserId);
-            return getJwtForUser(createResponse.customToken);
+            return FirebaseUtils.getJwtForUser(createResponse.customToken);
         }).then(jwt => {
             inexpUserJwt = jwt;
             return defaultRequest({
@@ -146,11 +97,11 @@ describe.only("BuddyRequest endpoint", () => {
                 url: url + "/user",
             });
         }).then(() => {
-            return createFirebaseUser(user3.email);
+            return FirebaseUtils.createFirebaseUser(user3.email);
         }).then(createResponse => {
             expUserId = createResponse.user.uid;
             uids.push(expUserId);
-            return getJwtForUser(createResponse.customToken);
+            return FirebaseUtils.getJwtForUser(createResponse.customToken);
         }).then(jwt => {
             expUserJwt = jwt;
             return defaultRequest({
@@ -224,7 +175,7 @@ describe.only("BuddyRequest endpoint", () => {
         });
     });
     after("Delete test users from Firebase", () => {
-        deleteFirebaseUsers(uids);
+        FirebaseUtils.deleteFirebaseUsers(uids);
     });
     describe("Creation", () => {
         it("should create a BuddyRequest", () => {
