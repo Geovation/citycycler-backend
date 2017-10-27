@@ -1,4 +1,5 @@
 import ExperiencedRoute from "../../common/ExperiencedRouteDataModel";
+import * as FirebaseUtils from "../../common/firebaseUtils";
 import * as chai from "chai";
 import * as _ from "lodash";
 import * as mocha from "mocha";
@@ -9,6 +10,7 @@ import * as logger from "winston";
 const expect = chai.expect;
 const assert = chai.assert;
 const before = mocha.before;
+const after = mocha.after;
 const describe = mocha.describe;
 const it = mocha.it;
 
@@ -36,26 +38,43 @@ describe("ExperiencedRoute endpoint", () => {
     let routeIds = [];  // A list of routes created
     before(() => {
         const user1 = { email: "experiencedRouteTest@e2e-test.matchmyroute-backend.appspot.com",
-            name: "E2E Test User3", password: "test" };
+            name: "E2E Test User3" };
         const user2 = { email: "experiencedRouteTest2@e2e-test.matchmyroute-backend.appspot.com",
-            name: "E2E Test User4", password: "test" };
-        return defaultRequest({
-            json: user1,
-            method: "PUT",
-            url: url + "/user",
-        }).then(response => {
-            userIds.push(parseInt(response.body.result.user.id, 10));
-            userJwts.push(response.body.result.jwt.token);
-        }).then(() => {
+            name: "E2E Test User4" };
+
+        return FirebaseUtils.createFirebaseUser(user1.email)
+        .then(createResponse => {
+            userIds.push(createResponse.user.uid);
+            return FirebaseUtils.getJwtForUser(createResponse.customToken);
+        }).then(jwt => {
+            userJwts.push(jwt);
             return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + jwt,
+                },
+                json: user1,
+                method: "PUT",
+                url: url + "/user",
+            });
+        }).then(() => {
+            return FirebaseUtils.createFirebaseUser(user2.email);
+        }).then(createResponse => {
+            userIds.push(createResponse.user.uid);
+            return FirebaseUtils.getJwtForUser(createResponse.customToken);
+        }).then(jwt => {
+            userJwts.push(jwt);
+            return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + jwt,
+                },
                 json: user2,
                 method: "PUT",
                 url: url + "/user",
             });
-        }).then(response => {
-            userIds.push(parseInt(response.body.result.user.id, 10));
-            userJwts.push(response.body.result.jwt.token);
         });
+    });
+    after("Delete test users from Firebase", () => {
+        FirebaseUtils.deleteFirebaseUsers(userIds);
     });
     describe("Creation", () => {
         it("should create experienced routes", () => {
@@ -71,7 +90,7 @@ describe("ExperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: route,
                 method: "PUT",
@@ -98,7 +117,7 @@ describe("ExperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: route,
                 method: "PUT",
@@ -125,7 +144,7 @@ describe("ExperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[3],
+                    Authorization: "Firebase " + userJwts[3],
                 },
                 json: route,
                 method: "PUT",
@@ -150,7 +169,7 @@ describe("ExperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: route,
                 method: "PUT",
@@ -190,7 +209,7 @@ describe("ExperiencedRoute endpoint", () => {
             it("should get an experienced route by a valid id with no auth", () => {
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/experiencedRoute?id=" + routeIds[0],
@@ -207,7 +226,7 @@ describe("ExperiencedRoute endpoint", () => {
             it("should not get an experienced route by an invalid id", () => {
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/experiencedRoute?id=" + -1,
@@ -240,7 +259,7 @@ describe("ExperiencedRoute endpoint", () => {
                 });
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     json: route,
                     method: "PUT",
@@ -263,7 +282,7 @@ describe("ExperiencedRoute endpoint", () => {
                 };
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     json: matchParams,
                     method: "POST",
@@ -306,7 +325,7 @@ describe("ExperiencedRoute endpoint", () => {
                 };
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     json: matchParams,
                     method: "POST",
@@ -336,7 +355,7 @@ describe("ExperiencedRoute endpoint", () => {
                 };
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     json: matchParams,
                     method: "POST",
@@ -367,7 +386,7 @@ describe("ExperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: updates,
                 method: "POST",
@@ -377,7 +396,7 @@ describe("ExperiencedRoute endpoint", () => {
                     response.statusCode + ", error given is: " + response.error);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/experiencedRoute?id=" + routeIds[0],
@@ -404,7 +423,7 @@ describe("ExperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: updates,
                 method: "POST",
@@ -414,7 +433,7 @@ describe("ExperiencedRoute endpoint", () => {
                     response.statusCode + ", error given is: " + response.error);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/experiencedRoute?id=" + routeIds[0],
@@ -439,7 +458,7 @@ describe("ExperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: updates,
                 method: "POST",
@@ -449,7 +468,7 @@ describe("ExperiencedRoute endpoint", () => {
                     response.statusCode + ", error given is: " + response.error);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/experiencedRoute?id=" + routeIds[0],
@@ -474,7 +493,7 @@ describe("ExperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: updates,
                 method: "POST",
@@ -484,7 +503,7 @@ describe("ExperiencedRoute endpoint", () => {
                     response.statusCode + ", error given is: " + response.error);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/experiencedRoute?id=" + routeIds[0],
@@ -507,7 +526,7 @@ describe("ExperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: updates,
                 method: "POST",
@@ -517,7 +536,7 @@ describe("ExperiencedRoute endpoint", () => {
                     response.statusCode + ", error given is: " + response.error);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/experiencedRoute?id=" + routeIds[0],
@@ -542,7 +561,7 @@ describe("ExperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: updates,
                 method: "POST",
@@ -552,7 +571,7 @@ describe("ExperiencedRoute endpoint", () => {
                     response.statusCode + ", error given is: " + response.error);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/experiencedRoute?id=" + routeIds[0],
@@ -575,7 +594,7 @@ describe("ExperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: updates,
                 method: "POST",
@@ -585,7 +604,7 @@ describe("ExperiencedRoute endpoint", () => {
                     response.statusCode + ", error given is: " + response.error);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/experiencedRoute?id=" + routeIds[0],
@@ -608,7 +627,7 @@ describe("ExperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: updates,
                 method: "POST",
@@ -618,7 +637,7 @@ describe("ExperiencedRoute endpoint", () => {
                     response.statusCode + ", error given is: " + response.error);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/experiencedRoute?id=" + routeIds[0],
@@ -641,7 +660,7 @@ describe("ExperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: updates,
                 method: "POST",
@@ -651,7 +670,7 @@ describe("ExperiencedRoute endpoint", () => {
                     response.statusCode + ", error given is: " + response.error);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/experiencedRoute?id=" + routeIds[0],
@@ -674,7 +693,7 @@ describe("ExperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: updates,
                 method: "POST",
@@ -684,7 +703,7 @@ describe("ExperiencedRoute endpoint", () => {
                     response.statusCode + ", error given is: " + response.error);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/experiencedRoute?id=" + routeIds[0],
@@ -707,7 +726,7 @@ describe("ExperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: updates,
                 method: "POST",
@@ -726,7 +745,7 @@ describe("ExperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: updates,
                 method: "POST",
@@ -746,7 +765,7 @@ describe("ExperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: updates,
                 method: "POST",
@@ -765,7 +784,7 @@ describe("ExperiencedRoute endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[1],
+                    Authorization: "Firebase " + userJwts[1],
                 },
                 json: updates,
                 method: "POST",
@@ -793,7 +812,7 @@ describe("ExperiencedRoute endpoint", () => {
             });
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[1],
+                    Authorization: "Firebase " + userJwts[1],
                 },
                 json: route,
                 method: "PUT",
@@ -805,7 +824,7 @@ describe("ExperiencedRoute endpoint", () => {
         it("should not delete an experienced route with an invalid id", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 method: "DELETE",
                 url: url + "/experiencedRoute?id=" + -1,
@@ -830,7 +849,7 @@ describe("ExperiencedRoute endpoint", () => {
         it("should not be able to delete another user's route", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[1],
+                    Authorization: "Firebase " + userJwts[1],
                 },
                 method: "DELETE",
                 url: url + "/experiencedRoute?id=" + routeIds[0],
@@ -844,7 +863,7 @@ describe("ExperiencedRoute endpoint", () => {
         it("should delete an experienced route", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 method: "DELETE",
                 url: url + "/experiencedRoute?id=" + routeIds[0],
@@ -853,7 +872,7 @@ describe("ExperiencedRoute endpoint", () => {
                     response.statusCode + ", error given is: " + response.error);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/experiencedRoute?id=" + routeIds[0],
@@ -866,26 +885,31 @@ describe("ExperiencedRoute endpoint", () => {
         });
         it("should delete any routes belonging to a user, when a user is deleted", () => {
             // Should delete routeIds[2], which we setup in beforeAll
+            let deleteResponse;
+
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[1],
+                    Authorization: "Firebase " + userJwts[1],
                 },
                 method: "DELETE",
                 url: url + "/user?id=" + userIds[1],
             }).then(response => {
-                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
-                    response.statusCode + ", error given is: " + response.error);
+                deleteResponse = response;
+                return FirebaseUtils.deleteFirebaseUsers([userIds[1]]);
+            }).then(response => {
+                expect(deleteResponse.statusCode).to.equal(200, "Expected 200 response but got " +
+                    deleteResponse.statusCode + ", error given is: " + deleteResponse.error);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[1],
+                        Authorization: "Firebase " + userJwts[1],
                     },
                     method: "GET",
                     url: url + "/experiencedRoute?id=" + routeIds[2],
                 });
             }).then(response => {
-                expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
+                expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
                 response.statusCode + ", body returned is: " + JSON.stringify(response.body) +
-                ". This means the user was not deleted");
+                ". This means the routes that belonged to the user were not deleted");
             });
         });
     });

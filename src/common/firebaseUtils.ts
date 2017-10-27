@@ -30,8 +30,8 @@ export function deleteFirebaseUsers (uids: string[]): Promise<any> {
     uids.forEach(uid => {
         deletePromises.push(
             firebaseAdmin.auth().deleteUser(uid)
-        )
-    })
+        );
+    });
 
     return Promise.all(deletePromises);
 };

@@ -14,7 +14,7 @@ export function notify(
     getRegistrationTokensForUser(userId).then(
         registrationTokens => {
             // send notification
-            if(registrationTokens.length > 0){
+            if ( registrationTokens.length > 0 ) {
                 console.log("sending notification");
                 firebaseAdmin.messaging().sendToDevice(
                     registrationTokens,

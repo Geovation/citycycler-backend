@@ -1,11 +1,9 @@
+import * as FirebaseUtils from "../../common/firebaseUtils";
 import * as chai from "chai";
-import * as firebase from 'firebase';
-import * as firebaseAdmin from "firebase-admin";
 import * as _ from "lodash";
 import * as mocha from "mocha";
 import * as moment from "moment";
 import * as rp from "request-promise-native";
-import * as FirebaseUtils from "../../common/firebaseUtils";
 
 const expect = chai.expect;
 const before = mocha.before;
@@ -33,7 +31,7 @@ const defaultRequest = (options): Promise<any> => {
     return rp(options);
 };
 
-describe.only("BuddyRequest endpoint", () => {
+describe("BuddyRequest endpoint", () => {
     let uids = [];
     let expUserId;  // The experienced User id
     let expUserJwt;  // The experienced User token
@@ -48,18 +46,18 @@ describe.only("BuddyRequest endpoint", () => {
         // The random user
         const user1 = {
             email: "buddyReqestTest@e2e-test.matchmyroute-backend.appspot.com",
-            name: "Random Test User"
+            name: "Random Test User",
         };
         // The inexperienced User
         const user2 = {
             email: "buddyReqestTest2@e2e-test.matchmyroute-backend.appspot.com",
-            name: "Inexperienced Test User"
+            name: "Inexperienced Test User",
         };
 
         // The experienced User
         const user3 = {
             email: "buddyReqestTest3@e2e-test.matchmyroute-backend.appspot.com",
-            name: "Experienced Test User"
+            name: "Experienced Test User",
         };
 
         return FirebaseUtils.createFirebaseUser(user1.email)
