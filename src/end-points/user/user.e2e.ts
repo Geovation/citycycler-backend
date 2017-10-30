@@ -270,13 +270,12 @@ describe("User endpoint", () => {
                 bio: "Updated bio",
                 email: "updateduserTest@e2e-test.matchmyroute-backend.appspot.com",
                 name: "Updated Test User",
-                password: "updatedtest",
                 photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21" +
                 "bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
             };
             defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -286,7 +285,7 @@ describe("User endpoint", () => {
                      JSON.stringify(response));
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/user?id=" + userIds[0],
@@ -298,21 +297,6 @@ describe("User endpoint", () => {
                 expect(user.bio).to.equal("Updated bio");
                 expect(user.photo).to.equal(CloudStorage.createFilenameForUser(userIds[0]));
                 photoName = user.photo;
-                // Test password change by logging in with the new password
-                return defaultRequest({
-                    headers: {
-                        Authorization: "Bearer " + userJwts[0],
-                    },
-                    json: {
-                        email: "updateduserTest@e2e-test.matchmyroute-backend.appspot.com",
-                        password: "updatedtest",
-                    },
-                    method: "POST",
-                    url: url + "/auth/user",
-                });
-            }).then(response => {
-                expect(response.statusCode).to.equal(200, "Got non 200 login response: " +
-                    JSON.stringify(response));
                 // check if photo exists in cloud storage
                 const imgUrl = process.env.STORAGE_BASE_URL +
                 "/" +
@@ -350,14 +334,14 @@ describe("User endpoint", () => {
                 expect(response.body.status).to.equal(403);
             });
         });
-        it("should not update a user to an extant email", () => {
+        it("should not update a user to an existent email", () => {
             const userUpdates = {
                 email: "test1@e2e-test.matchmyroute-backend.appspot.com",
                 name: "Updated2 Test User", password: "updated2test",
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -375,7 +359,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -385,7 +369,7 @@ describe("User endpoint", () => {
                      JSON.stringify(response));
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/user?id=" + userIds[0],
@@ -401,7 +385,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -411,7 +395,7 @@ describe("User endpoint", () => {
                      JSON.stringify(response));
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/user?id=" + userIds[0],
@@ -421,44 +405,13 @@ describe("User endpoint", () => {
                 expect(user.email).to.equal("userTest3@e2e-test.matchmyroute-backend.appspot.com");
             });
         });
-        it("should update a user's individual properties - password", () => {
-            const userUpdates = {
-                password: "test",
-            };
-            return defaultRequest({
-                headers: {
-                    Authorization: "Bearer " + userJwts[0],
-                },
-                json: userUpdates,
-                method: "POST",
-                url: url + "/user",
-            }).then(response => {
-                expect(response.statusCode).to.equal(200, "Got non 200 response: " +
-                     JSON.stringify(response));
-                // Test by logging in with the new password
-                return defaultRequest({
-                    headers: {
-                        Authorization: "Bearer " + userJwts[0],
-                    },
-                    json: {
-                        email: "userTest@e2e-test.matchmyroute-backend.appspot.com",
-                        password: "test",
-                    },
-                    method: "POST",
-                    url: url + "/auth/user",
-                });
-            }).then(response => {
-                expect(response.statusCode).to.equal(200, "Got non 200 login response: " +
-                    JSON.stringify(response));
-            });
-        });
         it("should update a user's individual properties - bio", () => {
             const userUpdates = {
                 bio: "Bio",
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -468,7 +421,7 @@ describe("User endpoint", () => {
                      JSON.stringify(response));
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/user?id=" + userIds[0],
@@ -485,7 +438,7 @@ describe("User endpoint", () => {
             };
             defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -495,7 +448,7 @@ describe("User endpoint", () => {
                      JSON.stringify(response));
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/user?id=" + userIds[0],
@@ -532,7 +485,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -542,7 +495,7 @@ describe("User endpoint", () => {
                      JSON.stringify(response));
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/user?id=" + userIds[0],
@@ -575,7 +528,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -585,7 +538,7 @@ describe("User endpoint", () => {
                      JSON.stringify(response));
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/user?id=" + userIds[0],
@@ -603,7 +556,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -619,7 +572,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -635,7 +588,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -651,7 +604,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -667,7 +620,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -682,7 +635,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -697,7 +650,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -712,7 +665,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",

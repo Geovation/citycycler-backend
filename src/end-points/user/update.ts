@@ -1,8 +1,7 @@
-import { getIdFromJWT, minimumHashingRounds } from "../../common/auth";
+import { getIdFromJWT } from "../../common/auth";
 import * as CloudStorage from "../../common/cloudstorage";
 import * as Database from "../../common/database";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
-import * as crypto from "crypto";
 // import * as logger from "winston";
 
 // /////////////////////////////////////////////////////////////
@@ -92,10 +91,6 @@ const definitions = {
                 example: "Joe Blogs",
                 type: "string",
             },
-            password: {
-                description: "The user's new password",
-                type: "string",
-            },
             photo: {
                 description: "A url pointing to the user's profile picture",
                 example: "http://lorempixel.com/400/400/people/",
@@ -157,25 +152,6 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
                     }
                 )
             );
-        }
-        if (payload.password !== undefined && payload.password.trim().length !== 0) {
-            // Generate the new password hash
-            promises.push(Database.getUserById(userId).then(user => {
-                let rounds = minimumHashingRounds;
-                return new Promise((resolve, reject) => {
-                    crypto.pbkdf2(payload.password.trim(), user.salt, rounds, 512, "sha512", (err, key) => {
-                        if (err) {
-                            reject("Error hashing: " + err);
-                        } else {
-                            updates.pwh = key;
-                            if (user.rounds !== minimumHashingRounds) {
-                                updates.rounds = minimumHashingRounds;
-                            }
-                            resolve(true);
-                        }
-                    });
-                });
-            }));
         }
         return Promise.all(promises).then(values => {
             if (!updates) {
