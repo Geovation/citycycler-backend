@@ -59,7 +59,7 @@ describe("User endpoint", () => {
     after("Delete test users from Firebase", () => {
         return FirebaseUtils.deleteFirebaseUsers(userIds);
     });
-    describe.only("Creation", () => {
+    describe("Creation", () => {
         it("should create a new user", () => {
             return defaultRequest({
                 headers: {
@@ -186,7 +186,7 @@ describe("User endpoint", () => {
             });
         });
     });
-    describe.only("Getting", () => {
+    describe("Getting", () => {
         it("should get a user by a valid id", () => {
             return defaultRequest({
                 headers: {
@@ -690,118 +690,13 @@ describe("User endpoint", () => {
         it("should let a user delete themself", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 method: "DELETE",
                 url: url + "/user",
             }).then(response => {
                 expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                     response.statusCode + ", error given is: " + response.error);
-            });
-        });
-    });
-    describe("Authentication", () => {
-        describe("Initial", () => {
-            it("should provide a JWT and the User", () => {
-                const auth = { email: "test1@e2e-test.matchmyroute-backend.appspot.com", password: "test" };
-                return defaultRequest({
-                    json: auth,
-                    method: "POST",
-                    url: url + "/user/auth",
-                }).then(response => {
-                    expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
-                        response.statusCode + ", error given is: " + response.error);
-                    expect(response.body.result, "JWT has no token: "
-                        + JSON.stringify(response.body.result)).to.have.property("token")
-                        .that.is.a("string", "JWT token is not a string, it's a " +
-                        (typeof response.body.result.token) + ", here is the JWT: " +
-                        JSON.stringify(response.body.result));
-                    expect(response.body.result, "JWT has no expires: "
-                        + JSON.stringify(response.body.result)).to.have.property("expires")
-                        .that.is.a("number", "JWT expires is not a number, it's a " +
-                        (typeof response.body.result.expires) + ", here is the JWT " +
-                        JSON.stringify(response.body.result));
-                    expect(response.body.result, "Call did not return user: " +
-                        JSON.stringify(response.body.result)).to.have.property("user");
-                    expect(response.body.result.user, "User object does not have id: " +
-                        JSON.stringify(response.body.result)).to.have.property("id");
-                });
-            });
-            it("should not provide a JWT if the password is incorrect", () => {
-                const auth = { email: "test1@e2e-test.matchmyroute-backend.appspot.com", password: "iforgot" };
-                return defaultRequest({
-                    json: auth,
-                    method: "POST",
-                    url: url + "/user/auth",
-                }).then(response => {
-                    expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
-                        response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                    expect(response.body.error).to.equal("Incorrect Password");
-                    expect(response.body.status).to.equal(403);
-                    expect(response.body.user, "User object was returned").to.be.undefined;
-                });
-            });
-            it("should not provide a JWT if the email doesn't exist", () => {
-                const auth = { email: "userTest@e2e-test.matchmyroute-backend.appspot.com", password: "test" };
-                return defaultRequest({
-                    json: auth,
-                    method: "POST",
-                    url: url + "/user/auth",
-                }).then(response => {
-                    expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
-                        response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                    expect(response.body.error).to.equal("Incorrect Password");
-                    expect(response.body.status).to.equal(403);
-                });
-            });
-        });
-        describe("Subsequent", () => {
-            it("should provide a JWT", () => {
-                return defaultRequest({
-                    headers: {
-                        Authorization: "Bearer " + userJwts[1],
-                    },
-                    method: "GET",
-                    url: url + "/user/auth",
-                }).then(response => {
-                    expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
-                        response.statusCode + ", error given is: " + response.error);
-                    expect(response.body.result, "JWT has no token: " +
-                        JSON.stringify(response.body.result)).to.have.property("token")
-                        .that.is.a("string", "JWT token is not a string, it's a " +
-                        (typeof response.body.result.token) + ", here is the JWT: " +
-                        JSON.stringify(response.body.result));
-                    expect(response.body.result, "JWT has no expires: " +
-                        JSON.stringify(response.body.result)).to.have.property("expires")
-                        .that.is.a("number", "JWT expires is not a number, it's a " +
-                        (typeof response.body.result.expires) + ", here is the JWT " +
-                        JSON.stringify(response.body.result));
-                });
-            });
-            it("should not provide a JWT if there is no auth", () => {
-                return defaultRequest({
-                    method: "GET",
-                    url: url + "/user/auth",
-                }).then(response => {
-                    expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
-                        response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                    expect(response.body.error).to.equal("Invalid authorization");
-                    expect(response.body.status).to.equal(403);
-                });
-            });
-            it("should not provide a JWT if there is invalid auth", () => {
-                return defaultRequest({
-                    headers: {
-                        Authorization: "Bearer " + userJwts[0],
-                    },
-                    method: "GET",
-                    url: url + "/user/auth",
-                }).then(response => {
-                    expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
-                        response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                    expect(response.body.error).to.equal("Invalid authorization");
-                    expect(response.body.status).to.equal(403);
-                });
             });
         });
     });
