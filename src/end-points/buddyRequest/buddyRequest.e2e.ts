@@ -170,7 +170,7 @@ describe("BuddyRequest endpoint", () => {
         });
     });
     after("Delete test users from Firebase", () => {
-        FirebaseUtils.deleteFirebaseUsers(uids);
+        return FirebaseUtils.deleteFirebaseUsers(uids);
     });
     describe("Creation", () => {
         it("should create a BuddyRequest", () => {

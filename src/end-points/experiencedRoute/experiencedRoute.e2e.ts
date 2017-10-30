@@ -74,7 +74,7 @@ describe("ExperiencedRoute endpoint", () => {
         });
     });
     after("Delete test users from Firebase", () => {
-        FirebaseUtils.deleteFirebaseUsers(userIds);
+        return FirebaseUtils.deleteFirebaseUsers(userIds);
     });
     describe("Creation", () => {
         it("should create experienced routes", () => {
@@ -885,18 +885,13 @@ describe("ExperiencedRoute endpoint", () => {
         });
         it("should delete any routes belonging to a user, when a user is deleted", () => {
             // Should delete routeIds[2], which we setup in beforeAll
-            let deleteResponse;
-
             return defaultRequest({
                 headers: {
                     Authorization: "Firebase " + userJwts[1],
                 },
                 method: "DELETE",
                 url: url + "/user?id=" + userIds[1],
-            }).then(response => {
-                deleteResponse = response;
-                return FirebaseUtils.deleteFirebaseUsers([userIds[1]]);
-            }).then(response => {
+            }).then(deleteResponse => {
                 expect(deleteResponse.statusCode).to.equal(200, "Expected 200 response but got " +
                     deleteResponse.statusCode + ", error given is: " + deleteResponse.error);
                 return defaultRequest({
