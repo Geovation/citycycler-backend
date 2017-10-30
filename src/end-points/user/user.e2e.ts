@@ -1,4 +1,5 @@
 import * as CloudStorage from "../../common/cloudstorage";
+import * as FirebaseUtils from "../../common/firebaseUtils";
 import * as chai from "chai";
 import * as _ from "lodash";
 import * as mocha from "mocha";
@@ -8,6 +9,8 @@ import * as retryRequest from "retry-request";
 const expect = chai.expect;
 const describe = mocha.describe;
 const it = mocha.it;
+const before = mocha.before;
+const after = mocha.after;
 
 const url = (process.env.URL || "http://localhost:8080") + "/api/v0";
 
@@ -30,12 +33,39 @@ const defaultRequest = (options): Promise<any> => {
 describe("User endpoint", () => {
     let userIds = [];   // A list of users created
     let userJwts = [];  // JWTs corresponding to the respective users in userIds
-    describe("Creation", () => {
+    const user1 = { email: "userTest@e2e-test.matchmyroute-backend.appspot.com",
+    name: "E2E Test User" };
+    const user2 = {
+        email: "test1@e2e-test.matchmyroute-backend.appspot.com",
+        name: "E2E Test User2",
+        photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21"
+            + "bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
+    };
+    before(() => {
+        return FirebaseUtils.createFirebaseUser(user1.email)
+        .then(createResponse => {
+            userIds.push(createResponse.user.uid);
+            return FirebaseUtils.getJwtForUser(createResponse.customToken);
+        }).then(jwt => {
+            userJwts.push(jwt);
+            return FirebaseUtils.createFirebaseUser(user2.email);
+        }).then(createResponse => {
+            userIds.push(createResponse.user.uid);
+            return FirebaseUtils.getJwtForUser(createResponse.customToken);
+        }).then(jwt => {
+            userJwts.push(jwt);
+        });
+    });
+    after("Delete test users from Firebase", () => {
+        return FirebaseUtils.deleteFirebaseUsers(userIds);
+    });
+    describe.only("Creation", () => {
         it("should create a new user", () => {
-            const user = { email: "userTest@e2e-test.matchmyroute-backend.appspot.com",
-                name: "E2E Test User", password: "test" };
             return defaultRequest({
-                json: user,
+                headers: {
+                    Authorization: "Firebase " + userJwts[0],
+                },
+                json: user1,
                 method: "PUT",
                 url: url + "/user",
             }).then(response => {
@@ -46,33 +76,16 @@ describe("User endpoint", () => {
                     JSON.stringify(response.body));
                 expect(response.body.result, "Creation did not yield a user. Got: " +
                     JSON.stringify(response.body.result)).to.have.property("user");
-                expect(parseInt(response.body.result.user.id, 10), "User returned has invalid id: " +
-                    JSON.stringify(response.body.result.user.id)).to.not.be.NaN;
-                expect(response.body.result.jwt, "JWT has no token: "
-                    + JSON.stringify(response.body.result)).to.have.property("token")
-                    .that.is.a("string", "JWT token is not a string, it's a " +
-                    (typeof response.body.result.jwt.token) + ", here is the JWT: " +
-                     JSON.stringify(response.body.result.jwt));
-                expect(response.body.result.jwt, "JWT has no expires: "
-                    + JSON.stringify(response.body.result)).to.have.property("expires")
-                    .that.is.a("number", "JWT expires is not a number, it's a " +
-                    (typeof response.body.result.jwt.expires) + ", here is the JWT " +
-                    JSON.stringify(response.body.result.jwt));
-
-                userIds.push(parseInt(response.body.result.user.id, 10));
-                userJwts.push(response.body.result.jwt.token);
+                expect(response.body.result.user.id, "User returned has invalid id: " +
+                    JSON.stringify(response.body.result.user.id)).to.equal(userIds[0]);
             });
         });
         it("should create a second user with different details and a profile photo", done => {
-            const user = {
-                email: "test1@e2e-test.matchmyroute-backend.appspot.com",
-                name: "E2E Test User2",
-                password: "test",
-                photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21"
-                    + "bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
-            };
             defaultRequest({
-                json: user,
+                headers: {
+                    Authorization: "Firebase " + userJwts[1],
+                },
+                json: user2,
                 method: "PUT",
                 url: url + "/user",
             }).then(response => {
@@ -83,22 +96,10 @@ describe("User endpoint", () => {
                     JSON.stringify(response.body));
                 expect(response.body.result, "Creation did not yield a user. Got: " +
                     JSON.stringify(response.body.result)).to.have.property("user");
-                expect(parseInt(response.body.result.user.id, 10), "User returned has invalid id: " +
-                    JSON.stringify(response.body.result.user.id)).to.not.be.NaN;
-                expect(response.body.result.jwt, "JWT has no token: "
-                    + JSON.stringify(response.body.result)).to.have.property("token")
-                    .that.is.a("string", "JWT token is not a string, it's a " +
-                    (typeof response.body.result.jwt.token) + ", here is the JWT: " +
-                    JSON.stringify(response.body.result.jwt));
-                expect(response.body.result.jwt, "JWT has no expires: "
-                    + JSON.stringify(response.body.result)).to.have.property("expires")
-                    .that.is.a("number", "JWT expires is not a number, it's a " +
-                    (typeof response.body.result.jwt.expires) + ", here is the JWT " +
-                    JSON.stringify(response.body.result.jwt));
+                expect(response.body.result.user.id, "User returned has invalid id: " +
+                    JSON.stringify(response.body.result.user.id)).to.equal(userIds[1]);
                 expect(response.body.result.user.photo).to.be.a.string;
 
-                userIds.push(parseInt(response.body.result.user.id, 10));
-                userJwts.push(response.body.result.jwt.token);
                 return response.body.result.user.photo;
             }).then(imgUrl => {
                 // check if photo exists in cloud storage
@@ -119,10 +120,19 @@ describe("User endpoint", () => {
         it("shouldn't create a user with no name", () => {
             const user = { email: "userTest2@e2e-test.matchmyroute-backend.appspot.com",
                 name: "", password: "test" };
-            return defaultRequest({
-                json: user,
-                method: "PUT",
-                url: url + "/user",
+            return FirebaseUtils.createFirebaseUser(user.email)
+            .then(createResponse => {
+                userIds.push(createResponse.user.uid);
+                return FirebaseUtils.getJwtForUser(createResponse.customToken);
+            }).then(jwt => {
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + jwt,
+                    },
+                    json: user,
+                    method: "PUT",
+                    url: url + "/user",
+                });
             }).then(response => {
                 expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
                     response.statusCode + ", body returned is: " + JSON.stringify(response.body));
@@ -132,10 +142,19 @@ describe("User endpoint", () => {
         });
         it("shouldn't create a user with no email", () => {
             const user = { email: "", name: "E2E Test User", password: "test" };
-            return defaultRequest({
-                json: user,
-                method: "PUT",
-                url: url + "/user",
+            return FirebaseUtils.createFirebaseUser("noEmail@e2e-test.matchmyroute-backend.appspot.com")
+            .then(createResponse => {
+                userIds.push(createResponse.user.uid);
+                return FirebaseUtils.getJwtForUser(createResponse.customToken);
+            }).then(jwt => {
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + jwt,
+                    },
+                    json: user,
+                    method: "PUT",
+                    url: url + "/user",
+                });
             }).then(response => {
                 expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
                     response.statusCode + ", body returned is: " + JSON.stringify(response.body));
@@ -143,27 +162,22 @@ describe("User endpoint", () => {
                 expect(response.body.status).to.equal(400);
             });
         });
-        it("shouldn't create a user with no password", () => {
-            const user = { email: "test3@e2e-test.matchmyroute-backend.appspot.com",
-                name: "E2E Test User", password: "" };
-            return defaultRequest({
-                json: user,
-                method: "PUT",
-                url: url + "/user",
-            }).then(response => {
-                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
-                    response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                expect(response.body.error).to.equal("Password Required");
-                expect(response.body.status).to.equal(400);
-            });
-        });
         it("shouldn't create a user with a duplicate email", () => {
             const user = { email: "userTest@e2e-test.matchmyroute-backend.appspot.com",
                 name: "E2E Test User", password: "test" };
-            return defaultRequest({
-                json: user,
-                method: "PUT",
-                url: url + "/user",
+            return FirebaseUtils.createFirebaseUser("duplicateEmail@e2e-test.matchmyroute-backend.appspot.com")
+                .then(createResponse => {
+                    userIds.push(createResponse.user.uid);
+                    return FirebaseUtils.getJwtForUser(createResponse.customToken);
+                }).then(jwt => {
+                    return defaultRequest({
+                        headers: {
+                            Authorization: "Firebase " + jwt,
+                        },
+                        json: user,
+                        method: "PUT",
+                        url: url + "/user",
+                    });
             }).then(response => {
                 expect(response.statusCode).to.equal(409, "Expected 490 response but got " +
                     response.statusCode + ", body returned is: " + JSON.stringify(response.body));
@@ -172,11 +186,11 @@ describe("User endpoint", () => {
             });
         });
     });
-    describe("Getting", () => {
+    describe.only("Getting", () => {
         it("should get a user by a valid id", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 method: "GET",
                 url: url + "/user?id=" + userIds[0],
@@ -192,7 +206,7 @@ describe("User endpoint", () => {
         it("should get the JWT user when called with no id", () => {
             defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 method: "GET",
                 url: url + "/user",
@@ -220,7 +234,7 @@ describe("User endpoint", () => {
         it("should get a user if auth is for another user, but should not have the preferences", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[1],
+                    Authorization: "Firebase " + userJwts[1],
                 },
                 method: "GET",
                 url: url + "/user?id=" + userIds[0],
@@ -237,7 +251,7 @@ describe("User endpoint", () => {
         it("should not get a user if the id is invalid", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 method: "GET",
                 url: url + "/user?id=" + -1,

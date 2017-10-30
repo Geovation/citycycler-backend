@@ -19,7 +19,7 @@ const operation = {
                 description: "The ID of the user to be returned",
                 in: "query",
                 name: "id",
-                type: "number",
+                type: "string",
             },
         ],
         produces: ["application/json; charset=utf-8"],
@@ -98,7 +98,7 @@ const definitions = {
             },
             id: {
                 description: "The user's database ID",
-                type: "number",
+                type: "string",
             },
             joined: {
                 description: "When the user joined MatchMyRoute, in UTC",
@@ -163,8 +163,9 @@ const service = (broadcast: Function, params: any): Promise<any> => {
         return getIdFromJWT(params.authorization, transactionClient);
     }).then(userId => {
         currentUserId = userId;
-        if (!isNaN(id)) {
-            return Database.getUserById(id, transactionClient);
+        if (typeof id !== "undefined" && id.length > 0) {
+            console.log("getting information for other user with id: " + id);
+            return Database.getUserById(id[0], transactionClient);
         } else {
             // Return the current user
             return Database.getUserById(currentUserId, transactionClient);
