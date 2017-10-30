@@ -19,10 +19,11 @@ export function createFirebaseUser (email: string): Promise<any> {
 };
 
 export function getJwtForUser (customToken: string): Promise<any> {
-    return firebase.auth().signInWithCustomToken(customToken)
-        .then(user => {
-            return user.getIdToken();
-        });
+    return firebase.auth().signOut().then(() => {
+        return firebase.auth().signInWithCustomToken(customToken);
+    }).then(user => {
+        return user.getIdToken();
+    });
 }
 
 export function deleteFirebaseUsers (uids: string[]): Promise<any> {
