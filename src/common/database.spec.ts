@@ -180,8 +180,6 @@ describe("MatchMyRoute Database Functions", () => {
             let updateables = [
                 { name: "Updated Test User" },
                 { email: "updated@example.com" },
-                // { pwh: new Buffer("updated") },
-                // { rounds: 10 },
                 { preferences_units: "kilometers" },
                 { preferences_difficulty: "quiet" },
                 { profile_photo: "http://lorempixel.com/400/400/people/Updated" },
@@ -191,8 +189,6 @@ describe("MatchMyRoute Database Functions", () => {
                     name: "Updated Test User",
                     profile_bio: "Updated Biography",
                     profile_photo: "http://lorempixel.com/400/400/people/Updated",
-                    // pwh: new Buffer("updated"),
-                    // rounds: 10,
                 },
             ];
             for (let i = 0; i < updateables.length; i++) {
