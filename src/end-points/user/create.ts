@@ -144,7 +144,6 @@ const definitions = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    console.log("will try to create user");
     const payload = params.body;
     const { email, name, bio, photo } = payload;
     let id;
@@ -170,14 +169,12 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     })
     // create user
     .then(newClient => {
-        console.log("transaction client created");
         client = newClient;
         let sqlParams = {id, name, email, profile_bio: bio, profile_joined: new Date().toISOString()};
         return Database.putUser(sqlParams, client);
     })
     // store profile photo for user if it exists
     .then(user => {
-        console.log("user stored");
         createdUser = user;
         if (typeof photo !== "undefined") {
             return CloudStorage.storeProfileImage(payload.photo, user.id)
@@ -200,12 +197,10 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         }
     })
     .then(() => {
-        console.log("image stored");
         return Database.commitAndReleaseTransaction(client);
     })
     // return information to client
     .then(tokenObject => {
-        console.log("commited transaction");
         let returnValues = {
             status: 201,
             user: createdUser.asUserProfile(),
