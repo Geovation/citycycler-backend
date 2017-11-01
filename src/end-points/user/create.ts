@@ -1,9 +1,9 @@
-import { generateJWTFor, minimumHashingRounds } from "../../common/auth";
+// import { generateJWTFor } from "../../common/auth";
+import { getIdFromJWT } from "../../common/auth";
 import * as CloudStorage from "../../common/cloudstorage";
 import * as Database from "../../common/database";
 import User from "../../common/UserDataModels";
 import { MicroserviceEndpoint } from "../../microservices-framework/web/services/microservice-endpoint";
-import * as crypto from "crypto";
 // import * as logger from "winston";
 
 // /////////////////////////////////////////////////////////////
@@ -35,6 +35,12 @@ const operation = {
                     $ref: "#/definitions/CreateResponse",
                 },
             },
+            403: {
+                description: "An invalid or non-existant authorization token was supplied",
+                schema: {
+                    $ref: "#/definitions/Error",
+                },
+            },
             409: {
                 description: "A user already exists with this email address",
                 schema: {
@@ -48,6 +54,11 @@ const operation = {
                 },
             },
         },
+        security: [
+            {
+                userAuth: [],
+            },
+        ],
         summary: "Create a new user",
         tags: [
             "Users",
@@ -81,13 +92,14 @@ const definitions = {
                 example: "joe@blogs.com",
                 type: "string",
             },
+            id: {
+                description: "The uid of the new user",
+                example: "Tzsr09123dswjgwsdfiouj1289",
+                type: "string",
+            },
             name: {
                 description: "The user's full name",
                 example: "Joe Blogs",
-                type: "string",
-            },
-            password: {
-                description: "The user's password",
                 type: "string",
             },
             photo: {
@@ -95,7 +107,7 @@ const definitions = {
                 type: "string",
             },
         },
-        required: ["email", "name", "password"],
+        required: ["id", "email", "name"],
     },
     NewUserResult: {
         properties: {
@@ -133,45 +145,32 @@ const definitions = {
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
-    const { email, password, name, bio, photo } = payload;
-    // Work out the user's password hash and salt.
-    // We are using PBKDF2 with 50000 iterations and sha512.
-    const rounds = minimumHashingRounds;
-    const salt = crypto.randomBytes(128);
-    const jwtSecret = crypto.randomBytes(20).toString("base64");
+    const { email, name, bio, photo } = payload;
+    let id;
+
     let createdUser: User;
-    let pwh;
     let client;
     return new Promise((resolve, reject) => {
         if (typeof email === "undefined" || email.trim().length === 0) {
             reject("400:Email Required");
             return;
-        } else if (typeof password === "undefined" || password.trim().length === 0) {
-            reject("400:Password Required");
-            return;
         } else if (typeof name === "undefined" || name.trim().length === 0) {
             reject("400:Name Required");
             return;
         }
-        crypto.pbkdf2(password, salt, rounds, 512, "sha512", (err, key) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(key);
-            }
-        });
+        resolve();
     })
-    .then(newPwh => {
-        pwh = newPwh;
+    .then(() => {
+        return getIdFromJWT(params.authorization);
+    })
+    .then((uid) => {
+        id = uid;
         return Database.createTransactionClient();
     })
     // create user
     .then(newClient => {
         client = newClient;
-        let sqlParams = {name, email, pwh, salt, rounds,
-                         jwt_secret: jwtSecret,
-                         profile_bio: bio,
-                         profile_joined: new Date().toISOString()};
+        let sqlParams = {id, name, email, profile_bio: bio, profile_joined: new Date().toISOString()};
         return Database.putUser(sqlParams, client);
     })
     // store profile photo for user if it exists
@@ -200,13 +199,9 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     .then(() => {
         return Database.commitAndReleaseTransaction(client);
     })
-    .then(() => {
-        return generateJWTFor(createdUser);
-    })
     // return information to client
     .then(tokenObject => {
         let returnValues = {
-            jwt: tokenObject,
             status: 201,
             user: createdUser.asUserProfile(),
         };

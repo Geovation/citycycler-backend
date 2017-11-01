@@ -1,6 +1,6 @@
 // Only a User's settings
 export interface IUserSettings {
-    id: number;
+    id: string;
     email: string;
     name: string;
     pwh: Buffer;
@@ -15,7 +15,7 @@ export interface IUserProfile {
     distance: number;
     email: string;
     helpedCount: number;
-    id: number;
+    id: string;
     name: string;
     joined: number;
     photo: string;
@@ -56,7 +56,7 @@ export default class User implements IUserSettings, IUserProfile {
         });
     }
 
-    public id: number;
+    public id: string;
     public email: string;
     public name: string;
     public pwh: Buffer;
@@ -80,14 +80,6 @@ export default class User implements IUserSettings, IUserProfile {
             throw "User object requires an email";
         } else if (!obj.name.trim().length) {
             throw "User object requires a name";
-        } else if (!obj.pwh.length) {
-            throw "User object requires a password hash";
-        } else if (!obj.salt.length) {
-            throw "User object requires a password salt";
-        } else if (!obj.rounds) {
-            throw "User object requires the number of hashing rounds to be set";
-        } else if (!obj.jwtSecret.trim().length) {
-            throw "User object requires a JWT secret";
         }
         this.id = obj.id;
         this.email = obj.email;

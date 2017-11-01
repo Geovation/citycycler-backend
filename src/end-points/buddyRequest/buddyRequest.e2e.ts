@@ -1,3 +1,4 @@
+import * as FirebaseUtils from "../../common/firebaseUtils";
 import * as chai from "chai";
 import * as _ from "lodash";
 import * as mocha from "mocha";
@@ -7,6 +8,7 @@ import * as rp from "request-promise-native";
 const expect = chai.expect;
 const before = mocha.before;
 const beforeEach = mocha.beforeEach;
+const after = mocha.after;
 const describe = mocha.describe;
 const it = mocha.it;
 
@@ -20,6 +22,7 @@ const defaultRequest = (options): Promise<any> => {
         {
             headers: {
                 Origin: "https://www.example.com",
+                contentType: "application/json",
             },
             json: true,
             resolveWithFullResponse: true,
@@ -29,12 +32,14 @@ const defaultRequest = (options): Promise<any> => {
 };
 
 describe("BuddyRequest endpoint", () => {
+    let uids = [];
     let expUserId;  // The experienced User id
     let expUserJwt;  // The experienced User token
     let experiencedRoute;   // The experienced Route
     let inexpUserId;  // The inexperienced User id
     let inexpUserJwt;  // The inexperienced User token
     let inexperiencedRoute; // The inexperienced Route
+    let randomUserId;
     let randomUserJwt;  // A token for a user unconnected to these buddy requests
     let buddyRequestObject; // A BuddyRequest object with the ids all set correctly
     before("Create 3 test users with respective routes", () => {
@@ -42,42 +47,67 @@ describe("BuddyRequest endpoint", () => {
         const user1 = {
             email: "buddyReqestTest@e2e-test.matchmyroute-backend.appspot.com",
             name: "Random Test User",
-            password: "test",
         };
-        return defaultRequest({
-            json: user1,
-            method: "PUT",
-            url: url + "/user",
-        }).then(response => {
-            randomUserJwt = response.body.result.jwt.token;
-            // The inexperienced User
-            const user2 = {
-                email: "buddyReqestTest2@e2e-test.matchmyroute-backend.appspot.com",
-                name: "Inexperienced Test User",
-                password: "test",
-            };
+        // The inexperienced User
+        const user2 = {
+            email: "buddyReqestTest2@e2e-test.matchmyroute-backend.appspot.com",
+            name: "Inexperienced Test User",
+        };
+
+        // The experienced User
+        const user3 = {
+            email: "buddyReqestTest3@e2e-test.matchmyroute-backend.appspot.com",
+            name: "Experienced Test User",
+        };
+
+        return FirebaseUtils.createFirebaseUser(user1.email)
+        .then(createResponse => {
+            randomUserId = createResponse.user.uid;
+            uids.push(randomUserId);
+            return FirebaseUtils.getJwtForUser(createResponse.customToken);
+        }).then(jwt => {
+            randomUserJwt = jwt;
             return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + randomUserJwt,
+                },
+                json: user1,
+                method: "PUT",
+                url: url + "/user",
+            });
+        }).then(() => {
+            return FirebaseUtils.createFirebaseUser(user2.email);
+        }).then(createResponse => {
+            inexpUserId = createResponse.user.uid;
+            uids.push(inexpUserId);
+            return FirebaseUtils.getJwtForUser(createResponse.customToken);
+        }).then(jwt => {
+            inexpUserJwt = jwt;
+            return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + inexpUserJwt,
+                },
                 json: user2,
                 method: "PUT",
                 url: url + "/user",
             });
-        }).then(response => {
-            inexpUserId = parseInt(response.body.result.user.id, 10);
-            inexpUserJwt = response.body.result.jwt.token;
-            // The experienced User
-            const user3 = {
-                email: "buddyReqestTest3@e2e-test.matchmyroute-backend.appspot.com",
-                name: "Experienced Test User",
-                password: "test",
-            };
+        }).then(() => {
+            return FirebaseUtils.createFirebaseUser(user3.email);
+        }).then(createResponse => {
+            expUserId = createResponse.user.uid;
+            uids.push(expUserId);
+            return FirebaseUtils.getJwtForUser(createResponse.customToken);
+        }).then(jwt => {
+            expUserJwt = jwt;
             return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + expUserJwt,
+                },
                 json: user3,
                 method: "PUT",
                 url: url + "/user",
-                });
-        }).then(response => {
-            expUserId = parseInt(response.body.result.user.id, 10);
-            expUserJwt = response.body.result.jwt.token;
+            });
+        }).then(() => {
             // The inexperienced Route
             const route1 = {
                 arrivalDateTime: "2000-01-01T13:00:00+00",
@@ -92,13 +122,13 @@ describe("BuddyRequest endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + inexpUserJwt,
+                    Authorization: "Firebase " + inexpUserJwt,
                 },
                 json: route1,
                 method: "PUT",
                 url: url + "/inexperiencedRoute",
             });
-        }).then(response => {
+        }).then((response) => {
             inexperiencedRoute = parseInt(response.body.result.id, 10);
             // The experienced Route
             const route2 = {
@@ -113,7 +143,7 @@ describe("BuddyRequest endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + expUserJwt,
+                    Authorization: "Firebase " + expUserJwt,
                 },
                 json: route2,
                 method: "PUT",
@@ -139,11 +169,15 @@ describe("BuddyRequest endpoint", () => {
             };
         });
     });
+    after("Delete test users from Firebase", () => {
+        return FirebaseUtils.deleteFirebaseUsers(uids);
+    });
     describe("Creation", () => {
         it("should create a BuddyRequest", () => {
+
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + inexpUserJwt,
+                    Authorization: "Firebase " + inexpUserJwt,
                 },
                 json: buddyRequestObject,
                 method: "PUT",
@@ -172,7 +206,7 @@ describe("BuddyRequest endpoint", () => {
         it("should not create a BuddyRequest with invalid auth", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer monkey",
+                    Authorization: "Firebase monkey",
                 },
                 json: buddyRequestObject,
                 method: "PUT",
@@ -190,7 +224,7 @@ describe("BuddyRequest endpoint", () => {
         before("Set up 2 buddy requests from inexp user -> exp user", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + inexpUserJwt,
+                    Authorization: "Firebase " + inexpUserJwt,
                 },
                 json: buddyRequestObject,
                 method: "PUT",
@@ -199,7 +233,7 @@ describe("BuddyRequest endpoint", () => {
                 buddyRequest1Id = parseInt(response.body.result.id, 10);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + inexpUserJwt,
+                        Authorization: "Firebase " + inexpUserJwt,
                     },
                     json: buddyRequestObject,
                     method: "PUT",
@@ -213,7 +247,7 @@ describe("BuddyRequest endpoint", () => {
             it("should get a user's sent buddy requests", () => {
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + inexpUserJwt,
+                        Authorization: "Firebase " + inexpUserJwt,
                     },
                     method: "GET",
                     url: url + "/buddyRequest/sent?id=" + buddyRequest1Id,
@@ -255,7 +289,7 @@ describe("BuddyRequest endpoint", () => {
             it("should get all of a user's sent buddy requests when no id is given", () => {
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + inexpUserJwt,
+                        Authorization: "Firebase " + inexpUserJwt,
                     },
                     method: "GET",
                     url: url + "/buddyRequest/sent",
@@ -333,7 +367,7 @@ describe("BuddyRequest endpoint", () => {
             it("should set otherUser correctly to the experiencedUser", () => {
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + inexpUserJwt,
+                        Authorization: "Firebase " + inexpUserJwt,
                     },
                     method: "GET",
                     url: url + "/buddyRequest/sent?id=" + buddyRequest1Id,
@@ -351,7 +385,7 @@ describe("BuddyRequest endpoint", () => {
             it("should not get a user's received buddy requests from the sent endpoint", () => {
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + expUserJwt,
+                        Authorization: "Firebase " + expUserJwt,
                     },
                     method: "GET",
                     url: url + "/buddyRequest/sent",
@@ -376,7 +410,7 @@ describe("BuddyRequest endpoint", () => {
             it("should not let a random user access the buddy request", () => {
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + randomUserJwt,
+                        Authorization: "Firebase " + randomUserJwt,
                     },
                     method: "GET",
                     url: url + "/buddyRequest/sent?id=" + buddyRequest1Id,
@@ -391,7 +425,7 @@ describe("BuddyRequest endpoint", () => {
             it("should get a user's received buddy requests", () => {
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + expUserJwt,
+                        Authorization: "Firebase " + expUserJwt,
                     },
                     method: "GET",
                     url: url + "/buddyRequest/received?id=" + buddyRequest1Id,
@@ -433,7 +467,7 @@ describe("BuddyRequest endpoint", () => {
             it("should get all of a user's received buddy requests when no id is given", () => {
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + expUserJwt,
+                        Authorization: "Firebase " + expUserJwt,
                     },
                     method: "GET",
                     url: url + "/buddyRequest/received",
@@ -511,7 +545,7 @@ describe("BuddyRequest endpoint", () => {
             it("should set otherUser correctly to the inexperiencedUser", () => {
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + expUserJwt,
+                        Authorization: "Firebase " + expUserJwt,
                     },
                     method: "GET",
                     url: url + "/buddyRequest/received?id=" + buddyRequest1Id,
@@ -529,7 +563,7 @@ describe("BuddyRequest endpoint", () => {
             it("should not get a user's sent buddy requests from the received endpoint", () => {
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + inexpUserJwt,
+                        Authorization: "Firebase " + inexpUserJwt,
                     },
                     method: "GET",
                     url: url + "/buddyRequest/received",
@@ -554,7 +588,7 @@ describe("BuddyRequest endpoint", () => {
             it("should not let a random user access the buddy request", () => {
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + randomUserJwt,
+                        Authorization: "Firebase " + randomUserJwt,
                     },
                     method: "GET",
                     url: url + "/buddyRequest/received?id=" + buddyRequest1Id,
@@ -572,7 +606,7 @@ describe("BuddyRequest endpoint", () => {
         before("Create a buddy request to update", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + inexpUserJwt,
+                    Authorization: "Firebase " + inexpUserJwt,
                 },
                 json: buddyRequestObject,
                 method: "PUT",
@@ -607,7 +641,7 @@ describe("BuddyRequest endpoint", () => {
                 const updatesWithId = Object.assign({id: buddyRequestId}, updates);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + expUserJwt,
+                        Authorization: "Firebase " + expUserJwt,
                     },
                     json: updatesWithId,
                     method: "POST",
@@ -619,7 +653,7 @@ describe("BuddyRequest endpoint", () => {
                     // Get the buddyRequest we just updated
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         method: "GET",
                         url: url + "/buddyRequest/sent?id=" + buddyRequestId,
@@ -674,7 +708,7 @@ describe("BuddyRequest endpoint", () => {
                 const updatesWithId = Object.assign({id: buddyRequestId}, updateables);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + expUserJwt,
+                        Authorization: "Firebase " + expUserJwt,
                     },
                     json: updatesWithId,
                     method: "POST",
@@ -691,7 +725,7 @@ describe("BuddyRequest endpoint", () => {
                         // Get the buddyRequest we just updated
                         return defaultRequest({
                             headers: {
-                                Authorization: "Bearer " + inexpUserJwt,
+                                Authorization: "Firebase " + inexpUserJwt,
                             },
                             method: "GET",
                             url: url + "/buddyRequest/sent?id=" + buddyRequestId,
@@ -719,7 +753,7 @@ describe("BuddyRequest endpoint", () => {
         it("should not make any updates as an inexperienced user", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + inexpUserJwt,
+                    Authorization: "Firebase " + inexpUserJwt,
                 },
                 json: {meetingTime: "2017-06-08T10:20:28.684Z"},
                 method: "POST",
@@ -736,7 +770,7 @@ describe("BuddyRequest endpoint", () => {
         beforeEach("Create a buddy request to update", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + inexpUserJwt,
+                    Authorization: "Firebase " + inexpUserJwt,
                 },
                 json: buddyRequestObject,
                 method: "PUT",
@@ -754,7 +788,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -773,7 +807,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -791,7 +825,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -810,7 +844,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -830,7 +864,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -852,7 +886,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -867,7 +901,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -885,7 +919,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -906,7 +940,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -924,7 +958,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -944,7 +978,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -966,7 +1000,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -980,7 +1014,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1001,7 +1035,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1020,7 +1054,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1038,7 +1072,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1058,7 +1092,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1080,7 +1114,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1093,7 +1127,7 @@ describe("BuddyRequest endpoint", () => {
                         };
                         return defaultRequest({
                             headers: {
-                                Authorization: "Bearer " + expUserJwt,
+                                Authorization: "Firebase " + expUserJwt,
                             },
                             json: status2,
                             method: "POST",
@@ -1108,7 +1142,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1128,7 +1162,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1149,7 +1183,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1167,7 +1201,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1191,7 +1225,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1211,7 +1245,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1232,7 +1266,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1250,7 +1284,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1270,7 +1304,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1292,7 +1326,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1306,7 +1340,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1326,7 +1360,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1347,7 +1381,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1365,7 +1399,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1385,7 +1419,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1407,7 +1441,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1421,7 +1455,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1441,7 +1475,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1462,7 +1496,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1482,7 +1516,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1504,7 +1538,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1517,7 +1551,7 @@ describe("BuddyRequest endpoint", () => {
                         };
                         return defaultRequest({
                             headers: {
-                                Authorization: "Bearer " + expUserJwt,
+                                Authorization: "Firebase " + expUserJwt,
                             },
                             json: status2,
                             method: "POST",
@@ -1532,7 +1566,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1552,7 +1586,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1573,7 +1607,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1591,7 +1625,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1613,7 +1647,7 @@ describe("BuddyRequest endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + expUserJwt,
+                    Authorization: "Firebase " + expUserJwt,
                 },
                 json: status,
                 method: "POST",
@@ -1634,7 +1668,7 @@ describe("BuddyRequest endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + expUserJwt,
+                    Authorization: "Firebase " + expUserJwt,
                 },
                 json: status,
                 method: "POST",
@@ -1654,7 +1688,7 @@ describe("BuddyRequest endpoint", () => {
                 beforeEach("Make a BuddyRequest to review", () => {
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: buddyRequestObject,
                         method: "PUT",
@@ -1667,7 +1701,7 @@ describe("BuddyRequest endpoint", () => {
                         };
                         return defaultRequest({
                             headers: {
-                                Authorization: "Bearer " + expUserJwt,
+                                Authorization: "Firebase " + expUserJwt,
                             },
                             json: status,
                             method: "POST",
@@ -1679,7 +1713,7 @@ describe("BuddyRequest endpoint", () => {
                     counter++;
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: {
                             buddyRequest: buddyRequestId,
@@ -1691,7 +1725,7 @@ describe("BuddyRequest endpoint", () => {
                         expect(response.statusCode).to.equal(200);
                         return defaultRequest({
                             headers: {
-                                Authorization: "Bearer " + inexpUserJwt,
+                                Authorization: "Firebase " + inexpUserJwt,
                             },
                             method: "GET",
                             url: url + "/buddyRequest/sent?id=" + buddyRequestId,
@@ -1702,7 +1736,7 @@ describe("BuddyRequest endpoint", () => {
                         expect(buddyRequest.status).to.equal("completed", "Status was not set");
                         return defaultRequest({
                             headers: {
-                                Authorization: "Bearer " + inexpUserJwt,
+                                Authorization: "Firebase " + inexpUserJwt,
                             },
                             method: "GET",
                             url: url + "/user?id=" + inexpUserId,
@@ -1713,7 +1747,7 @@ describe("BuddyRequest endpoint", () => {
                         expect(user.distance).to.equal(counter * 1000, "Inexperienced User distance was not updated");
                         return defaultRequest({
                             headers: {
-                                Authorization: "Bearer " + expUserJwt,
+                                Authorization: "Firebase " + expUserJwt,
                             },
                             method: "GET",
                             url: url + "/user?id=" + expUserId,
@@ -1729,7 +1763,7 @@ describe("BuddyRequest endpoint", () => {
                     counter++;
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: {
                             buddyRequest: buddyRequestId,
@@ -1741,7 +1775,7 @@ describe("BuddyRequest endpoint", () => {
                         expect(response.statusCode).to.equal(200);
                         return defaultRequest({
                             headers: {
-                                Authorization: "Bearer " + inexpUserJwt,
+                                Authorization: "Firebase " + inexpUserJwt,
                             },
                             method: "GET",
                             url: url + "/buddyRequest/sent?id=" + buddyRequestId,
@@ -1752,7 +1786,7 @@ describe("BuddyRequest endpoint", () => {
                         expect(buddyRequest.status).to.equal("completed", "Status was not set");
                         return defaultRequest({
                             headers: {
-                                Authorization: "Bearer " + inexpUserJwt,
+                                Authorization: "Firebase " + inexpUserJwt,
                             },
                             method: "GET",
                             url: url + "/user?id=" + inexpUserId,
@@ -1763,7 +1797,7 @@ describe("BuddyRequest endpoint", () => {
                         expect(user.distance).to.equal(counter * 1000, "Inexperienced User distance was not updated");
                         return defaultRequest({
                             headers: {
-                                Authorization: "Bearer " + expUserJwt,
+                                Authorization: "Firebase " + expUserJwt,
                             },
                             method: "GET",
                             url: url + "/user?id=" + expUserId,
@@ -1778,7 +1812,7 @@ describe("BuddyRequest endpoint", () => {
                 it("Should not let an experiencedUser review a buddyRequest", () => {
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + expUserJwt,
+                            Authorization: "Firebase " + expUserJwt,
                         },
                         json: {
                             buddyRequest: buddyRequestId,
@@ -1795,7 +1829,7 @@ describe("BuddyRequest endpoint", () => {
                 it("Should not let a user review a buddyRequest as a 2", () => {
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: {
                             buddyRequest: buddyRequestId,
@@ -1812,7 +1846,7 @@ describe("BuddyRequest endpoint", () => {
                 it("Should not let a user review a buddyRequest as a -2", () => {
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: {
                             buddyRequest: buddyRequestId,
@@ -1829,7 +1863,7 @@ describe("BuddyRequest endpoint", () => {
                 it("Should not let a user review a buddyRequest as a 0", () => {
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: {
                             buddyRequest: buddyRequestId,
@@ -1847,7 +1881,7 @@ describe("BuddyRequest endpoint", () => {
                     counter++;
                     return defaultRequest({
                         headers: {
-                            Authorization: "Bearer " + inexpUserJwt,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: {
                             buddyRequest: buddyRequestId,
@@ -1858,7 +1892,7 @@ describe("BuddyRequest endpoint", () => {
                     }).then(response => {
                         return defaultRequest({
                             headers: {
-                                Authorization: "Bearer " + inexpUserJwt,
+                                Authorization: "Firebase " + inexpUserJwt,
                             },
                             json: {
                                 buddyRequest: buddyRequestId,
@@ -1871,7 +1905,7 @@ describe("BuddyRequest endpoint", () => {
                         expect(response.statusCode).to.equal(200);
                         return defaultRequest({
                             headers: {
-                                Authorization: "Bearer " + inexpUserJwt,
+                                Authorization: "Firebase " + inexpUserJwt,
                             },
                             method: "GET",
                             url: url + "/buddyRequest/sent?id=" + buddyRequestId,
@@ -1881,7 +1915,7 @@ describe("BuddyRequest endpoint", () => {
                         expect(buddyRequest.review).to.equal(-1, "Review was not updated");
                         return defaultRequest({
                             headers: {
-                                Authorization: "Bearer " + inexpUserJwt,
+                                Authorization: "Firebase " + inexpUserJwt,
                             },
                             method: "GET",
                             url: url + "/user?id=" + inexpUserId,
@@ -1894,7 +1928,7 @@ describe("BuddyRequest endpoint", () => {
                             "but shouldn't have been");
                         return defaultRequest({
                             headers: {
-                                Authorization: "Bearer " + expUserJwt,
+                                Authorization: "Firebase " + expUserJwt,
                             },
                             method: "GET",
                             url: url + "/user?id=" + expUserId,

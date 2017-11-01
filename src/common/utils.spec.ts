@@ -482,49 +482,29 @@ describe("Various useful functions", () => {
         it("should be constructed", () => {
             const data = {
                 email: "test@example.com",
-                id: 555,
-                jwtSecret: "secret",
+                id: "abcd",
                 name: "Test User",
-                pwh: new Buffer("test"),
-                rounds: 5,
-                salt: new Buffer("salt"),
             };
             const user = new User(data);
-            expect(user.id).to.equal(555);
+            expect(user.id).to.equal("abcd");
             expect(user.name).to.equal("Test User");
             expect(user.email).to.equal("test@example.com");
-            expect(Buffer.compare(user.pwh, new Buffer("test"))).to.equal(0);
-            expect(Buffer.compare(user.salt, new Buffer("salt"))).to.equal(0);
-            expect(user.rounds).to.equal(5);
-            expect(user.jwtSecret).to.equal("secret");
         });
         it("should be constructed without an id", () => {
             const data = {
                 email: "test@example.com",
-                jwtSecret: "secret",
                 name: "Test User",
-                pwh: new Buffer("test"),
-                rounds: 5,
-                salt: new Buffer("salt"),
             };
             const user = new User(data);
             expect(user.id).to.be.undefined;
             expect(user.name).to.equal("Test User");
             expect(user.email).to.equal("test@example.com");
-            expect(Buffer.compare(user.pwh, new Buffer("test"))).to.equal(0);
-            expect(Buffer.compare(user.salt, new Buffer("salt"))).to.equal(0);
-            expect(user.rounds).to.equal(5);
-            expect(user.jwtSecret).to.equal("secret");
         });
         it("should error if no name is given", () => {
             const data = {
                 email: "test@example.com",
-                id: 555,
-                jwtSecret: "secret",
+                id: "abcd",
                 name: " ",
-                pwh: new Buffer("test"),
-                rounds: 5,
-                salt: new Buffer("salt"),
             };
             expect(() => {
                 return new User(data);
@@ -533,72 +513,12 @@ describe("Various useful functions", () => {
         it("should error if no email is given", () => {
             const data = {
                 email: "",
-                id: 555,
-                jwtSecret: "secret",
+                id: "abcd",
                 name: "Test User",
-                pwh: new Buffer("test"),
-                rounds: 5,
-                salt: new Buffer("salt"),
             };
             expect(() => {
                 return new User(data);
             }).to.throw("User object requires an email");
-        });
-        it("should error if no password is given", () => {
-            const data = {
-                email: "test@example.com",
-                id: 555,
-                jwtSecret: "secret",
-                name: "Test User",
-                pwh: new Buffer(""),
-                rounds: 5,
-                salt: new Buffer("salt"),
-            };
-            expect(() => {
-                return new User(data);
-            }).to.throw("User object requires a password hash");
-        });
-        it("should error if no salt is given", () => {
-            const data = {
-                email: "test@example.com",
-                id: 555,
-                jwtSecret: "secret",
-                name: "Test User",
-                pwh: new Buffer("test"),
-                rounds: 5,
-                salt: new Buffer(""),
-            };
-            expect(() => {
-                return new User(data);
-            }).to.throw("User object requires a password salt");
-        });
-        it("should error if no. of rounds are not given", () => {
-            const data = {
-                email: "test@example.com",
-                id: 555,
-                jwtSecret: "secret",
-                name: "Test User",
-                pwh: new Buffer("test"),
-                rounds: 0,
-                salt: new Buffer("salt"),
-            };
-            expect(() => {
-                return new User(data);
-            }).to.throw("User object requires the number of hashing rounds to be set");
-        });
-        it("should error if no JWT secret is given", () => {
-            const data = {
-                email: "test@example.com",
-                id: 555,
-                jwtSecret: "",
-                name: "Test User",
-                pwh: new Buffer("test"),
-                rounds: 5,
-                salt: new Buffer("salt"),
-            };
-            expect(() => {
-                return new User(data);
-            }).to.throw("User object requires a JWT secret");
         });
         it("should be constructed from full data", () => {
             const data = {
@@ -606,29 +526,21 @@ describe("Various useful functions", () => {
                 distance: 123321,
                 email: "test@example.com",
                 helpedCount: 13,
-                id: 555,
+                id: "abcd",
                 joined: 1234567,
-                jwtSecret: "secret",
                 name: "Test User",
                 photo: "www.example.com/image.jpg",
                 preferences: {
                     rideDifficulty: "balanced",
                     units: "miles",
                 },
-                pwh: new Buffer("test"),
                 rating: 7.5,
-                rounds: 5,
-                salt: new Buffer("salt"),
                 usersHelped: 21,
             };
             const user = new User(data);
-            expect(user.id).to.equal(555);
+            expect(user.id).to.equal("abcd");
             expect(user.name).to.equal("Test User");
             expect(user.email).to.equal("test@example.com");
-            expect(Buffer.compare(user.pwh, new Buffer("test"))).to.equal(0);
-            expect(Buffer.compare(user.salt, new Buffer("salt"))).to.equal(0);
-            expect(user.rounds).to.equal(5);
-            expect(user.jwtSecret).to.equal("secret");
             expect(user.bio).to.equal("I'm a really fast cyclist");
             expect(user.photo).to.equal("www.example.com/image.jpg");
             expect(user.joined).to.equal(1234567);
@@ -642,8 +554,7 @@ describe("Various useful functions", () => {
         it("should be constructed from a postgres row(ish) object", () => {
             const row = {
                 email: "test@example.com",
-                id: 555,
-                jwt_secret: "secret",
+                id: "abcd",
                 name: "Test User",
                 preferences_difficulty: "quiet",
                 preferences_units: "kilometers",
@@ -654,9 +565,6 @@ describe("Various useful functions", () => {
                 profile_joined: 1234567,
                 profile_photo: "www.example.com/image.jpg",
                 profile_rating_sum: 100,
-                pwh: new Buffer("test"),
-                rounds: 5,
-                salt: new Buffer("salt"),
             };
             const user = User.fromSQLRow(row);
             expect(user.name).to.equal("Test User");
@@ -674,7 +582,7 @@ describe("Various useful functions", () => {
         it("should not leak private data when made into a UserProfile", () => {
             const row = {
                 email: "test@example.com",
-                id: 555,
+                id: "abcd",
                 jwt_secret: "secret",
                 name: "Test User",
                 profile_bio: "I'm a really fast cyclist",
@@ -694,7 +602,7 @@ describe("Various useful functions", () => {
         it("should not leak data when turned into a UserSettings", () => {
             const row = {
                 email: "test@example.com",
-                id: 555,
+                id: "abcd",
                 jwt_secret: "secret",
                 name: "Test User",
                 profile_bio: "I'm a really fast cyclist",

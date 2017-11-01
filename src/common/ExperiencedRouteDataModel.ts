@@ -23,7 +23,7 @@ export default class ExperiencedRoute {
     public id: number;
     public length: number;
     public name: string;
-    public owner: number;
+    public owner: string;
     public route: number[][];
     public startPointName: string;
 

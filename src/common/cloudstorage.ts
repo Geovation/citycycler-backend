@@ -5,7 +5,7 @@ import * as getUriFunction from "get-uri";
 const gcs = Storage();
 const getUri = promisify(getUriFunction);
 
-export function storeProfileImage(imgUri: string, userId: number) {
+export function storeProfileImage(imgUri: string, userId: string) {
     const bucket = gcs.bucket(process.env.STORAGE_BUCKET);
     const filename = createFilenameForUser(userId);
     const file = bucket.file(filename);
@@ -26,11 +26,11 @@ export function storeProfileImage(imgUri: string, userId: number) {
     });
 }
 
-export function createFilenameForUser(userId: number): string {
+export function createFilenameForUser(userId: string): string {
     return "profileimg-" + userId + ".jpg";
 }
 
-export function deleteProfileImage(userId: number): Promise<any> {
+export function deleteProfileImage(userId: string): Promise<any> {
     const bucket = gcs.bucket(process.env.STORAGE_BUCKET);
     const filename = createFilenameForUser(userId);
     const file = bucket.file(filename);

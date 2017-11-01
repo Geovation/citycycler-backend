@@ -20,7 +20,7 @@ export default class InexperiencedRoute {
     public endPoint: [number, number];
     public endPointName: string;
     public id?: number;
-    public owner?: number;
+    public owner?: string;
     public radius: number;
     public startPoint: [number, number];
     public startPointName: string;

@@ -26,13 +26,13 @@ END$$;
 
 CREATE TABLE users (
 -- Core User attributes. Can't be null
-id serial PRIMARY KEY,
+id varchar(40) PRIMARY KEY,
 name varchar(200) NOT NULL,
 email varchar(200) UNIQUE,
-pwh bytea NOT NULL,
-salt bytea NOT NULL,
-rounds integer NOT NULL,
-jwt_secret varchar(32) NOT NULL,
+pwh bytea,
+salt bytea,
+rounds integer,
+jwt_secret varchar(32),
 -- User profile info. Should be optional
 profile_bio text,
 profile_photo varchar(200),             -- The url to the user's profile photo
@@ -55,7 +55,7 @@ endPointName text NOT NULL,     -- The english name of this route's end point
 departureTime time with time zone NOT NULL,	-- When the owner cycles this route
 arrivalTime time with time zone NOT NULL,	-- When the  user arrives at the destination
 days day_of_week[] DEFAULT ARRAY[]::day_of_week[],	-- An array of the days of the week a user cycles this route
-owner integer REFERENCES users ON DELETE CASCADE,	-- User who created this route
+owner varchar(40) REFERENCES users ON DELETE CASCADE,	-- User who created this route
 difficulty ride_difficulty DEFAULT 'balanced'::ride_difficulty,  -- How hard this route is
 length integer NOT NULL         -- How long the route is in meters
 );
@@ -69,7 +69,7 @@ startPointName text NOT NULL,       -- The english name of where the user wants 
 endPoint geography NOT NULL,        -- Where the user wants to get to
 endPointName text NOT NULL,         -- The english name of where the user wants to get to
 radius integer DEFAULT 1000,        -- How far from the start and end points to look for matching routes
-owner integer REFERENCES users ON DELETE CASCADE,    -- Who created this query
+owner varchar(40) REFERENCES users ON DELETE CASCADE,    -- Who created this query
 arrivalDateTime timestamp with time zone DEFAULT 'now',      -- When the user wants to arrive at their destination
 notifyOwner boolean DEFAULT FALSE,  -- If the owner wants to be notified of any new matches
 difficulty ride_difficulty DEFAULT 'balanced'::ride_difficulty, -- How hard the user wants the route to be
@@ -82,8 +82,8 @@ CREATE TABLE buddy_requests (
 id serial PRIMARY KEY,
 experiencedRouteName text NOT NULL,         -- The name of the experienced route
 experiencedRoute integer REFERENCES experienced_routes ON DELETE SET NULL,   -- The id of the experienced route
-experiencedUser integer REFERENCES users ON DELETE SET NULL,                 -- The id of the experienced user
-owner integer REFERENCES users ON DELETE SET NULL,                           -- The id of the inexperienced user
+experiencedUser varchar(40) REFERENCES users ON DELETE SET NULL,                 -- The id of the experienced user
+owner varchar(40) REFERENCES users ON DELETE SET NULL,                           -- The id of the inexperienced user
 inexperiencedRouteName text NOT NULL,       -- The name of the inexperienced route
 inexperiencedRoute integer REFERENCES inexperienced_routes ON DELETE SET NULL, -- The id of the inexperienced route
 meetingTime timestamptz NOT NULL,           -- When the users will meet

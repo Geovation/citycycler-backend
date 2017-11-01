@@ -14,11 +14,15 @@ export function notify(
     getRegistrationTokensForUser(userId).then(
         registrationTokens => {
             // send notification
-            console.log("sending notification");
-            firebaseAdmin.messaging().sendToDevice(
-                registrationTokens,
-                messagePayload
-            );
+            if ( registrationTokens.length > 0 ) {
+                console.log("sending notification");
+                firebaseAdmin.messaging().sendToDevice(
+                    registrationTokens,
+                    messagePayload
+                );
+            } else {
+                console.log("no registration token found for user");
+            }
         }
     );
 }

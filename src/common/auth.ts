@@ -23,7 +23,7 @@ function initFirebase() {
  * @param authHeader
  * @param uid
  */
-export function isUser(authHeader: string, uid: number, providedClient = null): Promise<boolean> {
+export function isUser(authHeader: string, uid: string, providedClient = null): Promise<boolean> {
     return getIdFromJWT(authHeader, providedClient)
         .then(id => {
             return id === uid;
@@ -38,7 +38,7 @@ export function isUser(authHeader: string, uid: number, providedClient = null): 
  * @param uid
  * @param onAuth
  */
-export function doIfUser(authHeader: string, uid: number, onAuth: Function, providedClient = null): Promise<any> {
+export function doIfUser(authHeader: string, uid: string, onAuth: Function, providedClient = null): Promise<any> {
     return new Promise((resolve, reject) => {
         isUser(authHeader, uid, providedClient).then(valid => {
             if (valid) {
@@ -54,35 +54,49 @@ export function doIfUser(authHeader: string, uid: number, onAuth: Function, prov
  * Return the user ID from a given token, after verifying that this is the correct user
  * @param authHeader
  */
-export function getIdFromJWT(authHeader: string, providedClient = null): Promise<number> {
+export function getIdFromJWT(authHeader: string, providedClient = null): Promise<string> {
     return new Promise((resolve, reject) => {
         if (authHeader === undefined) {
             reject("403:Invalid authorization");
         }
         const [scheme, token] = authHeader.split(" ");
-        if (scheme !== "Bearer") {
-            reject("400:Invalid authorization scheme. This API requires 'Bearer <JWT>'");
-        }
-        const payload = jwt.decode(token, {
-            json: true,
-        });
-        if (payload === null || payload.id === null) {
-            reject("403:Invalid authorization");
-        }
-        // Get the user, so we can use their secret to verify the JWT
-        Database.getUserById(payload.id, providedClient).then(user => {
-            try {
-                jwt.verify(token, user.jwtSecret, {
-                    algorithms: ["HS256"],
-                    issuer: "MatchMyRoute Backend",
+
+        switch (scheme) {
+            case "Firebase":
+                // check if id token is valid
+                firebaseAdmin.auth().verifyIdToken(token)
+                    .then(decodedToken => {
+                        resolve(decodedToken.uid);
+                    })
+                    .catch(err => {
+                        reject("403:Invalid authorization");
+                    });
+                    break;
+            case "Bearer":
+                const payload = jwt.decode(token, {
+                    json: true,
                 });
-                resolve(user.id);
-            } catch (err) {
-                reject("403:Invalid authorization");
-            }
-        }, err => {
-            reject("403:Invalid authorization");
-        });
+                if (payload === null || payload.id === null) {
+                    reject("403:Invalid authorization");
+                }
+                // Get the user, so we can use their secret to verify the JWT
+                Database.getUserById(payload.id, providedClient).then(user => {
+                    try {
+                        jwt.verify(token, user.jwtSecret, {
+                            algorithms: ["HS256"],
+                            issuer: "MatchMyRoute Backend",
+                        });
+                        resolve(user.id);
+                    } catch (err) {
+                        reject("403:Invalid authorization");
+                    }
+                }, err => {
+                    reject("403:Invalid authorization");
+                });
+                break;
+            default:
+                reject("400:Invalid authorization scheme. This API requires 'Bearer <JWT>'");
+        }
     });
 }
 

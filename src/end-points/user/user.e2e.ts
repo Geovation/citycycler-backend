@@ -1,4 +1,5 @@
 import * as CloudStorage from "../../common/cloudstorage";
+import * as FirebaseUtils from "../../common/firebaseUtils";
 import * as chai from "chai";
 import * as _ from "lodash";
 import * as mocha from "mocha";
@@ -8,6 +9,8 @@ import * as retryRequest from "retry-request";
 const expect = chai.expect;
 const describe = mocha.describe;
 const it = mocha.it;
+const before = mocha.before;
+const after = mocha.after;
 
 const url = (process.env.URL || "http://localhost:8080") + "/api/v0";
 
@@ -30,12 +33,39 @@ const defaultRequest = (options): Promise<any> => {
 describe("User endpoint", () => {
     let userIds = [];   // A list of users created
     let userJwts = [];  // JWTs corresponding to the respective users in userIds
+    const user1 = { email: "userTest@e2e-test.matchmyroute-backend.appspot.com",
+    name: "E2E Test User" };
+    const user2 = {
+        email: "test1@e2e-test.matchmyroute-backend.appspot.com",
+        name: "E2E Test User2",
+        photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21"
+            + "bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
+    };
+    before(() => {
+        return FirebaseUtils.createFirebaseUser(user1.email)
+        .then(createResponse => {
+            userIds.push(createResponse.user.uid);
+            return FirebaseUtils.getJwtForUser(createResponse.customToken);
+        }).then(jwt => {
+            userJwts.push(jwt);
+            return FirebaseUtils.createFirebaseUser(user2.email);
+        }).then(createResponse => {
+            userIds.push(createResponse.user.uid);
+            return FirebaseUtils.getJwtForUser(createResponse.customToken);
+        }).then(jwt => {
+            userJwts.push(jwt);
+        });
+    });
+    after("Delete test users from Firebase", () => {
+        return FirebaseUtils.deleteFirebaseUsers(userIds);
+    });
     describe("Creation", () => {
         it("should create a new user", () => {
-            const user = { email: "userTest@e2e-test.matchmyroute-backend.appspot.com",
-                name: "E2E Test User", password: "test" };
             return defaultRequest({
-                json: user,
+                headers: {
+                    Authorization: "Firebase " + userJwts[0],
+                },
+                json: user1,
                 method: "PUT",
                 url: url + "/user",
             }).then(response => {
@@ -46,33 +76,16 @@ describe("User endpoint", () => {
                     JSON.stringify(response.body));
                 expect(response.body.result, "Creation did not yield a user. Got: " +
                     JSON.stringify(response.body.result)).to.have.property("user");
-                expect(parseInt(response.body.result.user.id, 10), "User returned has invalid id: " +
-                    JSON.stringify(response.body.result.user.id)).to.not.be.NaN;
-                expect(response.body.result.jwt, "JWT has no token: "
-                    + JSON.stringify(response.body.result)).to.have.property("token")
-                    .that.is.a("string", "JWT token is not a string, it's a " +
-                    (typeof response.body.result.jwt.token) + ", here is the JWT: " +
-                     JSON.stringify(response.body.result.jwt));
-                expect(response.body.result.jwt, "JWT has no expires: "
-                    + JSON.stringify(response.body.result)).to.have.property("expires")
-                    .that.is.a("number", "JWT expires is not a number, it's a " +
-                    (typeof response.body.result.jwt.expires) + ", here is the JWT " +
-                    JSON.stringify(response.body.result.jwt));
-
-                userIds.push(parseInt(response.body.result.user.id, 10));
-                userJwts.push(response.body.result.jwt.token);
+                expect(response.body.result.user.id, "User returned has invalid id: " +
+                    JSON.stringify(response.body.result.user.id)).to.equal(userIds[0]);
             });
         });
         it("should create a second user with different details and a profile photo", done => {
-            const user = {
-                email: "test1@e2e-test.matchmyroute-backend.appspot.com",
-                name: "E2E Test User2",
-                password: "test",
-                photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21"
-                    + "bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
-            };
             defaultRequest({
-                json: user,
+                headers: {
+                    Authorization: "Firebase " + userJwts[1],
+                },
+                json: user2,
                 method: "PUT",
                 url: url + "/user",
             }).then(response => {
@@ -83,22 +96,10 @@ describe("User endpoint", () => {
                     JSON.stringify(response.body));
                 expect(response.body.result, "Creation did not yield a user. Got: " +
                     JSON.stringify(response.body.result)).to.have.property("user");
-                expect(parseInt(response.body.result.user.id, 10), "User returned has invalid id: " +
-                    JSON.stringify(response.body.result.user.id)).to.not.be.NaN;
-                expect(response.body.result.jwt, "JWT has no token: "
-                    + JSON.stringify(response.body.result)).to.have.property("token")
-                    .that.is.a("string", "JWT token is not a string, it's a " +
-                    (typeof response.body.result.jwt.token) + ", here is the JWT: " +
-                    JSON.stringify(response.body.result.jwt));
-                expect(response.body.result.jwt, "JWT has no expires: "
-                    + JSON.stringify(response.body.result)).to.have.property("expires")
-                    .that.is.a("number", "JWT expires is not a number, it's a " +
-                    (typeof response.body.result.jwt.expires) + ", here is the JWT " +
-                    JSON.stringify(response.body.result.jwt));
+                expect(response.body.result.user.id, "User returned has invalid id: " +
+                    JSON.stringify(response.body.result.user.id)).to.equal(userIds[1]);
                 expect(response.body.result.user.photo).to.be.a.string;
 
-                userIds.push(parseInt(response.body.result.user.id, 10));
-                userJwts.push(response.body.result.jwt.token);
                 return response.body.result.user.photo;
             }).then(imgUrl => {
                 // check if photo exists in cloud storage
@@ -119,10 +120,19 @@ describe("User endpoint", () => {
         it("shouldn't create a user with no name", () => {
             const user = { email: "userTest2@e2e-test.matchmyroute-backend.appspot.com",
                 name: "", password: "test" };
-            return defaultRequest({
-                json: user,
-                method: "PUT",
-                url: url + "/user",
+            return FirebaseUtils.createFirebaseUser(user.email)
+            .then(createResponse => {
+                userIds.push(createResponse.user.uid);
+                return FirebaseUtils.getJwtForUser(createResponse.customToken);
+            }).then(jwt => {
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + jwt,
+                    },
+                    json: user,
+                    method: "PUT",
+                    url: url + "/user",
+                });
             }).then(response => {
                 expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
                     response.statusCode + ", body returned is: " + JSON.stringify(response.body));
@@ -132,10 +142,19 @@ describe("User endpoint", () => {
         });
         it("shouldn't create a user with no email", () => {
             const user = { email: "", name: "E2E Test User", password: "test" };
-            return defaultRequest({
-                json: user,
-                method: "PUT",
-                url: url + "/user",
+            return FirebaseUtils.createFirebaseUser("noEmail@e2e-test.matchmyroute-backend.appspot.com")
+            .then(createResponse => {
+                userIds.push(createResponse.user.uid);
+                return FirebaseUtils.getJwtForUser(createResponse.customToken);
+            }).then(jwt => {
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + jwt,
+                    },
+                    json: user,
+                    method: "PUT",
+                    url: url + "/user",
+                });
             }).then(response => {
                 expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
                     response.statusCode + ", body returned is: " + JSON.stringify(response.body));
@@ -143,27 +162,22 @@ describe("User endpoint", () => {
                 expect(response.body.status).to.equal(400);
             });
         });
-        it("shouldn't create a user with no password", () => {
-            const user = { email: "test3@e2e-test.matchmyroute-backend.appspot.com",
-                name: "E2E Test User", password: "" };
-            return defaultRequest({
-                json: user,
-                method: "PUT",
-                url: url + "/user",
-            }).then(response => {
-                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
-                    response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                expect(response.body.error).to.equal("Password Required");
-                expect(response.body.status).to.equal(400);
-            });
-        });
         it("shouldn't create a user with a duplicate email", () => {
             const user = { email: "userTest@e2e-test.matchmyroute-backend.appspot.com",
                 name: "E2E Test User", password: "test" };
-            return defaultRequest({
-                json: user,
-                method: "PUT",
-                url: url + "/user",
+            return FirebaseUtils.createFirebaseUser("duplicateEmail@e2e-test.matchmyroute-backend.appspot.com")
+                .then(createResponse => {
+                    userIds.push(createResponse.user.uid);
+                    return FirebaseUtils.getJwtForUser(createResponse.customToken);
+                }).then(jwt => {
+                    return defaultRequest({
+                        headers: {
+                            Authorization: "Firebase " + jwt,
+                        },
+                        json: user,
+                        method: "PUT",
+                        url: url + "/user",
+                    });
             }).then(response => {
                 expect(response.statusCode).to.equal(409, "Expected 490 response but got " +
                     response.statusCode + ", body returned is: " + JSON.stringify(response.body));
@@ -176,7 +190,7 @@ describe("User endpoint", () => {
         it("should get a user by a valid id", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 method: "GET",
                 url: url + "/user?id=" + userIds[0],
@@ -192,7 +206,7 @@ describe("User endpoint", () => {
         it("should get the JWT user when called with no id", () => {
             defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 method: "GET",
                 url: url + "/user",
@@ -220,7 +234,7 @@ describe("User endpoint", () => {
         it("should get a user if auth is for another user, but should not have the preferences", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[1],
+                    Authorization: "Firebase " + userJwts[1],
                 },
                 method: "GET",
                 url: url + "/user?id=" + userIds[0],
@@ -237,7 +251,7 @@ describe("User endpoint", () => {
         it("should not get a user if the id is invalid", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 method: "GET",
                 url: url + "/user?id=" + -1,
@@ -256,13 +270,12 @@ describe("User endpoint", () => {
                 bio: "Updated bio",
                 email: "updateduserTest@e2e-test.matchmyroute-backend.appspot.com",
                 name: "Updated Test User",
-                password: "updatedtest",
                 photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21" +
                 "bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
             };
             defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -272,7 +285,7 @@ describe("User endpoint", () => {
                      JSON.stringify(response));
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/user?id=" + userIds[0],
@@ -284,21 +297,6 @@ describe("User endpoint", () => {
                 expect(user.bio).to.equal("Updated bio");
                 expect(user.photo).to.equal(CloudStorage.createFilenameForUser(userIds[0]));
                 photoName = user.photo;
-                // Test password change by logging in with the new password
-                return defaultRequest({
-                    headers: {
-                        Authorization: "Bearer " + userJwts[0],
-                    },
-                    json: {
-                        email: "updateduserTest@e2e-test.matchmyroute-backend.appspot.com",
-                        password: "updatedtest",
-                    },
-                    method: "POST",
-                    url: url + "/auth/user",
-                });
-            }).then(response => {
-                expect(response.statusCode).to.equal(200, "Got non 200 login response: " +
-                    JSON.stringify(response));
                 // check if photo exists in cloud storage
                 const imgUrl = process.env.STORAGE_BASE_URL +
                 "/" +
@@ -336,14 +334,14 @@ describe("User endpoint", () => {
                 expect(response.body.status).to.equal(403);
             });
         });
-        it("should not update a user to an extant email", () => {
+        it("should not update a user to an existent email", () => {
             const userUpdates = {
                 email: "test1@e2e-test.matchmyroute-backend.appspot.com",
                 name: "Updated2 Test User", password: "updated2test",
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -361,7 +359,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -371,7 +369,7 @@ describe("User endpoint", () => {
                      JSON.stringify(response));
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/user?id=" + userIds[0],
@@ -387,7 +385,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -397,7 +395,7 @@ describe("User endpoint", () => {
                      JSON.stringify(response));
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/user?id=" + userIds[0],
@@ -407,44 +405,13 @@ describe("User endpoint", () => {
                 expect(user.email).to.equal("userTest3@e2e-test.matchmyroute-backend.appspot.com");
             });
         });
-        it("should update a user's individual properties - password", () => {
-            const userUpdates = {
-                password: "test",
-            };
-            return defaultRequest({
-                headers: {
-                    Authorization: "Bearer " + userJwts[0],
-                },
-                json: userUpdates,
-                method: "POST",
-                url: url + "/user",
-            }).then(response => {
-                expect(response.statusCode).to.equal(200, "Got non 200 response: " +
-                     JSON.stringify(response));
-                // Test by logging in with the new password
-                return defaultRequest({
-                    headers: {
-                        Authorization: "Bearer " + userJwts[0],
-                    },
-                    json: {
-                        email: "userTest@e2e-test.matchmyroute-backend.appspot.com",
-                        password: "test",
-                    },
-                    method: "POST",
-                    url: url + "/auth/user",
-                });
-            }).then(response => {
-                expect(response.statusCode).to.equal(200, "Got non 200 login response: " +
-                    JSON.stringify(response));
-            });
-        });
         it("should update a user's individual properties - bio", () => {
             const userUpdates = {
                 bio: "Bio",
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -454,7 +421,7 @@ describe("User endpoint", () => {
                      JSON.stringify(response));
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/user?id=" + userIds[0],
@@ -471,7 +438,7 @@ describe("User endpoint", () => {
             };
             defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -481,7 +448,7 @@ describe("User endpoint", () => {
                      JSON.stringify(response));
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/user?id=" + userIds[0],
@@ -518,7 +485,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -528,7 +495,7 @@ describe("User endpoint", () => {
                      JSON.stringify(response));
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/user?id=" + userIds[0],
@@ -561,7 +528,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -571,7 +538,7 @@ describe("User endpoint", () => {
                      JSON.stringify(response));
                 return defaultRequest({
                     headers: {
-                        Authorization: "Bearer " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
                     url: url + "/user?id=" + userIds[0],
@@ -589,7 +556,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -605,7 +572,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -621,7 +588,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -637,7 +604,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -653,7 +620,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -668,7 +635,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -683,7 +650,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -698,7 +665,7 @@ describe("User endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 json: userUpdates,
                 method: "POST",
@@ -723,118 +690,13 @@ describe("User endpoint", () => {
         it("should let a user delete themself", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Bearer " + userJwts[0],
+                    Authorization: "Firebase " + userJwts[0],
                 },
                 method: "DELETE",
                 url: url + "/user",
             }).then(response => {
                 expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                     response.statusCode + ", error given is: " + response.error);
-            });
-        });
-    });
-    describe("Authentication", () => {
-        describe("Initial", () => {
-            it("should provide a JWT and the User", () => {
-                const auth = { email: "test1@e2e-test.matchmyroute-backend.appspot.com", password: "test" };
-                return defaultRequest({
-                    json: auth,
-                    method: "POST",
-                    url: url + "/user/auth",
-                }).then(response => {
-                    expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
-                        response.statusCode + ", error given is: " + response.error);
-                    expect(response.body.result, "JWT has no token: "
-                        + JSON.stringify(response.body.result)).to.have.property("token")
-                        .that.is.a("string", "JWT token is not a string, it's a " +
-                        (typeof response.body.result.token) + ", here is the JWT: " +
-                        JSON.stringify(response.body.result));
-                    expect(response.body.result, "JWT has no expires: "
-                        + JSON.stringify(response.body.result)).to.have.property("expires")
-                        .that.is.a("number", "JWT expires is not a number, it's a " +
-                        (typeof response.body.result.expires) + ", here is the JWT " +
-                        JSON.stringify(response.body.result));
-                    expect(response.body.result, "Call did not return user: " +
-                        JSON.stringify(response.body.result)).to.have.property("user");
-                    expect(response.body.result.user, "User object does not have id: " +
-                        JSON.stringify(response.body.result)).to.have.property("id");
-                });
-            });
-            it("should not provide a JWT if the password is incorrect", () => {
-                const auth = { email: "test1@e2e-test.matchmyroute-backend.appspot.com", password: "iforgot" };
-                return defaultRequest({
-                    json: auth,
-                    method: "POST",
-                    url: url + "/user/auth",
-                }).then(response => {
-                    expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
-                        response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                    expect(response.body.error).to.equal("Incorrect Password");
-                    expect(response.body.status).to.equal(403);
-                    expect(response.body.user, "User object was returned").to.be.undefined;
-                });
-            });
-            it("should not provide a JWT if the email doesn't exist", () => {
-                const auth = { email: "userTest@e2e-test.matchmyroute-backend.appspot.com", password: "test" };
-                return defaultRequest({
-                    json: auth,
-                    method: "POST",
-                    url: url + "/user/auth",
-                }).then(response => {
-                    expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
-                        response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                    expect(response.body.error).to.equal("Incorrect Password");
-                    expect(response.body.status).to.equal(403);
-                });
-            });
-        });
-        describe("Subsequent", () => {
-            it("should provide a JWT", () => {
-                return defaultRequest({
-                    headers: {
-                        Authorization: "Bearer " + userJwts[1],
-                    },
-                    method: "GET",
-                    url: url + "/user/auth",
-                }).then(response => {
-                    expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
-                        response.statusCode + ", error given is: " + response.error);
-                    expect(response.body.result, "JWT has no token: " +
-                        JSON.stringify(response.body.result)).to.have.property("token")
-                        .that.is.a("string", "JWT token is not a string, it's a " +
-                        (typeof response.body.result.token) + ", here is the JWT: " +
-                        JSON.stringify(response.body.result));
-                    expect(response.body.result, "JWT has no expires: " +
-                        JSON.stringify(response.body.result)).to.have.property("expires")
-                        .that.is.a("number", "JWT expires is not a number, it's a " +
-                        (typeof response.body.result.expires) + ", here is the JWT " +
-                        JSON.stringify(response.body.result));
-                });
-            });
-            it("should not provide a JWT if there is no auth", () => {
-                return defaultRequest({
-                    method: "GET",
-                    url: url + "/user/auth",
-                }).then(response => {
-                    expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
-                        response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                    expect(response.body.error).to.equal("Invalid authorization");
-                    expect(response.body.status).to.equal(403);
-                });
-            });
-            it("should not provide a JWT if there is invalid auth", () => {
-                return defaultRequest({
-                    headers: {
-                        Authorization: "Bearer " + userJwts[0],
-                    },
-                    method: "GET",
-                    url: url + "/user/auth",
-                }).then(response => {
-                    expect(response.statusCode).to.equal(403, "Expected 403 response but got " +
-                        response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                    expect(response.body.error).to.equal("Invalid authorization");
-                    expect(response.body.status).to.equal(403);
-                });
             });
         });
     });
