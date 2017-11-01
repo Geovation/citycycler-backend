@@ -168,7 +168,10 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     // create user
     .then(newClient => {
         client = newClient;
-        let sqlParams = {name, email, pwh, salt, rounds, jwt_secret: jwtSecret, profile_bio: bio};
+        let sqlParams = {name, email, pwh, salt, rounds,
+                         jwt_secret: jwtSecret,
+                         profile_bio: bio,
+                         profile_joined: new Date().toISOString()};
         return Database.putUser(sqlParams, client);
     })
     // store profile photo for user if it exists

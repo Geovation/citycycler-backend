@@ -36,7 +36,7 @@ jwt_secret varchar(32) NOT NULL,
 -- User profile info. Should be optional
 profile_bio text,
 profile_photo varchar(200),             -- The url to the user's profile photo
-profile_joined timestamp DEFAULT 'now'::timestamp,
+profile_joined timestamptz DEFAULT 'now'::timestamptz,
 profile_help_count integer DEFAULT 0,   -- How many times this user has helped an inexperienced cyclist
 profile_rating_sum integer DEFAULT 0,   -- Average rating = rating_sum/help_count
 profile_helped_count integer DEFAULT 0, -- How many times this user has been buddied up with an experienced cyclist
