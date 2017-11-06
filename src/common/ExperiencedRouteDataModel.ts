@@ -5,6 +5,7 @@ export default class ExperiencedRoute {
         return new ExperiencedRoute({
             arrivalTime: row.arrivaltime,
             days: row.days,
+            deleted: row.deleted,
             departureTime: row.departuretime,
             endPointName: row.endpointname,
             id: row.id,

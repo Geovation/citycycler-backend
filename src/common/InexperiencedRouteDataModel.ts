@@ -3,6 +3,7 @@ export default class InexperiencedRoute {
     public static fromSQLRow(row) {
         return new InexperiencedRoute({
             arrivalDateTime: row.arrivaldatetime,
+            deleted: row.deleted,
             endPoint: pointStringToCoords(row.endpoint),
             endPointName: row.endpointname,
             id: row.id,

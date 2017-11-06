@@ -57,7 +57,8 @@ arrivalTime time with time zone NOT NULL,	-- When the  user arrives at the desti
 days day_of_week[] DEFAULT ARRAY[]::day_of_week[],	-- An array of the days of the week a user cycles this route
 owner varchar(40) REFERENCES users ON DELETE CASCADE,	-- User who created this route
 difficulty ride_difficulty DEFAULT 'balanced'::ride_difficulty,  -- How hard this route is
-length integer NOT NULL         -- How long the route is in meters
+length integer NOT NULL,        -- How long the route is in meters
+deleted boolean DEFAULT FALSE   -- Whether this route is deleted or not
 );
 
 -- A inexperienced route
@@ -76,6 +77,7 @@ difficulty ride_difficulty DEFAULT 'balanced'::ride_difficulty, -- How hard the 
                                                                 -- Will match any rides with dificulty <= this
 length integer NOT NULL,             -- How long the route is in meters
 reusable boolean DEFAULT TRUE        -- Whether the route can be reused for another buddy search
+deleted boolean DEFAULT FALSE        -- Whether this route is deleted or not
 );
 
 -- A buddy request
