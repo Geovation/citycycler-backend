@@ -88,6 +88,11 @@ const definitions = {
                 },
                 type: "array",
             },
+            deleted: {
+                description: "The deleted status of this route",
+                example: "false",
+                type: "boolean",
+            },
             departureTime: {
                 description: "The time in ISO 8601 extended format that the owner will start their route",
                 example: "12:22:00Z",
@@ -127,6 +132,7 @@ const definitions = {
         },
         required: [
             "arrivalTime",
+            "deleted",
             "departureTime",
             "endPointName",
             "length",

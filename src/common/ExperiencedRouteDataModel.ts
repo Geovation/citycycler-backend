@@ -19,6 +19,7 @@ export default class ExperiencedRoute {
 
     public arrivalTime: string;
     public days: string[];
+    public deleted: boolean;
     public departureTime: string;
     public endPointName: string;
     public id: number;
@@ -67,6 +68,7 @@ export default class ExperiencedRoute {
         }
         this.arrivalTime = obj.arrivalTime;
         this.days = obj.days;
+        this.deleted = obj.deleted;
         this.departureTime = obj.departureTime;
         this.endPointName = obj.endPointName;
         this.id = obj.id;

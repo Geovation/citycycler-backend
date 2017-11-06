@@ -431,7 +431,7 @@ describe("MatchMyRoute Database Functions", () => {
                         [thisRouteId],
                         transactionClient
                     ).then(result => {
-                        expect(result.rowCount).to.equal(0);
+                        expect(result.rows[0].deleted).to.be.true;
                     });
                 });
             });
@@ -801,6 +801,7 @@ describe("MatchMyRoute Database Functions", () => {
             it("should create an inexperienced route", () => {
                 let inexperiencedRouteData: InexperiencedRoute = {
                     arrivalDateTime: "2000-01-01T13:00:00+00",
+                    deleted: false,
                     endPoint: [15, 15],
                     endPointName: "44 Simon Street",
                     length: 1000,
@@ -879,6 +880,7 @@ describe("MatchMyRoute Database Functions", () => {
             it("should not create an inexperienced route with an invalid arrivalTime", done => {
                 let inexperiencedRouteData: InexperiencedRoute = {
                     arrivalDateTime: "I'm a little teapot",
+                    deleted: false,
                     endPoint: [15, 15],
                     endPointName: "44 Simon Street",
                     length: 1000,
@@ -900,6 +902,7 @@ describe("MatchMyRoute Database Functions", () => {
             done => {
                 Database.createInexperiencedRoute(userId, {
                     arrivalDateTime: "2000-01-01T13:00:00+00",
+                    deleted: false,
                     endPoint: [15, 15],
                     endPointName: "44 Simon Street",
                     length: 1000,
@@ -961,6 +964,7 @@ describe("MatchMyRoute Database Functions", () => {
             let inexperiencedRouteId;
             let existingInexperiencedRoute: InexperiencedRoute = {
                 arrivalDateTime: "2000-01-01T13:00:00+00",
+                deleted: false,
                 endPoint: [15, 15],
                 endPointName: "44 Simon Street",
                 length: 1000,
@@ -1034,6 +1038,7 @@ describe("MatchMyRoute Database Functions", () => {
                     ownerId = newUser.id;
                     return Database.createInexperiencedRoute(ownerId, {
                         arrivalDateTime: "2000-01-01T13:00:00+00",
+                        deleted: false,
                         endPoint: [15, 15],
                         endPointName: "44 Simon Street",
                         length: 1000,
@@ -1056,7 +1061,7 @@ describe("MatchMyRoute Database Functions", () => {
                     return Database.sqlTransaction("SELECT * FROM inexperienced_routes WHERE id=$1;",
                     ["" + inexperiencedRouteId], transactionClient)
                     .then(results => {
-                        expect(results.rows.length).to.equal(0);
+                        expect(results.rows[0].deleted).to.be.true;
                     });
                 });
             });

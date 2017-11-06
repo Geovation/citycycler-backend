@@ -190,7 +190,7 @@ export function getExperiencedRouteById(id: number, providedClient = null): Prom
 export function getExperiencedRoutes(params: {userId: string, id?: number}, providedClient = null)
 : Promise<ExperiencedRoute[]> {
     let query = "SELECT id, owner, departuretime, arrivalTime, days::text[], ST_AsText(route) AS route, " +
-    "startPointName, endPointName, length, name FROM experienced_routes where owner=$1";
+    "startPointName, endPointName, length, name, deleted FROM experienced_routes where owner=$1";
     let queryParams = new Array<any>();
     queryParams.push(params.userId);
     if (params.id !== null && typeof params.id !== "undefined") {
@@ -434,7 +434,7 @@ export function deleteExperiencedRoute(id: number, providedClient = null): Promi
         "(SELECT users.name FROM users, experienced_routes WHERE experienced_routes.id=$1 AND " +
         "experienced_routes.owner=users.id )::text || ' has deleted the route \"' || (SELECT name " +
         "FROM experienced_routes WHERE id=$1)::text || '\"';";
-    const query2 = "DELETE FROM experienced_routes WHERE id=$1";
+    const query2 = "UPDATE experienced_routes SET deleted=true WHERE id=$1";
     return sqlTransaction(query1, [id], providedClient).then(() => {
         return sqlTransaction(query2, [id], providedClient).then(result => {
             if (result.rowCount) {
@@ -484,7 +484,7 @@ export function getInexperiencedRoutes(
 )
 : Promise<InexperiencedRoute[]> {
     let query = "SELECT id, owner, radius, notifyOwner, arrivalDateTime, ST_AsText(startPoint) AS startPoint, " +
-        "startPointName, ST_AsText(endPoint) AS endPoint, endPointName, length, name " +
+        "startPointName, ST_AsText(endPoint) AS endPoint, endPointName, length, name, deleted " +
         " FROM inexperienced_routes WHERE owner=$1";
     let queryParams = new Array<any>();
     queryParams.push(params.userId);
@@ -517,7 +517,7 @@ export function deleteInexperiencedRoute(id: number, providedClient = null): Pro
     const query1 = "UPDATE buddy_requests SET status='canceled'::buddy_request_status, reason=" +
         "(SELECT users.name FROM users, inexperienced_routes WHERE inexperienced_routes.id=$1 AND " +
         "inexperienced_routes.owner=users.id )::text || ' no longer needs to buddy up with you';";
-    const query2 = "DELETE FROM inexperienced_routes WHERE id=$1";
+    const query2 = "UPDATE inexperienced_routes SET deleted=true WHERE id=$1";
     return sqlTransaction(query1, [id], providedClient).then(() => {
         return sqlTransaction(query2, [id], providedClient).then(result => {
             if (result.rowCount) {

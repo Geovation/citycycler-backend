@@ -19,6 +19,7 @@ export default class InexperiencedRoute {
     }
 
     public arrivalDateTime: string;
+    public deleted: boolean;
     public endPoint: [number, number];
     public endPointName: string;
     public id?: number;
@@ -50,6 +51,7 @@ export default class InexperiencedRoute {
             obj.reusable = false;
         }
         this.arrivalDateTime = obj.arrivalDateTime;
+        this.deleted = obj.deleted;
         this.startPoint = obj.startPoint;
         this.startPointName = obj.startPointName;
         this.endPoint = obj.endPoint;

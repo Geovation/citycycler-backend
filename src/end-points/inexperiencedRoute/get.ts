@@ -88,6 +88,11 @@ const definitions = {
                 example: new Date().toISOString(),
                 type: "string",
             },
+            deleted: {
+                description: "The deleted status of this route",
+                example: "false",
+                type: "boolean",
+            },
             endPoint: {
                 $ref: "#/definitions/Coordinate",
                 description: "Where the user will finish cycling. Must be within <radius> of " +
@@ -139,6 +144,7 @@ const definitions = {
         },
         required: [
             "arrivalDateTime",
+            "deleted",
             "startPoint",
             "startPointName",
             "endPoint",

@@ -878,8 +878,8 @@ describe("ExperiencedRoute endpoint", () => {
                     url: url + "/experiencedRoute?id=" + routeIds[0],
                 });
             }).then(response => {
-                expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
-                    response.statusCode + ", body returned is: " + JSON.stringify(response.body) +
+                expect(response.body.result[0].deleted).to.equal(true, "Expected deleted object to be true but got " +
+                    response.body.result[0].deleted + ", body returned is: " + JSON.stringify(response.body) +
                     ". This means the route was not deleted");
             });
         });

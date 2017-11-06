@@ -1220,9 +1220,9 @@ describe("InexperiencedRoute endpoint", () => {
                     url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
                 });
             }).then(response => {
-                expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
-                response.statusCode + ", body returned is: " + JSON.stringify(response.body) +
-                ". This means the inexperiencedRoute was not deleted");
+                expect(response.body.result[0].deleted).to.equal(true, "Expected deleted object to be true but got " +
+                response.body.result[0].deleted + ", body returned is: " + JSON.stringify(response.body) +
+                ". This means the route was not deleted");
             });
         });
         it("should delete a user's inexperienced routes when that user is deleted", () => {
