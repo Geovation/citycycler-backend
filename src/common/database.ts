@@ -433,7 +433,7 @@ export function deleteExperiencedRoute(id: number, providedClient = null): Promi
     const query1 = "UPDATE buddy_requests SET status='canceled'::buddy_request_status, reason=" +
         "(SELECT users.name FROM users, experienced_routes WHERE experienced_routes.id=$1 AND " +
         "experienced_routes.owner=users.id )::text || ' has deleted the route \"' || (SELECT name " +
-        "FROM experienced_routes WHERE id=$1)::text || '\"';";
+        "FROM experienced_routes WHERE id=$1)::text || '\"' WHERE experiencedroute=$1;";
     const query2 = "UPDATE experienced_routes SET deleted=true WHERE id=$1";
     return sqlTransaction(query1, [id], providedClient).then(() => {
         return sqlTransaction(query2, [id], providedClient).then(result => {
@@ -516,7 +516,8 @@ export function getInexperiencedRoutes(
 export function deleteInexperiencedRoute(id: number, providedClient = null): Promise<Boolean> {
     const query1 = "UPDATE buddy_requests SET status='canceled'::buddy_request_status, reason=" +
         "(SELECT users.name FROM users, inexperienced_routes WHERE inexperienced_routes.id=$1 AND " +
-        "inexperienced_routes.owner=users.id )::text || ' no longer needs to buddy up with you';";
+        "inexperienced_routes.owner=users.id )::text || ' no longer needs to buddy up with you' " +
+        "WHERE inexperiencedroute=$1;";
     const query2 = "UPDATE inexperienced_routes SET deleted=true WHERE id=$1";
     return sqlTransaction(query1, [id], providedClient).then(() => {
         return sqlTransaction(query2, [id], providedClient).then(result => {
@@ -687,7 +688,8 @@ export function getUserById(id: string, providedClient = null): Promise<User> {
 export function deleteUser(id: string, providedClient = null): Promise<Boolean> {
     // First update any buddy requests, then actually delete the user
     const query1 = "UPDATE buddy_requests SET status='canceled'::buddy_request_status, reason=" +
-        "(SELECT name from users where id=$1)::text || ' has deleted their account';";
+        "(SELECT name from users where id=$1)::text || ' has deleted their account' " +
+        "WHERE experienceduser=$1 OR owner=$1;";
     const query2 = "DELETE FROM users WHERE id=$1";
     return sqlTransaction(query1, [id], providedClient)
         .then(() => {
