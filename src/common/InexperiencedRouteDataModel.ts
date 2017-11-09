@@ -11,6 +11,7 @@ export default class InexperiencedRoute {
             notifyOwner: row.notifyowner,
             owner: row.owner,
             radius: row.radius,
+            reusable: row.reusable,
             startPoint: pointStringToCoords(row.startpoint),
             startPointName: row.startpointname,
         });
@@ -27,6 +28,7 @@ export default class InexperiencedRoute {
     public length: number;
     public name: string;
     public notifyOwner: boolean;
+    public reusable: boolean;
 
     constructor(obj) {
         if (!obj.startPoint || obj.startPoint.length !== 2 ) {
@@ -43,6 +45,8 @@ export default class InexperiencedRoute {
             obj.name = obj.startPointName + " to " + obj.endPointName;
         } else if (obj.radius <= 0) {
             throw new Error("400:Radius must be positive");
+        } else if (typeof obj.reusable === "undefined") {
+            obj.reusable = false;
         }
         this.arrivalDateTime = obj.arrivalDateTime;
         this.startPoint = obj.startPoint;
@@ -55,5 +59,6 @@ export default class InexperiencedRoute {
         this.length = obj.length;
         this.name = obj.name;
         this.notifyOwner = obj.notifyOwner;
+        this.reusable = obj.reusable;
     }
 }

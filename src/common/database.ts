@@ -449,8 +449,8 @@ export function createInexperiencedRoute(owner: string, inexperiencedRoute: Inex
 : Promise<Number> {
     inexperiencedRoute = new InexperiencedRoute(inexperiencedRoute);
     const query = "INSERT INTO inexperienced_routes (startPoint, startPointName, endPoint, endPointName, radius, " +
-        "length, name, notifyOwner, arrivalDateTime, owner)" +
-        "VALUES (ST_GeogFromText($1), $2, ST_GeogFromText($3), $4, $5, $6, $7, $8, $9, $10)" +
+        "length, name, notifyOwner, arrivalDateTime, owner, reusable)" +
+        "VALUES (ST_GeogFromText($1), $2, ST_GeogFromText($3), $4, $5, $6, $7, $8, $9, $10, $11)" +
         "RETURNING id";
     const queryParams = [
         coordsToPointString(inexperiencedRoute.startPoint),
@@ -463,6 +463,7 @@ export function createInexperiencedRoute(owner: string, inexperiencedRoute: Inex
         inexperiencedRoute.notifyOwner,
         inexperiencedRoute.arrivalDateTime,
         owner,
+        inexperiencedRoute.reusable,
     ];
     return sqlTransaction(query, queryParams, providedClient).then(result => {
         return result.rows[0].id;
@@ -476,16 +477,19 @@ export function createInexperiencedRoute(owner: string, inexperiencedRoute: Inex
  * @param  {client} providedClient Database client to use for this interaction
  * @return {Object[]} Array of inexperienced routes
  */
-export function getInexperiencedRoutes(params: {userId: string, id?: number}, providedClient = null)
+export function getInexperiencedRoutes(params: {userId: string, id?: number, onlyreusable?: boolean}, providedClient = null)
 : Promise<InexperiencedRoute[]> {
     let query = "SELECT id, owner, radius, notifyOwner, arrivalDateTime, ST_AsText(startPoint) AS startPoint, " +
         "startPointName, ST_AsText(endPoint) AS endPoint, endPointName, length, name " +
-        " FROM inexperienced_routes where owner=$1";
+        " FROM inexperienced_routes WHERE owner=$1";
     let queryParams = new Array<any>();
     queryParams.push(params.userId);
     if (params.id !== null && typeof params.id !== "undefined") {
         query +=  " AND id=$2";
         queryParams.push(params.id);
+    }
+    if (params.onlyreusable) {
+        query += " AND reusable=true";
     }
     return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
         if (params.id !== undefined && params.id !== null && result.rows.length === 0) {

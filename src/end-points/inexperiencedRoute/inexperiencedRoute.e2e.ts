@@ -88,6 +88,38 @@ describe("InexperiencedRoute endpoint", () => {
                 name: "Ride home",
                 notifyOwner: false,
                 radius: 1000,
+                reusable: true,
+                startPoint: [10, 10],
+                startPointName: "33 Stanley Street",
+            };
+            return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + userJwts[0],
+                },
+                json: inexperiencedRoute,
+                method: "PUT",
+                url: url + "/inexperiencedRoute",
+            }).then(response => {
+                expect(response.statusCode).to.equal(201, "Expected 201 response but got " +
+                    response.statusCode + ", error given is: " + response.error + " body is " +
+                    JSON.stringify(response.body));
+                expect(typeof response.body).to.equal("object", "Body is of unexpected type. " +
+                    "Expected object, but got a " + typeof response.body);
+                expect(parseInt(response.body.result, 10)).to.not.equal(NaN, "The returned ID is NaN. " +
+                    "Full response body is: " + JSON.stringify(response.body));
+                inexperiencedRouteIds.push(parseInt(response.body.result.id, 10));
+            });
+        });
+        it("should create inexperienced routes that are not reusable", () => {
+            const inexperiencedRoute = {
+                arrivalDateTime: "2000-01-01T13:00:00+00",
+                endPoint: [15, 15],
+                endPointName: "18 Penny Promenade",
+                length: 1222,
+                name: "Ride home",
+                notifyOwner: false,
+                radius: 1000,
+                reusable: false,
                 startPoint: [10, 10],
                 startPointName: "33 Stanley Street",
             };
@@ -118,6 +150,7 @@ describe("InexperiencedRoute endpoint", () => {
                 name: "Ride home",
                 notifyOwner: false,
                 radius: 1000,
+                reusable: true,
                 startPoint: [10, 10],
                 startPointName: "33 Stanley Street",
             };
@@ -144,6 +177,7 @@ describe("InexperiencedRoute endpoint", () => {
                 name: "Ride home",
                 notifyOwner: false,
                 radius: 1000,
+                reusable: true,
                 startPoint: [10, 10],
                 startPointName: "33 Stanley Street",
             };
@@ -168,6 +202,7 @@ describe("InexperiencedRoute endpoint", () => {
                 name: "Ride home",
                 notifyOwner: false,
                 radius: -500,
+                reusable: true,
                 startPoint: [10, 10],
                 startPointName: "33 Stanley Street",
             };
@@ -194,6 +229,7 @@ describe("InexperiencedRoute endpoint", () => {
                 name: "Ride home",
                 notifyOwner: false,
                 radius: 1000,
+                reusable: true,
                 startPoint: [10, 10, 10],
                 startPointName: "33 Stanley Street",
             };
@@ -220,6 +256,7 @@ describe("InexperiencedRoute endpoint", () => {
                 name: "Ride home",
                 notifyOwner: false,
                 radius: 1000,
+                reusable: true,
                 startPoint: [10],
                 startPointName: "33 Stanley Street",
             };
@@ -246,6 +283,7 @@ describe("InexperiencedRoute endpoint", () => {
                 name: "Ride home",
                 notifyOwner: false,
                 radius: 1000,
+                reusable: true,
                 startPoint: [10, 10],
                 startPointName: "33 Stanley Street",
             };
@@ -272,6 +310,7 @@ describe("InexperiencedRoute endpoint", () => {
                 name: "Ride home",
                 notifyOwner: false,
                 radius: 1000,
+                reusable: true,
                 startPoint: [10, 10],
                 startPointName: "33 Stanley Street",
             };

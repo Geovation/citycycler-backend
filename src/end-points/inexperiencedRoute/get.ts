@@ -22,6 +22,14 @@ const operation = {
                 required: false,
                 type: "integer",
             },
+            {
+                description: "Whether only reusable routes should be received " +
+                    "or all routes",
+                in: "query",
+                name: "onlyreusable",
+                required: false,
+                type: "boolean",
+            },
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
@@ -160,13 +168,18 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     if (!id) {
         id = null;
     }
+    let onlyreusable = true;
+    if(params.onlyreusable && params.onlyreusable.length > 0) {
+        onlyreusable = params.onlyreusable[0].toLowerCase() === "true";
+    }
+
     let transactionClient;
     let results;
     return Database.createTransactionClient().then(newClient => {
         transactionClient = newClient;
         return getIdFromJWT(params.authorization, transactionClient);
     }).then((userId) => {
-        return Database.getInexperiencedRoutes({userId, id}, transactionClient);
+        return Database.getInexperiencedRoutes({userId, id, onlyreusable}, transactionClient);
     }).then(theResults => {
         results = theResults;
         return Database.commitAndReleaseTransaction(transactionClient);
