@@ -21,6 +21,14 @@ const operation = {
                 required: false,
                 type: "integer",
             },
+            {
+                default: false,
+                description: "The flag indicates whether to include the deleted routes",
+                in: "query",
+                name: "includedeleted",
+                required: false,
+                type: "boolean",
+            },
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
@@ -158,11 +166,14 @@ const definitions = {
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
     let id = parseInt(params.id, 10);
+    // params.includedeleted is an object instead of boolean, so we compare it with string "true"
+    let includedeleted = params.includedeleted ?
+        params.includedeleted.toString().toLowerCase() === "true" ? true : false : false;
     if (!id) {
         id = null;
     }
     return getIdFromJWT(params.authorization).then((userId) => {
-        return Database.getExperiencedRoutes({userId, id});
+        return Database.getExperiencedRoutes({userId, id, includedeleted});
     });
 };
 

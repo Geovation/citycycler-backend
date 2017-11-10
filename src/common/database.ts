@@ -187,8 +187,13 @@ export function getExperiencedRouteById(id: number, providedClient = null): Prom
  * @param  {client} providedClient Database client to use for this interaction
  * @return {Object[]} Array of experienced_routes
  */
-export function getExperiencedRoutes(params: {userId: string, id?: number}, providedClient = null)
-: Promise<ExperiencedRoute[]> {
+export function getExperiencedRoutes(
+    params: {
+        userId: string,
+        id?: number,
+        includedeleted?: boolean
+    },
+    providedClient = null): Promise<ExperiencedRoute[]> {
     let query = "SELECT id, owner, departuretime, arrivalTime, days::text[], ST_AsText(route) AS route, " +
     "startPointName, endPointName, length, name, deleted FROM experienced_routes where owner=$1";
     let queryParams = new Array<any>();
@@ -197,10 +202,16 @@ export function getExperiencedRoutes(params: {userId: string, id?: number}, prov
         query +=  " AND id=$2";
         queryParams.push(params.id);
     }
+<<<<<<< HEAD
     query += " ORDER BY id DESC";
+=======
+    if (!params.includedeleted) {
+        query += " AND deleted=false";
+    }
+>>>>>>> Change the route get endpoint to only return non-deleted routes or optionally also included deleted routes
     return sqlTransaction(query, queryParams, providedClient).then(result => {
         if (params.id !== undefined && params.id !== null && result.rows.length === 0) {
-            throw new Error("404:ExperiencedRoute does not exist");
+            throw new Error("404:InexperiencedRoute does not exist or is a deleted route");
         }
         return result.rows.map((route) => {
             return ExperiencedRoute.fromSQLRow(route);
@@ -479,7 +490,7 @@ export function createInexperiencedRoute(owner: string, inexperiencedRoute: Inex
  * @return {Object[]} Array of inexperienced routes
  */
 export function getInexperiencedRoutes(
-    params: {userId: string, id?: number, onlyreusable?: boolean},
+    params: {userId: string, id?: number, includedeleted?: boolean, onlyreusable?: boolean},
     providedClient = null
 )
 : Promise<InexperiencedRoute[]> {
@@ -489,8 +500,11 @@ export function getInexperiencedRoutes(
     let queryParams = new Array<any>();
     queryParams.push(params.userId);
     if (params.id !== null && typeof params.id !== "undefined") {
-        query +=  " AND id=$2";
+        query += " AND id=$2";
         queryParams.push(params.id);
+    }
+    if (!params.includedeleted) {
+        query += " AND deleted=false";
     }
     if (params.onlyreusable) {
         query += " AND reusable=true";
@@ -498,7 +512,7 @@ export function getInexperiencedRoutes(
     query += " ORDER BY id DESC";
     return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
         if (params.id !== undefined && params.id !== null && result.rows.length === 0) {
-            throw new Error("404:InexperiencedRoute does not exist");
+            throw new Error("404:InexperiencedRoute does not exist or is a deleted route");
         }
         return result.rows.map((inexperiencedRoute) => {
             return InexperiencedRoute.fromSQLRow(inexperiencedRoute);
@@ -769,11 +783,14 @@ export function getSentBuddyRequests(params: {userId: string, id?: number}, prov
             let otherUser;
             return getUserById(otherUserId, providedClient).then(user => {
                 otherUser = user.asUserProfile();
-                return getInexperiencedRoutes({id: routeId, userId: thisUserId}, providedClient);
+                return getInexperiencedRoutes({id: routeId, includedeleted: true, userId: thisUserId}, providedClient);
             }, err => {
                 if (err.message.slice(0, 3) === "404") {
                     // User not found, so leave otherUser undefined
-                    return getInexperiencedRoutes({id: routeId, userId: thisUserId}, providedClient);
+                    return getInexperiencedRoutes({
+                        id: routeId,
+                        includedeleted: true,
+                        userId: thisUserId}, providedClient);
                 } else {
                     throw err;
                 }
@@ -816,11 +833,14 @@ export function getReceivedBuddyRequests(params: {userId: string, id?: number}, 
             let otherUser;
             return getUserById(otherUserId, providedClient).then(user => {
                 otherUser = user.asUserProfile();
-                return getExperiencedRoutes({id: routeId, userId: thisUserId}, providedClient);
+                return getExperiencedRoutes({id: routeId, includedeleted: true, userId: thisUserId}, providedClient);
             }, err => {
                 if (err.message.slice(0, 3) === "404") {
                     // User not found, so leave otherUser undefined
-                    return getExperiencedRoutes({id: routeId, userId: thisUserId}, providedClient);
+                    return getExperiencedRoutes({
+                        id: routeId,
+                        includedeleted: true,
+                        userId: thisUserId}, providedClient);
                 } else {
                     throw err;
                 }

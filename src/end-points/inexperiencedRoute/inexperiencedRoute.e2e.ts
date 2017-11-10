@@ -1202,7 +1202,7 @@ describe("InexperiencedRoute endpoint", () => {
                 expect(response.body.status).to.equal(404);
             });
         });
-        it("should delete an inexperienced route", () => {
+        it("should delete an inexperienced route by setting the deleted status to be true", () => {
             return defaultRequest({
                 headers: {
                     Authorization: "Firebase " + userJwts[0],
@@ -1217,7 +1217,7 @@ describe("InexperiencedRoute endpoint", () => {
                         Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
-                    url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                    url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0] + "&includedeleted=true",
                 });
             }).then(response => {
                 expect(response.body.result[0].deleted).to.equal(true, "Expected deleted object to be true but got " +
