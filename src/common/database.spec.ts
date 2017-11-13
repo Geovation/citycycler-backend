@@ -807,6 +807,7 @@ describe("MatchMyRoute Database Functions", () => {
                     name: "Ride to the park",
                     notifyOwner: false,
                     radius: 1000,
+                    reusable: true,
                     startPoint: [10, 10],
                     startPointName: "1 Denis Drive",
                 };
@@ -815,7 +816,7 @@ describe("MatchMyRoute Database Functions", () => {
                     return Database.sqlTransaction(
                         "SELECT arrivalDateTime, ST_AsText(endPoint) AS endPoint, notifyOwner, radius, " +
                         "ST_AsText(startPoint) AS startPoint, owner, length, name, startPointName, " +
-                        "endPointName FROM inexperienced_routes WHERE id=$1",
+                        "endPointName, reusable FROM inexperienced_routes WHERE id=$1",
                         ["" + inexperiencedRouteId],
                         transactionClient
                     ).then(result => {
@@ -832,6 +833,46 @@ describe("MatchMyRoute Database Functions", () => {
                         expect(result.rows[0].name).to.equal(inexperiencedRouteData.name);
                         expect(result.rows[0].startpointname).to.equal(inexperiencedRouteData.startPointName);
                         expect(result.rows[0].endpointname).to.equal(inexperiencedRouteData.endPointName);
+                        expect(result.rows[0].reusable).to.equal(inexperiencedRouteData.reusable);
+                    });
+                });
+            });
+            it("should create an inexperienced route that is not reusable", () => {
+                let inexperiencedRouteData: InexperiencedRoute = {
+                    arrivalDateTime: "2000-01-01T13:00:00+00",
+                    endPoint: [15, 15],
+                    endPointName: "44 Simon Street",
+                    length: 1000,
+                    name: "Ride to the park",
+                    notifyOwner: false,
+                    radius: 1000,
+                    reusable: false,
+                    startPoint: [10, 10],
+                    startPointName: "1 Denis Drive",
+                };
+                return Database.createInexperiencedRoute(userId, inexperiencedRouteData, transactionClient)
+                .then(inexperiencedRouteId => {
+                    return Database.sqlTransaction(
+                        "SELECT arrivalDateTime, ST_AsText(endPoint) AS endPoint, notifyOwner, radius, " +
+                        "ST_AsText(startPoint) AS startPoint, owner, length, name, startPointName, " +
+                        "endPointName, reusable FROM inexperienced_routes WHERE id=$1",
+                        ["" + inexperiencedRouteId],
+                        transactionClient
+                    ).then(result => {
+                        expect(moment(result.rows[0].arrivaldatetime)
+                            .isSame(inexperiencedRouteData.arrivalDateTime)).to.be.true;
+                        expect(Database.pointStringToCoords(result.rows[0].endpoint))
+                            .to.eql(inexperiencedRouteData.endPoint);
+                        expect(Database.pointStringToCoords(result.rows[0].startpoint))
+                            .to.eql(inexperiencedRouteData.startPoint);
+                        expect(result.rows[0].notifyowner).to.equal(inexperiencedRouteData.notifyOwner);
+                        expect(result.rows[0].radius).to.equal(inexperiencedRouteData.radius);
+                        expect(result.rows[0].owner).to.equal(userId);
+                        expect(result.rows[0].length).to.equal(inexperiencedRouteData.length);
+                        expect(result.rows[0].name).to.equal(inexperiencedRouteData.name);
+                        expect(result.rows[0].startpointname).to.equal(inexperiencedRouteData.startPointName);
+                        expect(result.rows[0].endpointname).to.equal(inexperiencedRouteData.endPointName);
+                        expect(result.rows[0].reusable).to.equal(inexperiencedRouteData.reusable);
                     });
                 });
             });
@@ -844,6 +885,7 @@ describe("MatchMyRoute Database Functions", () => {
                     name: "Ride to the park",
                     notifyOwner: false,
                     radius: 1000,
+                    reusable: true,
                     startPoint: [10, 10],
                     startPointName: "1 Denis Drive",
                 };
@@ -864,6 +906,7 @@ describe("MatchMyRoute Database Functions", () => {
                     name: "Ride to the park",
                     notifyOwner: false,
                     radius: 1000,
+                    reusable: true,
                     startPoint: [10, 10],
                     startPointName: "1 Denis Drive",
                 },
@@ -924,6 +967,7 @@ describe("MatchMyRoute Database Functions", () => {
                 name: "Ride to the park",
                 notifyOwner: false,
                 radius: 1000,
+                reusable: true,
                 startPoint: [10, 10],
                 startPointName: "1 Denis Drive",
             };
@@ -996,6 +1040,7 @@ describe("MatchMyRoute Database Functions", () => {
                         name: "Ride to the park",
                         notifyOwner: false,
                         radius: 1000,
+                        reusable: true,
                         startPoint: [10, 10],
                         startPointName: "1 Denis Drive",
                     },
