@@ -197,6 +197,7 @@ export function getExperiencedRoutes(params: {userId: string, id?: number}, prov
         query +=  " AND id=$2";
         queryParams.push(params.id);
     }
+    query += " ORDER BY id DESC";
     return sqlTransaction(query, queryParams, providedClient).then(result => {
         if (params.id !== undefined && params.id !== null && result.rows.length === 0) {
             throw new Error("404:ExperiencedRoute does not exist");
@@ -491,6 +492,7 @@ export function getInexperiencedRoutes(params: {userId: string, id?: number, onl
     if (params.onlyreusable) {
         query += " AND reusable=true";
     }
+    query += " ORDER BY id DESC";
     return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
         if (params.id !== undefined && params.id !== null && result.rows.length === 0) {
             throw new Error("404:InexperiencedRoute does not exist");
