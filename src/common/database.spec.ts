@@ -448,6 +448,30 @@ describe("MatchMyRoute Database Functions", () => {
                 });
             });
         });
+        describe("Retrieval after deleting", () => {
+            let experiencedRouteId1;
+            let experiencedRouteId2;
+            beforeEach("Set up two experienced routes", () => {
+                return Database.putExperiencedRoute(routeData, transactionClient)
+                    .then(routeId => {
+                        experiencedRouteId1 = routeId;
+                        return Database.putExperiencedRoute(routeData, transactionClient);
+                    }).then(routeId => {
+                        experiencedRouteId2 = routeId;
+                    });
+            });
+            it("Should only get non-deleted experienced routes if includedeleted is set to false", () => {
+                return Database.deleteExperiencedRoute(experiencedRouteId1, transactionClient).then(success => {
+                    expect(success).to.be.true;
+                    return Database.getExperiencedRoutes({
+                        includedeleted: false,
+                        userId: thisUserId}, transactionClient);
+                }).then(experiencedRoutes => {
+                    expect(experiencedRoutes.length).to.equal(1);
+                    expect(experiencedRoutes[0].deleted).to.be.false;
+                });
+            });
+        });
     });
     describe("Route Matching", () => {
         let thisUserId;
@@ -1078,6 +1102,51 @@ describe("MatchMyRoute Database Functions", () => {
             it("should not delete an inexperiencedRoute with an invalid id", done => {
                 const promise = Database.deleteInexperiencedRoute(-1, transactionClient);
                 expect(promise).to.be.rejected.and.notify(done);
+            });
+        });
+        describe("Retrieval after deleting", () => {
+            let inexperiencedRouteId1;
+            let inexperiencedRouteId2;
+            beforeEach("Set up two inexperienced routes", () => {
+                return Database.createInexperiencedRoute(userId, {
+                        arrivalDateTime: "2000-01-01T13:00:00+00",
+                        deleted: false,
+                        endPoint: [15, 15],
+                        endPointName: "44 Simon Street",
+                        length: 1000,
+                        name: "Ride to the park",
+                        notifyOwner: false,
+                        radius: 1000,
+                        startPoint: [10, 10],
+                        startPointName: "1 Denis Drive",
+                    },
+                    transactionClient).then(newInexperiencedRouteId => {
+                        inexperiencedRouteId1 = newInexperiencedRouteId;
+                        return Database.createInexperiencedRoute(userId, {
+                            arrivalDateTime: "2000-01-01T13:00:00+00",
+                            deleted: false,
+                            endPoint: [15, 15],
+                            endPointName: "44 Simon Street",
+                            length: 1000,
+                            name: "Ride to the park",
+                            notifyOwner: false,
+                            radius: 1000,
+                            startPoint: [10, 10],
+                            startPointName: "1 Denis Drive",
+                        },
+                        transactionClient);
+                    }).then(newInexperiencedRouteId => {
+                        inexperiencedRouteId2 = newInexperiencedRouteId;
+                    });
+            });
+            it("Should only get non-deleted inexperienced routes if includedeleted is set to false", () => {
+                return Database.deleteInexperiencedRoute(inexperiencedRouteId1, transactionClient).then(success => {
+                    expect(success).to.be.true;
+                    return Database.getInexperiencedRoutes({userId, includedeleted: false}, transactionClient);
+                }).then(inexperiencedRoutes => {
+                    expect(inexperiencedRoutes.length).to.equal(1);
+                    expect(inexperiencedRoutes[0].deleted).to.be.false;
+                });
             });
         });
     });

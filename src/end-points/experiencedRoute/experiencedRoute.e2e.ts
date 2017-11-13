@@ -102,7 +102,7 @@ describe("ExperiencedRoute endpoint", () => {
                     "Expected object, but got a " + typeof response.body);
                 expect(parseInt(response.body.result, 10)).to.not.equal(NaN, "The returned ID is NaN. " +
                     "Full response body is: " + JSON.stringify(response.body));
-                routeIds.push(parseInt(response.body.result.id, 10));
+                routeIds.push(response.body.result.id);
             });
         });
         it("should create experienced routes without a name", () => {
@@ -129,6 +129,7 @@ describe("ExperiencedRoute endpoint", () => {
                     "Expected object, but got a " + typeof response.body);
                 expect(parseInt(response.body.result, 10)).to.not.equal(NaN, "The returned ID is NaN. " +
                     "Full response body is: " + JSON.stringify(response.body));
+                routeIds.push(response.body.result.id);
             });
         });
         it("should not create experienced routes when the auth is invalid", () => {
@@ -206,7 +207,24 @@ describe("ExperiencedRoute endpoint", () => {
     });
     describe("Getting", () => {
         describe("By ID", () => {
-            it("should get an experienced route by a valid id with no auth", () => {
+            it("should get all experienced routes if no id is given", () => {
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + userJwts[0],
+                    },
+                    method: "GET",
+                    url: url + "/experiencedRoute",
+                }).then(response => {
+                    expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                        response.statusCode + ", error given is: " + response.error);
+                    expect(response.body.result.length).to.equal(2);
+                    expect(response.body.result[0].owner).to.equal(userIds[0],
+                        "Route belongs to another user. Expected owner to be " +
+                        userIds[0] + ", but it was " + response.body.result.owner +
+                        ". Full response body is: " + JSON.stringify(response.body));
+                });
+            });
+            it("should get an experienced route by a valid id", () => {
                 return defaultRequest({
                     headers: {
                         Authorization: "Firebase " + userJwts[0],
@@ -233,8 +251,35 @@ describe("ExperiencedRoute endpoint", () => {
                 }).then(response => {
                     expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
                         response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                    expect(response.body.error).to.equal("ExperiencedRoute does not exist");
+                    expect(response.body.error).to.equal("ExperiencedRoute does not exist or is a deleted route");
                     expect(response.body.status).to.equal(404);
+                });
+            });
+        });
+        describe("By includedeleted", () => {
+            it("should only get non-deleted experienced routes if includedeleted is set to false", () => {
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + userJwts[0],
+                    },
+                    method: "DELETE",
+                    url: url + "/experiencedRoute?id=" + routeIds[1],
+                }).then(response => {
+                    expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                        response.statusCode + ", error given is: " + response.error);
+                    routeIds.pop();
+                    return defaultRequest({
+                        headers: {
+                            Authorization: "Firebase " + userJwts[0],
+                        },
+                        method: "GET",
+                        url: url + "/experiencedRoute?includedeleted=false",
+                    });
+                }).then(response => {
+                    expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                        response.statusCode + ", error given is: " + response.error);
+                    expect(response.body.result.length).to.equal(1);
+                    expect(response.body.result[0].deleted).to.be.false;
                 });
             });
         });

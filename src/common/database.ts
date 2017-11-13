@@ -211,7 +211,7 @@ export function getExperiencedRoutes(
 >>>>>>> Change the route get endpoint to only return non-deleted routes or optionally also included deleted routes
     return sqlTransaction(query, queryParams, providedClient).then(result => {
         if (params.id !== undefined && params.id !== null && result.rows.length === 0) {
-            throw new Error("404:InexperiencedRoute does not exist or is a deleted route");
+            throw new Error("404:ExperiencedRoute does not exist or is a deleted route");
         }
         return result.rows.map((route) => {
             return ExperiencedRoute.fromSQLRow(route);
