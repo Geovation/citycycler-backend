@@ -478,7 +478,10 @@ export function createInexperiencedRoute(owner: string, inexperiencedRoute: Inex
  * @param  {client} providedClient Database client to use for this interaction
  * @return {Object[]} Array of inexperienced routes
  */
-export function getInexperiencedRoutes(params: {userId: string, id?: number, onlyreusable?: boolean}, providedClient = null)
+export function getInexperiencedRoutes(
+    params: {userId: string, id?: number, onlyreusable?: boolean},
+    providedClient = null
+)
 : Promise<InexperiencedRoute[]> {
     let query = "SELECT id, owner, radius, notifyOwner, arrivalDateTime, ST_AsText(startPoint) AS startPoint, " +
         "startPointName, ST_AsText(endPoint) AS endPoint, endPointName, length, name " +

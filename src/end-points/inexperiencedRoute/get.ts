@@ -169,7 +169,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         id = null;
     }
     let onlyreusable = true;
-    if(params.onlyreusable && params.onlyreusable.length > 0) {
+    if (params.onlyreusable && params.onlyreusable.length > 0) {
         onlyreusable = params.onlyreusable[0].toLowerCase() === "true";
     }
 
