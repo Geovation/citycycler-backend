@@ -865,6 +865,7 @@ describe("MatchMyRoute Database Functions", () => {
             it("should create an inexperienced route that is not reusable", () => {
                 let inexperiencedRouteData: InexperiencedRoute = {
                     arrivalDateTime: "2000-01-01T13:00:00+00",
+                    deleted: false,
                     endPoint: [15, 15],
                     endPointName: "44 Simon Street",
                     length: 1000,
@@ -1117,6 +1118,7 @@ describe("MatchMyRoute Database Functions", () => {
                         name: "Ride to the park",
                         notifyOwner: false,
                         radius: 1000,
+                        reusable: true,
                         startPoint: [10, 10],
                         startPointName: "1 Denis Drive",
                     },
@@ -1131,6 +1133,7 @@ describe("MatchMyRoute Database Functions", () => {
                             name: "Ride to the park",
                             notifyOwner: false,
                             radius: 1000,
+                            reusable: true,
                             startPoint: [10, 10],
                             startPointName: "1 Denis Drive",
                         },

@@ -202,13 +202,10 @@ export function getExperiencedRoutes(
         query +=  " AND id=$2";
         queryParams.push(params.id);
     }
-<<<<<<< HEAD
-    query += " ORDER BY id DESC";
-=======
     if (!params.includedeleted) {
         query += " AND deleted=false";
     }
->>>>>>> Change the route get endpoint to only return non-deleted routes or optionally also included deleted routes
+    query += " ORDER BY id DESC";
     return sqlTransaction(query, queryParams, providedClient).then(result => {
         if (params.id !== undefined && params.id !== null && result.rows.length === 0) {
             throw new Error("404:ExperiencedRoute does not exist or is a deleted route");
@@ -496,7 +493,7 @@ export function getInexperiencedRoutes(
 : Promise<InexperiencedRoute[]> {
     let query = "SELECT id, owner, radius, notifyOwner, arrivalDateTime, ST_AsText(startPoint) AS startPoint, " +
         "startPointName, ST_AsText(endPoint) AS endPoint, endPointName, length, name, deleted " +
-        " FROM inexperienced_routes WHERE owner=$1";
+        "FROM inexperienced_routes WHERE owner=$1";
     let queryParams = new Array<any>();
     queryParams.push(params.userId);
     if (params.id !== null && typeof params.id !== "undefined") {

@@ -76,7 +76,7 @@ notifyOwner boolean DEFAULT FALSE,  -- If the owner wants to be notified of any 
 difficulty ride_difficulty DEFAULT 'balanced'::ride_difficulty, -- How hard the user wants the route to be
                                                                 -- Will match any rides with dificulty <= this
 length integer NOT NULL,             -- How long the route is in meters
-reusable boolean DEFAULT TRUE        -- Whether the route can be reused for another buddy search
+reusable boolean DEFAULT TRUE,        -- Whether the route can be reused for another buddy search
 deleted boolean DEFAULT FALSE        -- Whether this route is deleted or not
 );
 

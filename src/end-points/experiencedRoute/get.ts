@@ -166,11 +166,12 @@ const definitions = {
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
     let id = parseInt(params.id, 10);
-    // params.includedeleted is an object instead of boolean, so we compare it with string "true"
-    let includedeleted = params.includedeleted ?
-        params.includedeleted.toString().toLowerCase() === "true" ? true : false : false;
     if (!id) {
         id = null;
+    }
+    let includedeleted = false;
+    if (params.includedeleted && params.includedeleted.length > 0) {
+        includedeleted = params.includedeleted[0].toLowerCase() === "true";
     }
     return getIdFromJWT(params.authorization).then((userId) => {
         return Database.getExperiencedRoutes({userId, id, includedeleted});

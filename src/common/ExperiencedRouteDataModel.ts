@@ -59,6 +59,8 @@ export default class ExperiencedRoute {
             throw new Error("400:ExperiencedRoute requires an endPointName");
         } else if (obj.length === undefined || obj.length === null) {
             throw new Error("400:ExperiencedRoute requires a length");
+        } else if (typeof obj.deleted === "undefined") {
+            obj.deleted = false;
         }
         if (!obj.days) {
             obj.days = [];

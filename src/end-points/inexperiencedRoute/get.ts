@@ -23,17 +23,18 @@ const operation = {
                 type: "integer",
             },
             {
-<<<<<<< HEAD
-                description: "Whether only reusable routes should be received " +
-                    "or all routes",
-                in: "query",
-                name: "onlyreusable",
-=======
                 default: false,
                 description: "The flag indicates whether to include the deleted routes",
                 in: "query",
                 name: "includedeleted",
->>>>>>> Change the route get endpoint to only return non-deleted routes or optionally also included deleted routes
+                required: false,
+                type: "boolean",
+            },
+            {
+                description: "Whether only reusable routes should be received " +
+                    "or all routes",
+                in: "query",
+                name: "onlyreusable",
                 required: false,
                 type: "boolean",
             },
@@ -181,28 +182,21 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     if (!id) {
         id = null;
     }
-<<<<<<< HEAD
     let onlyreusable = true;
     if (params.onlyreusable && params.onlyreusable.length > 0) {
         onlyreusable = params.onlyreusable[0].toLowerCase() === "true";
     }
-
-=======
-    // params.includedeleted is an object instead of boolean, so we compare it with string "true"
-    let includedeleted = params.includedeleted ?
-        params.includedeleted.toString().toLowerCase() === "true" ? true : false : false;
->>>>>>> Change the route get endpoint to only return non-deleted routes or optionally also included deleted routes
+    let includedeleted = false;
+    if (params.includedeleted && params.includedeleted.length > 0) {
+        includedeleted = params.includedeleted[0].toLowerCase() === "true";
+    }
     let transactionClient;
     let results;
     return Database.createTransactionClient().then(newClient => {
         transactionClient = newClient;
         return getIdFromJWT(params.authorization, transactionClient);
     }).then((userId) => {
-<<<<<<< HEAD
-        return Database.getInexperiencedRoutes({userId, id, onlyreusable}, transactionClient);
-=======
-        return Database.getInexperiencedRoutes({userId, id, includedeleted}, transactionClient);
->>>>>>> Change the route get endpoint to only return non-deleted routes or optionally also included deleted routes
+        return Database.getInexperiencedRoutes({userId, id, includedeleted, onlyreusable}, transactionClient);
     }).then(theResults => {
         results = theResults;
         return Database.commitAndReleaseTransaction(transactionClient);

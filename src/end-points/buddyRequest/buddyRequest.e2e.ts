@@ -35,18 +35,18 @@ describe("BuddyRequest endpoint", () => {
     let uids = [];
     let expUserId;  // The experienced User id
     let expUserJwt;  // The experienced User token
-    let experiencedRouteId1;   // The experienced Route id
+    let experiencedRouteId;   // The experienced Route id
     let experiencedRouteId2;   // Another experienced Route id
-    let inexpUserId1;  // The inexperienced User id
-    let inexpUserJwt1;  // The inexperienced User token
+    let inexpUserId;  // The inexperienced User id
+    let inexpUserJwt;  // The inexperienced User token
     let inexpUserId2;  // Another inexperienced User id
     let inexpUserJwt2;  // Another inexperienced User token
-    let inexperiencedRouteId1; // The inexperienced Route id
+    let inexperiencedRouteId; // The inexperienced Route id
     let inexperiencedRouteId2; // Another inexperienced Route id
     let inexperiencedRouteId3; // Another inexperienced Route id
     let randomUserId;
     let randomUserJwt;  // A token for a user unconnected to these buddy requests
-    let buddyRequestObject1; // A BuddyRequest object with the ids all set correctly
+    let buddyRequestObject; // A BuddyRequest object with the ids all set correctly
     let buddyRequestObject2; // Another BuddyRequest object with the ids all set correctly
     let buddyRequestObject3; // Another BuddyRequest object with the ids all set correctly
     let buddyRequestObject4; // Another BuddyRequest object with the ids all set correctly
@@ -92,14 +92,14 @@ describe("BuddyRequest endpoint", () => {
         }).then(() => {
             return FirebaseUtils.createFirebaseUser(user2.email);
         }).then(createResponse => {
-            inexpUserId1 = createResponse.user.uid;
-            uids.push(inexpUserId1);
+            inexpUserId = createResponse.user.uid;
+            uids.push(inexpUserId);
             return FirebaseUtils.getJwtForUser(createResponse.customToken);
         }).then(jwt => {
-            inexpUserJwt1 = jwt;
+            inexpUserJwt = jwt;
             return defaultRequest({
                 headers: {
-                    Authorization: "Firebase " + inexpUserJwt1,
+                    Authorization: "Firebase " + inexpUserJwt,
                 },
                 json: user2,
                 method: "PUT",
@@ -152,14 +152,14 @@ describe("BuddyRequest endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Firebase " + inexpUserJwt1,
+                    Authorization: "Firebase " + inexpUserJwt,
                 },
                 json: route1,
                 method: "PUT",
                 url: url + "/inexperiencedRoute",
             });
-        }).then((response) => {
-            inexperiencedRouteId1 = parseInt(response.body.result.id, 10);
+        }).then(response => {
+            inexperiencedRouteId = parseInt(response.body.result.id, 10);
             // Another inexperienced Route
             const route2 = {
                 arrivalDateTime: "2017-11-10T13:00:00+00",
@@ -174,13 +174,13 @@ describe("BuddyRequest endpoint", () => {
             };
             return defaultRequest({
                 headers: {
-                    Authorization: "Firebase " + inexpUserJwt1,
+                    Authorization: "Firebase " + inexpUserJwt,
                 },
                 json: route2,
                 method: "PUT",
                 url: url + "/inexperiencedRoute",
             });
-        }).then((response) => {
+        }).then(response => {
             inexperiencedRouteId2 = parseInt(response.body.result.id, 10);
             // Another inexperienced Route
             const route3 = {
@@ -202,7 +202,7 @@ describe("BuddyRequest endpoint", () => {
                 method: "PUT",
                 url: url + "/inexperiencedRoute",
             });
-        }).then((response) => {
+        }).then(response => {
             inexperiencedRouteId3 = parseInt(response.body.result.id, 10);
             // The experienced Route
             const route4 = {
@@ -224,16 +224,16 @@ describe("BuddyRequest endpoint", () => {
                 url: url + "/experiencedRoute",
             });
         }).then(response => {
-            experiencedRouteId1 = parseInt(response.body.result.id, 10);
-            buddyRequestObject1 = {
+            experiencedRouteId = parseInt(response.body.result.id, 10);
+            buddyRequestObject = {
                 averageSpeed: 5,
                 divorcePoint: [1, 1],
                 divorcePointName: "32 Shelly Street",
                 divorceTime: "2017-06-08T12:00:28.684Z",
-                experiencedRoute: experiencedRouteId1,
+                experiencedRoute: experiencedRouteId,
                 experiencedRouteName: "Ride to work",
                 experiencedUser: expUserId,
-                inexperiencedRoute: inexperiencedRouteId1,
+                inexperiencedRoute: inexperiencedRouteId,
                 inexperiencedRouteName: "Ride to my friend Jerry's",
                 length: 1000,
                 meetingPoint: [0, 0],
@@ -270,7 +270,7 @@ describe("BuddyRequest endpoint", () => {
                 experiencedRoute: experiencedRouteId2,
                 experiencedRouteName: "Ride to work2",
                 experiencedUser: expUserId,
-                inexperiencedRoute: inexperiencedRouteId1,
+                inexperiencedRoute: inexperiencedRouteId,
                 inexperiencedRouteName: "Ride to 18 Penny Promenade",
                 length: 1000,
                 meetingPoint: [0, 0],
@@ -320,9 +320,9 @@ describe("BuddyRequest endpoint", () => {
 
             return defaultRequest({
                 headers: {
-                    Authorization: "Firebase " + inexpUserJwt1,
+                    Authorization: "Firebase " + inexpUserJwt,
                 },
-                json: buddyRequestObject1,
+                json: buddyRequestObject,
                 method: "PUT",
                 url: url + "/buddyRequest",
             }).then(response => {
@@ -337,7 +337,7 @@ describe("BuddyRequest endpoint", () => {
         });
         it("should not create a BuddyRequest with no auth", () => {
             return defaultRequest({
-                json: buddyRequestObject1,
+                json: buddyRequestObject,
                 method: "PUT",
                 url: url + "/buddyRequest",
             }).then(response => {
@@ -351,7 +351,7 @@ describe("BuddyRequest endpoint", () => {
                 headers: {
                     Authorization: "Firebase monkey",
                 },
-                json: buddyRequestObject1,
+                json: buddyRequestObject,
                 method: "PUT",
                 url: url + "/buddyRequest",
             }).then(response => {
@@ -367,16 +367,16 @@ describe("BuddyRequest endpoint", () => {
         before("Set up 2 buddy requests from inexp user -> exp user", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Firebase " + inexpUserJwt1,
+                    Authorization: "Firebase " + inexpUserJwt,
                 },
-                json: buddyRequestObject1,
+                json: buddyRequestObject,
                 method: "PUT",
                 url: url + "/buddyRequest",
             }).then(response => {
                 buddyRequest1Id = parseInt(response.body.result.id, 10);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Firebase " + inexpUserJwt1,
+                        Authorization: "Firebase " + inexpUserJwt,
                     },
                     json: buddyRequestObject2,
                     method: "PUT",
@@ -390,7 +390,7 @@ describe("BuddyRequest endpoint", () => {
             it("should get a user's sent buddy requests", () => {
                 return defaultRequest({
                     headers: {
-                        Authorization: "Firebase " + inexpUserJwt1,
+                        Authorization: "Firebase " + inexpUserJwt,
                     },
                     method: "GET",
                     url: url + "/buddyRequest/sent?id=" + buddyRequest1Id,
@@ -403,36 +403,36 @@ describe("BuddyRequest endpoint", () => {
                     let buddyRequests = response.body.result;
                     expect(buddyRequests.length).to.equal(1);
                     expect(buddyRequests[0].id).to.equal(buddyRequest1Id);
-                    expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject1.averageSpeed);
+                    expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
                     expect(moment(buddyRequests[0].divorceTime)
-                        .isSame(buddyRequestObject1.divorceTime, "second")).to.be.true;
-                    expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject1.divorcePoint);
-                    expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject1.divorcePointName);
-                    expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject1.experiencedRoute);
+                        .isSame(buddyRequestObject.divorceTime, "second")).to.be.true;
+                    expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                    expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
+                    expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
                     expect(buddyRequests[0].experiencedRouteName)
-                        .to.equal(buddyRequestObject1.experiencedRouteName);
-                    expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject1.experiencedUser);
+                        .to.equal(buddyRequestObject.experiencedRouteName);
+                    expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute)
-                        .to.equal(buddyRequestObject1.inexperiencedRoute);
+                        .to.equal(buddyRequestObject.inexperiencedRoute);
                     expect(buddyRequests[0].inexperiencedRouteName)
-                        .to.equal(buddyRequestObject1.inexperiencedRouteName);
-                    expect(buddyRequests[0].length).to.equal(buddyRequestObject1.length);
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
+                    expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime)
-                        .isSame(buddyRequestObject1.meetingTime, "second")).to.be.true;
-                    expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject1.meetingPoint);
-                    expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject1.meetingPointName);
+                        .isSame(buddyRequestObject.meetingTime, "second")).to.be.true;
+                    expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                    expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
                     expect(buddyRequests[0].myRoute).to.eql([[10, 10], [15, 15]]);
-                    expect(buddyRequests[0].owner).to.equal(inexpUserId1);
+                    expect(buddyRequests[0].owner).to.equal(inexpUserId);
                     expect(buddyRequests[0].status).to.equal("pending");
                     expect(buddyRequests[0].reason).to.equal("");
-                    expect(buddyRequests[0].route).to.eql(buddyRequestObject1.route);
+                    expect(buddyRequests[0].route).to.eql(buddyRequestObject.route);
                     expect(moment(buddyRequests[0].updated).isSame(buddyRequests[0].created, "second")).to.be.true;
                 });
             });
             it("should get all of a user's sent buddy requests when no id is given", () => {
                 return defaultRequest({
                     headers: {
-                        Authorization: "Firebase " + inexpUserJwt1,
+                        Authorization: "Firebase " + inexpUserJwt,
                     },
                     method: "GET",
                     url: url + "/buddyRequest/sent",
@@ -445,72 +445,72 @@ describe("BuddyRequest endpoint", () => {
                     let buddyRequests = response.body.result;
                     // Should get 2 from before() and 1 from the creation tests
                     expect(buddyRequests.length).to.equal(3);
-                    expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject1.averageSpeed);
+                    expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
                     expect(moment(buddyRequests[0].divorceTime)
-                        .isSame(buddyRequestObject1.divorceTime, "second"),
+                        .isSame(buddyRequestObject.divorceTime, "second"),
                         "Divorce time is different to expected." +
-                        "\nExpected: " + moment(buddyRequestObject1.divorceTime) +
+                        "\nExpected: " + moment(buddyRequestObject.divorceTime) +
                         "\nActual: " + moment(buddyRequests[0].divorceTime)).to.be.true;
-                    expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject1.divorcePoint);
-                    expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject1.divorcePointName);
-                    expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject1.experiencedRoute);
+                    expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                    expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
+                    expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
                     expect(buddyRequests[0].experiencedRouteName)
-                        .to.equal(buddyRequestObject1.experiencedRouteName);
-                    expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject1.experiencedUser);
+                        .to.equal(buddyRequestObject.experiencedRouteName);
+                    expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute)
-                        .to.equal(buddyRequestObject1.inexperiencedRoute);
-                    expect(buddyRequests[0].length).to.equal(buddyRequestObject1.length);
+                        .to.equal(buddyRequestObject.inexperiencedRoute);
+                    expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(buddyRequests[0].inexperiencedRouteName)
-                        .to.equal(buddyRequestObject1.inexperiencedRouteName);
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
                     expect(moment(buddyRequests[0].meetingTime)
-                        .isSame(buddyRequestObject1.meetingTime, "second"),
+                        .isSame(buddyRequestObject.meetingTime, "second"),
                         "Meeting time is different to expected." +
-                        "\nExpected: " + moment(buddyRequestObject1.meetingTime) +
+                        "\nExpected: " + moment(buddyRequestObject.meetingTime) +
                         "\nActual: " + moment(buddyRequests[0].meetingTime)).to.be.true;
-                    expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject1.meetingPoint);
-                    expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject1.meetingPointName);
+                    expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                    expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
                     expect(buddyRequests[0].myRoute).to.eql([[10, 10], [15, 15]]);
-                    expect(buddyRequests[0].owner).to.equal(inexpUserId1);
+                    expect(buddyRequests[0].owner).to.equal(inexpUserId);
                     expect(buddyRequests[0].status).to.equal("pending");
                     expect(buddyRequests[0].reason).to.equal("");
-                    expect(buddyRequests[0].route).to.eql(buddyRequestObject1.route);
+                    expect(buddyRequests[0].route).to.eql(buddyRequestObject.route);
                     expect(moment(buddyRequests[0].updated).isSame(buddyRequests[0].created, "second")).to.be.true;
-                    expect(buddyRequests[1].averageSpeed).to.equal(buddyRequestObject1.averageSpeed);
+                    expect(buddyRequests[1].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
                     expect(moment(buddyRequests[1].divorceTime)
-                        .isSame(buddyRequestObject1.divorceTime, "second"),
+                        .isSame(buddyRequestObject.divorceTime, "second"),
                         "Divorce time is different to expected." +
-                        "\nExpected: " + moment(buddyRequestObject1.divorceTime) +
+                        "\nExpected: " + moment(buddyRequestObject.divorceTime) +
                         "\nActual: " + moment(buddyRequests[1].divorceTime)).to.be.true;
-                    expect(buddyRequests[1].divorcePoint).to.eql(buddyRequestObject1.divorcePoint);
-                    expect(buddyRequests[1].divorcePointName).to.equal(buddyRequestObject1.divorcePointName);
-                    expect(buddyRequests[1].experiencedRoute).to.equal(buddyRequestObject1.experiencedRoute);
+                    expect(buddyRequests[1].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                    expect(buddyRequests[1].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
+                    expect(buddyRequests[1].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
                     expect(buddyRequests[1].experiencedRouteName)
-                        .to.equal(buddyRequestObject1.experiencedRouteName);
-                    expect(buddyRequests[1].experiencedUser).to.equal(buddyRequestObject1.experiencedUser);
+                        .to.equal(buddyRequestObject.experiencedRouteName);
+                    expect(buddyRequests[1].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[1].inexperiencedRoute)
-                        .to.equal(buddyRequestObject1.inexperiencedRoute);
+                        .to.equal(buddyRequestObject.inexperiencedRoute);
                     expect(buddyRequests[1].inexperiencedRouteName)
-                        .to.equal(buddyRequestObject1.inexperiencedRouteName);
-                    expect(buddyRequests[1].length).to.equal(buddyRequestObject1.length);
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
+                    expect(buddyRequests[1].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[1].meetingTime)
-                        .isSame(buddyRequestObject1.meetingTime, "second"),
+                        .isSame(buddyRequestObject.meetingTime, "second"),
                         "Meeting time is different to expected." +
-                        "\nExpected: " + moment(buddyRequestObject1.meetingTime) +
+                        "\nExpected: " + moment(buddyRequestObject.meetingTime) +
                         "\nActual: " + moment(buddyRequests[1].meetingTime)).to.be.true;
-                    expect(buddyRequests[1].meetingPoint).to.eql(buddyRequestObject1.meetingPoint);
-                    expect(buddyRequests[1].meetingPointName).to.equal(buddyRequestObject1.meetingPointName);
+                    expect(buddyRequests[1].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                    expect(buddyRequests[1].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
                     expect(buddyRequests[1].myRoute).to.eql([[10, 10], [15, 15]]);
-                    expect(buddyRequests[1].owner).to.equal(inexpUserId1);
+                    expect(buddyRequests[1].owner).to.equal(inexpUserId);
                     expect(buddyRequests[1].status).to.equal("pending");
                     expect(buddyRequests[1].reason).to.equal("");
-                    expect(buddyRequests[1].route).to.eql(buddyRequestObject1.route);
+                    expect(buddyRequests[1].route).to.eql(buddyRequestObject.route);
                     expect(moment(buddyRequests[1].updated).isSame(buddyRequests[1].created, "second")).to.be.true;
                 });
             });
             it("should set otherUser correctly to the experiencedUser", () => {
                 return defaultRequest({
                     headers: {
-                        Authorization: "Firebase " + inexpUserJwt1,
+                        Authorization: "Firebase " + inexpUserJwt,
                     },
                     method: "GET",
                     url: url + "/buddyRequest/sent?id=" + buddyRequest1Id,
@@ -581,29 +581,29 @@ describe("BuddyRequest endpoint", () => {
                     let buddyRequests = response.body.result;
                     expect(buddyRequests.length).to.equal(1);
                     expect(buddyRequests[0].id).to.equal(buddyRequest1Id);
-                    expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject1.averageSpeed);
+                    expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
                     expect(moment(buddyRequests[0].divorceTime)
-                        .isSame(buddyRequestObject1.divorceTime, "second")).to.be.true;
-                    expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject1.divorcePoint);
-                    expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject1.divorcePointName);
-                    expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject1.experiencedRoute);
+                        .isSame(buddyRequestObject.divorceTime, "second")).to.be.true;
+                    expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                    expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
+                    expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
                     expect(buddyRequests[0].experiencedRouteName)
-                        .to.equal(buddyRequestObject1.experiencedRouteName);
-                    expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject1.experiencedUser);
+                        .to.equal(buddyRequestObject.experiencedRouteName);
+                    expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute)
-                        .to.equal(buddyRequestObject1.inexperiencedRoute);
+                        .to.equal(buddyRequestObject.inexperiencedRoute);
                     expect(buddyRequests[0].inexperiencedRouteName)
-                        .to.equal(buddyRequestObject1.inexperiencedRouteName);
-                    expect(buddyRequests[0].length).to.equal(buddyRequestObject1.length);
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
+                    expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime)
-                        .isSame(buddyRequestObject1.meetingTime, "second")).to.be.true;
-                    expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject1.meetingPoint);
-                    expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject1.meetingPointName);
+                        .isSame(buddyRequestObject.meetingTime, "second")).to.be.true;
+                    expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                    expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
                     expect(buddyRequests[0].myRoute).to.eql([[0, 0], [1, 0], [1, 1]]);
-                    expect(buddyRequests[0].owner).to.equal(inexpUserId1);
+                    expect(buddyRequests[0].owner).to.equal(inexpUserId);
                     expect(buddyRequests[0].status).to.equal("pending");
                     expect(buddyRequests[0].reason).to.equal("");
-                    expect(buddyRequests[0].route).to.eql(buddyRequestObject1.route);
+                    expect(buddyRequests[0].route).to.eql(buddyRequestObject.route);
                     expect(moment(buddyRequests[0].updated).isSame(buddyRequests[0].created, "second")).to.be.true;
                 });
             });
@@ -623,65 +623,65 @@ describe("BuddyRequest endpoint", () => {
                     let buddyRequests = response.body.result;
                     // Should get 2 from before() and 1 from the creation tests
                     expect(buddyRequests.length).to.equal(3);
-                    expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject1.averageSpeed);
+                    expect(buddyRequests[0].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
                     expect(moment(buddyRequests[0].divorceTime)
-                        .isSame(buddyRequestObject1.divorceTime, "second"),
+                        .isSame(buddyRequestObject.divorceTime, "second"),
                         "Divorce time is different to expected." +
-                        "\nExpected: " + moment(buddyRequestObject1.divorceTime) +
+                        "\nExpected: " + moment(buddyRequestObject.divorceTime) +
                         "\nActual: " + moment(buddyRequests[0].divorceTime)).to.be.true;
-                    expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject1.divorcePoint);
-                    expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject1.divorcePointName);
-                    expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject1.experiencedRoute);
+                    expect(buddyRequests[0].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                    expect(buddyRequests[0].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
+                    expect(buddyRequests[0].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
                     expect(buddyRequests[0].experiencedRouteName)
-                        .to.equal(buddyRequestObject1.experiencedRouteName);
-                    expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject1.experiencedUser);
+                        .to.equal(buddyRequestObject.experiencedRouteName);
+                    expect(buddyRequests[0].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[0].inexperiencedRoute)
-                        .to.equal(buddyRequestObject1.inexperiencedRoute);
+                        .to.equal(buddyRequestObject.inexperiencedRoute);
                     expect(buddyRequests[0].inexperiencedRouteName)
-                        .to.equal(buddyRequestObject1.inexperiencedRouteName);
-                    expect(buddyRequests[0].length).to.equal(buddyRequestObject1.length);
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
+                    expect(buddyRequests[0].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[0].meetingTime)
-                        .isSame(buddyRequestObject1.meetingTime, "second"),
+                        .isSame(buddyRequestObject.meetingTime, "second"),
                         "Meeting time is different to expected." +
-                        "\nExpected: " + moment(buddyRequestObject1.meetingTime) +
+                        "\nExpected: " + moment(buddyRequestObject.meetingTime) +
                         "\nActual: " + moment(buddyRequests[0].meetingTime)).to.be.true;
-                    expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject1.meetingPoint);
-                    expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject1.meetingPointName);
+                    expect(buddyRequests[0].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                    expect(buddyRequests[0].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
                     expect(buddyRequests[0].myRoute).to.eql([[0, 0], [1, 0], [1, 1]]);
-                    expect(buddyRequests[0].owner).to.equal(inexpUserId1);
+                    expect(buddyRequests[0].owner).to.equal(inexpUserId);
                     expect(buddyRequests[0].status).to.equal("pending");
                     expect(buddyRequests[0].reason).to.equal("");
-                    expect(buddyRequests[0].route).to.eql(buddyRequestObject1.route);
+                    expect(buddyRequests[0].route).to.eql(buddyRequestObject.route);
                     expect(moment(buddyRequests[0].updated).isSame(buddyRequests[0].created, "second")).to.be.true;
-                    expect(buddyRequests[1].averageSpeed).to.equal(buddyRequestObject1.averageSpeed);
+                    expect(buddyRequests[1].averageSpeed).to.equal(buddyRequestObject.averageSpeed);
                     expect(moment(buddyRequests[1].divorceTime)
-                        .isSame(buddyRequestObject1.divorceTime, "second"),
+                        .isSame(buddyRequestObject.divorceTime, "second"),
                         "Divorce time is different to expected." +
-                        "\nExpected: " + moment(buddyRequestObject1.divorceTime) +
+                        "\nExpected: " + moment(buddyRequestObject.divorceTime) +
                         "\nActual: " + moment(buddyRequests[1].divorceTime)).to.be.true;
-                    expect(buddyRequests[1].divorcePoint).to.eql(buddyRequestObject1.divorcePoint);
-                    expect(buddyRequests[1].divorcePointName).to.equal(buddyRequestObject1.divorcePointName);
-                    expect(buddyRequests[1].experiencedRoute).to.equal(buddyRequestObject1.experiencedRoute);
+                    expect(buddyRequests[1].divorcePoint).to.eql(buddyRequestObject.divorcePoint);
+                    expect(buddyRequests[1].divorcePointName).to.equal(buddyRequestObject.divorcePointName);
+                    expect(buddyRequests[1].experiencedRoute).to.equal(buddyRequestObject.experiencedRoute);
                     expect(buddyRequests[1].experiencedRouteName)
-                        .to.equal(buddyRequestObject1.experiencedRouteName);
-                    expect(buddyRequests[1].experiencedUser).to.equal(buddyRequestObject1.experiencedUser);
+                        .to.equal(buddyRequestObject.experiencedRouteName);
+                    expect(buddyRequests[1].experiencedUser).to.equal(buddyRequestObject.experiencedUser);
                     expect(buddyRequests[1].inexperiencedRoute)
-                        .to.equal(buddyRequestObject1.inexperiencedRoute);
+                        .to.equal(buddyRequestObject.inexperiencedRoute);
                     expect(buddyRequests[1].inexperiencedRouteName)
-                        .to.equal(buddyRequestObject1.inexperiencedRouteName);
-                    expect(buddyRequests[1].length).to.equal(buddyRequestObject1.length);
+                        .to.equal(buddyRequestObject.inexperiencedRouteName);
+                    expect(buddyRequests[1].length).to.equal(buddyRequestObject.length);
                     expect(moment(buddyRequests[1].meetingTime)
-                        .isSame(buddyRequestObject1.meetingTime, "second"),
+                        .isSame(buddyRequestObject.meetingTime, "second"),
                         "Meeting time is different to expected." +
-                        "\nExpected: " + moment(buddyRequestObject1.meetingTime) +
+                        "\nExpected: " + moment(buddyRequestObject.meetingTime) +
                         "\nActual: " + moment(buddyRequests[1].meetingTime)).to.be.true;
-                    expect(buddyRequests[1].meetingPoint).to.eql(buddyRequestObject1.meetingPoint);
-                    expect(buddyRequests[1].meetingPointName).to.equal(buddyRequestObject1.meetingPointName);
+                    expect(buddyRequests[1].meetingPoint).to.eql(buddyRequestObject.meetingPoint);
+                    expect(buddyRequests[1].meetingPointName).to.equal(buddyRequestObject.meetingPointName);
                     expect(buddyRequests[1].myRoute).to.eql([[0, 0], [1, 0], [1, 1]]);
-                    expect(buddyRequests[1].owner).to.equal(inexpUserId1);
+                    expect(buddyRequests[1].owner).to.equal(inexpUserId);
                     expect(buddyRequests[1].status).to.equal("pending");
                     expect(buddyRequests[1].reason).to.equal("");
-                    expect(buddyRequests[1].route).to.eql(buddyRequestObject1.route);
+                    expect(buddyRequests[1].route).to.eql(buddyRequestObject.route);
                     expect(moment(buddyRequests[1].updated).isSame(buddyRequests[1].created, "second")).to.be.true;
                 });
             });
@@ -700,13 +700,13 @@ describe("BuddyRequest endpoint", () => {
                     "Expected object, but got a " + typeof response.body);
                     let buddyRequests = response.body.result;
                     expect(buddyRequests.length).to.equal(1);
-                    expect(buddyRequests[0].otherUser.id).to.equal(inexpUserId1);
+                    expect(buddyRequests[0].otherUser.id).to.equal(inexpUserId);
                 });
             });
             it("should not get a user's sent buddy requests from the received endpoint", () => {
                 return defaultRequest({
                     headers: {
-                        Authorization: "Firebase " + inexpUserJwt1,
+                        Authorization: "Firebase " + inexpUserJwt,
                     },
                     method: "GET",
                     url: url + "/buddyRequest/received",
@@ -749,9 +749,9 @@ describe("BuddyRequest endpoint", () => {
         before("Create a buddy request to update", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Firebase " + inexpUserJwt1,
+                    Authorization: "Firebase " + inexpUserJwt,
                 },
-                json: buddyRequestObject1,
+                json: buddyRequestObject,
                 method: "PUT",
                 url: url + "/buddyRequest",
             }).then(response => {
@@ -796,7 +796,7 @@ describe("BuddyRequest endpoint", () => {
                     // Get the buddyRequest we just updated
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         method: "GET",
                         url: url + "/buddyRequest/sent?id=" + buddyRequestId,
@@ -868,7 +868,7 @@ describe("BuddyRequest endpoint", () => {
                         // Get the buddyRequest we just updated
                         return defaultRequest({
                             headers: {
-                                Authorization: "Firebase " + inexpUserJwt1,
+                                Authorization: "Firebase " + inexpUserJwt,
                             },
                             method: "GET",
                             url: url + "/buddyRequest/sent?id=" + buddyRequestId,
@@ -896,7 +896,7 @@ describe("BuddyRequest endpoint", () => {
         it("should not make any updates as an inexperienced user", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Firebase " + inexpUserJwt1,
+                    Authorization: "Firebase " + inexpUserJwt,
                 },
                 json: {meetingTime: "2017-06-08T10:20:28.684Z"},
                 method: "POST",
@@ -913,9 +913,9 @@ describe("BuddyRequest endpoint", () => {
         beforeEach("Create a buddy request to update", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Firebase " + inexpUserJwt1,
+                    Authorization: "Firebase " + inexpUserJwt,
                 },
-                json: buddyRequestObject1,
+                json: buddyRequestObject,
                 method: "PUT",
                 url: url + "/buddyRequest",
             }).then(response => {
@@ -1368,7 +1368,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1388,7 +1388,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1409,7 +1409,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1427,7 +1427,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1447,7 +1447,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1483,7 +1483,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1503,7 +1503,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1524,7 +1524,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1542,7 +1542,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1562,7 +1562,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1598,7 +1598,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1618,7 +1618,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1639,7 +1639,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1659,7 +1659,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1709,7 +1709,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1729,7 +1729,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1750,7 +1750,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1768,7 +1768,7 @@ describe("BuddyRequest endpoint", () => {
                     };
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: status,
                         method: "POST",
@@ -1834,9 +1834,9 @@ describe("BuddyRequest endpoint", () => {
         before("Set up 4 buddy requests from inexp user -> exp user", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Firebase " + inexpUserJwt1,
+                    Authorization: "Firebase " + inexpUserJwt,
                 },
-                json: buddyRequestObject1,
+                json: buddyRequestObject,
                 method: "PUT",
                 url: url + "/buddyRequest",
             }).then(response => {
@@ -1844,7 +1844,7 @@ describe("BuddyRequest endpoint", () => {
                 buddyRequest1Id = parseInt(response.body.result.id, 10);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Firebase " + inexpUserJwt1,
+                        Authorization: "Firebase " + inexpUserJwt,
                     },
                     json: buddyRequestObject2,
                     method: "PUT",
@@ -1855,7 +1855,7 @@ describe("BuddyRequest endpoint", () => {
                 buddyRequest2Id = parseInt(response.body.result.id, 10);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Firebase " + inexpUserJwt1,
+                        Authorization: "Firebase " + inexpUserJwt,
                     },
                     json: buddyRequestObject3,
                     method: "PUT",
@@ -1884,13 +1884,13 @@ describe("BuddyRequest endpoint", () => {
                     Authorization: "Firebase " + expUserJwt,
                 },
                 method: "DELETE",
-                url: url + "/experiencedRoute?id=" + experiencedRouteId1,
+                url: url + "/experiencedRoute?id=" + experiencedRouteId,
             }).then(response => {
                 expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                 response.statusCode + ", error given is: " + response.error);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Firebase " + inexpUserJwt1,
+                        Authorization: "Firebase " + inexpUserJwt,
                     },
                     method: "GET",
                     url: url + "/buddyRequest/sent?id=" + buddyRequest1Id,
@@ -1899,7 +1899,7 @@ describe("BuddyRequest endpoint", () => {
                 expect(response.body.result[0].status).to.equal("canceled");
                 return defaultRequest({
                     headers: {
-                        Authorization: "Firebase " + inexpUserJwt1,
+                        Authorization: "Firebase " + inexpUserJwt,
                     },
                     method: "GET",
                     url: url + "/buddyRequest/sent?id=" + buddyRequest2Id,
@@ -1912,16 +1912,16 @@ describe("BuddyRequest endpoint", () => {
         it("Should only update status for any buddy requests with the deleted inexp route", () => {
             return defaultRequest({
                 headers: {
-                    Authorization: "Firebase " + inexpUserJwt1,
+                    Authorization: "Firebase " + inexpUserJwt,
                 },
                 method: "DELETE",
-                url: url + "/inexperiencedRoute?id=" + inexperiencedRouteId1,
+                url: url + "/inexperiencedRoute?id=" + inexperiencedRouteId,
             }).then(response => {
                 expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                 response.statusCode + ", error given is: " + response.error);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Firebase " + inexpUserJwt1,
+                        Authorization: "Firebase " + inexpUserJwt,
                     },
                     method: "GET",
                     url: url + "/buddyRequest/sent?id=" + buddyRequest2Id,
@@ -1930,7 +1930,7 @@ describe("BuddyRequest endpoint", () => {
                 expect(response.body.result[0].status).to.equal("canceled");
                 return defaultRequest({
                     headers: {
-                        Authorization: "Firebase " + inexpUserJwt1,
+                        Authorization: "Firebase " + inexpUserJwt,
                     },
                     method: "GET",
                     url: url + "/buddyRequest/sent?id=" + buddyRequest3Id,
@@ -1952,7 +1952,7 @@ describe("BuddyRequest endpoint", () => {
                 response.statusCode + ", error given is: " + response.error);
                 return defaultRequest({
                     headers: {
-                        Authorization: "Firebase " + inexpUserJwt1,
+                        Authorization: "Firebase " + inexpUserJwt,
                     },
                     method: "GET",
                     url: url + "/buddyRequest/sent?id=" + buddyRequest3Id,
@@ -1980,9 +1980,9 @@ describe("BuddyRequest endpoint", () => {
                 beforeEach("Make a BuddyRequest to review", () => {
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
-                        json: buddyRequestObject1,
+                        json: buddyRequestObject,
                         method: "PUT",
                         url: url + "/buddyRequest",
                     }).then(response => {
@@ -2005,7 +2005,7 @@ describe("BuddyRequest endpoint", () => {
                     counter++;
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: {
                             buddyRequest: buddyRequestId,
@@ -2017,7 +2017,7 @@ describe("BuddyRequest endpoint", () => {
                         expect(response.statusCode).to.equal(200);
                         return defaultRequest({
                             headers: {
-                                Authorization: "Firebase " + inexpUserJwt1,
+                                Authorization: "Firebase " + inexpUserJwt,
                             },
                             method: "GET",
                             url: url + "/buddyRequest/sent?id=" + buddyRequestId,
@@ -2028,10 +2028,10 @@ describe("BuddyRequest endpoint", () => {
                         expect(buddyRequest.status).to.equal("completed", "Status was not set");
                         return defaultRequest({
                             headers: {
-                                Authorization: "Firebase " + inexpUserJwt1,
+                                Authorization: "Firebase " + inexpUserJwt,
                             },
                             method: "GET",
-                            url: url + "/user?id=" + inexpUserId1,
+                            url: url + "/user?id=" + inexpUserId,
                         });
                     }).then(response => {
                         let user = response.body.result;
@@ -2055,7 +2055,7 @@ describe("BuddyRequest endpoint", () => {
                     counter++;
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: {
                             buddyRequest: buddyRequestId,
@@ -2067,7 +2067,7 @@ describe("BuddyRequest endpoint", () => {
                         expect(response.statusCode).to.equal(200);
                         return defaultRequest({
                             headers: {
-                                Authorization: "Firebase " + inexpUserJwt1,
+                                Authorization: "Firebase " + inexpUserJwt,
                             },
                             method: "GET",
                             url: url + "/buddyRequest/sent?id=" + buddyRequestId,
@@ -2078,10 +2078,10 @@ describe("BuddyRequest endpoint", () => {
                         expect(buddyRequest.status).to.equal("completed", "Status was not set");
                         return defaultRequest({
                             headers: {
-                                Authorization: "Firebase " + inexpUserJwt1,
+                                Authorization: "Firebase " + inexpUserJwt,
                             },
                             method: "GET",
-                            url: url + "/user?id=" + inexpUserId1,
+                            url: url + "/user?id=" + inexpUserId,
                         });
                     }).then(response => {
                         let user = response.body.result;
@@ -2121,7 +2121,7 @@ describe("BuddyRequest endpoint", () => {
                 it("Should not let a user review a buddyRequest as a 2", () => {
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: {
                             buddyRequest: buddyRequestId,
@@ -2138,7 +2138,7 @@ describe("BuddyRequest endpoint", () => {
                 it("Should not let a user review a buddyRequest as a -2", () => {
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: {
                             buddyRequest: buddyRequestId,
@@ -2155,7 +2155,7 @@ describe("BuddyRequest endpoint", () => {
                 it("Should not let a user review a buddyRequest as a 0", () => {
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: {
                             buddyRequest: buddyRequestId,
@@ -2173,7 +2173,7 @@ describe("BuddyRequest endpoint", () => {
                     counter++;
                     return defaultRequest({
                         headers: {
-                            Authorization: "Firebase " + inexpUserJwt1,
+                            Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: {
                             buddyRequest: buddyRequestId,
@@ -2184,7 +2184,7 @@ describe("BuddyRequest endpoint", () => {
                     }).then(response => {
                         return defaultRequest({
                             headers: {
-                                Authorization: "Firebase " + inexpUserJwt1,
+                                Authorization: "Firebase " + inexpUserJwt,
                             },
                             json: {
                                 buddyRequest: buddyRequestId,
@@ -2197,7 +2197,7 @@ describe("BuddyRequest endpoint", () => {
                         expect(response.statusCode).to.equal(200);
                         return defaultRequest({
                             headers: {
-                                Authorization: "Firebase " + inexpUserJwt1,
+                                Authorization: "Firebase " + inexpUserJwt,
                             },
                             method: "GET",
                             url: url + "/buddyRequest/sent?id=" + buddyRequestId,
@@ -2207,10 +2207,10 @@ describe("BuddyRequest endpoint", () => {
                         expect(buddyRequest.review).to.equal(-1, "Review was not updated");
                         return defaultRequest({
                             headers: {
-                                Authorization: "Firebase " + inexpUserJwt1,
+                                Authorization: "Firebase " + inexpUserJwt,
                             },
                             method: "GET",
-                            url: url + "/user?id=" + inexpUserId1,
+                            url: url + "/user?id=" + inexpUserId,
                         });
                     }).then(response => {
                         let user = response.body.result;

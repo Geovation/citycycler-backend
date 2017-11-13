@@ -49,6 +49,8 @@ export default class InexperiencedRoute {
             throw new Error("400:Radius must be positive");
         } else if (typeof obj.reusable === "undefined") {
             obj.reusable = false;
+        } else if (typeof obj.deleted === "undefined") {
+            obj.deleted = false;
         }
         this.arrivalDateTime = obj.arrivalDateTime;
         this.deleted = obj.deleted;

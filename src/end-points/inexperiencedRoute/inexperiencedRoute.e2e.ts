@@ -339,6 +339,7 @@ describe("InexperiencedRoute endpoint", () => {
                 name: "Ride home",
                 notifyOwner: false,
                 radius: 1000,
+                reusable: true,
                 startPoint: [10, 10],
                 startPointName: "33 Stanley Street",
             };
@@ -394,7 +395,7 @@ describe("InexperiencedRoute endpoint", () => {
             }).then(response => {
                 expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                     response.statusCode + ", error given is: " + response.error);
-                expect(response.body.result.length).to.equal(1);
+                expect(response.body.result.length).to.equal(2);
                 expect(response.body.result[0].deleted).to.be.false;
             });
         });
