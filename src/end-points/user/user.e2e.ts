@@ -1,4 +1,3 @@
-import * as CloudStorage from "../../common/cloudstorage";
 import * as FirebaseUtils from "../../common/firebaseUtils";
 import * as chai from "chai";
 import * as _ from "lodash";
@@ -162,8 +161,8 @@ describe("User endpoint", () => {
                 expect(response.body.status).to.equal(400);
             });
         });
-        //commented out temporarily for transitioning to new accounts (as uniqueness of email
-        //was dropped in db temporarily)
+        // commented out temporarily for transitioning to new accounts (as uniqueness of email
+        // was dropped in db temporarily)
         // it("shouldn't create a user with a duplicate email", () => {
         //     const user = { email: "userTest@e2e-test.matchmyroute-backend.appspot.com",
         //         name: "E2E Test User", password: "test" };
@@ -267,7 +266,6 @@ describe("User endpoint", () => {
     });
     describe("Updating", () => {
         it("should update a user", done => {
-            let photoName;
             const userUpdates = {
                 bio: "Updated bio",
                 email: "updateduserTest@e2e-test.matchmyroute-backend.appspot.com",
@@ -329,8 +327,8 @@ describe("User endpoint", () => {
                 expect(response.body.status).to.equal(403);
             });
         });
-        //temporarily removed as we allow multiple users with same email
-        //while transitioning to Firebase auth
+        // temporarily removed as we allow multiple users with same email
+        // while transitioning to Firebase auth
         // it("should not update a user to an existent email", () => {
         //     const userUpdates = {
         //         email: "test1@e2e-test.matchmyroute-backend.appspot.com",
