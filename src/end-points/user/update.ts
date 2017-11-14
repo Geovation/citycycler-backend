@@ -148,7 +148,8 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
             promises.push(
                 CloudStorage.storeProfileImage(payload.photo, userId)
                 .then(profileImage => {
-                        updates.profile_photo = profileImage;
+                        updates.profile_photo = process.env.STORAGE_BASE_URL + "/" +
+                            process.env.STORAGE_BUCKET + "/" + profileImage;
                     }
                 )
             );

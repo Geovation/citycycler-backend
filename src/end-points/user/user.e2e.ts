@@ -1,4 +1,3 @@
-import * as CloudStorage from "../../common/cloudstorage";
 import * as FirebaseUtils from "../../common/firebaseUtils";
 import * as chai from "chai";
 import * as _ from "lodash";
@@ -162,29 +161,31 @@ describe("User endpoint", () => {
                 expect(response.body.status).to.equal(400);
             });
         });
-        it("shouldn't create a user with a duplicate email", () => {
-            const user = { email: "userTest@e2e-test.matchmyroute-backend.appspot.com",
-                name: "E2E Test User", password: "test" };
-            return FirebaseUtils.createFirebaseUser("duplicateEmail@e2e-test.matchmyroute-backend.appspot.com")
-                .then(createResponse => {
-                    userIds.push(createResponse.user.uid);
-                    return FirebaseUtils.getJwtForUser(createResponse.customToken);
-                }).then(jwt => {
-                    return defaultRequest({
-                        headers: {
-                            Authorization: "Firebase " + jwt,
-                        },
-                        json: user,
-                        method: "PUT",
-                        url: url + "/user",
-                    });
-            }).then(response => {
-                expect(response.statusCode).to.equal(409, "Expected 490 response but got " +
-                    response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                expect(response.body.error).to.equal("An account already exists using this email");
-                expect(response.body.status).to.equal(409);
-            });
-        });
+        // commented out temporarily for transitioning to new accounts (as uniqueness of email
+        // was dropped in db temporarily)
+        // it("shouldn't create a user with a duplicate email", () => {
+        //     const user = { email: "userTest@e2e-test.matchmyroute-backend.appspot.com",
+        //         name: "E2E Test User", password: "test" };
+        //     return FirebaseUtils.createFirebaseUser("duplicateEmail@e2e-test.matchmyroute-backend.appspot.com")
+        //         .then(createResponse => {
+        //             userIds.push(createResponse.user.uid);
+        //             return FirebaseUtils.getJwtForUser(createResponse.customToken);
+        //         }).then(jwt => {
+        //             return defaultRequest({
+        //                 headers: {
+        //                     Authorization: "Firebase " + jwt,
+        //                 },
+        //                 json: user,
+        //                 method: "PUT",
+        //                 url: url + "/user",
+        //             });
+        //     }).then(response => {
+        //         expect(response.statusCode).to.equal(409, "Expected 490 response but got " +
+        //             response.statusCode + ", body returned is: " + JSON.stringify(response.body));
+        //         expect(response.body.error).to.equal("An account already exists using this email");
+        //         expect(response.body.status).to.equal(409);
+        //     });
+        // });
     });
     describe("Getting", () => {
         it("should get a user by a valid id", () => {
@@ -265,7 +266,6 @@ describe("User endpoint", () => {
     });
     describe("Updating", () => {
         it("should update a user", done => {
-            let photoName;
             const userUpdates = {
                 bio: "Updated bio",
                 email: "updateduserTest@e2e-test.matchmyroute-backend.appspot.com",
@@ -295,14 +295,7 @@ describe("User endpoint", () => {
                 expect(user.name).to.equal("Updated Test User");
                 expect(user.email).to.equal("updateduserTest@e2e-test.matchmyroute-backend.appspot.com");
                 expect(user.bio).to.equal("Updated bio");
-                expect(user.photo).to.equal(CloudStorage.createFilenameForUser(userIds[0]));
-                photoName = user.photo;
-                // check if photo exists in cloud storage
-                const imgUrl = process.env.STORAGE_BASE_URL +
-                "/" +
-                process.env.STORAGE_BUCKET +
-                "/" +
-                photoName;
+                expect(user.photo).to.be.a.string;
                 retryRequest({
                     json: true,
                     method: "GET",
@@ -310,7 +303,7 @@ describe("User endpoint", () => {
                     shouldRetryFn: httpMessage => {
                         return httpMessage.statusMessage !== "OK";
                     },
-                    url: imgUrl,
+                    url: user.photo,
                 }, (error4, response4, body4) => {
                     expect(response4.statusCode)
                         .to.equal(200, "Image doesn't exist in Cloud Storage");
@@ -334,25 +327,27 @@ describe("User endpoint", () => {
                 expect(response.body.status).to.equal(403);
             });
         });
-        it("should not update a user to an existent email", () => {
-            const userUpdates = {
-                email: "test1@e2e-test.matchmyroute-backend.appspot.com",
-                name: "Updated2 Test User", password: "updated2test",
-            };
-            return defaultRequest({
-                headers: {
-                    Authorization: "Firebase " + userJwts[0],
-                },
-                json: userUpdates,
-                method: "POST",
-                url: url + "/user",
-            }).then(response => {
-                expect(response.statusCode).to.equal(409, "Expected 490 response but got " +
-                    response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                expect(response.body.error).to.equal("An account already exists using this email");
-                expect(response.body.status).to.equal(409);
-            });
-        });
+        // temporarily removed as we allow multiple users with same email
+        // while transitioning to Firebase auth
+        // it("should not update a user to an existent email", () => {
+        //     const userUpdates = {
+        //         email: "test1@e2e-test.matchmyroute-backend.appspot.com",
+        //         name: "Updated2 Test User", password: "updated2test",
+        //     };
+        //     return defaultRequest({
+        //         headers: {
+        //             Authorization: "Firebase " + userJwts[0],
+        //         },
+        //         json: userUpdates,
+        //         method: "POST",
+        //         url: url + "/user",
+        //     }).then(response => {
+        //         expect(response.statusCode).to.equal(409, "Expected 490 response but got " +
+        //             response.statusCode + ", body returned is: " + JSON.stringify(response.body));
+        //         expect(response.body.error).to.equal("An account already exists using this email");
+        //         expect(response.body.status).to.equal(409);
+        //     });
+        // });
         it("should update a user's individual properties - name", () => {
             const userUpdates = {
                 name: "E2E Test User",
@@ -455,14 +450,7 @@ describe("User endpoint", () => {
                 });
             }).then(response => {
                 let user = response.body.result;
-                expect(user.photo).to.equal(CloudStorage.createFilenameForUser(userIds[0]));
-                // done();
-                // check if photo exists in cloud storage
-                const imgUrl = process.env.STORAGE_BASE_URL +
-                "/" +
-                process.env.STORAGE_BUCKET +
-                "/" +
-                user.photo;
+                expect(user.photo).to.be.a.string;
                 retryRequest(
                     {
                         json: true,
@@ -471,7 +459,7 @@ describe("User endpoint", () => {
                         shouldRetryFn: httpMessage => {
                             return httpMessage.statusMessage !== "OK";
                         },
-                        url: imgUrl,
+                        url: user.photo,
                     }, (error, response2, body) => {
                         expect(response2.statusCode).to.equal(200, "Image doesn't exist in Cloud Storage");
                         done();
