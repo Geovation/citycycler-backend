@@ -492,7 +492,7 @@ export function getInexperiencedRoutes(
 )
 : Promise<InexperiencedRoute[]> {
     let query = "SELECT id, owner, radius, notifyOwner, arrivalDateTime, ST_AsText(startPoint) AS startPoint, " +
-        "startPointName, ST_AsText(endPoint) AS endPoint, endPointName, length, name, deleted " +
+        "startPointName, ST_AsText(endPoint) AS endPoint, endPointName, length, name, deleted, reusable " +
         "FROM inexperienced_routes WHERE owner=$1";
     let queryParams = new Array<any>();
     queryParams.push(params.userId);

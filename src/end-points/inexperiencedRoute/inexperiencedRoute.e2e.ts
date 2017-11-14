@@ -354,7 +354,7 @@ describe("InexperiencedRoute endpoint", () => {
                 expect(response.statusCode).to.equal(201, "Expected 201 response but got " +
                     response.statusCode + ", error given is: " + response.error + " body is " +
                     JSON.stringify(response.body));
-                inexperiencedRouteIds.push(response.body.result.id, 10);
+                inexperiencedRouteIds.push(response.body.result.id);
             });
         });
         it("should get all inexperienced routes if no id is given", () => {
@@ -374,13 +374,13 @@ describe("InexperiencedRoute endpoint", () => {
                     ". Full response body is: " + JSON.stringify(response.body));
             });
         });
-        it("should only get non-deleted inexperienced routes if includedeleted is set to false", () => {
+        it("should only get non-deleted reusable inexperienced routes if includedeleted is set to false", () => {
             return defaultRequest({
                 headers: {
                         Authorization: "Firebase " + userJwts[0],
                     },
                     method: "DELETE",
-                    url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[1],
+                    url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[2],
             }).then(response => {
                 expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                     response.statusCode + ", error given is: " + response.error);
@@ -395,8 +395,22 @@ describe("InexperiencedRoute endpoint", () => {
             }).then(response => {
                 expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                     response.statusCode + ", error given is: " + response.error);
-                expect(response.body.result.length).to.equal(2);
+                expect(response.body.result.length).to.equal(1);
                 expect(response.body.result[0].deleted).to.be.false;
+            });
+        });
+        it("should get all reusable inexperienced routes if includedeleted is set to true", () => {
+            return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + userJwts[0],
+                },
+                method: "GET",
+                url: url + "/inexperiencedRoute?includedeleted=true",
+            }).then(response => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + response.error);
+                expect(response.body.result.length).to.equal(2);
+                expect(response.body.result[0].deleted).to.be.true;
             });
         });
         it("should get an inexperiencedRoute by a valid id", () => {
@@ -1198,7 +1212,7 @@ describe("InexperiencedRoute endpoint", () => {
     });
     describe("Deleting", () => {
         before(() => {
-            // Make two new inexperienced routes (inexperiencedRouteIds[1] + [2])
+            // Make another new inexperienced route (inexperiencedRouteIds[2])
             const inexperiencedRoute = {
                 arrivalDateTime: "2000-01-01T13:00:00+00",
                 endPoint: [15, 15],
@@ -1217,17 +1231,6 @@ describe("InexperiencedRoute endpoint", () => {
                 json: inexperiencedRoute,
                 method: "PUT",
                 url: url + "/inexperiencedRoute",
-            }).then(response => {
-                inexperiencedRouteIds.push(parseInt(response.body.result.id, 10));
-            }).then(() => {
-                return defaultRequest({
-                    headers: {
-                        Authorization: "Firebase " + userJwts[0],
-                    },
-                    json: inexperiencedRoute,
-                    method: "PUT",
-                    url: url + "/inexperiencedRoute",
-                });
             }).then(response => {
                 inexperiencedRouteIds.push(parseInt(response.body.result.id, 10));
             });

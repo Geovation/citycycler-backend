@@ -282,6 +282,20 @@ describe("ExperiencedRoute endpoint", () => {
                     expect(response.body.result[0].deleted).to.be.false;
                 });
             });
+            it("should get all experienced routes if includedeleted is set to true", () => {
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + userJwts[0],
+                    },
+                    method: "GET",
+                    url: url + "/experiencedRoute?includedeleted=true",
+                }).then(response => {
+                    expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                        response.statusCode + ", error given is: " + response.error);
+                    expect(response.body.result.length).to.equal(2);
+                    expect(response.body.result[0].deleted).to.be.true;
+                });
+            });
         });
         /* tslint:disable no-empty */
         describe("By Nearby", () => {
