@@ -5,6 +5,7 @@ export default class ExperiencedRoute {
         return new ExperiencedRoute({
             arrivalTime: row.arrivaltime,
             days: row.days,
+            deleted: row.deleted,
             departureTime: row.departuretime,
             endPointName: row.endpointname,
             id: row.id,
@@ -18,6 +19,7 @@ export default class ExperiencedRoute {
 
     public arrivalTime: string;
     public days: string[];
+    public deleted: boolean;
     public departureTime: string;
     public endPointName: string;
     public id: number;
@@ -57,6 +59,8 @@ export default class ExperiencedRoute {
             throw new Error("400:ExperiencedRoute requires an endPointName");
         } else if (obj.length === undefined || obj.length === null) {
             throw new Error("400:ExperiencedRoute requires a length");
+        } else if (typeof obj.deleted === "undefined") {
+            obj.deleted = false;
         }
         if (!obj.days) {
             obj.days = [];
@@ -66,6 +70,7 @@ export default class ExperiencedRoute {
         }
         this.arrivalTime = obj.arrivalTime;
         this.days = obj.days;
+        this.deleted = obj.deleted;
         this.departureTime = obj.departureTime;
         this.endPointName = obj.endPointName;
         this.id = obj.id;

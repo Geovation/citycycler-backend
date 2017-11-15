@@ -21,6 +21,14 @@ const operation = {
                 required: false,
                 type: "integer",
             },
+            {
+                default: false,
+                description: "The flag indicates whether to include the deleted routes",
+                in: "query",
+                name: "includedeleted",
+                required: false,
+                type: "boolean",
+            },
         ],
         produces: ["application/json; charset=utf-8"],
         responses: {
@@ -88,6 +96,11 @@ const definitions = {
                 },
                 type: "array",
             },
+            deleted: {
+                description: "The deleted status of this route",
+                example: "false",
+                type: "boolean",
+            },
             departureTime: {
                 description: "The time in ISO 8601 extended format that the owner will start their route",
                 example: "12:22:00Z",
@@ -127,6 +140,7 @@ const definitions = {
         },
         required: [
             "arrivalTime",
+            "deleted",
             "departureTime",
             "endPointName",
             "length",
@@ -155,8 +169,12 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     if (!id) {
         id = null;
     }
+    let includedeleted = false;
+    if (params.includedeleted && params.includedeleted.length > 0) {
+        includedeleted = params.includedeleted[0].toLowerCase() === "true";
+    }
     return getIdFromJWT(params.authorization).then((userId) => {
-        return Database.getExperiencedRoutes({userId, id});
+        return Database.getExperiencedRoutes({userId, id, includedeleted});
     });
 };
 

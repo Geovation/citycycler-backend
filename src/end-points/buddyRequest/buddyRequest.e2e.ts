@@ -35,14 +35,22 @@ describe("BuddyRequest endpoint", () => {
     let uids = [];
     let expUserId;  // The experienced User id
     let expUserJwt;  // The experienced User token
-    let experiencedRoute;   // The experienced Route
+    let experiencedRouteId;   // The experienced Route id
+    let experiencedRouteId2;   // Another experienced Route id
     let inexpUserId;  // The inexperienced User id
     let inexpUserJwt;  // The inexperienced User token
-    let inexperiencedRoute; // The inexperienced Route
+    let inexpUserId2;  // Another inexperienced User id
+    let inexpUserJwt2;  // Another inexperienced User token
+    let inexperiencedRouteId; // The inexperienced Route id
+    let inexperiencedRouteId2; // Another inexperienced Route id
+    let inexperiencedRouteId3; // Another inexperienced Route id
     let randomUserId;
     let randomUserJwt;  // A token for a user unconnected to these buddy requests
     let buddyRequestObject; // A BuddyRequest object with the ids all set correctly
-    before("Create 3 test users with respective routes", () => {
+    let buddyRequestObject2; // Another BuddyRequest object with the ids all set correctly
+    let buddyRequestObject3; // Another BuddyRequest object with the ids all set correctly
+    let buddyRequestObject4; // Another BuddyRequest object with the ids all set correctly
+    before("Create 4 test users with respective routes", () => {
         // The random user
         const user1 = {
             email: "buddyReqestTest@e2e-test.matchmyroute-backend.appspot.com",
@@ -51,12 +59,18 @@ describe("BuddyRequest endpoint", () => {
         // The inexperienced User
         const user2 = {
             email: "buddyReqestTest2@e2e-test.matchmyroute-backend.appspot.com",
-            name: "Inexperienced Test User",
+            name: "Inexperienced Test User 1",
+        };
+
+        // Another inexperienced User
+        const user3 = {
+            email: "buddyReqestTest3@e2e-test.matchmyroute-backend.appspot.com",
+            name: "Inexperienced Test User 2",
         };
 
         // The experienced User
-        const user3 = {
-            email: "buddyReqestTest3@e2e-test.matchmyroute-backend.appspot.com",
+        const user4 = {
+            email: "buddyReqestTest4@e2e-test.matchmyroute-backend.appspot.com",
             name: "Experienced Test User",
         };
 
@@ -94,6 +108,22 @@ describe("BuddyRequest endpoint", () => {
         }).then(() => {
             return FirebaseUtils.createFirebaseUser(user3.email);
         }).then(createResponse => {
+            inexpUserId2 = createResponse.user.uid;
+            uids.push(inexpUserId2);
+            return FirebaseUtils.getJwtForUser(createResponse.customToken);
+        }).then(jwt => {
+            inexpUserJwt2 = jwt;
+            return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + inexpUserJwt2,
+                },
+                json: user3,
+                method: "PUT",
+                url: url + "/user",
+            });
+        }).then(() => {
+            return FirebaseUtils.createFirebaseUser(user4.email);
+        }).then(createResponse => {
             expUserId = createResponse.user.uid;
             uids.push(expUserId);
             return FirebaseUtils.getJwtForUser(createResponse.customToken);
@@ -103,14 +133,14 @@ describe("BuddyRequest endpoint", () => {
                 headers: {
                     Authorization: "Firebase " + expUserJwt,
                 },
-                json: user3,
+                json: user4,
                 method: "PUT",
                 url: url + "/user",
             });
         }).then(() => {
             // The inexperienced Route
             const route1 = {
-                arrivalDateTime: "2000-01-01T13:00:00+00",
+                arrivalDateTime: "2017-06-08T13:00:00+00",
                 endPoint: [15, 15],
                 endPointName: "18 Penny Promenade",
                 length: 1222,
@@ -128,12 +158,56 @@ describe("BuddyRequest endpoint", () => {
                 method: "PUT",
                 url: url + "/inexperiencedRoute",
             });
-        }).then((response) => {
-            inexperiencedRoute = parseInt(response.body.result.id, 10);
-            // The experienced Route
+        }).then(response => {
+            inexperiencedRouteId = parseInt(response.body.result.id, 10);
+            // Another inexperienced Route
             const route2 = {
+                arrivalDateTime: "2017-11-10T13:00:00+00",
+                endPoint: [15, 15],
+                endPointName: "18 Penny Promenade",
+                length: 1222,
+                name: "Ride home2",
+                notifyOwner: false,
+                radius: 1000,
+                startPoint: [10, 10],
+                startPointName: "16 Lenny Lane",
+            };
+            return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + inexpUserJwt,
+                },
+                json: route2,
+                method: "PUT",
+                url: url + "/inexperiencedRoute",
+            });
+        }).then(response => {
+            inexperiencedRouteId2 = parseInt(response.body.result.id, 10);
+            // Another inexperienced Route
+            const route3 = {
+                arrivalDateTime: "2017-11-10T13:00:00+00",
+                endPoint: [15, 15],
+                endPointName: "18 Penny Promenade",
+                length: 1222,
+                name: "Ride home3",
+                notifyOwner: false,
+                radius: 1000,
+                startPoint: [10, 10],
+                startPointName: "16 Lenny Lane",
+            };
+            return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + inexpUserJwt2,
+                },
+                json: route3,
+                method: "PUT",
+                url: url + "/inexperiencedRoute",
+            });
+        }).then(response => {
+            inexperiencedRouteId3 = parseInt(response.body.result.id, 10);
+            // The experienced Route
+            const route4 = {
                 arrivalTime: "13:00:00+00",
-                days: ["monday"],
+                days: ["monday", "thursday"],
                 departureTime: "12:00:00+00",
                 endPointName: "33 Rachel Road",
                 length: 5000,
@@ -145,26 +219,95 @@ describe("BuddyRequest endpoint", () => {
                 headers: {
                     Authorization: "Firebase " + expUserJwt,
                 },
-                json: route2,
+                json: route4,
                 method: "PUT",
                 url: url + "/experiencedRoute",
             });
         }).then(response => {
-            experiencedRoute = parseInt(response.body.result.id, 10);
+            experiencedRouteId = parseInt(response.body.result.id, 10);
             buddyRequestObject = {
                 averageSpeed: 5,
                 divorcePoint: [1, 1],
                 divorcePointName: "32 Shelly Street",
                 divorceTime: "2017-06-08T12:00:28.684Z",
-                experiencedRoute,
+                experiencedRoute: experiencedRouteId,
                 experiencedRouteName: "Ride to work",
                 experiencedUser: expUserId,
-                inexperiencedRoute,
+                inexperiencedRoute: inexperiencedRouteId,
                 inexperiencedRouteName: "Ride to my friend Jerry's",
                 length: 1000,
                 meetingPoint: [0, 0],
                 meetingPointName: "64 Ryan Road",
                 meetingTime: "2017-06-08T11:34:28.684Z",
+                route: [[0, 0], [0.5, 0.5], [1, 1]],
+            };
+            // Another experienced Route
+            const route5 = {
+                arrivalTime: "13:00:00+00",
+                days: ["monday", "friday"],
+                departureTime: "11:00:00+00",
+                endPointName: "33 Rachel Road",
+                length: 5000,
+                name: "Ride to work2",
+                route: [[0, 0], [1, 0], [1, 1]],
+                startPointName: "122 Stanley Street",
+            };
+            return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + expUserJwt,
+                },
+                json: route5,
+                method: "PUT",
+                url: url + "/experiencedRoute",
+            });
+        }).then(response => {
+            experiencedRouteId2 = parseInt(response.body.result.id, 10);
+            buddyRequestObject2 = {
+                averageSpeed: 5,
+                divorcePoint: [1, 1],
+                divorcePointName: "32 Shelly Street",
+                divorceTime: "2017-11-10T12:00:28.684Z",
+                experiencedRoute: experiencedRouteId2,
+                experiencedRouteName: "Ride to work2",
+                experiencedUser: expUserId,
+                inexperiencedRoute: inexperiencedRouteId,
+                inexperiencedRouteName: "Ride to 18 Penny Promenade",
+                length: 1000,
+                meetingPoint: [0, 0],
+                meetingPointName: "64 Ryan Road",
+                meetingTime: "2017-11-10T11:34:28.684Z",
+                route: [[0, 0], [0.5, 0.5], [1, 1]],
+            };
+            buddyRequestObject3 = {
+                averageSpeed: 5,
+                divorcePoint: [1, 1],
+                divorcePointName: "32 Shelly Street",
+                divorceTime: "2017-11-10T12:00:28.684Z",
+                experiencedRoute: experiencedRouteId2,
+                experiencedRouteName: "Ride to work3",
+                experiencedUser: expUserId,
+                inexperiencedRoute: inexperiencedRouteId2,
+                inexperiencedRouteName: "Ride to 18 Penny Promenade",
+                length: 1000,
+                meetingPoint: [0, 0],
+                meetingPointName: "64 Ryan Road",
+                meetingTime: "2017-11-10T11:34:28.684Z",
+                route: [[0, 0], [0.5, 0.5], [1, 1]],
+            };
+            buddyRequestObject4 = {
+                averageSpeed: 5,
+                divorcePoint: [1, 1],
+                divorcePointName: "32 Shelly Street",
+                divorceTime: "2017-11-10T12:00:28.684Z",
+                experiencedRoute: experiencedRouteId2,
+                experiencedRouteName: "Ride to work4",
+                experiencedUser: expUserId,
+                inexperiencedRoute: inexperiencedRouteId3,
+                inexperiencedRouteName: "Ride to 18 Penny Promenade",
+                length: 1000,
+                meetingPoint: [0, 0],
+                meetingPointName: "64 Ryan Road",
+                meetingTime: "2017-11-10T11:34:28.684Z",
                 route: [[0, 0], [0.5, 0.5], [1, 1]],
             };
         });
@@ -235,7 +378,7 @@ describe("BuddyRequest endpoint", () => {
                     headers: {
                         Authorization: "Firebase " + inexpUserJwt,
                     },
-                    json: buddyRequestObject,
+                    json: buddyRequestObject2,
                     method: "PUT",
                     url: url + "/buddyRequest",
                 });
@@ -1682,6 +1825,155 @@ describe("BuddyRequest endpoint", () => {
             });
         });
     });
+
+    describe("Updating status after route deletion", () => {
+        let buddyRequest1Id;
+        let buddyRequest2Id;
+        let buddyRequest3Id;
+        let buddyRequest4Id;
+        before("Set up 4 buddy requests from inexp user -> exp user", () => {
+            return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + inexpUserJwt,
+                },
+                json: buddyRequestObject,
+                method: "PUT",
+                url: url + "/buddyRequest",
+            }).then(response => {
+                // Buddy request 1: from inexp user 1 -> exp user
+                buddyRequest1Id = parseInt(response.body.result.id, 10);
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + inexpUserJwt,
+                    },
+                    json: buddyRequestObject2,
+                    method: "PUT",
+                    url: url + "/buddyRequest",
+                });
+            }).then(response => {
+                // Buddy request 2: from inexp user 1 -> exp user
+                buddyRequest2Id = parseInt(response.body.result.id, 10);
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + inexpUserJwt,
+                    },
+                    json: buddyRequestObject3,
+                    method: "PUT",
+                    url: url + "/buddyRequest",
+                });
+            }).then(response => {
+                // Buddy request 3: from inexp user 1 -> exp user
+                buddyRequest3Id = parseInt(response.body.result.id, 10);
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + inexpUserJwt2,
+                    },
+                    json: buddyRequestObject4,
+                    method: "PUT",
+                    url: url + "/buddyRequest",
+                });
+            }).then(response => {
+                // Buddy request 4: from inexp user 2 -> exp user
+                buddyRequest4Id = parseInt(response.body.result.id, 10);
+            });
+        });
+
+        it("Should only update status for any buddy requests with the deleted exp route", () => {
+            return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + expUserJwt,
+                },
+                method: "DELETE",
+                url: url + "/experiencedRoute?id=" + experiencedRouteId,
+            }).then(response => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                response.statusCode + ", error given is: " + response.error);
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + inexpUserJwt,
+                    },
+                    method: "GET",
+                    url: url + "/buddyRequest/sent?id=" + buddyRequest1Id,
+                });
+            }).then(response => {
+                expect(response.body.result[0].status).to.equal("canceled");
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + inexpUserJwt,
+                    },
+                    method: "GET",
+                    url: url + "/buddyRequest/sent?id=" + buddyRequest2Id,
+                });
+            }).then(response => {
+                expect(response.body.result[0].status).to.equal("pending");
+            });
+        });
+
+        it("Should only update status for any buddy requests with the deleted inexp route", () => {
+            return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + inexpUserJwt,
+                },
+                method: "DELETE",
+                url: url + "/inexperiencedRoute?id=" + inexperiencedRouteId,
+            }).then(response => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                response.statusCode + ", error given is: " + response.error);
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + inexpUserJwt,
+                    },
+                    method: "GET",
+                    url: url + "/buddyRequest/sent?id=" + buddyRequest2Id,
+                });
+            }).then(response => {
+                expect(response.body.result[0].status).to.equal("canceled");
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + inexpUserJwt,
+                    },
+                    method: "GET",
+                    url: url + "/buddyRequest/sent?id=" + buddyRequest3Id,
+                });
+            }).then(response => {
+                expect(response.body.result[0].status).to.equal("pending");
+            });
+        });
+
+        it("Should only update status for any buddy requests with the deleted user", () => {
+            return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + inexpUserJwt2,
+                },
+                method: "DELETE",
+                url: url + "/user?id=" + inexpUserId2,
+            }).then(response => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                response.statusCode + ", error given is: " + response.error);
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + inexpUserJwt,
+                    },
+                    method: "GET",
+                    url: url + "/buddyRequest/sent?id=" + buddyRequest3Id,
+                });
+            }).then(response => {
+                expect(response.body.result[0].status).to.equal("pending");
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + inexpUserJwt2,
+                    },
+                    method: "GET",
+                    url: url + "/buddyRequest/sent?id=" + buddyRequest4Id,
+                });
+            }).then(response => {
+                // Inexperienced test user 2 has been deleted, so the buddyRequest does not exist
+                expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
+                response.statusCode + ", error given is: " + response.error);
+            });
+        });
+    });
+
     describe("Reviewing", () => {
                 let buddyRequestId;
                 let counter = 0;

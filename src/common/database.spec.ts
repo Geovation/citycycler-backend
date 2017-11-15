@@ -431,7 +431,7 @@ describe("MatchMyRoute Database Functions", () => {
                         [thisRouteId],
                         transactionClient
                     ).then(result => {
-                        expect(result.rowCount).to.equal(0);
+                        expect(result.rows[0].deleted).to.be.true;
                     });
                 });
             });
@@ -445,6 +445,41 @@ describe("MatchMyRoute Database Functions", () => {
                     );
                 }).then((result: any) => {
                     expect(result.rowCount).to.equal(0);
+                });
+            });
+        });
+        describe("Retrieval after deleting", () => {
+            let experiencedRouteId1;
+            let experiencedRouteId2;
+            beforeEach("Set up two experienced routes", () => {
+                return Database.putExperiencedRoute(routeData, transactionClient)
+                    .then(routeId => {
+                        experiencedRouteId1 = routeId;
+                        return Database.putExperiencedRoute(routeData, transactionClient);
+                    }).then(routeId => {
+                        experiencedRouteId2 = routeId;
+                    });
+            });
+            it("should only get non-deleted experienced routes if includedeleted is set to false", () => {
+                return Database.deleteExperiencedRoute(experiencedRouteId1, transactionClient).then(success => {
+                    expect(success).to.be.true;
+                    return Database.getExperiencedRoutes({
+                        includedeleted: false,
+                        userId: thisUserId}, transactionClient);
+                }).then(experiencedRoutes => {
+                    expect(experiencedRoutes.length).to.equal(1);
+                    expect(experiencedRoutes[0].deleted).to.be.false;
+                });
+            });
+            it("should get all experienced routes if includedeleted is set to true", () => {
+                return Database.deleteExperiencedRoute(experiencedRouteId1, transactionClient).then(success => {
+                    expect(success).to.be.true;
+                    return Database.getExperiencedRoutes({
+                        includedeleted: true,
+                        userId: thisUserId}, transactionClient);
+                }).then(experiencedRoutes => {
+                    expect(experiencedRoutes.length).to.equal(2);
+                    expect(experiencedRoutes[1].deleted).to.be.true;
                 });
             });
         });
@@ -801,6 +836,7 @@ describe("MatchMyRoute Database Functions", () => {
             it("should create an inexperienced route", () => {
                 let inexperiencedRouteData: InexperiencedRoute = {
                     arrivalDateTime: "2000-01-01T13:00:00+00",
+                    deleted: false,
                     endPoint: [15, 15],
                     endPointName: "44 Simon Street",
                     length: 1000,
@@ -840,6 +876,7 @@ describe("MatchMyRoute Database Functions", () => {
             it("should create an inexperienced route that is not reusable", () => {
                 let inexperiencedRouteData: InexperiencedRoute = {
                     arrivalDateTime: "2000-01-01T13:00:00+00",
+                    deleted: false,
                     endPoint: [15, 15],
                     endPointName: "44 Simon Street",
                     length: 1000,
@@ -879,6 +916,7 @@ describe("MatchMyRoute Database Functions", () => {
             it("should not create an inexperienced route with an invalid arrivalTime", done => {
                 let inexperiencedRouteData: InexperiencedRoute = {
                     arrivalDateTime: "I'm a little teapot",
+                    deleted: false,
                     endPoint: [15, 15],
                     endPointName: "44 Simon Street",
                     length: 1000,
@@ -900,6 +938,7 @@ describe("MatchMyRoute Database Functions", () => {
             done => {
                 Database.createInexperiencedRoute(userId, {
                     arrivalDateTime: "2000-01-01T13:00:00+00",
+                    deleted: false,
                     endPoint: [15, 15],
                     endPointName: "44 Simon Street",
                     length: 1000,
@@ -961,6 +1000,7 @@ describe("MatchMyRoute Database Functions", () => {
             let inexperiencedRouteId;
             let existingInexperiencedRoute: InexperiencedRoute = {
                 arrivalDateTime: "2000-01-01T13:00:00+00",
+                deleted: false,
                 endPoint: [15, 15],
                 endPointName: "44 Simon Street",
                 length: 1000,
@@ -1034,6 +1074,7 @@ describe("MatchMyRoute Database Functions", () => {
                     ownerId = newUser.id;
                     return Database.createInexperiencedRoute(ownerId, {
                         arrivalDateTime: "2000-01-01T13:00:00+00",
+                        deleted: false,
                         endPoint: [15, 15],
                         endPointName: "44 Simon Street",
                         length: 1000,
@@ -1056,7 +1097,7 @@ describe("MatchMyRoute Database Functions", () => {
                     return Database.sqlTransaction("SELECT * FROM inexperienced_routes WHERE id=$1;",
                     ["" + inexperiencedRouteId], transactionClient)
                     .then(results => {
-                        expect(results.rows.length).to.equal(0);
+                        expect(results.rows[0].deleted).to.be.true;
                     });
                 });
             });
@@ -1073,6 +1114,62 @@ describe("MatchMyRoute Database Functions", () => {
             it("should not delete an inexperiencedRoute with an invalid id", done => {
                 const promise = Database.deleteInexperiencedRoute(-1, transactionClient);
                 expect(promise).to.be.rejected.and.notify(done);
+            });
+        });
+        describe("Retrieval after deleting", () => {
+            let inexperiencedRouteId1;
+            let inexperiencedRouteId2;
+            beforeEach("Set up two inexperienced routes", () => {
+                return Database.createInexperiencedRoute(userId, {
+                        arrivalDateTime: "2017-11-15T13:00:00+00",
+                        deleted: false,
+                        endPoint: [15, 15],
+                        endPointName: "44 Simon Street",
+                        length: 1000,
+                        name: "Ride to the park",
+                        notifyOwner: false,
+                        radius: 1000,
+                        reusable: true,
+                        startPoint: [10, 10],
+                        startPointName: "1 Denis Drive",
+                    },
+                    transactionClient).then(newInexperiencedRouteId => {
+                        inexperiencedRouteId1 = newInexperiencedRouteId;
+                        return Database.createInexperiencedRoute(userId, {
+                            arrivalDateTime: "2017-11-16T09:00:00+00",
+                            deleted: false,
+                            endPoint: [15, 15],
+                            endPointName: "1 Sekforde Street",
+                            length: 2200,
+                            name: "Ride to work",
+                            notifyOwner: false,
+                            radius: 1000,
+                            reusable: true,
+                            startPoint: [10, 10],
+                            startPointName: "Liverpool Street",
+                        },
+                        transactionClient);
+                    }).then(newInexperiencedRouteId => {
+                        inexperiencedRouteId2 = newInexperiencedRouteId;
+                    });
+            });
+            it("should only get non-deleted reusable inexperienced routes if includedeleted is set to false", () => {
+                return Database.deleteInexperiencedRoute(inexperiencedRouteId1, transactionClient).then(success => {
+                    expect(success).to.be.true;
+                    return Database.getInexperiencedRoutes({userId, includedeleted: false}, transactionClient);
+                }).then(inexperiencedRoutes => {
+                    expect(inexperiencedRoutes.length).to.equal(1);
+                    expect(inexperiencedRoutes[0].deleted).to.be.false;
+                });
+            });
+            it("should get all reusable inexperienced routes if includedeleted is set to true", () => {
+                return Database.deleteInexperiencedRoute(inexperiencedRouteId1, transactionClient).then(success => {
+                    expect(success).to.be.true;
+                    return Database.getInexperiencedRoutes({userId, includedeleted: true}, transactionClient);
+                }).then(inexperiencedRoutes => {
+                    expect(inexperiencedRoutes.length).to.equal(2);
+                    expect(inexperiencedRoutes[1].deleted).to.be.true;
+                });
             });
         });
     });
@@ -1116,7 +1213,7 @@ describe("MatchMyRoute Database Functions", () => {
                 experiencedRoute = routeId;
             }).then(() => {
                 return Database.createInexperiencedRoute(inexpUserId, new InexperiencedRoute({
-                    arrivalDateTime: "2000-01-01T13:00:00+00",
+                    arrivalDateTime: "2017-11-12T13:00:00+00",
                     endPoint: [15, 15],
                     endPointName: "112 Rachel Road",
                     length: 5100,
@@ -1130,10 +1227,10 @@ describe("MatchMyRoute Database Functions", () => {
                 inexperiencedRoute = routeId;
                 buddyRequestObject = {  // A general buddyRequest Object, which we can copy
                     averageSpeed: 5,
-                    created: "2017-06-07T10:24:28.684Z",
+                    created: "2017-11-08T10:24:28.684Z",
                     divorcePoint: [1, 1],
                     divorcePointName: "99 Chris Crescent",
-                    divorceTime: "2017-06-08T12:00:28.684Z",
+                    divorceTime: "2017-11-12T12:00:28.684Z",
                     experiencedRoute,
                     experiencedRouteName: "Ride to work",
                     experiencedUser: expUserId,
@@ -1142,12 +1239,12 @@ describe("MatchMyRoute Database Functions", () => {
                     length: 5000,
                     meetingPoint: [0, 0],
                     meetingPointName: "1 Shelly Street",
-                    meetingTime: "2017-06-08T11:34:28.684Z",
+                    meetingTime: "2017-11-12T11:34:28.684Z",
                     owner: inexpUserId,
                     reason: "",
                     route: [[0, 0], [0.5, 0.5], [1, 1]],
                     status: "pending",
-                    updated: "2017-06-07T10:24:28.684Z",
+                    updated: "2017-11-08T10:24:28.684Z",
                 };
             });
         });
@@ -1424,8 +1521,8 @@ describe("MatchMyRoute Database Functions", () => {
             });
             // These two lists are updates objects that should/shouldn't succede
             const thingsThatCanBeUpdated = [
-                {meetingTime: "2017-06-08T10:20:28.684Z"},
-                {divorceTime: "2017-06-08T12:12:12.684Z"},
+                {meetingTime: "2017-11-12T10:20:28.684Z"},
+                {divorceTime: "2017-11-12T12:12:12.684Z"},
                 {meetingPoint: [0.5, 0.5]},
                 {divorcePoint: [0.6, 0.6]},
                 {meetingPointName: "32 Arthur Avenue"},
@@ -1439,11 +1536,11 @@ describe("MatchMyRoute Database Functions", () => {
                 {   // All at once
                     divorcePoint: [0.6, 0.6],
                     divorcePointName: "64 Derek Drive",
-                    divorceTime: "2017-06-08T12:12:12.684Z",
+                    divorceTime: "2017-11-12T12:12:12.684Z",
                     length: 1234,
                     meetingPoint: [0.5, 0.5],
                     meetingPointName: "32 Arthur Avenue",
-                    meetingTime: "2017-06-08T10:20:28.684Z",
+                    meetingTime: "2017-11-12T10:20:28.684Z",
                     reason: "Excellent Reason",
                     review: -1,
                     status: "rejected",
@@ -1467,9 +1564,9 @@ describe("MatchMyRoute Database Functions", () => {
                 {error: "400:BuddyRequest review must be +/- 1", review: -2},
                 {route: [[1, 1], [0.5, 0.5], [2, 2]]},
                 {
-                    divorceTime: "2017-06-08T10:12:12.684Z",
+                    divorceTime: "2017-11-12T10:12:12.684Z",
                     error: "400:Divorce time is before Meeting time",
-                    meetingTime: "2017-06-08T12:20:28.684Z",
+                    meetingTime: "2017-11-12T12:20:28.684Z",
                 },
             ];
             let mostRecentlyUpdated = moment();
@@ -1524,6 +1621,123 @@ describe("MatchMyRoute Database Functions", () => {
                 });
             }
         });
+
+        describe("Updating status after route deletion", () => {
+            let experiencedRouteId2;
+            let inexperiencedRouteId2;
+            let inexpUserId2;
+            let buddyRequestId1;
+            let buddyRequestId2;
+            let buddyRequestObject2;
+
+            beforeEach("Create another experienced route for the experienced user /" +
+                " Create another inexperienced user and a new inexperienced route /" +
+                " Create two buddy requests to update for comparison", () => {
+                return Database.putExperiencedRoute(new ExperiencedRoute({
+                    arrivalTime: "14:00:00+00",
+                    days: ["monday", "friday"],
+                    departureTime: "13:00:00+00",
+                    endPointName: "112 Rachel Road",
+                    length: 5000,
+                    name: "Ride to work",
+                    owner: expUserId,
+                    route: [[0, 0], [1, 0], [1, 1]],
+                    startPointName: "33 Stanley Street",
+                }), transactionClient)
+                .then(routeId => {
+                    experiencedRouteId2 = routeId;
+                    return Database.putUser({
+                        email: "inexperienced2@example.com",
+                        id: "inexperienceduser2",
+                        name: "Inexperienced User 2",
+                    }, transactionClient);
+                })
+                .then(newUser => {
+                    inexpUserId2 = newUser.id;
+                    return Database.createInexperiencedRoute(inexpUserId2, new InexperiencedRoute({
+                        arrivalDateTime: "2017-11-14T13:00:00+00",
+                        endPoint: [15, 15],
+                        endPointName: "112 Rachel Road",
+                        length: 5100,
+                        name: "Ride home on Tuesday",
+                        notifyOwner: false,
+                        radius: 1000,
+                        startPoint: [10, 10],
+                        startPointName: "33 Stanley Street",
+                    }), transactionClient);
+                })
+                .then(routeId => {
+                    inexperiencedRouteId2 = routeId;
+                    buddyRequestObject2 = {
+                        averageSpeed: 5,
+                        created: "2017-11-08T11:24:28.684Z",
+                        divorcePoint: [1, 1],
+                        divorcePointName: "99 Chris Crescent",
+                        divorceTime: "2017-11-14T12:00:28.684Z",
+                        experiencedRoute: experiencedRouteId2,
+                        experiencedRouteName: "Ride to work",
+                        experiencedUser: expUserId,
+                        inexperiencedRoute: inexperiencedRouteId2,
+                        inexperiencedRouteName: "My First Ride",
+                        length: 5000,
+                        meetingPoint: [0, 0],
+                        meetingPointName: "1 Shelly Street",
+                        meetingTime: "2017-11-14T11:34:28.684Z",
+                        owner: inexpUserId2,
+                        reason: "",
+                        route: [[0, 0], [0.5, 0.5], [1, 1]],
+                        status: "pending",
+                        updated: "2017-11-08T11:24:28.684Z",
+                    };
+                    return Database.createBuddyRequest(buddyRequestObject, transactionClient);
+                })
+                .then(newBuddyRequestId => {
+                    buddyRequestId1 = newBuddyRequestId;
+                    return Database.createBuddyRequest(buddyRequestObject2, transactionClient);
+                })
+                .then(newBuddyRequestId => {
+                    buddyRequestId2 = newBuddyRequestId;
+                });
+            });
+
+            it("Should only update status for any buddy requests with the deleted exp route", () => {
+               return Database.deleteExperiencedRoute(experiencedRoute, transactionClient).then(() => {
+                    return Database.getSentBuddyRequests({id: buddyRequestId1, userId: inexpUserId}, transactionClient);
+                }).then(buddyRequests => {
+                    expect(buddyRequests[0].status).to.equal("canceled");
+                    return Database.getSentBuddyRequests({id: buddyRequestId2, userId: inexpUserId2}
+                            , transactionClient);
+                }).then(buddyRequests => {
+                    expect(buddyRequests[0].status).to.equal("pending");
+                });
+            });
+
+            it("Should only update status for any buddy requests with the deleted inexp route", () => {
+                return Database.deleteInexperiencedRoute(inexperiencedRoute, transactionClient).then(() => {
+                    return Database.getSentBuddyRequests({id: buddyRequestId1, userId: inexpUserId}, transactionClient);
+                }).then(buddyRequests => {
+                    expect(buddyRequests[0].status).to.equal("canceled");
+                    return Database.getSentBuddyRequests({id: buddyRequestId2, userId: inexpUserId2}
+                            , transactionClient);
+                }).then(buddyRequests => {
+                    expect(buddyRequests[0].status).to.equal("pending");
+                });
+            });
+
+            it("Should only update status for any buddy requests with the deleted user", () => {
+                return Database.deleteUser(inexpUserId2, transactionClient).then(() => {
+                    return Database.getSentBuddyRequests({id: buddyRequestId1, userId: inexpUserId}, transactionClient);
+                }).then(buddyRequests => {
+                    expect(buddyRequests[0].status).to.equal("pending");
+                    return Database.getSentBuddyRequests({id: buddyRequestId2, userId: inexpUserId2}
+                            , transactionClient);
+                }).catch(err => {
+                    // Inexperienced test user 2 has been deleted, so the buddy request 2 does not exist
+                    expect(err.message).to.equal("404:BuddyRequest does not exist");
+                });
+            });
+        });
+
         describe("Reviewing", () => {
             let buddyRequestId;
             beforeEach("Create a BuddyRequest to review", () => {

@@ -187,20 +187,28 @@ export function getExperiencedRouteById(id: number, providedClient = null): Prom
  * @param  {client} providedClient Database client to use for this interaction
  * @return {Object[]} Array of experienced_routes
  */
-export function getExperiencedRoutes(params: {userId: string, id?: number}, providedClient = null)
-: Promise<ExperiencedRoute[]> {
+export function getExperiencedRoutes(
+    params: {
+        userId: string,
+        id?: number,
+        includedeleted?: boolean
+    },
+    providedClient = null): Promise<ExperiencedRoute[]> {
     let query = "SELECT id, owner, departuretime, arrivalTime, days::text[], ST_AsText(route) AS route, " +
-    "startPointName, endPointName, length, name FROM experienced_routes where owner=$1";
+    "startPointName, endPointName, length, name, deleted FROM experienced_routes where owner=$1";
     let queryParams = new Array<any>();
     queryParams.push(params.userId);
     if (params.id !== null && typeof params.id !== "undefined") {
         query +=  " AND id=$2";
         queryParams.push(params.id);
     }
+    if (!params.includedeleted) {
+        query += " AND deleted=false";
+    }
     query += " ORDER BY id DESC";
     return sqlTransaction(query, queryParams, providedClient).then(result => {
         if (params.id !== undefined && params.id !== null && result.rows.length === 0) {
-            throw new Error("404:ExperiencedRoute does not exist");
+            throw new Error("404:ExperiencedRoute does not exist or is a deleted route");
         }
         return result.rows.map((route) => {
             return ExperiencedRoute.fromSQLRow(route);
@@ -433,8 +441,8 @@ export function deleteExperiencedRoute(id: number, providedClient = null): Promi
     const query1 = "UPDATE buddy_requests SET status='canceled'::buddy_request_status, reason=" +
         "(SELECT users.name FROM users, experienced_routes WHERE experienced_routes.id=$1 AND " +
         "experienced_routes.owner=users.id )::text || ' has deleted the route \"' || (SELECT name " +
-        "FROM experienced_routes WHERE id=$1)::text || '\"';";
-    const query2 = "DELETE FROM experienced_routes WHERE id=$1";
+        "FROM experienced_routes WHERE id=$1)::text || '\"' WHERE experiencedroute=$1;";
+    const query2 = "UPDATE experienced_routes SET deleted=true WHERE id=$1";
     return sqlTransaction(query1, [id], providedClient).then(() => {
         return sqlTransaction(query2, [id], providedClient).then(result => {
             if (result.rowCount) {
@@ -479,18 +487,21 @@ export function createInexperiencedRoute(owner: string, inexperiencedRoute: Inex
  * @return {Object[]} Array of inexperienced routes
  */
 export function getInexperiencedRoutes(
-    params: {userId: string, id?: number, onlyreusable?: boolean},
+    params: {userId: string, id?: number, includedeleted?: boolean, onlyreusable?: boolean},
     providedClient = null
 )
 : Promise<InexperiencedRoute[]> {
     let query = "SELECT id, owner, radius, notifyOwner, arrivalDateTime, ST_AsText(startPoint) AS startPoint, " +
-        "startPointName, ST_AsText(endPoint) AS endPoint, endPointName, length, name " +
-        " FROM inexperienced_routes WHERE owner=$1";
+        "startPointName, ST_AsText(endPoint) AS endPoint, endPointName, length, name, deleted, reusable " +
+        "FROM inexperienced_routes WHERE owner=$1";
     let queryParams = new Array<any>();
     queryParams.push(params.userId);
     if (params.id !== null && typeof params.id !== "undefined") {
-        query +=  " AND id=$2";
+        query += " AND id=$2";
         queryParams.push(params.id);
+    }
+    if (!params.includedeleted) {
+        query += " AND deleted=false";
     }
     if (params.onlyreusable) {
         query += " AND reusable=true";
@@ -498,7 +509,7 @@ export function getInexperiencedRoutes(
     query += " ORDER BY id DESC";
     return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
         if (params.id !== undefined && params.id !== null && result.rows.length === 0) {
-            throw new Error("404:InexperiencedRoute does not exist");
+            throw new Error("404:InexperiencedRoute does not exist or is a deleted route");
         }
         return result.rows.map((inexperiencedRoute) => {
             return InexperiencedRoute.fromSQLRow(inexperiencedRoute);
@@ -516,8 +527,9 @@ export function getInexperiencedRoutes(
 export function deleteInexperiencedRoute(id: number, providedClient = null): Promise<Boolean> {
     const query1 = "UPDATE buddy_requests SET status='canceled'::buddy_request_status, reason=" +
         "(SELECT users.name FROM users, inexperienced_routes WHERE inexperienced_routes.id=$1 AND " +
-        "inexperienced_routes.owner=users.id )::text || ' no longer needs to buddy up with you';";
-    const query2 = "DELETE FROM inexperienced_routes WHERE id=$1";
+        "inexperienced_routes.owner=users.id )::text || ' no longer needs to buddy up with you' " +
+        "WHERE inexperiencedroute=$1;";
+    const query2 = "UPDATE inexperienced_routes SET deleted=true WHERE id=$1";
     return sqlTransaction(query1, [id], providedClient).then(() => {
         return sqlTransaction(query2, [id], providedClient).then(result => {
             if (result.rowCount) {
@@ -687,7 +699,8 @@ export function getUserById(id: string, providedClient = null): Promise<User> {
 export function deleteUser(id: string, providedClient = null): Promise<Boolean> {
     // First update any buddy requests, then actually delete the user
     const query1 = "UPDATE buddy_requests SET status='canceled'::buddy_request_status, reason=" +
-        "(SELECT name from users where id=$1)::text || ' has deleted their account';";
+        "(SELECT name from users where id=$1)::text || ' has deleted their account' " +
+        "WHERE experienceduser=$1 OR owner=$1;";
     const query2 = "DELETE FROM users WHERE id=$1";
     return sqlTransaction(query1, [id], providedClient)
         .then(() => {
@@ -767,11 +780,14 @@ export function getSentBuddyRequests(params: {userId: string, id?: number}, prov
             let otherUser;
             return getUserById(otherUserId, providedClient).then(user => {
                 otherUser = user.asUserProfile();
-                return getInexperiencedRoutes({id: routeId, userId: thisUserId}, providedClient);
+                return getInexperiencedRoutes({id: routeId, includedeleted: true, userId: thisUserId}, providedClient);
             }, err => {
                 if (err.message.slice(0, 3) === "404") {
                     // User not found, so leave otherUser undefined
-                    return getInexperiencedRoutes({id: routeId, userId: thisUserId}, providedClient);
+                    return getInexperiencedRoutes({
+                        id: routeId,
+                        includedeleted: true,
+                        userId: thisUserId}, providedClient);
                 } else {
                     throw err;
                 }
@@ -814,11 +830,14 @@ export function getReceivedBuddyRequests(params: {userId: string, id?: number}, 
             let otherUser;
             return getUserById(otherUserId, providedClient).then(user => {
                 otherUser = user.asUserProfile();
-                return getExperiencedRoutes({id: routeId, userId: thisUserId}, providedClient);
+                return getExperiencedRoutes({id: routeId, includedeleted: true, userId: thisUserId}, providedClient);
             }, err => {
                 if (err.message.slice(0, 3) === "404") {
                     // User not found, so leave otherUser undefined
-                    return getExperiencedRoutes({id: routeId, userId: thisUserId}, providedClient);
+                    return getExperiencedRoutes({
+                        id: routeId,
+                        includedeleted: true,
+                        userId: thisUserId}, providedClient);
                 } else {
                     throw err;
                 }

@@ -330,6 +330,89 @@ describe("InexperiencedRoute endpoint", () => {
         });
     });
     describe("Retrieval", () => {
+        before("Set up one more inexperienced route", () => {
+            const inexperiencedRoute = {
+                arrivalDateTime: "2000-01-01T13:00:00+00",
+                endPoint: [15, 15],
+                endPointName: "18 Penny Promenade",
+                length: 1222,
+                name: "Ride home",
+                notifyOwner: false,
+                radius: 1000,
+                reusable: true,
+                startPoint: [10, 10],
+                startPointName: "33 Stanley Street",
+            };
+            return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + userJwts[0],
+                },
+                json: inexperiencedRoute,
+                method: "PUT",
+                url: url + "/inexperiencedRoute",
+            }).then(response => {
+                expect(response.statusCode).to.equal(201, "Expected 201 response but got " +
+                    response.statusCode + ", error given is: " + response.error + " body is " +
+                    JSON.stringify(response.body));
+                inexperiencedRouteIds.push(response.body.result.id);
+            });
+        });
+        it("should get all inexperienced routes if no id is given", () => {
+            return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + userJwts[0],
+                },
+                method: "GET",
+                url: url + "/inexperiencedRoute",
+            }).then(response => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + response.error);
+                expect(response.body.result.length).to.equal(2);
+                expect(response.body.result[0].owner).to.equal(userIds[0],
+                    "Route belongs to another user. Expected owner to be " +
+                    userIds[0] + ", but it was " + response.body.result.owner +
+                    ". Full response body is: " + JSON.stringify(response.body));
+            });
+        });
+        it("should only get non-deleted reusable inexperienced routes if includedeleted is set to false", () => {
+            return defaultRequest({
+                headers: {
+                        Authorization: "Firebase " + userJwts[0],
+                    },
+                    method: "DELETE",
+                    url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[2],
+            }).then(response => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + response.error);
+                inexperiencedRouteIds.pop();
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + userJwts[0],
+                    },
+                    method: "GET",
+                    url: url + "/inexperiencedRoute?includedeleted=false",
+                });
+            }).then(response => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + response.error);
+                expect(response.body.result.length).to.equal(1);
+                expect(response.body.result[0].deleted).to.be.false;
+            });
+        });
+        it("should get all reusable inexperienced routes if includedeleted is set to true", () => {
+            return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + userJwts[0],
+                },
+                method: "GET",
+                url: url + "/inexperiencedRoute?includedeleted=true",
+            }).then(response => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + response.error);
+                expect(response.body.result.length).to.equal(2);
+                expect(response.body.result[0].deleted).to.be.true;
+            });
+        });
         it("should get an inexperiencedRoute by a valid id", () => {
             return defaultRequest({
                 headers: {
@@ -357,7 +440,7 @@ describe("InexperiencedRoute endpoint", () => {
             }).then(response => {
                 expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
                     response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                expect(response.body.error).to.equal("InexperiencedRoute does not exist");
+                expect(response.body.error).to.equal("InexperiencedRoute does not exist or is a deleted route");
                 expect(response.body.status).to.equal(404);
             });
         });
@@ -676,7 +759,7 @@ describe("InexperiencedRoute endpoint", () => {
             }).then(response => {
                 expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
                     response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                expect(response.body.error).to.equal("InexperiencedRoute does not exist");
+                expect(response.body.error).to.equal("InexperiencedRoute does not exist or is a deleted route");
                 expect(response.body.status).to.equal(404);
             });
         });
@@ -1129,7 +1212,7 @@ describe("InexperiencedRoute endpoint", () => {
     });
     describe("Deleting", () => {
         before(() => {
-            // Make two new inexperienced routes (inexperiencedRouteIds[1] + [2])
+            // Make another new inexperienced route (inexperiencedRouteIds[2])
             const inexperiencedRoute = {
                 arrivalDateTime: "2000-01-01T13:00:00+00",
                 endPoint: [15, 15],
@@ -1150,17 +1233,6 @@ describe("InexperiencedRoute endpoint", () => {
                 url: url + "/inexperiencedRoute",
             }).then(response => {
                 inexperiencedRouteIds.push(parseInt(response.body.result.id, 10));
-            }).then(() => {
-                return defaultRequest({
-                    headers: {
-                        Authorization: "Firebase " + userJwts[0],
-                    },
-                    json: inexperiencedRoute,
-                    method: "PUT",
-                    url: url + "/inexperiencedRoute",
-                });
-            }).then(response => {
-                inexperiencedRouteIds.push(parseInt(response.body.result.id, 10));
             });
         });
         it("should not delete an inexperienced route with an invalid id", () => {
@@ -1173,7 +1245,7 @@ describe("InexperiencedRoute endpoint", () => {
             }).then(response => {
                 expect(response.statusCode).to.equal(404, "Expected 403 response but got " +
                     response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                expect(response.body.error).to.equal("InexperiencedRoute does not exist");
+                expect(response.body.error).to.equal("InexperiencedRoute does not exist or is a deleted route");
                 expect(response.body.status).to.equal(404);
             });
         });
@@ -1198,11 +1270,11 @@ describe("InexperiencedRoute endpoint", () => {
             }).then(response => {
                 expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
                     response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                expect(response.body.error).to.equal("InexperiencedRoute does not exist");
+                expect(response.body.error).to.equal("InexperiencedRoute does not exist or is a deleted route");
                 expect(response.body.status).to.equal(404);
             });
         });
-        it("should delete an inexperienced route", () => {
+        it("should delete an inexperienced route by setting the deleted status to be true", () => {
             return defaultRequest({
                 headers: {
                     Authorization: "Firebase " + userJwts[0],
@@ -1217,12 +1289,12 @@ describe("InexperiencedRoute endpoint", () => {
                         Authorization: "Firebase " + userJwts[0],
                     },
                     method: "GET",
-                    url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0],
+                    url: url + "/inexperiencedRoute?id=" + inexperiencedRouteIds[0] + "&includedeleted=true",
                 });
             }).then(response => {
-                expect(response.statusCode).to.equal(404, "Expected 404 response but got " +
-                response.statusCode + ", body returned is: " + JSON.stringify(response.body) +
-                ". This means the inexperiencedRoute was not deleted");
+                expect(response.body.result[0].deleted).to.equal(true, "Expected deleted object to be true but got " +
+                response.body.result[0].deleted + ", body returned is: " + JSON.stringify(response.body) +
+                ". This means the route was not deleted");
             });
         });
         it("should delete a user's inexperienced routes when that user is deleted", () => {

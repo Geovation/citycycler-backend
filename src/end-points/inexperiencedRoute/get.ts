@@ -23,6 +23,14 @@ const operation = {
                 type: "integer",
             },
             {
+                default: false,
+                description: "The flag indicates whether to include the deleted routes",
+                in: "query",
+                name: "includedeleted",
+                required: false,
+                type: "boolean",
+            },
+            {
                 description: "Whether only reusable routes should be received " +
                     "or all routes",
                 in: "query",
@@ -88,6 +96,11 @@ const definitions = {
                 example: new Date().toISOString(),
                 type: "string",
             },
+            deleted: {
+                description: "The deleted status of this route",
+                example: "false",
+                type: "boolean",
+            },
             endPoint: {
                 $ref: "#/definitions/Coordinate",
                 description: "Where the user will finish cycling. Must be within <radius> of " +
@@ -126,6 +139,11 @@ const definitions = {
                  example: 1000,
                  type: "integer",
             },
+            reusable: {
+                description: "Whether this route is reusable",
+                example: "false",
+                type: "boolean",
+            },
             startPoint: {
                 $ref: "#/definitions/Coordinate",
                 description: "Where the user will start cycling from. Must be within <radius> of " +
@@ -139,12 +157,14 @@ const definitions = {
         },
         required: [
             "arrivalDateTime",
+            "deleted",
             "startPoint",
             "startPointName",
             "endPoint",
             "endPointName",
             "owner",
             "radius",
+            "reusable",
             "length",
             "name",
             "id",
@@ -172,14 +192,17 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     if (params.onlyreusable && params.onlyreusable.length > 0) {
         onlyreusable = params.onlyreusable[0].toLowerCase() === "true";
     }
-
+    let includedeleted = false;
+    if (params.includedeleted && params.includedeleted.length > 0) {
+        includedeleted = params.includedeleted[0].toLowerCase() === "true";
+    }
     let transactionClient;
     let results;
     return Database.createTransactionClient().then(newClient => {
         transactionClient = newClient;
         return getIdFromJWT(params.authorization, transactionClient);
     }).then((userId) => {
-        return Database.getInexperiencedRoutes({userId, id, onlyreusable}, transactionClient);
+        return Database.getInexperiencedRoutes({userId, id, includedeleted, onlyreusable}, transactionClient);
     }).then(theResults => {
         results = theResults;
         return Database.commitAndReleaseTransaction(transactionClient);

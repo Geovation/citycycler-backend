@@ -3,6 +3,7 @@ export default class InexperiencedRoute {
     public static fromSQLRow(row) {
         return new InexperiencedRoute({
             arrivalDateTime: row.arrivaldatetime,
+            deleted: row.deleted,
             endPoint: pointStringToCoords(row.endpoint),
             endPointName: row.endpointname,
             id: row.id,
@@ -18,6 +19,7 @@ export default class InexperiencedRoute {
     }
 
     public arrivalDateTime: string;
+    public deleted: boolean;
     public endPoint: [number, number];
     public endPointName: string;
     public id?: number;
@@ -47,8 +49,11 @@ export default class InexperiencedRoute {
             throw new Error("400:Radius must be positive");
         } else if (typeof obj.reusable === "undefined") {
             obj.reusable = false;
+        } else if (typeof obj.deleted === "undefined") {
+            obj.deleted = false;
         }
         this.arrivalDateTime = obj.arrivalDateTime;
+        this.deleted = obj.deleted;
         this.startPoint = obj.startPoint;
         this.startPointName = obj.startPointName;
         this.endPoint = obj.endPoint;
