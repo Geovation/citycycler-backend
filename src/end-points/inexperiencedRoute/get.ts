@@ -139,6 +139,11 @@ const definitions = {
                  example: 1000,
                  type: "integer",
             },
+            reusable: {
+                description: "Whether this route is reusable",
+                example: "false",
+                type: "boolean",
+            },
             startPoint: {
                 $ref: "#/definitions/Coordinate",
                 description: "Where the user will start cycling from. Must be within <radius> of " +
@@ -159,6 +164,7 @@ const definitions = {
             "endPointName",
             "owner",
             "radius",
+            "reusable",
             "length",
             "name",
             "id",
