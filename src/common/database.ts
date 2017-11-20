@@ -357,6 +357,8 @@ export function matchRoutes(
     "    ST_DWithin(ST_GeogFromText($2), route, $3) " +
     "AND " +
     "    requiredDay = ANY(days) " +
+    "AND " +
+    "    deleted = false " +
     "ORDER BY " +
     "   divorceTime::time + timeFromDivorcePoint - $4::timestamptz::time ";
     const startPoint = "POINT(" + matchParams.startPoint[0] + " " + matchParams.startPoint[1] + ")";

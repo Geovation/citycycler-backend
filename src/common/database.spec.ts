@@ -593,6 +593,23 @@ describe("MatchMyRoute Database Functions", () => {
                 expect(thisRoute).to.equal(undefined, "Got route when we shouldn't: " + JSON.stringify(thisRoute));
             });
         });
+        it("should not match an experienced route if it was deleted", () => {
+            const matchParams = {
+                arrivalDateTime: "2017-09-08T13:20:00+00",
+                endPoint: <[number, number]> [0, 4.6],
+                radius: 500,
+                startPoint: <[number, number]> [0, 1.4],
+            };
+            return Database.deleteExperiencedRoute(thisRouteId, transactionClient).then(success => {
+                expect(success).to.be.true;
+                return Database.matchRoutes(matchParams, newArrivalDateTime, transactionClient);
+            }).then(routes => {
+                const thisRoute = routes.filter((route) => {
+                    return route.id === thisRouteId;
+                })[0];
+                expect(thisRoute).to.equal(undefined, "Got route when we shouldn't: " + JSON.stringify(thisRoute));
+            });
+        });
     });
     describe("Route Updating", () => {
         // insert an experienced route to update
