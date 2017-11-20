@@ -731,6 +731,38 @@ describe("InexperiencedRoute endpoint", () => {
                     JSON.stringify(response.body.result));
             });
         });
+        it("should not match an experienced route if it was deleted", () => {
+            return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + userJwts[0],
+                },
+                method: "DELETE",
+                url: url + "/experiencedRoute?id=" + routeIds[0],
+            }).then(response => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                response.statusCode + ", error given is: " + response.error);
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + userJwts[1],
+                    },
+                    json: {
+                        id: shouldMatchId,
+                    },
+                    method: "POST",
+                    url: url + "/inexperiencedRoute/query",
+                });
+            }).then(response => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + response.error);
+                expect(response.body.result instanceof Array).to.equal(true, "body.result is not a list of " +
+                    "results, body is: " + JSON.stringify(response.body));
+                const routes = response.body.result.filter((route) => {
+                    return route.id === routeId;
+                });
+                expect(routes.length).to.equal(0, "Route was matched. Results were " +
+                    JSON.stringify(response.body.result));
+            });
+        });
         it("should err with no auth", () => {
             return defaultRequest({
                 headers: {},
