@@ -1545,8 +1545,8 @@ describe("MatchMyRoute Database Functions", () => {
                 {meetingPointName: "32 Arthur Avenue"},
                 {divorcePointName: "64 Derek Drive"},
                 {status: "rejected"},
+                {review: 5},
                 {review: 1},
-                {review: -1},
                 {review: 0},
                 {length: 1234},
                 {reason: "Excellent Reason"},
@@ -1559,7 +1559,7 @@ describe("MatchMyRoute Database Functions", () => {
                     meetingPointName: "32 Arthur Avenue",
                     meetingTime: "2017-11-12T10:20:28.684Z",
                     reason: "Excellent Reason",
-                    review: -1,
+                    review: 1,
                     status: "rejected",
                 },
             ];
@@ -1577,8 +1577,8 @@ describe("MatchMyRoute Database Functions", () => {
                 {averageSpeed: 200},
                 {created: "2000-01-01T12:00:00.000Z"},
                 {updated: "2000-01-01T12:00:00.000Z"},
-                {error: "400:BuddyRequest review must be +/- 1", review: 2},
-                {error: "400:BuddyRequest review must be +/- 1", review: -2},
+                {error: "400:BuddyRequest review must be between 1 and 5", review: 6},
+                {error: "400:BuddyRequest review must be between 1 and 5", review: -2},
                 {route: [[1, 1], [0.5, 0.5], [2, 2]]},
                 {
                     divorceTime: "2017-11-12T10:12:12.684Z",
@@ -1768,7 +1768,7 @@ describe("MatchMyRoute Database Functions", () => {
                     return Database.updateBuddyRequest(buddyRequests[0], updates, transactionClient);
                 });
             });
-            it("Should be able to review a buddy request positively", () => {
+            it("Should be able to review a buddy request as a 1", () => {
                 return Database.updateBuddyRequestReview(inexpUserId, buddyRequestId, 1, transactionClient)
                 .then(() => {
                     return Database.getSentBuddyRequests({id: buddyRequestId, userId: inexpUserId}, transactionClient);
@@ -1780,14 +1780,14 @@ describe("MatchMyRoute Database Functions", () => {
                         "Status was not set. Should be 'comleted' but got " + buddyRequest.status);
                 });
             });
-            it("Should be able to review a buddy request negatively", () => {
-                return Database.updateBuddyRequestReview(inexpUserId, buddyRequestId, -1, transactionClient)
+            it("Should be able to review a buddy request as a 5", () => {
+                return Database.updateBuddyRequestReview(inexpUserId, buddyRequestId, 5, transactionClient)
                 .then(() => {
                     return Database.getSentBuddyRequests({id: buddyRequestId, userId: inexpUserId}, transactionClient);
                 }).then(requests => {
                     let buddyRequest = requests[0];
-                    expect(buddyRequest.review).to.equal(-1,
-                        "Review was not saved. Tried to set it to -1 but got " + buddyRequest.review);
+                    expect(buddyRequest.review).to.equal(5,
+                        "Review was not saved. Tried to set it to 5 but got " + buddyRequest.review);
                     expect(buddyRequest.status).to.equal("completed",
                         "Status was not set. Should be 'comleted' but got " + buddyRequest.status);
                 });
@@ -1818,16 +1818,16 @@ describe("MatchMyRoute Database Functions", () => {
                         "User's rating was not updated. Should be 1 but got " + user.rating);
                 });
             });
-            it("should be able to update a review", () => {
+            it("Should be able to update a review", () => {
                 return Database.updateBuddyRequestReview(inexpUserId, buddyRequestId, 1, transactionClient)
                 .then(() => {
-                    return Database.updateBuddyRequestReview(inexpUserId, buddyRequestId, -1, transactionClient);
+                    return Database.updateBuddyRequestReview(inexpUserId, buddyRequestId, 3, transactionClient);
                 }).then(() => {
                     return Database.getSentBuddyRequests({id: buddyRequestId, userId: inexpUserId}, transactionClient);
                 }).then(requests => {
                     // Buddy request should have new review
                     let buddyRequest = requests[0];
-                    expect(buddyRequest.review).to.equal(-1,
+                    expect(buddyRequest.review).to.equal(3,
                         "Review was not updated. By here it should be -1, but got " + buddyRequest.review);
                     return Database.getUserById(inexpUserId, transactionClient);
                 }).then(user => {
@@ -1845,18 +1845,36 @@ describe("MatchMyRoute Database Functions", () => {
                         buddyRequestObject.length + " but got " + user.distance);
                     expect(user.usersHelped).to.equal(1,
                         "Experienced user's usersHelped was updated. Should be 1 but got " + user.usersHelped);
-                    expect(user.rating).to.equal(-1,
-                        "Experienced user's rating was not updated. Should be -1 but got " + user.rating);
+                    expect(user.rating).to.equal(3,
+                        "Experienced user's rating was not updated. Should be 3 but got " + user.rating);
+                });
+            });
+            it("Should not be able to review a buddy request over 5", () => {
+                try {
+                    Database.updateBuddyRequestReview(inexpUserId, buddyRequestId, 6, transactionClient).then(() => {
+                        expect(false).to.equal(true, "Expected this promise to be rejected with: " +
+                            "'400:BuddyRequest review must be between 1 and 5'");
+                    });
+                } catch (err) {
+                    expect(err.message).to.equal("400:BuddyRequest review must be between 1 and 5");
+                }
+                return Database.getSentBuddyRequests({id: buddyRequestId, userId: inexpUserId}, transactionClient)
+                .then(requests => {
+                    let buddyRequest = requests[0];
+                    expect(buddyRequest.review).to.equal(0,
+                        "Review was set. Should still be 0 but got " + buddyRequest.review);
+                    expect(buddyRequest.status).to.equal("accepted",
+                        "Status was set. Should still be 'accpeted' but got " + buddyRequest.status);
                 });
             });
             it("Should not be able to review a buddy request with 0", () => {
                 try {
                     Database.updateBuddyRequestReview(inexpUserId, buddyRequestId, 0, transactionClient).then(() => {
                         expect(false).to.equal(true, "Expected this promise to be rejected with: " +
-                            "'400:BuddyRequest review must be +/- 1'");
+                            "'400:BuddyRequest review must be between 1 and 5'");
                     });
                 } catch (err) {
-                    expect(err.message).to.equal("400:BuddyRequest review must be +/- 1");
+                    expect(err.message).to.equal("400:BuddyRequest review must be between 1 and 5");
                 }
                 return Database.getSentBuddyRequests({id: buddyRequestId, userId: inexpUserId}, transactionClient)
                 .then(requests => {
@@ -1865,7 +1883,25 @@ describe("MatchMyRoute Database Functions", () => {
                         "Status was set. Should still be 'accpeted' but got " + buddyRequest.status);
                 });
             });
-            it("Should not let the experiencedUser review it", () => {
+            it("Should not be able to review a buddy request negatively", () => {
+                try {
+                    Database.updateBuddyRequestReview(inexpUserId, buddyRequestId, -1, transactionClient).then(() => {
+                        expect(false).to.equal(true, "Expected this promise to be rejected with: " +
+                            "'400:BuddyRequest review must be between 1 and 5'");
+                    });
+                } catch (err) {
+                    expect(err.message).to.equal("400:BuddyRequest review must be between 1 and 5");
+                }
+                return Database.getSentBuddyRequests({id: buddyRequestId, userId: inexpUserId}, transactionClient)
+                .then(requests => {
+                    let buddyRequest = requests[0];
+                    expect(buddyRequest.review).to.equal(0,
+                        "Review was set. Should still be 0 but got " + buddyRequest.review);
+                    expect(buddyRequest.status).to.equal("accepted",
+                        "Status was set. Should still be 'accpeted' but got " + buddyRequest.status);
+                });
+            });
+            it("Should not let the experiencedUser review a buddy request", () => {
                 return Database.updateBuddyRequestReview(expUserId, buddyRequestId, 1, transactionClient)
                 .then(() => {
                     expect(false).to.equal(true, "Expected this promise to be rejected with: " +

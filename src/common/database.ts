@@ -962,8 +962,8 @@ export function updateBuddyRequest(
  */
 export function updateBuddyRequestReview(
     owner: string, buddyRequestId: number, score: number, providedClient = null): Promise<boolean> {
-        if (score === 0) {
-            throw new Error("400:BuddyRequest review must be +/- 1");
+        if (score < 1 || score > 5) {
+            throw new Error("400:BuddyRequest review must be between 1 and 5");
         }
         let buddyRequest;
         // First up, get the buddyRequest

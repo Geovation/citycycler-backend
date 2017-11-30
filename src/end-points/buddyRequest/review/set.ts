@@ -84,8 +84,8 @@ const definitions = {
                 type: "integer",
             },
             score: {
-                description: "The review score",
-                enum: [1, -1],
+                description: "The review score of star ratings",
+                enum: [1, 2, 3, 4, 5],
                 example: 1,
                 type: "integer",
             },

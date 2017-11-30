@@ -2001,7 +2001,7 @@ describe("BuddyRequest endpoint", () => {
                         });
                     });
                 });
-                it("Should let a user review a buddyRequest positively", () => {
+                it("Should let a user review a buddy request as a 1", () => {
                     counter++;
                     return defaultRequest({
                         headers: {
@@ -2051,7 +2051,7 @@ describe("BuddyRequest endpoint", () => {
                         expect(user.rating).to.equal(1, "Experienced User rating was not updated");
                     });
                 });
-                it("Should let a user review a buddyRequest negatively", () => {
+                it("Should let a user review a buddy request as a 5", () => {
                     counter++;
                     return defaultRequest({
                         headers: {
@@ -2059,7 +2059,7 @@ describe("BuddyRequest endpoint", () => {
                         },
                         json: {
                             buddyRequest: buddyRequestId,
-                            score: -1,
+                            score: 5,
                         },
                         method: "POST",
                         url: url + "/buddyRequest/review",
@@ -2074,7 +2074,7 @@ describe("BuddyRequest endpoint", () => {
                         });
                     }).then(response => {
                         let buddyRequest = response.body.result[0];
-                        expect(buddyRequest.review).to.equal(-1, "Review was not set");
+                        expect(buddyRequest.review).to.equal(5, "Review was not set");
                         expect(buddyRequest.status).to.equal("completed", "Status was not set");
                         return defaultRequest({
                             headers: {
@@ -2098,7 +2098,7 @@ describe("BuddyRequest endpoint", () => {
                         let user = response.body.result;
                         expect(user.usersHelped).to.equal(counter, "Experienced User usersHelped was not updated");
                         expect(user.distance).to.equal(counter * 1000, "Experienced User distance was not updated");
-                        expect(user.rating).to.equal(0, "Experienced User rating was not updated");
+                        expect(user.rating).to.equal((1 + 5) / counter, "Experienced User rating was not updated");
                     });
                 });
                 it("Should not let an experiencedUser review a buddyRequest", () => {
@@ -2118,21 +2118,21 @@ describe("BuddyRequest endpoint", () => {
                         expect(response.body.error).to.equal("BuddyRequest does not exist");
                     });
                 });
-                it("Should not let a user review a buddyRequest as a 2", () => {
+                it("Should not let a user review a buddyRequest as a 6", () => {
                     return defaultRequest({
                         headers: {
                             Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: {
                             buddyRequest: buddyRequestId,
-                            score: 2,
+                            score: 6,
                         },
                         method: "POST",
                         url: url + "/buddyRequest/review",
                     }).then(response => {
                         expect(response.statusCode).to.equal(400);
                         expect(response.body.status).to.equal(400);
-                        expect(response.body.error).to.equal("BuddyRequest review must be +/- 1");
+                        expect(response.body.error).to.equal("BuddyRequest review must be between 1 and 5");
                     });
                 });
                 it("Should not let a user review a buddyRequest as a -2", () => {
@@ -2149,7 +2149,7 @@ describe("BuddyRequest endpoint", () => {
                     }).then(response => {
                         expect(response.statusCode).to.equal(400);
                         expect(response.body.status).to.equal(400);
-                        expect(response.body.error).to.equal("BuddyRequest review must be +/- 1");
+                        expect(response.body.error).to.equal("BuddyRequest review must be between 1 and 5");
                     });
                 });
                 it("Should not let a user review a buddyRequest as a 0", () => {
@@ -2166,7 +2166,7 @@ describe("BuddyRequest endpoint", () => {
                     }).then(response => {
                         expect(response.statusCode).to.equal(400);
                         expect(response.body.status).to.equal(400);
-                        expect(response.body.error).to.equal("BuddyRequest review must be +/- 1");
+                        expect(response.body.error).to.equal("BuddyRequest review must be between 1 and 5");
                     });
                 });
                 it("Should let a user update a review", () => {
@@ -2188,7 +2188,7 @@ describe("BuddyRequest endpoint", () => {
                             },
                             json: {
                                 buddyRequest: buddyRequestId,
-                                score: -1,
+                                score: 3,
                             },
                             method: "POST",
                             url: url + "/buddyRequest/review",
@@ -2204,7 +2204,7 @@ describe("BuddyRequest endpoint", () => {
                         });
                     }).then(response => {
                         let buddyRequest = response.body.result[0];
-                        expect(buddyRequest.review).to.equal(-1, "Review was not updated");
+                        expect(buddyRequest.review).to.equal(3, "Review was not updated");
                         return defaultRequest({
                             headers: {
                                 Authorization: "Firebase " + inexpUserJwt,
@@ -2231,7 +2231,7 @@ describe("BuddyRequest endpoint", () => {
                             "but shouldn't have been");
                         expect(user.distance).to.equal(counter * 1000, "Experienced User distance was updated " +
                             "but shouldn't have been");
-                        expect(user.rating).to.equal((-1 / 3), "Experienced User rating was not updated");
+                        expect(user.rating).to.equal((1 + 5 + 3) / counter, "Experienced User rating was not updated");
                     });
                 });
                 it("Should not let a user review with no auth", () => {

@@ -747,19 +747,19 @@ describe("Various useful functions", () => {
             }).to.throw("400:BuddyRequest requires a status of 'pending', 'accepted', 'rejected', " +
                 "'canceled' or 'completed'");
         });
-        it("should throw an error if the review is 2", () => {
+        it("should throw an error if the review is 6", () => {
             const copy = Object.assign({}, buddyRequestObject);
-            copy.review = 2;
+            copy.review = 6;
             expect(() => {
                 return new BuddyRequest(copy);
-            }).to.throw("400:BuddyRequest review must be +/- 1");
+            }).to.throw("400:BuddyRequest review must be between 1 and 5");
         });
         it("should throw an error if the review is -2", () => {
             const copy = Object.assign({}, buddyRequestObject);
             copy.review = -2;
             expect(() => {
                 return new BuddyRequest(copy);
-            }).to.throw("400:BuddyRequest review must be +/- 1");
+            }).to.throw("400:BuddyRequest review must be between 1 and 5");
         });
         for (let key in buddyRequestObject) {
             if (key !== "id" && key !== "reason" && key !== "review") {
