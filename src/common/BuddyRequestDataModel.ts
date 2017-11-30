@@ -130,8 +130,8 @@ export default class BuddyRequest {
             throw new Error("400:BuddyRequest requires an owner");
         } else if (obj.review === undefined || obj.review === null) {
             obj.review = 0;
-        } else if (obj.review !== 0 && obj.review !== 1 && obj.review !== -1) {
-            throw new Error("400:BuddyRequest review must be +/- 1");
+        } else if (obj.review < 0 || obj.review > 5) { // also exclude the default 0
+            throw new Error("400:BuddyRequest review must be between 1 and 5");
         }
         this.averageSpeed = obj.averageSpeed;
         this.created = obj.created;
