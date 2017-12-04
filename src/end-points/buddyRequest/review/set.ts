@@ -99,8 +99,8 @@ const definitions = {
 // ///////////////
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
-    const buddyRequestId = params.body.buddyRequest;
-    const score = params.body.score;
+    const buddyRequestId = parseInt(params.body.id, 10);
+    const score = parseInt(params.body.score, 10);
     if (buddyRequestId === undefined) {
         throw new Error("400:Please specify the BuddyRequest you want to review by passing an ID");
     }

@@ -2008,7 +2008,7 @@ describe("BuddyRequest endpoint", () => {
                             Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: {
-                            buddyRequest: buddyRequestId,
+                            id: buddyRequestId,
                             score: 1,
                         },
                         method: "POST",
@@ -2058,7 +2058,7 @@ describe("BuddyRequest endpoint", () => {
                             Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: {
-                            buddyRequest: buddyRequestId,
+                            id: buddyRequestId,
                             score: 5,
                         },
                         method: "POST",
@@ -2107,7 +2107,7 @@ describe("BuddyRequest endpoint", () => {
                             Authorization: "Firebase " + expUserJwt,
                         },
                         json: {
-                            buddyRequest: buddyRequestId,
+                            id: buddyRequestId,
                             score: 1,
                         },
                         method: "POST",
@@ -2124,7 +2124,7 @@ describe("BuddyRequest endpoint", () => {
                             Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: {
-                            buddyRequest: buddyRequestId,
+                            id: buddyRequestId,
                             score: 6,
                         },
                         method: "POST",
@@ -2141,7 +2141,7 @@ describe("BuddyRequest endpoint", () => {
                             Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: {
-                            buddyRequest: buddyRequestId,
+                            id: buddyRequestId,
                             score: -2,
                         },
                         method: "POST",
@@ -2158,7 +2158,7 @@ describe("BuddyRequest endpoint", () => {
                             Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: {
-                            buddyRequest: buddyRequestId,
+                            id: buddyRequestId,
                             score: 0,
                         },
                         method: "POST",
@@ -2176,7 +2176,7 @@ describe("BuddyRequest endpoint", () => {
                             Authorization: "Firebase " + inexpUserJwt,
                         },
                         json: {
-                            buddyRequest: buddyRequestId,
+                            id: buddyRequestId,
                             score: 1,
                         },
                         method: "POST",
@@ -2187,7 +2187,7 @@ describe("BuddyRequest endpoint", () => {
                                 Authorization: "Firebase " + inexpUserJwt,
                             },
                             json: {
-                                buddyRequest: buddyRequestId,
+                                id: buddyRequestId,
                                 score: 3,
                             },
                             method: "POST",
@@ -2237,7 +2237,7 @@ describe("BuddyRequest endpoint", () => {
                 it("Should not let a user review with no auth", () => {
                     return defaultRequest({
                         json: {
-                            buddyRequest: buddyRequestId,
+                            id: buddyRequestId,
                             score: 1,
                         },
                         method: "POST",
