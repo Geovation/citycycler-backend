@@ -155,11 +155,13 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         } else if (typeof payload.photo !== "undefined" && payload.photo.trim().length !== 0) {
             const uidNew = Math.random().toString(35).substr(2, 7);
             promises.push(
-                CloudStorage.storeProfileImage(payload.photo, uidNew)
-                .then(profileImage => {
-                    updates.profile_photo = process.env.STORAGE_BASE_URL + "/" +
-                            process.env.STORAGE_BUCKET + "/" + profileImage;
-                    return true;
+                CloudStorage.deleteProfileImage(uid).then(() => {
+                    return CloudStorage.storeProfileImage(payload.photo, uidNew)
+                        .then(profileImage => {
+                            updates.profile_photo = process.env.STORAGE_BASE_URL + "/" +
+                                    process.env.STORAGE_BUCKET + "/" + profileImage;
+                            return true;
+                        });
                 })
             );
         }
