@@ -119,7 +119,15 @@ const definitions = {
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
+    let uid = "";
     return getIdFromJWT(params.authorization).then(userId => {
+            Database.getUserById(userId).then(user => {
+                if (user.photo) {
+                    uid = user.photo.substring(user.photo.lastIndexOf("-") + 1).slice(0, -4);
+                }
+            });
+            return userId;
+        }).then(userId => {
         let updates: any = {};
         let promises = [];
         if (payload.bio !== undefined && payload.bio.trim().length !== 0) {
@@ -142,16 +150,17 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         }
         // delete or replace profile photo
         if (payload.photo === null) {
-            promises.push(CloudStorage.deleteProfileImage(userId));
+            promises.push(CloudStorage.deleteProfileImage(uid));
             updates.profile_photo = null;
         } else if (typeof payload.photo !== "undefined" && payload.photo.trim().length !== 0) {
+            const uidNew = Math.random().toString(35).substr(2, 7);
             promises.push(
-                CloudStorage.storeProfileImage(payload.photo, userId)
+                CloudStorage.storeProfileImage(payload.photo, uidNew)
                 .then(profileImage => {
-                        updates.profile_photo = process.env.STORAGE_BASE_URL + "/" +
+                    updates.profile_photo = process.env.STORAGE_BASE_URL + "/" +
                             process.env.STORAGE_BUCKET + "/" + profileImage;
-                    }
-                )
+                    return true;
+                })
             );
         }
         return Promise.all(promises).then(values => {
