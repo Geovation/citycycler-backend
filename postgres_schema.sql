@@ -27,7 +27,8 @@ END$$;
 CREATE TABLE users (
 -- Core User attributes. Can't be null
 id varchar(40) PRIMARY KEY,
-name varchar(200) NOT NULL,
+firstname varchar(200) NOT NULL,
+surname varchar(200) NOT NULL,
 email varchar(200) UNIQUE,
 pwh bytea,
 salt bytea,
