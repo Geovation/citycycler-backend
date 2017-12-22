@@ -84,30 +84,35 @@ describe("MatchMyRoute Database Functions", () => {
         it("should create new user (without bio)", () => {
             return Database.putUser({
                 email: "test@example.com",
+                firstname: "Test",
                 id: "testuser",
-                name: "Test User",
+                surname: "User",
             }, transactionClient)
                 .then(response => {
-                    expect(response.name).to.equal("Test User");
+                    expect(response.firstname).to.equal("Test");
+                    expect(response.surname).to.equal("User");
                 });
         });
         it("should create new user (with bio)", () => {
             return Database.putUser({
                 email: "test@example.com",
+                firstname: "Test",
                 id: "testuser",
-                name: "Test User",
                 profile_bio: "mybio",
+                surname: "User",
             }, transactionClient)
                 .then(response => {
-                    expect(response.name).to.equal("Test User");
+                    expect(response.firstname).to.equal("Test");
+                    expect(response.surname).to.equal("User");
                     expect(response.bio).to.equal("mybio");
                 });
         });
         it("should escape SQL injections", () => {
             return Database.putUser({
                 email: "test2@example.com",
+                firstname: "Test",
                 id: "testuser2",
-                name: "Test User');DROP TABLE users;",
+                surname: "User');DROP TABLE users;",
             }, transactionClient);
         });
         describe("User reliant tests", () => {
@@ -115,8 +120,9 @@ describe("MatchMyRoute Database Functions", () => {
             beforeEach("Create user to test against", () => {
                 return Database.putUser({
                     email: "test@example.com",
+                    firstname: "Test",
                     id: "testuser",
-                    name: "Test User",
+                    surname: "User",
                 },
                 transactionClient)
                 .then(user => {
@@ -127,8 +133,9 @@ describe("MatchMyRoute Database Functions", () => {
             it("should fail to create users with duplicate emails", done => {
                 const promise = Database.putUser({
                     email: "test@example.com",
+                    firstname: "Test",
                     id: "testuser2",
-                    name: "Test User2",
+                    surname: "User 2",
                 }, transactionClient);
                 expect(promise).to.be.rejected.and.notify(done);
             });
@@ -146,7 +153,8 @@ describe("MatchMyRoute Database Functions", () => {
             it("should get a user by id", () => {
                 return Database.getUserById(userId, transactionClient)
                 .then(user => {
-                    return expect(user.name).to.equal("Test User");
+                    expect(user.firstname).to.equal("Test");
+                    expect(user.surname).to.equal("User");
                 });
             });
             it("should not get a user by an invalid ID", done => {
@@ -155,7 +163,8 @@ describe("MatchMyRoute Database Functions", () => {
             });
             it("should get a user by email", () => {
                 return Database.getUserByEmail("test@example.com", transactionClient).then(user => {
-                    expect(user.name).to.equal("Test User");
+                    expect(user.firstname).to.equal("Test");
+                    expect(user.surname).to.equal("User");
                 });
             });
             it("should not get a user by an invalid email", done => {
@@ -169,8 +178,9 @@ describe("MatchMyRoute Database Functions", () => {
             beforeEach("Create the user to run tests against", done => {
                 Database.putUser({
                     email: "non-updated@example.com",
+                    firstname: "Non-updated Test",
                     id: "non-updated",
-                    name: "Non-updated Test User",
+                    surname: "User",
                 }, transactionClient).then(user => {
                     thisUserId = user.id;
                     done();
@@ -178,7 +188,8 @@ describe("MatchMyRoute Database Functions", () => {
             });
             // Go through these objects and try to update the user with them
             let updateables = [
-                { name: "Updated Test User" },
+                { firstname: "Updated Test" },
+                { surname: "User" },
                 { email: "updated@example.com" },
                 { preferences_units: "kilometers" },
                 { preferences_difficulty: "quiet" },
@@ -186,9 +197,10 @@ describe("MatchMyRoute Database Functions", () => {
                 { profile_bio: "Updated Biography" },
                 {
                     email: "updated@example.com",
-                    name: "Updated Test User",
+                    firstname: "Updated Test",
                     profile_bio: "Updated Biography",
                     profile_photo: "http://lorempixel.com/400/400/people/Updated",
+                    surname: "User",
                 },
             ];
             for (let i = 0; i < updateables.length; i++) {
@@ -196,7 +208,7 @@ describe("MatchMyRoute Database Functions", () => {
                 let keys = Object.keys(updates).join(", ");
                 it("should update " + keys, () => {
                     return Database.updateUser(thisUserId, updates, transactionClient).then(() => {
-                        return Database.sqlTransaction("SELECT name, email, pwh, rounds, profile_photo, " +
+                        return Database.sqlTransaction("SELECT firstname, surname, email, profile_photo, " +
                             "profile_bio, preferences_difficulty, preferences_units FROM users WHERE id=$1;",
                             [thisUserId], transactionClient).then(result => {
                                 return result.rows[0];
@@ -248,8 +260,9 @@ describe("MatchMyRoute Database Functions", () => {
         beforeEach("Create user and experienced route to test against", () => {
             return Database.putUser({
                 email: "test@example.com",
+                firstname: "Test",
                 id: "testuser",
-                name: "Test User",
+                surname: "User",
             },
             transactionClient)
             .then(user => {
@@ -271,8 +284,9 @@ describe("MatchMyRoute Database Functions", () => {
             .then(() => {
                 return Database.putUser({
                     email: "test2@example.com",
+                    firstname: "Test",
                     id: "testuser2",
-                    name: "Test User2",
+                    surname: "User 2",
                 },
                 transactionClient);
             })
@@ -492,8 +506,9 @@ describe("MatchMyRoute Database Functions", () => {
         beforeEach("Create user and route to test against", done => {
             Database.putUser({
                 email: "test@example.com",
+                firstname: "Test",
                 id: "testuser",
-                name: "Test User",
+                surname: "User",
             },
             transactionClient)
             .then(user => {
@@ -619,8 +634,9 @@ describe("MatchMyRoute Database Functions", () => {
         beforeEach("Create user and route to update", done => {
             Database.putUser({
                 email: "test@example.com",
+                firstname: "Test",
                 id: "testuser",
-                name: "Test User",
+                surname: "User",
             },
             transactionClient)
             .then(user => {
@@ -841,8 +857,9 @@ describe("MatchMyRoute Database Functions", () => {
         beforeEach("Create user to own inexperiencedRoutes", done => {
             Database.putUser({
                 email: "test@example.com",
+                firstname: "Test",
                 id: "testuser",
-                name: "Test User",
+                surname: "User",
             },
             transactionClient).then(newUser => {
                 userId = newUser.id;
@@ -971,8 +988,9 @@ describe("MatchMyRoute Database Functions", () => {
                 }).then(() => {
                     Database.putUser({
                         email: "test2@example.com",
+                        firstname: "Test",
                         id: "testuser2",
-                        name: "Test User2",
+                        surname: "User 2",
                     },
                     transactionClient).then(newUser => {
                         spareUserId = newUser.id;
@@ -1084,8 +1102,9 @@ describe("MatchMyRoute Database Functions", () => {
             beforeEach("Make a user and inexperiencedRoute to delete", done => {
                 Database.putUser({
                     email: "test2@example.com",
+                    firstname: "Test",
                     id: "testuser2",
-                    name: "Test User2",
+                    surname: "User 2",
                 },
                 transactionClient).then(newUser => {
                     ownerId = newUser.id;
@@ -1199,8 +1218,9 @@ describe("MatchMyRoute Database Functions", () => {
         beforeEach("Create two users to send/receive the Buddy requests, with respective routes", () => {
             return Database.putUser({
                 email: "experienced@example.com",
+                firstname: "Experienced",
                 id: "experienceduser",
-                name: "Experienced User",
+                surname: "User",
             }, transactionClient)
             .then(newUser => {
                 expUserId = newUser.id;
@@ -1208,8 +1228,9 @@ describe("MatchMyRoute Database Functions", () => {
             .then(() => {
                 return Database.putUser({
                     email: "inexperienced@example.com",
+                    firstname: "Inexperienced",
                     id: "inexperienceduser",
-                    name: "Inexperienced User",
+                    surname: "User",
                 },
                 transactionClient);
             }).then(newUser => {
@@ -1319,8 +1340,9 @@ describe("MatchMyRoute Database Functions", () => {
                 }).then(() => {
                     return Database.putUser({
                         email: "random@example.com",
+                        firstname: "Unattached",
                         id: "randomuser",
-                        name: "Unnattached User",
+                        surname: "User",
                     }, transactionClient);
                 }).then(user => {
                     randomOtherId = user.id;
@@ -1665,8 +1687,9 @@ describe("MatchMyRoute Database Functions", () => {
                     experiencedRouteId2 = routeId;
                     return Database.putUser({
                         email: "inexperienced2@example.com",
+                        firstname: "Inexperienced",
                         id: "inexperienceduser2",
-                        name: "Inexperienced User 2",
+                        surname: "User 2",
                     }, transactionClient);
                 })
                 .then(newUser => {
@@ -2099,8 +2122,9 @@ describe("Database shutdown", () => {
         promises.push(
             Database.putUser({
                 email: "test@example.com",
+                firstname: "Test",
                 id: "testuser",
-                name: "Test User",
+                surname: "User",
             })
         );
         // getUserById
