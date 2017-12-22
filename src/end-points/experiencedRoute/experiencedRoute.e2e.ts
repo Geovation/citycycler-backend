@@ -37,10 +37,16 @@ describe("ExperiencedRoute endpoint", () => {
     let userJwts = [];  // JWTs corresponding to the respective users in userIds
     let routeIds = [];  // A list of routes created
     before(() => {
-        const user1 = { email: "experiencedRouteTest@e2e-test.matchmyroute-backend.appspot.com",
-            name: "E2E Test User3" };
-        const user2 = { email: "experiencedRouteTest2@e2e-test.matchmyroute-backend.appspot.com",
-            name: "E2E Test User4" };
+        const user1 = {
+            email: "experiencedRouteTest@e2e-test.matchmyroute-backend.appspot.com",
+            firstname: "E2E Test",
+            surname: "User 3",
+        };
+        const user2 = {
+            email: "experiencedRouteTest2@e2e-test.matchmyroute-backend.appspot.com",
+            firstname: "E2E Test",
+            surname: "User 4",
+        };
 
         return FirebaseUtils.createFirebaseUser(user1.email)
         .then(createResponse => {

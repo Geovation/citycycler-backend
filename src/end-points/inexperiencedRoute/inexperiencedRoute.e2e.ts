@@ -39,11 +39,16 @@ describe("InexperiencedRoute endpoint", () => {
     let routeIds = [];  // A list of routes created that will be deleted at the end of this test run
     let inexperiencedRouteIds = [];   // A list of Inexperienced Route IDs that will be deleted at the end of this run
     before(() => {
-        const user1 = { email: "inexperiencedRouteTest@e2e-test.matchmyroute-backend.appspot.com",
-            name: "E2E Test User3" };
-        const user2 = { email: "inexperiencedRouteTest2@e2e-test.matchmyroute-backend.appspot.com",
-            name: "E2E Test User4" };
-
+        const user1 = {
+            email: "inexperiencedRouteTest@e2e-test.matchmyroute-backend.appspot.com",
+            firstname: "E2E Test",
+            surname: "User 3",
+        };
+        const user2 = {
+            email: "inexperiencedRouteTest2@e2e-test.matchmyroute-backend.appspot.com",
+            firstname: "E2E Test",
+            surname: "User 4",
+        };
         return FirebaseUtils.createFirebaseUser(user1.email)
         .then(createResponse => {
             userIds.push(createResponse.user.uid);
