@@ -82,14 +82,14 @@ const definitions = {
                 example: "joe@blogs.com",
                 type: "string",
             },
+            firstname: {
+                description: "The user's first name",
+                example: "Joe",
+                type: "string",
+            },
             id: {
                 description: "The user's internal id",
                 type: "integer",
-            },
-            name: {
-                description: "The user's new full name",
-                example: "Joe Blogs",
-                type: "string",
             },
             photo: {
                 description: "A url pointing to the user's profile picture",
@@ -98,6 +98,11 @@ const definitions = {
             },
             preferences: {
                 $ref: "#/definitions/UserPreferences",
+            },
+            surname: {
+                description: "The user's surname",
+                example: "Bloggs",
+                type: "string",
             },
         },
         required: ["id"],
@@ -136,8 +141,11 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         if (payload.email !== undefined && payload.email.trim().length !== 0) {
             updates.email = payload.email;
         }
-        if (payload.name !== undefined && payload.name.trim().length !== 0) {
-            updates.name = payload.name;
+        if (payload.firstname !== undefined && payload.firstname.trim().length !== 0) {
+            updates.firstname = payload.firstname;
+        }
+        if (payload.surname !== undefined && payload.surname.trim().length !== 0) {
+            updates.surname = payload.surname;
         }
         if (payload.preferences !== undefined) {
             if (payload.preferences.rideDifficulty !== undefined &&
