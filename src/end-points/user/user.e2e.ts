@@ -119,10 +119,37 @@ describe("User endpoint", () => {
                 });
             });
         });
-        it("shouldn't create a user with no name", () => {
+        it("shouldn't create a user with no first name", () => {
             const user = {
                 email: "userTest2@e2e-test.matchmyroute-backend.appspot.com",
                 firstname: "",
+                password: "test",
+                surname: "Bloggs",
+            };
+            return FirebaseUtils.createFirebaseUser(user.email)
+            .then(createResponse => {
+                userIds.push(createResponse.user.uid);
+                return FirebaseUtils.getJwtForUser(createResponse.customToken);
+            }).then(jwt => {
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + jwt,
+                    },
+                    json: user,
+                    method: "PUT",
+                    url: url + "/user",
+                });
+            }).then(response => {
+                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                    response.statusCode + ", body returned is: " + JSON.stringify(response.body));
+                expect(response.body.error).to.equal("First Name Required");
+                expect(response.body.status).to.equal(400);
+            });
+        });
+        it("shouldn't create a user with no surname", () => {
+            const user = {
+                email: "userTest3@e2e-test.matchmyroute-backend.appspot.com",
+                firstname: "Joe",
                 password: "test",
                 surname: "",
             };
@@ -142,7 +169,7 @@ describe("User endpoint", () => {
             }).then(response => {
                 expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
                     response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                expect(response.body.error).to.equal("Name Required");
+                expect(response.body.error).to.equal("Surname Required");
                 expect(response.body.status).to.equal(400);
             });
         });
@@ -234,7 +261,7 @@ describe("User endpoint", () => {
                 expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                     response.statusCode + ", error given is: " + response.error);
                 expect(response.body.result.firstname).to.equal("E2E Test",
-                    "Got a different first name than expected. Expected: \"E2E Test User\", got \"" +
+                    "Got a different first name than expected. Expected: \"E2E Test\", got \"" +
                     response.body.result.firstname + "\". Full response body is: " +
                     JSON.stringify(response.body));
                 expect(response.body.result.surname).to.equal("User",

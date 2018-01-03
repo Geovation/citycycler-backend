@@ -151,7 +151,6 @@ const definitions = {
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
     const { email, firstname, surname, bio, photo } = payload;
-    const name = firstname + " " + surname;
     let id;
 
     let createdUser: User;
@@ -160,8 +159,11 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         if (typeof email === "undefined" || email.trim().length === 0) {
             reject("400:Email Required");
             return;
-        } else if (typeof name === "undefined" || name.trim().length === 0) {
-            reject("400:Name Required");
+        } else if (typeof firstname === "undefined" || firstname.trim().length === 0) {
+            reject("400:First Name Required");
+            return;
+        } else if (typeof surname === "undefined" || surname.trim().length === 0) {
+            reject("400:Surname Required");
             return;
         }
         resolve();
