@@ -482,39 +482,56 @@ describe("Various useful functions", () => {
         it("should be constructed", () => {
             const data = {
                 email: "test@example.com",
+                firstname: "Test",
                 id: "abcd",
-                name: "Test User",
+                surname: "User",
             };
             const user = new User(data);
             expect(user.id).to.equal("abcd");
-            expect(user.name).to.equal("Test User");
+            expect(user.firstname).to.equal("Test");
+            expect(user.surname).to.equal("User");
             expect(user.email).to.equal("test@example.com");
         });
         it("should be constructed without an id", () => {
             const data = {
                 email: "test@example.com",
-                name: "Test User",
+                firstname: "Test",
+                surname: "User",
             };
             const user = new User(data);
             expect(user.id).to.be.undefined;
-            expect(user.name).to.equal("Test User");
+            expect(user.firstname).to.equal("Test");
+            expect(user.surname).to.equal("User");
             expect(user.email).to.equal("test@example.com");
         });
-        it("should error if no name is given", () => {
+        it("should error if no first name is given", () => {
             const data = {
                 email: "test@example.com",
+                firstname: " ",
                 id: "abcd",
-                name: " ",
+                surname: "User",
             };
             expect(() => {
                 return new User(data);
-            }).to.throw("User object requires a name");
+            }).to.throw("User object requires a first name");
+        });
+        it("should error if no surname is given", () => {
+            const data = {
+                email: "test@example.com",
+                firstname: "Test",
+                id: "abcd",
+                surname: " ",
+            };
+            expect(() => {
+                return new User(data);
+            }).to.throw("User object requires a surname");
         });
         it("should error if no email is given", () => {
             const data = {
                 email: "",
+                firstname: "Test",
                 id: "abcd",
-                name: "Test User",
+                surname: "User",
             };
             expect(() => {
                 return new User(data);
@@ -525,21 +542,23 @@ describe("Various useful functions", () => {
                 bio: "I'm a really fast cyclist",
                 distance: 123321,
                 email: "test@example.com",
+                firstname: "Test",
                 helpedCount: 13,
                 id: "abcd",
                 joined: 1234567,
-                name: "Test User",
                 photo: "www.example.com/image.jpg",
                 preferences: {
                     rideDifficulty: "balanced",
                     units: "miles",
                 },
                 rating: 7.5,
+                surname: "User",
                 usersHelped: 21,
             };
             const user = new User(data);
             expect(user.id).to.equal("abcd");
-            expect(user.name).to.equal("Test User");
+            expect(user.firstname).to.equal("Test");
+            expect(user.surname).to.equal("User");
             expect(user.email).to.equal("test@example.com");
             expect(user.bio).to.equal("I'm a really fast cyclist");
             expect(user.photo).to.equal("www.example.com/image.jpg");
@@ -554,8 +573,8 @@ describe("Various useful functions", () => {
         it("should be constructed from a postgres row(ish) object", () => {
             const row = {
                 email: "test@example.com",
+                firstname: "Test",
                 id: "abcd",
-                name: "Test User",
                 preferences_difficulty: "quiet",
                 preferences_units: "kilometers",
                 profile_bio: "I'm a really fast cyclist",
@@ -565,9 +584,11 @@ describe("Various useful functions", () => {
                 profile_joined: 1234567,
                 profile_photo: "www.example.com/image.jpg",
                 profile_rating_sum: 100,
+                surname: "User",
             };
             const user = User.fromSQLRow(row);
-            expect(user.name).to.equal("Test User");
+            expect(user.firstname).to.equal("Test");
+            expect(user.surname).to.equal("User");
             expect(user.email).to.equal("test@example.com");
             expect(user.bio).to.equal("I'm a really fast cyclist");
             expect(user.photo).to.equal("www.example.com/image.jpg");
@@ -582,9 +603,9 @@ describe("Various useful functions", () => {
         it("should not leak private data when made into a UserProfile", () => {
             const row = {
                 email: "test@example.com",
+                firstname: "Test",
                 id: "abcd",
                 jwt_secret: "secret",
-                name: "Test User",
                 profile_bio: "I'm a really fast cyclist",
                 profile_helped: 21,
                 profile_joined: 1234567,
@@ -592,6 +613,7 @@ describe("Various useful functions", () => {
                 pwh: new Buffer("test"),
                 rounds: 5,
                 salt: new Buffer("salt"),
+                surname: "User",
             };
             const user = User.fromSQLRow(row).asUserProfile();
             expect(user).not.to.include.keys("jwtSecret");
@@ -602,9 +624,9 @@ describe("Various useful functions", () => {
         it("should not leak data when turned into a UserSettings", () => {
             const row = {
                 email: "test@example.com",
+                firstname: "Test",
                 id: "abcd",
                 jwt_secret: "secret",
-                name: "Test User",
                 profile_bio: "I'm a really fast cyclist",
                 profile_helped: 21,
                 profile_joined: 1234567,
@@ -612,6 +634,7 @@ describe("Various useful functions", () => {
                 pwh: new Buffer("test"),
                 rounds: 5,
                 salt: new Buffer("salt"),
+                surname: "User",
             };
             const user = User.fromSQLRow(row).asUserSettings();
             expect(user).not.to.include.keys("bio");

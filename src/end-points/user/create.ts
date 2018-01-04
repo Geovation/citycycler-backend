@@ -92,22 +92,27 @@ const definitions = {
                 example: "joe@blogs.com",
                 type: "string",
             },
+            firstname: {
+                description: "The user's first name",
+                example: "Joe",
+                type: "string",
+            },
             id: {
                 description: "The uid of the new user",
                 example: "Tzsr09123dswjgwsdfiouj1289",
-                type: "string",
-            },
-            name: {
-                description: "The user's full name",
-                example: "Joe Blogs",
                 type: "string",
             },
             photo: {
                 description: "A profile photo for the user as data URI",
                 type: "string",
             },
+            surname: {
+                description: "The user's surname",
+                example: "Bloggs",
+                type: "string",
+            },
         },
-        required: ["id", "email", "name"],
+        required: ["id", "email", "firstname", "surname"],
     },
     NewUserResult: {
         properties: {
@@ -145,7 +150,7 @@ const definitions = {
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
-    const { email, name, bio, photo } = payload;
+    const { email, firstname, surname, bio, photo } = payload;
     let id;
 
     let createdUser: User;
@@ -154,8 +159,11 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
         if (typeof email === "undefined" || email.trim().length === 0) {
             reject("400:Email Required");
             return;
-        } else if (typeof name === "undefined" || name.trim().length === 0) {
-            reject("400:Name Required");
+        } else if (typeof firstname === "undefined" || firstname.trim().length === 0) {
+            reject("400:First Name Required");
+            return;
+        } else if (typeof surname === "undefined" || surname.trim().length === 0) {
+            reject("400:Surname Required");
             return;
         }
         resolve();
@@ -170,7 +178,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     // create user
     .then(newClient => {
         client = newClient;
-        let sqlParams = {id, name, email, profile_bio: bio, profile_joined: new Date().toISOString()};
+        let sqlParams = {id, firstname, surname, email, profile_bio: bio, profile_joined: new Date().toISOString()};
         return Database.putUser(sqlParams, client);
     })
     // store profile photo for user if it exists

@@ -33,12 +33,15 @@ describe("User endpoint", () => {
     let userIds = [];   // A list of users created
     let userJwts = [];  // JWTs corresponding to the respective users in userIds
     const user1 = { email: "userTest@e2e-test.matchmyroute-backend.appspot.com",
-    name: "E2E Test User" };
+        firstname: "E2E Test",
+        surname: "User",
+    };
     const user2 = {
         email: "test1@e2e-test.matchmyroute-backend.appspot.com",
-        name: "E2E Test User2",
+        firstname: "E2E Test",
         photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21"
             + "bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
+        surname: "User 2",
     };
     before(() => {
         return FirebaseUtils.createFirebaseUser(user1.email)
@@ -116,9 +119,13 @@ describe("User endpoint", () => {
                 });
             });
         });
-        it("shouldn't create a user with no name", () => {
-            const user = { email: "userTest2@e2e-test.matchmyroute-backend.appspot.com",
-                name: "", password: "test" };
+        it("shouldn't create a user with no first name", () => {
+            const user = {
+                email: "userTest2@e2e-test.matchmyroute-backend.appspot.com",
+                firstname: "",
+                password: "test",
+                surname: "Bloggs",
+            };
             return FirebaseUtils.createFirebaseUser(user.email)
             .then(createResponse => {
                 userIds.push(createResponse.user.uid);
@@ -135,12 +142,44 @@ describe("User endpoint", () => {
             }).then(response => {
                 expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
                     response.statusCode + ", body returned is: " + JSON.stringify(response.body));
-                expect(response.body.error).to.equal("Name Required");
+                expect(response.body.error).to.equal("First Name Required");
+                expect(response.body.status).to.equal(400);
+            });
+        });
+        it("shouldn't create a user with no surname", () => {
+            const user = {
+                email: "userTest3@e2e-test.matchmyroute-backend.appspot.com",
+                firstname: "Joe",
+                password: "test",
+                surname: "",
+            };
+            return FirebaseUtils.createFirebaseUser(user.email)
+            .then(createResponse => {
+                userIds.push(createResponse.user.uid);
+                return FirebaseUtils.getJwtForUser(createResponse.customToken);
+            }).then(jwt => {
+                return defaultRequest({
+                    headers: {
+                        Authorization: "Firebase " + jwt,
+                    },
+                    json: user,
+                    method: "PUT",
+                    url: url + "/user",
+                });
+            }).then(response => {
+                expect(response.statusCode).to.equal(400, "Expected 400 response but got " +
+                    response.statusCode + ", body returned is: " + JSON.stringify(response.body));
+                expect(response.body.error).to.equal("Surname Required");
                 expect(response.body.status).to.equal(400);
             });
         });
         it("shouldn't create a user with no email", () => {
-            const user = { email: "", name: "E2E Test User", password: "test" };
+            const user = {
+                email: "",
+                firstname: "E2E Test",
+                password: "test",
+                surname: "User",
+            };
             return FirebaseUtils.createFirebaseUser("noEmail@e2e-test.matchmyroute-backend.appspot.com")
             .then(createResponse => {
                 userIds.push(createResponse.user.uid);
@@ -164,8 +203,12 @@ describe("User endpoint", () => {
         // commented out temporarily for transitioning to new accounts (as uniqueness of email
         // was dropped in db temporarily)
         // it("shouldn't create a user with a duplicate email", () => {
-        //     const user = { email: "userTest@e2e-test.matchmyroute-backend.appspot.com",
-        //         name: "E2E Test User", password: "test" };
+        //     const user = {
+        //         email: "userTest@e2e-test.matchmyroute-backend.appspot.com",
+        //         firstname: "E2E Test",
+        //         password: "test",
+        //         surname: "User",
+        //     };
         //     return FirebaseUtils.createFirebaseUser("duplicateEmail@e2e-test.matchmyroute-backend.appspot.com")
         //         .then(createResponse => {
         //             userIds.push(createResponse.user.uid);
@@ -198,9 +241,12 @@ describe("User endpoint", () => {
             }).then(response => {
                 expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                     response.statusCode + ", error given is: " + response.error);
-                expect(response.body.result.name).to.equal("E2E Test User",
-                    "Got a different name than expected. Expected: \"E2E Test User\", got \"" +
-                    response.body.result.name + "\". Full response body is: " + JSON.stringify(response.body));
+                expect(response.body.result.firstname).to.equal("E2E Test",
+                    "Got a different first name than expected. Expected: \"E2E Test\", got \"" +
+                    response.body.result.firstname + "\". Full response body is: " + JSON.stringify(response.body));
+                expect(response.body.result.surname).to.equal("User",
+                    "Got a different surname than expected. Expected: \"User\", got \"" +
+                    response.body.result.surname + "\". Full response body is: " + JSON.stringify(response.body));
                 expect(response.body.result.preferences).to.not.be.undefined;
             });
         });
@@ -214,9 +260,13 @@ describe("User endpoint", () => {
             }).then(response => {
                 expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                     response.statusCode + ", error given is: " + response.error);
-                expect(response.body.result.name).to.equal("E2E Test User",
-                    "Got a different name than expected. Expected: \"E2E Test User\", got \"" +
-                    response.body.result.name + "\". Full response body is: " +
+                expect(response.body.result.firstname).to.equal("E2E Test",
+                    "Got a different first name than expected. Expected: \"E2E Test\", got \"" +
+                    response.body.result.firstname + "\". Full response body is: " +
+                    JSON.stringify(response.body));
+                expect(response.body.result.surname).to.equal("User",
+                    "Got a different surname than expected. Expected: \"User\", got \"" +
+                    response.body.result.surname + "\". Full response body is: " +
                     JSON.stringify(response.body));
                 expect(response.body.result.preferences).to.not.be.undefined;
             });
@@ -242,8 +292,12 @@ describe("User endpoint", () => {
             }).then(response => {
                 expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
                     response.statusCode + ", error given is: " + response.error);
-                expect(response.body.result.name).to.equal("E2E Test User",
-                    "Expected result name to be \"E2E Test User\", but it got \""
+                expect(response.body.result.firstname).to.equal("E2E Test",
+                    "Expected result first name to be \"E2E Test\", but it got \""
+                    + response.body.result.name +
+                    "\". Full response body is: " + JSON.stringify(response.body));
+                expect(response.body.result.surname).to.equal("User",
+                    "Expected result surname to be \"User\", but it got \""
                     + response.body.result.name +
                     "\". Full response body is: " + JSON.stringify(response.body));
                 expect(response.body.result.preferences).to.be.undefined;
@@ -269,9 +323,10 @@ describe("User endpoint", () => {
             const userUpdates = {
                 bio: "Updated bio",
                 email: "updateduserTest@e2e-test.matchmyroute-backend.appspot.com",
-                name: "Updated Test User",
+                firstname: "Updated Test",
                 photo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21" +
                 "bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=",
+                surname: "User",
             };
             defaultRequest({
                 headers: {
@@ -292,7 +347,8 @@ describe("User endpoint", () => {
                 });
             }).then(response => {
                 let user = response.body.result;
-                expect(user.name).to.equal("Updated Test User");
+                expect(user.firstname).to.equal("Updated Test");
+                expect(user.surname).to.equal("User");
                 expect(user.email).to.equal("updateduserTest@e2e-test.matchmyroute-backend.appspot.com");
                 expect(user.bio).to.equal("Updated bio");
                 expect(user.photo).to.be.a.string;
@@ -314,7 +370,9 @@ describe("User endpoint", () => {
         it("should not update a user without auth", () => {
             const userUpdates = {
                 email: "updated2userTest@e2e-test.matchmyroute-backend.appspot.com",
-                name: "Updated2 Test User", password: "updated2test",
+                firstname: "Updated2 Test",
+                password: "updated2test",
+                surname: "User",
             };
             return defaultRequest({
                 json: userUpdates,
@@ -332,7 +390,9 @@ describe("User endpoint", () => {
         // it("should not update a user to an existent email", () => {
         //     const userUpdates = {
         //         email: "test1@e2e-test.matchmyroute-backend.appspot.com",
-        //         name: "Updated2 Test User", password: "updated2test",
+        //         firstname: "Updated2 Test",
+        //         password: "updated2test",
+        //         surname: "User",
         //     };
         //     return defaultRequest({
         //         headers: {
@@ -350,7 +410,8 @@ describe("User endpoint", () => {
         // });
         it("should update a user's individual properties - name", () => {
             const userUpdates = {
-                name: "E2E Test User",
+                firstname: "E2E Test",
+                surname: "User",
             };
             return defaultRequest({
                 headers: {
@@ -371,7 +432,8 @@ describe("User endpoint", () => {
                 });
             }).then(response => {
                 let user = response.body.result;
-                expect(user.name).to.equal("E2E Test User");
+                expect(user.firstname).to.equal("E2E Test");
+                expect(user.surname).to.equal("User");
             });
         });
         it("should update a user's individual properties - email", () => {

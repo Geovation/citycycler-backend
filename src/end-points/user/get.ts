@@ -91,6 +91,11 @@ const definitions = {
                 example: "joe@blogs.com",
                 type: "string",
             },
+            firstname: {
+                description: "The user's first name",
+                example: "Joe",
+                type: "string",
+            },
             helpedCount: {
                 description: "How many times this user has been helped by an expeienced cyclist",
                 example: 3,
@@ -103,11 +108,6 @@ const definitions = {
             joined: {
                 description: "When the user joined MatchMyRoute, in UTC",
                 example: "2017-05-25T05:58:18.763Z",
-                type: "string",
-            },
-            name: {
-                description: "The user's full name",
-                example: "Joe Blogs",
                 type: "string",
             },
             photo: {
@@ -123,13 +123,18 @@ const definitions = {
                 example: 7.5,
                 type: "number",
             },
+            surname: {
+                description: "The user's surname",
+                example: "Bloggs",
+                type: "string",
+            },
             usersHelped: {
                 description: "How many inexperienced cyclists this user has helped",
                 example: 3,
                 type: "integer",
             },
         },
-        required: ["email", "id", "name", "rating", "usersHelped", "helpedCount", "distance"],
+        required: ["email", "id", "firstname", "surname", "rating", "usersHelped", "helpedCount", "distance"],
     },
     UserPreferences: {
         description: "A user's preferences. Only returned if the user is the currently logged in user",

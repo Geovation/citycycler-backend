@@ -36,12 +36,13 @@ describe("MatchMyRoute Auth Functions", () => {
             }).then(client => {
                 return Database.putUser({
                     email: "test@example.com",
+                    firstname: new Buffer("test"),
                     id: "testuser",
                     jwt_secret: secret,
-                    name: new Buffer("test"),
                     pwh: new Buffer("test"),
                     rounds: 1,
                     salt: "salty",
+                    surname: new Buffer("user"),
                 }, transactionClient);
             }).then(createdUser => {
                 uid = createdUser.id;

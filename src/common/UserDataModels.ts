@@ -2,9 +2,10 @@
 export interface IUserSettings {
     id: string;
     email: string;
-    name: string;
+    firstname: string;
     pwh: Buffer;
     salt: Buffer;
+    surname: string;
     rounds: number;
     jwtSecret: string;
 }
@@ -16,7 +17,8 @@ export interface IUserProfile {
     email: string;
     helpedCount: number;
     id: string;
-    name: string;
+    firstname: string;
+    surname: string;
     joined: number;
     photo: string;
     preferences: {
@@ -38,11 +40,11 @@ export default class User implements IUserSettings, IUserProfile {
             bio: row.profile_bio,
             distance: row.profile_distance,
             email: row.email,
+            firstname: row.firstname,
             helpedCount: row.profile_helped_count,
             id: row.id,
             joined: row.profile_joined,
             jwtSecret: row.jwt_secret,
-            name: row.name,
             photo: row.profile_photo,
             preferences: {
                 rideDifficulty: row.preferences_difficulty,
@@ -52,13 +54,15 @@ export default class User implements IUserSettings, IUserProfile {
             rating,
             rounds: row.rounds,
             salt: row.salt,
+            surname: row.surname,
             usersHelped: row.profile_help_count,
         });
     }
 
     public id: string;
     public email: string;
-    public name: string;
+    public firstname: string;
+    public surname: string;
     public pwh: Buffer;
     public salt: Buffer;
     public rounds: number;
@@ -78,12 +82,15 @@ export default class User implements IUserSettings, IUserProfile {
     constructor(obj) {
         if (!obj.email.trim().length) {
             throw "User object requires an email";
-        } else if (!obj.name.trim().length) {
-            throw "User object requires a name";
+        } else if (!obj.firstname.trim().length) {
+            throw "User object requires a first name";
+        } else if (!obj.surname.trim().length) {
+            throw "User object requires a surname";
         }
         this.id = obj.id;
         this.email = obj.email;
-        this.name = obj.name;
+        this.firstname = obj.firstname;
+        this.surname = obj.surname;
         this.pwh = obj.pwh;
         this.salt = obj.salt;
         this.rounds = obj.rounds;
@@ -101,12 +108,13 @@ export default class User implements IUserSettings, IUserProfile {
     public asUserSettings(): IUserSettings {
         return {
             email: this.email,
+            firstname: this.firstname,
             id: this.id,
             jwtSecret: this.jwtSecret,
-            name: this.name,
             pwh: this.pwh,
             rounds: this.rounds,
             salt: this.salt,
+            surname: this.surname,
         } as IUserSettings;
     }
 
@@ -115,13 +123,14 @@ export default class User implements IUserSettings, IUserProfile {
             bio: this.bio,
             distance: this.distance,
             email: this.email,
+            firstname: this.firstname,
             helpedCount: this.helpedCount,
             id: this.id,
             joined: this.joined,
-            name: this.name,
             photo: this.photo,
             preferences: this.preferences,
             rating: this.rating,
+            surname: this.surname,
             usersHelped: this.usersHelped,
         } as IUserProfile;
     }
