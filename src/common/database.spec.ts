@@ -631,6 +631,43 @@ describe("MatchMyRoute Database Functions", () => {
                     "Got route when we shouldn't: " + JSON.stringify(matchedRoute));
             });
         });
+        it("should not match an experienced route if it is owned by that user", () => {
+            let shouldNotMatchOwnRouteId;
+            before("Create an experienced route from this user to test against", done => {
+                Database.putExperiencedRoute(new ExperiencedRoute({
+                    arrivalTime: "13:30:00+00",
+                    days: ["tuesday", "friday", "sunday"],
+                    departureTime: "12:45:00+00",
+                    endPointName: "33 Stanley Street",
+                    length: 5000,
+                    owner: thisUserId,
+                    route: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6]],
+                    startPointName: "112 Rachel Road",
+                }), transactionClient)
+                .then(routeId => {
+                    shouldNotMatchOwnRouteId = routeId;
+                    done();
+                });
+            });
+            const matchParams = {
+                arrivalDateTime: "2017-09-08T13:20:00+00",
+                endPoint: <[number, number]> [0, 4.6],
+                radius: 500,
+                startPoint: <[number, number]> [0, 1.4],
+            };
+            return Database.matchRoutes(thisUserId, matchParams, newArrivalDateTime, transactionClient)
+                .then(routes => {
+                    const matchedRoute = routes.filter((route) => {
+                        return route.id === matchedRouteId;
+                    })[0];
+                    const nonMatchedRoute = routes.filter((route) => {
+                        return route.id === shouldNotMatchOwnRouteId;
+                    })[0];
+                    expect(matchedRoute.owner.id).to.equal(matchedUserId, "Owner is not what was expected");
+                    expect(nonMatchedRoute).to.equal(undefined,
+                        "Got route when we shouldn't: " + JSON.stringify(nonMatchedRoute));
+                });
+        });
     });
     describe("Route Updating", () => {
         // insert an experienced route to update
