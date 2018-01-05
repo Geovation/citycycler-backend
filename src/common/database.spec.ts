@@ -499,8 +499,9 @@ describe("MatchMyRoute Database Functions", () => {
         });
     });
     describe("Route Matching", () => {
-        let thisUserId;
-        let thisRouteId;
+        let thisUserId = "testUserInexperienced";
+        let matchedUserId;
+        let matchedRouteId;
         let routeData;
         const newArrivalDateTime = null;
         beforeEach("Create user and route to test against", done => {
@@ -512,21 +513,21 @@ describe("MatchMyRoute Database Functions", () => {
             },
             transactionClient)
             .then(user => {
-                thisUserId = user.id;
+                matchedUserId = user.id;
                 routeData = new ExperiencedRoute({
                     arrivalTime: "13:30:00+00",
                     days: ["tuesday", "friday", "sunday"],
                     departureTime: "12:45:00+00",
                     endPointName: "33 Stanley Street",
                     length: 5000,
-                    owner: thisUserId,
+                    owner: matchedUserId,
                     route: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6]],
                     startPointName: "112 Rachel Road",
                 });
                 return Database.putExperiencedRoute(routeData, transactionClient);
             })
             .then(routeId => {
-                thisRouteId = routeId;
+                matchedRouteId = routeId;
                 done();
             });
         });
@@ -537,28 +538,29 @@ describe("MatchMyRoute Database Functions", () => {
                 radius: 500,
                 startPoint: <[number, number]> [0, 1.4],
             };
-            return Database.matchRoutes(matchParams, newArrivalDateTime, transactionClient).then(routes => {
-                const thisRoute = routes.filter((route) => {
-                    return route.id === thisRouteId;
-                })[0];
-                expect(thisRoute).to.not.equal(undefined, "Route was not matched. Results were " +
-                    JSON.stringify(routes));
-                expect(thisRoute, "Returned match doesn't have owner").to.have.property("owner");
-                expect(thisRoute.owner, "Returned owner doesn't id").to.have.property("id");
-                expect(thisRoute.owner.id).to.equal(thisUserId, "Owner is not what was expected");
-                expect(moment("2017-09-08T12:45:00+00").isBefore(thisRoute.meetingTime)).to.equal(true,
-                    "meetingTime is before the route's start time (2017-09-08T12:45:00+00). Got " +
-                    thisRoute.meetingTime);
-                expect(moment("2017-09-08T13:30:00+00").isAfter(thisRoute.meetingTime)).to.equal(true,
-                    "meetingTime is after the route's end time (2017-09-08T13:30:00+00). Got " +
-                    thisRoute.meetingTime);
-                expect(thisRoute.meetingPoint).to.eql([0, 1.4]);
-                expect(thisRoute.divorcePoint).to.eql([0, 4.6]);
-                expect(thisRoute.name).to.equal("112 Rachel Road to 33 Stanley Street");
-                expect(thisRoute.route).to.eql([[0, 1.4], [0, 2], [0, 3], [0, 4], [0, 4.6]]);
-                expect(thisRoute.length).to.equal(353848);
-                expect(thisRoute.averageSpeed).to.equal(245.7);
-            });
+            return Database.matchRoutes(thisUserId, matchParams, newArrivalDateTime, transactionClient)
+                .then(routes => {
+                    const matchedRoute = routes.filter((route) => {
+                        return route.id === matchedRouteId;
+                    })[0];
+                    expect(matchedRoute).to.not.equal(undefined, "Route was not matched. Results were " +
+                        JSON.stringify(routes));
+                    expect(matchedRoute, "Returned match doesn't have owner").to.have.property("owner");
+                    expect(matchedRoute.owner, "Returned owner doesn't id").to.have.property("id");
+                    expect(matchedRoute.owner.id).to.equal(matchedUserId, "Owner is not what was expected");
+                    expect(moment("2017-09-08T12:45:00+00").isBefore(matchedRoute.meetingTime)).to.equal(true,
+                        "meetingTime is before the route's start time (2017-09-08T12:45:00+00). Got " +
+                        matchedRoute.meetingTime);
+                    expect(moment("2017-09-08T13:30:00+00").isAfter(matchedRoute.meetingTime)).to.equal(true,
+                        "meetingTime is after the route's end time (2017-09-08T13:30:00+00). Got " +
+                        matchedRoute.meetingTime);
+                    expect(matchedRoute.meetingPoint).to.eql([0, 1.4]);
+                    expect(matchedRoute.divorcePoint).to.eql([0, 4.6]);
+                    expect(matchedRoute.name).to.equal("112 Rachel Road to 33 Stanley Street");
+                    expect(matchedRoute.route).to.eql([[0, 1.4], [0, 2], [0, 3], [0, 4], [0, 4.6]]);
+                    expect(matchedRoute.length).to.equal(353848);
+                    expect(matchedRoute.averageSpeed).to.equal(245.7);
+                });
         });
         it("should not match an experienced route if the radius is too big", done => {
             const matchParams = {
@@ -567,7 +569,7 @@ describe("MatchMyRoute Database Functions", () => {
                 radius: 5000,
                 startPoint: <[number, number]> [0, 1.4],
             };
-            const promise = Database.matchRoutes(matchParams, newArrivalDateTime, transactionClient);
+            const promise = Database.matchRoutes(thisUserId, matchParams, newArrivalDateTime, transactionClient);
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not match an experienced route if the radius is too small", done => {
@@ -577,7 +579,7 @@ describe("MatchMyRoute Database Functions", () => {
                 radius: 0.5,
                 startPoint: <[number, number]> [0, 1.4],
             };
-            const promise = Database.matchRoutes(matchParams, newArrivalDateTime, transactionClient);
+            const promise = Database.matchRoutes(thisUserId, matchParams, newArrivalDateTime, transactionClient);
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not match an experienced route in the wrong direction", () => {
@@ -587,11 +589,12 @@ describe("MatchMyRoute Database Functions", () => {
                 radius: 500,
                 startPoint: <[number, number]> [0, 4.6],
             };
-            return Database.matchRoutes(matchParams, newArrivalDateTime, transactionClient).then(routes => {
-                const thisRoute = routes.filter((route) => {
-                    return route.id === thisRouteId;
+            return Database.matchRoutes(thisUserId, matchParams, newArrivalDateTime, transactionClient).then(routes => {
+                const matchedRoute = routes.filter((route) => {
+                    return route.id === matchedRouteId;
                 })[0];
-                expect(thisRoute).to.equal(undefined, "Got route when we shouldn't: " + JSON.stringify(thisRoute));
+                expect(matchedRoute).to.equal(undefined,
+                    "Got route when we shouldn't: " + JSON.stringify(matchedRoute));
             });
         });
         it("should not match an experienced route if days are set to exclude the required day", () => {
@@ -601,12 +604,14 @@ describe("MatchMyRoute Database Functions", () => {
                 radius: 500,
                 startPoint: <[number, number]> [0, 1.4],
             };
-            return Database.matchRoutes(matchParams, newArrivalDateTime, transactionClient).then(routes => {
-                const thisRoute = routes.filter((route) => {
-                    return route.id === thisRouteId;
-                })[0];
-                expect(thisRoute).to.equal(undefined, "Got route when we shouldn't: " + JSON.stringify(thisRoute));
-            });
+            return Database.matchRoutes(thisUserId, matchParams, newArrivalDateTime, transactionClient)
+                .then(routes => {
+                    const matchedRoute = routes.filter((route) => {
+                        return route.id === matchedRouteId;
+                    })[0];
+                    expect(matchedRoute).to.equal(undefined,
+                        "Got route when we shouldn't: " + JSON.stringify(matchedRoute));
+                });
         });
         it("should not match an experienced route if it was deleted", () => {
             const matchParams = {
@@ -615,14 +620,15 @@ describe("MatchMyRoute Database Functions", () => {
                 radius: 500,
                 startPoint: <[number, number]> [0, 1.4],
             };
-            return Database.deleteExperiencedRoute(thisRouteId, transactionClient).then(success => {
+            return Database.deleteExperiencedRoute(matchedRouteId, transactionClient).then(success => {
                 expect(success).to.be.true;
-                return Database.matchRoutes(matchParams, newArrivalDateTime, transactionClient);
+                return Database.matchRoutes(thisUserId, matchParams, newArrivalDateTime, transactionClient);
             }).then(routes => {
-                const thisRoute = routes.filter((route) => {
-                    return route.id === thisRouteId;
+                const matchedRoute = routes.filter((route) => {
+                    return route.id === matchedRouteId;
                 })[0];
-                expect(thisRoute).to.equal(undefined, "Got route when we shouldn't: " + JSON.stringify(thisRoute));
+                expect(matchedRoute).to.equal(undefined,
+                    "Got route when we shouldn't: " + JSON.stringify(matchedRoute));
             });
         });
     });
