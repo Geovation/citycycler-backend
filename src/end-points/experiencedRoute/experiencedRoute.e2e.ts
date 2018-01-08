@@ -324,7 +324,7 @@ describe("ExperiencedRoute endpoint", () => {
                 });
                 return defaultRequest({
                     headers: {
-                        Authorization: "Firebase " + userJwts[0],
+                        Authorization: "Firebase " + userJwts[1],
                     },
                     json: route,
                     method: "PUT",
@@ -365,7 +365,7 @@ describe("ExperiencedRoute endpoint", () => {
                         JSON.stringify(response.body.result));
                     expect(thisRoute, "Route does not have owner").to.have.property("owner");
                     expect(thisRoute.owner, "Owner does not have id").to.have.property("id");
-                    expect(thisRoute.owner.id).to.equal(userIds[0], "Owner is not who was expected");
+                    expect(thisRoute.owner.id).to.equal(userIds[1], "Owner is not who was expected");
                     // Should be the intersection between the route days and the search days
                     expect(moment("2017-09-08T12:15:00+00").isBefore(thisRoute.meetingTime)).to.equal(true,
                         "meetingTime is before the route's start time (12:15:00+00). Got " +
