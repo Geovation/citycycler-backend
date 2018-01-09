@@ -464,13 +464,14 @@ describe("InexperiencedRoute endpoint", () => {
     });
     describe("Querying against Routes", () => {
         let routeId;
+        let nonMatchedRouteId;
         let shouldMatchId;
         let shouldMatchTuesdayId;
         let shouldMatchSundayId;
         let shouldNotMatchId;
-        before("set up an experienced route and two inexperienced routes that do and don't match it", () => {
+        before("set up experienced routes and inexperienced routes that do and don't match it", () => {
             // Set up a long straight route that is easy to reason about
-            // Then set up an inexperienced route that should match this route,
+            // Then set up three inexperienced routes on different dates that should match this route,
             // and one that shouldn't
             const route = new ExperiencedRoute({
                 arrivalTime: "13:15:00+00",
@@ -527,6 +528,18 @@ describe("InexperiencedRoute endpoint", () => {
                 startPoint: [0, 10],
                 startPointName: "33 Stanley Street",
             };
+            // Set up another long straight route specifically for test user 4 to test against
+            const nonMatchedRoute = new ExperiencedRoute({
+                arrivalTime: "13:15:00+00",
+                days: ["tuesday", "friday", "saturday", "sunday"],
+                departureTime: "12:15:00+00",
+                endPointName: "33 Rachel Road",
+                length: 5000,
+                name: "Ride to work",
+                owner: userIds[1],
+                route: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6]],
+                startPointName: "112 Stanley Street",
+            });
             return defaultRequest({
                 headers: {
                     Authorization: "Firebase " + userJwts[0],
@@ -541,6 +554,22 @@ describe("InexperiencedRoute endpoint", () => {
                 } else {
                     routeIds.push(response.body.result.id);
                     routeId = response.body.result.id;
+                    return defaultRequest({
+                        headers: {
+                            Authorization: "Firebase " + userJwts[1],
+                        },
+                        json: nonMatchedRoute,
+                        method: "PUT",
+                        url: url + "/experiencedRoute",
+                    });
+                }
+            }).then(response => {
+                if (response.statusCode !== 201) {
+                    logger.error("Error while setting up the route to test route matching");
+                    throw response.error || response.body;
+                } else {
+                    routeIds.push(response.body.result.id);
+                    nonMatchedRouteId = response.body.result.id;
                     return defaultRequest({
                         headers: {
                             Authorization: "Firebase " + userJwts[1],
@@ -766,6 +795,28 @@ describe("InexperiencedRoute endpoint", () => {
                 });
                 expect(routes.length).to.equal(0, "Route was matched. Results were " +
                     JSON.stringify(response.body.result));
+            });
+        });
+        it("should not match an experienced route if it is owned by that user", () => {
+            return defaultRequest({
+                headers: {
+                    Authorization: "Firebase " + userJwts[1],
+                },
+                json: {
+                    id: shouldMatchId,
+                },
+                method: "POST",
+                url: url + "/inexperiencedRoute/query",
+            }).then(response => {
+                expect(response.statusCode).to.equal(200, "Expected 200 response but got " +
+                    response.statusCode + ", error given is: " + response.error);
+                expect(response.body.result instanceof Array).to.equal(true, "body.result is not a list of " +
+                    "results, body is: " + JSON.stringify(response.body));
+                const nonMatchedRoute = response.body.result.filter((route) => {
+                    return route.id === nonMatchedRouteId;
+                })[0];
+                expect(nonMatchedRoute).to.equal(undefined,
+                    "Got route when we shouldn't: " + JSON.stringify(nonMatchedRoute));
             });
         });
         it("should err with no auth", () => {

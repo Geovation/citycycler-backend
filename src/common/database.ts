@@ -278,6 +278,7 @@ export function matchRoutes(
         radius: number,
         startPoint: [number, number],
     },
+    userId?: string,
     newArrivalDateTime = null,
     providedClient = null
 ): Promise<{
@@ -358,9 +359,12 @@ export function matchRoutes(
     "AND " +
     "    requiredDay = ANY(days) " +
     "AND " +
-    "    deleted = false " +
-    "ORDER BY " +
-    "   divorceTime::time + timeFromDivorcePoint - $4::timestamptz::time ";
+    "    deleted = false ";
+    // If userId is given, the experienced route of this user will not be matched
+    if (userId) {
+        query += `AND owner != '${userId}'`;
+    }
+    query += " ORDER BY divorceTime::time + timeFromDivorcePoint - $4::timestamptz::time";
     const startPoint = "POINT(" + matchParams.startPoint[0] + " " + matchParams.startPoint[1] + ")";
     const endPoint = "POINT(" + matchParams.endPoint[0] + " " + matchParams.endPoint[1] + ")";
     let queryParams = [
