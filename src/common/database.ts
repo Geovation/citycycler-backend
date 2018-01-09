@@ -360,6 +360,7 @@ export function matchRoutes(
     "    requiredDay = ANY(days) " +
     "AND " +
     "    deleted = false ";
+    // If userId is given, the experienced route of this user will not be matched
     if (userId) {
         query += `AND owner != '${userId}'`;
     }

@@ -655,6 +655,7 @@ describe("MatchMyRoute Database Functions", () => {
                 radius: 500,
                 startPoint: <[number, number]> [0, 1.4],
             };
+            // The userId is given, so the user's own experienced route will not be matched
             return Database.matchRoutes(matchParams, thisUserId, newArrivalDateTime, transactionClient)
                 .then(routes => {
                     const matchedRoute = routes.filter((route) => {
