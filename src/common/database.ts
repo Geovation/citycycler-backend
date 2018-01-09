@@ -272,13 +272,13 @@ export function getExperiencedRoutesNearby(radius: number, lat: number, lon: num
  * @returns routes - A list of ExperiencedRoutes
  */
 export function matchRoutes(
-    userId: string,
     matchParams: {
         arrivalDateTime: string,
         endPoint: [number, number],
         radius: number,
         startPoint: [number, number],
     },
+    userId?: string,
     newArrivalDateTime = null,
     providedClient = null
 ): Promise<{
@@ -359,11 +359,11 @@ export function matchRoutes(
     "AND " +
     "    requiredDay = ANY(days) " +
     "AND " +
-    "    deleted = false " +
-    "AND " +
-    "    owner != $5 " +
-    "ORDER BY " +
-    "   divorceTime::time + timeFromDivorcePoint - $4::timestamptz::time ";
+    "    deleted = false ";
+    if (userId) {
+        query += `AND owner != '${userId}'`;
+    }
+    query += " ORDER BY divorceTime::time + timeFromDivorcePoint - $4::timestamptz::time";
     const startPoint = "POINT(" + matchParams.startPoint[0] + " " + matchParams.startPoint[1] + ")";
     const endPoint = "POINT(" + matchParams.endPoint[0] + " " + matchParams.endPoint[1] + ")";
     let queryParams = [
@@ -371,7 +371,6 @@ export function matchRoutes(
         endPoint,
         matchParams.radius,
         newArrivalDateTime ? newArrivalDateTime : matchParams.arrivalDateTime,
-        userId,
     ];
     return sqlTransaction(query + ";", queryParams, providedClient).then(result => {
         return Promise.all(result.rows.map((row) => {

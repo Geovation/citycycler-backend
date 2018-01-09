@@ -95,7 +95,7 @@ export const service = (broadcast: Function, params: any): Promise<any> => {
     }).then(inexperiencedRoutes => {
         if (inexperiencedRoutes.length === 1) {
             if (inexperiencedRoutes[0].owner === userId) {
-                return Database.matchRoutes(userId, inexperiencedRoutes[0], newArrivalDateTime);
+                return Database.matchRoutes(inexperiencedRoutes[0], userId, newArrivalDateTime);
             } else {
                 throw new Error("403:Invalid authorization");
             }

@@ -538,7 +538,7 @@ describe("MatchMyRoute Database Functions", () => {
                 radius: 500,
                 startPoint: <[number, number]> [0, 1.4],
             };
-            return Database.matchRoutes(thisUserId, matchParams, newArrivalDateTime, transactionClient)
+            return Database.matchRoutes(matchParams, thisUserId, newArrivalDateTime, transactionClient)
                 .then(routes => {
                     const matchedRoute = routes.filter((route) => {
                         return route.id === matchedRouteId;
@@ -569,7 +569,7 @@ describe("MatchMyRoute Database Functions", () => {
                 radius: 5000,
                 startPoint: <[number, number]> [0, 1.4],
             };
-            const promise = Database.matchRoutes(thisUserId, matchParams, newArrivalDateTime, transactionClient);
+            const promise = Database.matchRoutes(matchParams, thisUserId, newArrivalDateTime, transactionClient);
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not match an experienced route if the radius is too small", done => {
@@ -579,7 +579,7 @@ describe("MatchMyRoute Database Functions", () => {
                 radius: 0.5,
                 startPoint: <[number, number]> [0, 1.4],
             };
-            const promise = Database.matchRoutes(thisUserId, matchParams, newArrivalDateTime, transactionClient);
+            const promise = Database.matchRoutes(matchParams, thisUserId, newArrivalDateTime, transactionClient);
             expect(promise).to.be.rejected.and.notify(done);
         });
         it("should not match an experienced route in the wrong direction", () => {
@@ -589,7 +589,7 @@ describe("MatchMyRoute Database Functions", () => {
                 radius: 500,
                 startPoint: <[number, number]> [0, 4.6],
             };
-            return Database.matchRoutes(thisUserId, matchParams, newArrivalDateTime, transactionClient).then(routes => {
+            return Database.matchRoutes(matchParams, thisUserId, newArrivalDateTime, transactionClient).then(routes => {
                 const matchedRoute = routes.filter((route) => {
                     return route.id === matchedRouteId;
                 })[0];
@@ -604,7 +604,7 @@ describe("MatchMyRoute Database Functions", () => {
                 radius: 500,
                 startPoint: <[number, number]> [0, 1.4],
             };
-            return Database.matchRoutes(thisUserId, matchParams, newArrivalDateTime, transactionClient)
+            return Database.matchRoutes(matchParams, thisUserId, newArrivalDateTime, transactionClient)
                 .then(routes => {
                     const matchedRoute = routes.filter((route) => {
                         return route.id === matchedRouteId;
@@ -622,7 +622,7 @@ describe("MatchMyRoute Database Functions", () => {
             };
             return Database.deleteExperiencedRoute(matchedRouteId, transactionClient).then(success => {
                 expect(success).to.be.true;
-                return Database.matchRoutes(thisUserId, matchParams, newArrivalDateTime, transactionClient);
+                return Database.matchRoutes(matchParams, thisUserId, newArrivalDateTime, transactionClient);
             }).then(routes => {
                 const matchedRoute = routes.filter((route) => {
                     return route.id === matchedRouteId;
@@ -655,7 +655,7 @@ describe("MatchMyRoute Database Functions", () => {
                 radius: 500,
                 startPoint: <[number, number]> [0, 1.4],
             };
-            return Database.matchRoutes(thisUserId, matchParams, newArrivalDateTime, transactionClient)
+            return Database.matchRoutes(matchParams, thisUserId, newArrivalDateTime, transactionClient)
                 .then(routes => {
                     const matchedRoute = routes.filter((route) => {
                         return route.id === matchedRouteId;

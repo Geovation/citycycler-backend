@@ -210,8 +210,8 @@ const definitions = {
 
 export const service = (broadcast: Function, params: any): Promise<any> => {
     const payload = params.body;
-    return getIdFromJWT(params.authorization).then(userId => {
-        return matchRoutes(userId, payload);
+    return getIdFromJWT(params.authorization).then(() => {
+        return matchRoutes(payload);
     }, err => {
         throw err;
     });
