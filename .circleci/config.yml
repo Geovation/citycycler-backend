@@ -11,5 +11,15 @@ jobs:
             - checkout
             - run: echo "hello world"
             - run: sudo apt install postgresql-client-9.6
-            # - run: psql -c "CREATE USER testuser WITH PASSWORD 'test' SUPERUSER;"
-            # - run: psql -c 'CREATE DATABASE "matchMyRouteTest" WITH OWNER testuser;'
+            - restore_cache:
+                key: dependency-cache-{{ checksum "package.json" }}
+            - run:
+                name: install-npm-wee
+                command: npm install
+            - save_cache:
+                key: dependency-cache-{{ checksum "package.json" }}
+                paths:
+                    - ./node_modules
+            - run:
+                name: test
+                command: npm test
