@@ -3,6 +3,10 @@ jobs:
     build:
         docker:
             - image: circleci/node:8
+            - image: circlci/postgres:9.6.9-alpine-postgis-ram
         steps:
             - checkout
             - run: echo "hello world"
+            - run: sudo apt install postgresql-client-9.6
+            - run: psql -c "CREATE USER testuser WITH PASSWORD 'test' SUPERUSER;"
+            - run: psql -c 'CREATE DATABASE "matchMyRouteTest" WITH OWNER testuser;'
