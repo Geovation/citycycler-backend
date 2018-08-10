@@ -28,7 +28,7 @@ jobs:
 
     deploy:
         docker:
-            - image: circleci/node:6-stretch
+            - image: google/cloud-sdk
         steps:
             # - run: sudo /opt/google-cloud-sdk/bin/gcloud components update -q
             # - run: sudo chown ubuntu.ubuntu -R /home/ubuntu/.config/gcloud
