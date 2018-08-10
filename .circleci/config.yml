@@ -2,7 +2,7 @@ version: 2
 jobs:
     build:
         docker:
-            - image: circleci/node:8-stretch
+            - image: circleci/node:6-stretch
             - image: circleci/postgres:9.6.9-alpine-postgis-ram
               environment:
                   POSTGRES_USER: testuser
