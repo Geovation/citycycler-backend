@@ -37,14 +37,11 @@ jobs:
             - run: npm run deploy
             - run: URL=https://matchmyroute-backend.appspot.com npm run e2etest
 
-    workflows:
-        version: 2
-        build-and-deploy:
-        jobs:
-          - build
-          - deploy:
-              requires:
-                - build
-              # filters:
-              #   branches:
-              #     only: sequential-branch-filter
+workflows:
+    version: 2
+    build-and-deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
