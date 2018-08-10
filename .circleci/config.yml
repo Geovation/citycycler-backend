@@ -30,6 +30,7 @@ jobs:
         docker:
             - image: google/cloud-sdk
         steps:
+            - checkout
             # - run: sudo /opt/google-cloud-sdk/bin/gcloud components update -q
             # - run: sudo chown ubuntu.ubuntu -R /home/ubuntu/.config/gcloud
             - run: gcloud auth activate-service-account --key-file conf/key-file.json
@@ -41,7 +42,7 @@ workflows:
     version: 2
     build-and-deploy:
         jobs:
-          - build
+          # - build
           - deploy:
               requires:
                 - build
