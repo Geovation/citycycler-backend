@@ -3,7 +3,7 @@ jobs:
     build:
         docker:
             - image: circleci/node:8
-            - image: circlci/postgres:9.6.9-alpine-postgis-ram
+            - image: circleci/postgres:9.6.9-alpine-postgis-ram
         steps:
             - checkout
             - run: echo "hello world"
