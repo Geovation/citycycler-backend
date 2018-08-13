@@ -31,8 +31,8 @@ jobs:
             - image: google/cloud-sdk
         steps:
             - checkout
-            - run: sudo curl -sL https://deb.nodesource.com/setup_6.x | bash -
-            - run: sudo apt install -y nodejs
+            - run: curl -sL https://deb.nodesource.com/setup_6.x | bash -
+            - run: apt install -y nodejs
             - restore_cache:
                 key: dependency-cache-{{ checksum "package.json" }}
             - run:
