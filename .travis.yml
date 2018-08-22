@@ -1,0 +1,30 @@
+language: node_js
+node_js:
+- '6'
+cache:
+  directories:
+  - node_modules
+env:
+  global:
+  - NODE_ENV=staging
+  - URL="https://matchmyroute-backend.appspot.com"
+addons:
+  postgresql: '9.6'
+  apt:
+    packages:
+    - postgresql-9.6-postgis-2.3
+before_script:
+- psql -U postgres -c "create extension postgis"
+- psql -c "CREATE USER testuser WITH PASSWORD 'test' SUPERUSER;"
+- psql -c 'CREATE DATABASE "matchMyRouteTest" WITH OWNER testuser;'
+script:
+- npm run test
+- npm run build
+deploy:
+  provider: gae
+  keyfile: "./conf/key-file.json"
+  project: matchmyroute-backend
+  config: "./build/app.yaml"
+  skip_cleanup: true
+after_deploy:
+- npm run e2etest

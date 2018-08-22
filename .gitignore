@@ -4,3 +4,6 @@ build
 coverage
 node_modules
 npm-debug.log
+
+conf/*.json
+conf/*.tar
