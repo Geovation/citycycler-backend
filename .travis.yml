@@ -8,11 +8,16 @@ env:
   global:
   - NODE_ENV=staging
   - URL="https://matchmyroute-backend.appspot.com"
+  - secure: on4jgkRvu0rt9ThaqcMW9OvlTjVkfSDekhRAT2oDa7cYppvqRKxQyYCivWinlKsDPNF5MD13tZO4VpvezvmhT1YIPSkEejLt2+U7AypxYlM4R7EVBwhpIH1KDpjuJYeDMiq6gcFEaWl5DVrey39MZArrNip01co5uEnFDmyArk90M2iR2tySatTjqy4ZMZrhbgXOxsin7AjJejx+5KGpekAvId2infmQt1EKlOUoRsp/HHOV0qaK1DpevBNdbl2rHzKm0x07xP5bQaf3FKgm82qx9NPyl/bmczBQ+J6vbneP0kN/yRce9ipchoSaCrRn7V69CUYfioDBT/ddY0ae7ow7rLPKuDrdKZcgGOKo6uYAlnh235yzEi7R61UvuVZAb46ltRnsVjOt6Igxmh4xg9lvW5Yr5241jKpggqvyEz4LrQxFkMwwA3QhLE3CLE5+8QbS/+tjYM7mjL7LVPNvoUS2qGV0HSPlGDmUmDRhwUVZO2/MmH+Io7smVjIuDaDF4xfhwhlHA/G94xOkKr036fIpcSgK1jvK69dwwHQfxAR0tdYF8XamylrNUWlXjIZ1Te2uN4S8aO25S7/ChOBqJjI9tXH3f1WiYos63Z3Svp3JcK2eYV38ov7Zy0YQkxR4Abhum9GUzRF+VGpauThM1CWQu57nbbK5Eb/Mw55xTt0=
 addons:
   postgresql: '9.6'
   apt:
     packages:
     - postgresql-9.6-postgis-2.3
+before_install:
+- openssl aes-256-cbc -K $encrypted_0e3badaffc60_key -iv $encrypted_0e3badaffc60_iv
+  -in credentials.tar.enc -out credentials.tar -d
+- tar xvf ./conf/credentials.tar -C ./conf
 before_script:
 - psql -U postgres -c "create extension postgis"
 - psql -c "CREATE USER testuser WITH PASSWORD 'test' SUPERUSER;"
