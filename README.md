@@ -1,5 +1,7 @@
-MatchMyRoute Backend
+CityCycler Backend
 ====================
+
+also known as: matchmyroute-backend (which was the pre-release name)
 
 ## Install
 
