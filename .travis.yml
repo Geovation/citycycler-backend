@@ -16,7 +16,7 @@ addons:
     - postgresql-9.6-postgis-2.3
 before_install:
 - openssl aes-256-cbc -K $encrypted_0e3badaffc60_key -iv $encrypted_0e3badaffc60_iv
-  -in credentials.tar.enc -out credentials.tar -d
+  -in ./conf/credentials.tar.enc -out ./conf/credentials.tar -d
 - tar xvf ./conf/credentials.tar -C ./conf
 before_script:
 - psql -U postgres -c "create extension postgis"
