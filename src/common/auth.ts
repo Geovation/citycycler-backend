@@ -11,7 +11,7 @@ initFirebase();
 
 function initFirebase() {
     const firebaseServiceAccount = require("conf/firebase-admin-sdk.json");
-    if (typeof firebaseServiceAccount !== "undefined") {
+    if (!firebaseServiceAccount.isTest) {
         firebaseAdmin.initializeApp({
             credential: firebaseAdmin.credential.cert(firebaseServiceAccount),
             databaseURL: "https://matchmyroute-backend.firebaseio.com/",
