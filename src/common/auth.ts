@@ -11,11 +11,12 @@ initFirebase();
 
 function initFirebase() {
     const firebaseServiceAccount = require("conf/firebase-admin-sdk.json");
-
-    firebaseAdmin.initializeApp({
-        credential: firebaseAdmin.credential.cert(firebaseServiceAccount),
-        databaseURL: "https://matchmyroute-backend.firebaseio.com/",
-    });
+    if (typeof firebaseServiceAccount !== 'undefined') {
+        firebaseAdmin.initializeApp({
+            credential: firebaseAdmin.credential.cert(firebaseServiceAccount),
+            databaseURL: "https://matchmyroute-backend.firebaseio.com/",
+        });
+    }
 }
 
 /**
