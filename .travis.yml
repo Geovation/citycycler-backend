@@ -17,7 +17,7 @@ addons:
 before_install:
 - 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then openssl aes-256-cbc -K $encrypted_0e3badaffc60_key -iv $encrypted_0e3badaffc60_iv
   -in ./conf/credentials.tar.enc -out ./conf/credentials.tar -d; tar xvf ./conf/credentials.tar -C ./conf; fi'
-- 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then touch ./conf/firebase-admin-sdk.json'; fi'
+- 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then touch ./conf/firebase-admin-sdk.json; fi'
 before_script:
 - psql -U postgres -c "create extension postgis"
 - psql -c "CREATE USER testuser WITH PASSWORD 'test' SUPERUSER;"
