@@ -11,15 +11,15 @@ const firebaseAdminRef = initFirebase();
 
 function initFirebase() {
     const firebaseServiceAccount = require("conf/firebase-admin-sdk.json");
-    let firebaseAdminRef;
+    let firebaseAdminReference;
     if (!firebaseServiceAccount.isTest) {
-        firebaseAdminRef = firebaseAdmin;
-        firebaseAdminRef.initializeApp({
-            credential: firebaseAdminRef.credential.cert(firebaseServiceAccount),
+        firebaseAdminReference = firebaseAdmin;
+        firebaseAdminReference.initializeApp({
+            credential: firebaseAdminReference.credential.cert(firebaseServiceAccount),
             databaseURL: "https://matchmyroute-backend.firebaseio.com/",
         });
     } else {
-        firebaseAdminRef = {
+        firebaseAdminReference = {
             auth: () => {
                 return {
                     createCustomToken: (uid) => {
@@ -30,7 +30,7 @@ function initFirebase() {
         };
     }
 
-    return firebaseAdminRef;
+    return firebaseAdminReference;
 }
 
 /**
