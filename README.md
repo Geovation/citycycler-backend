@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/Geovation/citycycler-backend.svg?branch=master)](https://travis-ci.org/Geovation/citycycler-backend)
+
 CityCycler Backend
 ====================
 
@@ -126,9 +128,7 @@ The `predeploy` step currently just runs a build (and lint) and the tests.
 This is running on google's cloud SQL, and the easiest way to access it is
 running google's cloud proxy. You can run this with `npm run dbproxy`,
 which will allow you to connect to the database on `localhost:3307`.
-You will also need the password, which is `aUZw[:Gw38H&>Jf2hUwd`.
-*When it comes time to open source this repo we should definitley change
-it, because this one is also floating round in our gulpfile*
+You will also need the password.
 
 ### Advanced
 
