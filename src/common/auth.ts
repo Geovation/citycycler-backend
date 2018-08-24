@@ -9,7 +9,7 @@ export const minimumHashingRounds = 30000;
 
 initFirebase();
 
-var firebaseAdminRef;
+let firebaseAdminRef;
 
 function initFirebase() {
     const firebaseServiceAccount = require("conf/firebase-admin-sdk.json");
@@ -32,7 +32,6 @@ function initFirebase() {
     }
 
 }
-
 
 /**
  * check if the header was authorsed by the given user
