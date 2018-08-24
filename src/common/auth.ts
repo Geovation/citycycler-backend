@@ -16,6 +16,11 @@ function initFirebase() {
             credential: firebaseAdmin.credential.cert(firebaseServiceAccount),
             databaseURL: "https://matchmyroute-backend.firebaseio.com/",
         });
+    } else {
+        // mock firebase function
+        firebaseAdmin.auth().createCustomToken = () => {
+            return Promise.resolve('testtoken')
+        }
     }
 }
 
