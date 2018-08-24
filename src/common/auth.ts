@@ -25,7 +25,7 @@ function initFirebase() {
                 return {
                     createCustomToken: (uid) => {
                         return Promise.resolve("testtoken");
-                    }
+                    },
                 };
             }
         };
