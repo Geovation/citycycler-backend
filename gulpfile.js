@@ -104,7 +104,7 @@ function getProductionEnvVars() {
         STATIC_DIR: "static",
         NODE_ENV: "production",
         PGUSER: "postgres",
-        PGPASSWORD: "aUZw[:Gw38H&>Jf2hUwd",
+        PGPASSWORD: process.env.PGPRODPW,
         GOOGLE_APPLICATION_CREDENTIALS: "conf/storage-keyfile.json",
         STORAGE_BUCKET: "matchmyroute-prod"
     });

@@ -1,5 +1,7 @@
-MatchMyRoute Backend
+CityCycler Backend
 ====================
+
+also known as: matchmyroute-backend (which was the pre-release name)
 
 ## Install
 
@@ -143,7 +145,7 @@ If you want to revoke accounts, you can do so with:
 
 ```
 gcloud auth list
-gcloud auth revoke james.gardner@geovation.uk
+gcloud auth revoke john.smith@smith.com
 ```
 
 If you want to see all the HTTP requests and responses during deployment you

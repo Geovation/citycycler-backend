@@ -7,15 +7,30 @@ import * as jwt from "jsonwebtoken";
 // Updating this will cause any user who logs in or updates their password to have a new, more secure password generated
 export const minimumHashingRounds = 30000;
 
-initFirebase();
+const firebaseAdminRef = initFirebase();
 
 function initFirebase() {
-    const firebaseServiceAccount = require("conf/matchmyroute-backend-firebase-adminsdk-jm5jb-e33eab9419.json");
+    const firebaseServiceAccount = require("conf/firebase-admin-sdk.json");
+    let firebaseAdminReference;
+    if (!firebaseServiceAccount.isTest) {
+        firebaseAdminReference = firebaseAdmin;
+        firebaseAdminReference.initializeApp({
+            credential: firebaseAdminReference.credential.cert(firebaseServiceAccount),
+            databaseURL: "https://matchmyroute-backend.firebaseio.com/",
+        });
+    } else {
+        firebaseAdminReference = {
+            auth: () => {
+                return {
+                    createCustomToken: (uid) => {
+                        return Promise.resolve("testtoken");
+                    },
+                };
+            },
+        };
+    }
 
-    firebaseAdmin.initializeApp({
-        credential: firebaseAdmin.credential.cert(firebaseServiceAccount),
-        databaseURL: "https://matchmyroute-backend.firebaseio.com/",
-    });
+    return firebaseAdminReference;
 }
 
 /**
@@ -64,7 +79,7 @@ export function getIdFromJWT(authHeader: string, providedClient = null): Promise
         switch (scheme) {
             case "Firebase":
                 // check if id token is valid
-                firebaseAdmin.auth().verifyIdToken(token)
+                firebaseAdminRef.auth().verifyIdToken(token)
                     .then(decodedToken => {
                         resolve(decodedToken.uid);
                     })
@@ -107,7 +122,7 @@ export function getIdFromJWT(authHeader: string, providedClient = null): Promise
  */
 export const generateJWTFor = (user: IUserSettings):
 Promise<{ token: string; expires: number; firebaseToken: string }> => {
-    return firebaseAdmin.auth().createCustomToken(user.id + "")
+    return firebaseAdminRef.auth().createCustomToken(user.id + "")
     .then(firebaseToken => {
         return {
             expires: Math.trunc((new Date()).getTime() / 1000) + 1209600,
