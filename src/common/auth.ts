@@ -9,20 +9,30 @@ export const minimumHashingRounds = 30000;
 
 initFirebase();
 
+var firebaseAdminRef;
+
 function initFirebase() {
     const firebaseServiceAccount = require("conf/firebase-admin-sdk.json");
+    firebaseAdminRef = firebaseAdmin;
     if (!firebaseServiceAccount.isTest) {
-        firebaseAdmin.initializeApp({
-            credential: firebaseAdmin.credential.cert(firebaseServiceAccount),
+        firebaseAdminRef.initializeApp({
+            credential: firebaseAdminRef.credential.cert(firebaseServiceAccount),
             databaseURL: "https://matchmyroute-backend.firebaseio.com/",
         });
     } else {
-        // mock firebase function
-        firebaseAdmin.auth().createCustomToken = () => {
-            return Promise.resolve("testtoken");
+        firebaseAdminRef = {
+            auth: () => {
+                return {
+                    createCustomToken: (uid) => {
+                        return Promise.resolve("testtoken");
+                    }
+                };
+            }
         };
     }
+
 }
+
 
 /**
  * check if the header was authorsed by the given user
@@ -70,7 +80,7 @@ export function getIdFromJWT(authHeader: string, providedClient = null): Promise
         switch (scheme) {
             case "Firebase":
                 // check if id token is valid
-                firebaseAdmin.auth().verifyIdToken(token)
+                firebaseAdminRef.auth().verifyIdToken(token)
                     .then(decodedToken => {
                         resolve(decodedToken.uid);
                     })
@@ -113,7 +123,7 @@ export function getIdFromJWT(authHeader: string, providedClient = null): Promise
  */
 export const generateJWTFor = (user: IUserSettings):
 Promise<{ token: string; expires: number; firebaseToken: string }> => {
-    return firebaseAdmin.auth().createCustomToken(user.id + "")
+    return firebaseAdminRef.auth().createCustomToken(user.id + "")
     .then(firebaseToken => {
         return {
             expires: Math.trunc((new Date()).getTime() / 1000) + 1209600,
