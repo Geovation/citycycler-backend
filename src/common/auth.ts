@@ -7,14 +7,13 @@ import * as jwt from "jsonwebtoken";
 // Updating this will cause any user who logs in or updates their password to have a new, more secure password generated
 export const minimumHashingRounds = 30000;
 
-initFirebase();
-
-let firebaseAdminRef;
+const firebaseAdminRef = initFirebase();
 
 function initFirebase() {
     const firebaseServiceAccount = require("conf/firebase-admin-sdk.json");
-    firebaseAdminRef = firebaseAdmin;
+    let firebaseAdminRef;
     if (!firebaseServiceAccount.isTest) {
+        firebaseAdminRef = firebaseAdmin;
         firebaseAdminRef.initializeApp({
             credential: firebaseAdminRef.credential.cert(firebaseServiceAccount),
             databaseURL: "https://matchmyroute-backend.firebaseio.com/",
@@ -31,6 +30,7 @@ function initFirebase() {
         };
     }
 
+    return firebaseAdminRef;
 }
 
 /**
