@@ -27,7 +27,7 @@ function initFirebase() {
                         return Promise.resolve("testtoken");
                     },
                 };
-            }
+            },
         };
     }
 
