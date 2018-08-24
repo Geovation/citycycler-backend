@@ -15,9 +15,11 @@ addons:
     packages:
     - postgresql-9.6-postgis-2.3
 before_install:
-- 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then openssl aes-256-cbc -K $encrypted_0e3badaffc60_key -iv $encrypted_0e3badaffc60_iv
-  -in ./conf/credentials.tar.enc -out ./conf/credentials.tar -d; tar xvf ./conf/credentials.tar -C ./conf; fi'
-- 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then echo {\"isTest\": true} >> ./conf/firebase-admin-sdk.json; fi'
+- if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then openssl aes-256-cbc -K $encrypted_0e3badaffc60_key
+  -iv $encrypted_0e3badaffc60_iv -in ./conf/credentials.tar.enc -out ./conf/credentials.tar
+  -d; tar xvf ./conf/credentials.tar -C ./conf; fi
+- 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then echo {\"isTest\": true} >> ./conf/firebase-admin-sdk.json;
+  fi'
 before_script:
 - psql -U postgres -c "create extension postgis"
 - psql -c "CREATE USER testuser WITH PASSWORD 'test' SUPERUSER;"
@@ -33,3 +35,6 @@ deploy:
   skip_cleanup: true
 after_deploy:
 - npm run e2etest
+notifications:
+  slack:
+    secure: hioCGanq36apZfaC+teJuME5+POT+l/2X+DS3sWWSUBH/nxcVqqLOpYqlTklreUhi2Ix99KVHeEU1XCZUrZ/0NdB2bDoLKQnk2l9xQ6hwEqc26SbV69c+X2CCnJ+PkNKljGXEUSHwSx2QJwtXTcMfX3UetT7mh1yKgXpG5lvUUDDJ03lZSDVG9tyvIieYkrdF8FceUXkLohRW7QON//rbPvu6UciokIsouR+myAsOawLiCvyjvZYhp2FhL+rRH5QVOeHdSAb3zDAC3Sf95dj5DKtXZDKaDS7lMFF9ZulN4W1ah4KdmsOXsRf8cgtyZTrsP9EcpiOb3b5WtQiejTfwuDjt/SIjbycqHMSl5cxbh5tkyALvdndTGnq6ExcWCVDTi7kCn02UTPpRxqS0cqZz6ygPbv5rJUo03wlC3GaqQCxOOdBk/xOuNIacoSv4olxEhifmRownIp0ejL7ko2Grb8Vssy0LAMXgVjcoZ2b5Cyzn14J0iqsYbhZmQJlLgG3A/lEQRQ2FS7VDD2qcUpccSuZ7nLKK+NydlZrfQep8zKfMaThwOpEpy8u4MZRNdnMWxW9+ZlIyHB3RYYEbxnpQjgtCeUh/aqO4GzACmZllJwzax7Fdmmx4H5YryjoVNOpAARDY+TEXJhoJS48a0Xt/56veH2Y/8hVJ0qUaNx4Yxg=
