@@ -19,8 +19,8 @@ function initFirebase() {
     } else {
         // mock firebase function
         firebaseAdmin.auth().createCustomToken = () => {
-            return Promise.resolve('testtoken')
-        }
+            return Promise.resolve('testtoken');
+        };
     }
 }
 
